@@ -1,0 +1,38 @@
+#centerFloat{
+    width:100%;
+    position:fixed;
+    bottom:0px;
+    text-align:center;
+    z-index:9999;
+}
+
+#prnthImg{
+    width:25%;
+    margin-bottom:8px;
+    -moz-animation: 3s ease 0s normal none infinite swing;
+    -moz-transform-origin: center center;
+    -webkit-animation:swing 3s infinite ease-in-out;
+    -webkit-transform-origin:center;
+}
+@-moz-keyframes swing{
+    0%{-moz-transform:rotate(-1deg)}
+    50%{-moz-transform:rotate(1deg)}
+    100%{-moz-transform:rotate(-1deg)}
+}
+@-webkit-keyframes swing{
+    0%{-webkit-transform:rotate(-1deg)}
+    50%{-webkit-transform:rotate(1deg)}
+    100%{-webkit-transform:rotate(-1deg)}
+}
+#page1{
+    height:100vh;
+    background-color:rgb(95, 0, 114);
+    color:white;
+}
+
+@media only screen and (max-width: 768px){
+    /* For mobile phones: */
+    #prnthImg {
+        width: 60%;
+    }
+}
