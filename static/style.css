@@ -130,6 +130,9 @@ h1{
     .menuLink{
         color:black;
     }
+    div.social>a{
+        color:black;
+    }
     .menuBar {
         height:10vh;
         width:100%;
