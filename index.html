@@ -1,33 +1,437 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Prnth's Homepage</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <title>Prnth's Homepage</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.4.1/css/simple-line-icons.css">
+  <link rel="stylesheet" href="https://unpkg.com/picnic">
+  <link rel="stylesheet" href="/static/style.css">
+  <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body>
-    <div id="page1">
-        <div class="col-md-6 col-sm-12">
-            <h1 style="font-size:72px;">Engineering<br/>the<br/>future.</h1>
-        </div>
-        <div style="text-align:right" class="col-md-6 col-sm-12">
-                <h1>Pranith Hengavalli<br/>About Me<br/>Reading</h1>
-        </div>
+  <body onload="showPage()" >
+    <div id="loading" style="display:inline-block;z-index: 99999;padding-top:40vh">
+      <h1><div style="display:inline-block;" class="el">#</div><div style="display:inline-block;" class="el">!</div></h1>
     </div>
-    <div id="centerFloat">
-        <img id="prnthImg" src="/static/img/header.png"></img>
+    
+    <div>
+      <nav class="menuBar">
+        <!-- responsive-->
+        <input id="bmenub" type="checkbox" class="show">
+        <label for="bmenub" class="burger pseudo button" style="color:white">#!</label>
+        
+        <div class="menu" style="width:100%">
+          <a href="#work"><button class="stack pseudo" style="font-size:0.2em;"><pre class="menuLink">
+                                              __       
+                                             /  |      
+            __   __   __   ______    ______  $$ |   __ 
+           /  | /  | /  | /      \  /      \ $$ |  /  |
+           $$ | $$ | $$ |/$$$$$$  |/$$$$$$  |$$ |_/$$/ 
+           $$ | $$ | $$ |$$ |  $$ |$$ |  $$/ $$   $$<  
+           $$ \_$$ \_$$ |$$ \__$$ |$$ |      $$$$$$  \ 
+           $$   $$   $$/ $$    $$/ $$ |      $$ | $$  |
+            $$$$$/$$$$/   $$$$$$/  $$/       $$/   $$/ 
+          </pre>></button></a>
+          <a href="#art"><button class="stack pseudo" style="font-size:0.2em;color:rgb(255, 93, 93)"><pre class="menuLink">                                                                                  
+        ______    ______   _____  ____    ______    _______ 
+       /      \  /      \ /     \/    \  /      \  /       |
+      /$$$$$$  | $$$$$$  |$$$$$$ $$$$  |/$$$$$$  |/$$$$$$$/ 
+      $$ |  $$ | /    $$ |$$ | $$ | $$ |$$    $$ |$$      \ 
+      $$ \__$$ |/$$$$$$$ |$$ | $$ | $$ |$$$$$$$$/  $$$$$$  |
+      $$    $$ |$$    $$ |$$ | $$ | $$ |$$       |/     $$/ 
+       $$$$$$$ | $$$$$$$/ $$/  $$/  $$/  $$$$$$$/ $$$$$$$/  
+      /  \__$$ |                                            
+      $$    $$/                                             
+       $$$$$$/                                                                                 
+          </pre></button></a>
+          <a href="#news"><button class="stack pseudo" style="font-size:0.2em;color:rgb(179, 177, 168)"><pre class="menuLink">
+              __           __                      __ 
+             /  |         /  |                    /  |
+            /$$/______   _$$ |_     _______      /$$/ 
+           /$$//      \ / $$   |   /       |    /$$/  
+          /$$//$$$$$$  |$$$$$$/   /$$$$$$$/    /$$/   
+         /$$/ $$    $$ |  $$ | __ $$ |        /$$/    
+        /$$/  $$$$$$$$/   $$ |/  |$$ \_____  /$$/     
+       /$$/   $$       |  $$  $$/ $$       |/$$/      
+       $$/     $$$$$$$/    $$$$/   $$$$$$$/ $$/                       
+          </pre></button></a>
+          
+          <div class="stack pseudo" style="padding-top:10vh;font-weight:5;font-size:1.5em;text-align:center;">
+            <div class="social"><a href="https://github.com/prnthh"><i class="icon-social-github icons"></i></a></div>
+            <div class="social"><a href="https://www.instagram.com/pranithisnotaswaggot/"><i class="icon-social-instagram icons"></i></a> </div>
+            <div class="social"><a href="https://www.facebook.com/prnth"><i class="icon-social-facebook icons"></i></a> </div>
+            <div class="social"><a href="https://www.linkedin.com/in/pranith-hengavalli-21b5834/"><i class="icon-social-linkedin icons"></i></a> </div>
+          </div>
+        </div>
+        
+      </nav>
+      
+    </div>
+    <div id="content" style="text-align:left;">
+      <div id="headerBox" class="section" style="font-size:0.5em;padding-bottom:0;padding-top:0px;">
+        <div id="headerB" style="text-align:center">
+        <pre id="header1" onclick="showTwo()" style="background:none;color:rgb(20, 247, 255)">
+        ___                 _ _   _       
+       / _ \_ __ __ _ _ __ (_) |_| |__   
+      / /_)/ '__/ _` | '_ \| | __| '_ \  
+     / ___/| | | (_| | | | | | |_| | | | 
+     \/    |_|  \__,_|_| |_|_|\__|_| |_|  _ _ _   
+   /\  /\___ _ __   __ _  __ ___   ____ _| | (_)
+  / /_/ / _ \ '_ \ / _` |/ _` \ \ / / _` | | | |
+ / __  /  __/ | | | (_| | (_| |\ V / (_| | | | |
+ \/ /_/ \___|_| |_|\__, |\__,_| \_/ \__,_|_|_|_|
+                   |___/                        
+               </pre>
+               <pre id="header2" style="background:none;display:none;color:white">
+     
+                            _   _     
+           _ __  _ __ _ __ | |_| |__  
+     /\/| | '_ \| '__| '_ \| __| '_ \ 
+    |/\/  | |_) | |  | | | | |_| | | |
+          | .__/|_|  |_| |_|\__|_| |_|
+          |_|                         
+                      ~The Polymath   
+     
+        
+        </pre>
+      </div>
+      </div>
+      
+      <div id="work" class="section">
+        <div class="flex one two-700 center">
+          <div>
+            <article class="card">
+              <header><h4>Production </h4><div style="float:right" class="subtle">Consumer-Facing Work</div></header>
+              <footer style="height:30vh;overflow:scroll" class="worktext">
+                <b>Fullstack - Web</b><br>
+                NodeJS <div class="subtle">Scripting language for everything from robots to websites.</div><br>
+                ASP.net<div class="subtle">Microsoft's powerful web framework.</div><br>
+                React Native<div class="subtle">Making cross platform mobile apps.</div><br>
+                <b>Systems and Backend</b><br>
+                Blockchain<div class="subtle">Building fault tolerant distributed systems.</div><br>
+                Asterisk PBX<div class="subtle">Make telephone calls programmatically.</div><br>
+                UNIX<div class="subtle">My preferred operating environment.</div><br>
+                Python<div class="subtle">Automation and dirty prototypes.</div><br>
+
+              </footer>
+            </article>
+          </div>
+          <div>
+            <article class="card dark">
+              <header><h4>Hacks</h4><div style="float:right" class="subtle">See anything you like?</div></header>
+              <footer style="height:30vh;overflow:scroll" class="worktext">
+
+                  <label for="modal_2">MuChain - Blockchain Balloting Hardware<div style="float:right"></div></label>
+                  <div class="modal">
+                    <input id="modal_2" type="checkbox" />
+                    <label for="modal_2" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>MuChain - Blockchain Balloting Hardware</h3>
+                        <label for="modal_2" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                          A wearable sensor capable of detecting emotional outbursts in students, monitoring their stress levels as they solve problems of varying difficulty. <br>
+
+                          Awarded Best Innovative Product by eCell at IIT Kharagpur.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://github.com/prnthh/Emote-Inc---Healthcare">Project Repo</a> 
+                        <a class="button" href="http://www.ecell-iitkgp.org/empresario/winner.php">The Award</a>
+
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_1">Frugal Pregnancy Monitor (IESA) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_1" type="checkbox" />
+                    <label for="modal_1" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Jeevan</h3>
+                        <label for="modal_1" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                          An extremely frugal and safe pregnancy monitoring kit for rural communities.
+  
+                          Jeevan was build using an arduino, one AD8232 ECG sensor, and a Grove piezovibration sensor. <br>
+                          Runners' up at IESA Makeathon 18'.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://github.com/nehsus/Jeevan">Project Repo</a>
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_2">Emote Sensor - Predict Outbursts (IIT KGP) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_2" type="checkbox" />
+                    <label for="modal_2" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Aut.learn</h3>
+                        <label for="modal_2" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                          A wearable sensor capable of detecting emotional outbursts in students, monitoring their stress levels as they solve problems of varying difficulty. <br>
+
+                          Awarded Best Innovative Product by eCell at IIT Kharagpur.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://github.com/prnthh/Emote-Inc---Healthcare">Project Repo</a> 
+                        <a class="button" href="http://www.ecell-iitkgp.org/empresario/winner.php">The Award</a>
+
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_3">Broget: Rasberry Pi CDN<div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_3" type="checkbox" />
+                    <label for="modal_3" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Broget: Raspberry Pi Content Distribution Network</h3>
+                        <label for="modal_3" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                        Broget is a way to remotely download and transfer files to circumvent difficult network environments.
+                        Broget can remotely start downloads while you're outside and sync them when you get home.
+                        Broget can be used to serve content to customers in retail stores.
+
+                        The Under 25 Summit
+                        We were given exclusive passes to attend the launch of Startup India by PM Narendra Modi in Delhi. We were the youngest attendees at the event.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://github.com/EnKrypt/BroGet">Project Repo</a> 
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_3">Serverless Messaging System </label>
+                  <div class="modal">
+                    <input id="modal_3" type="checkbox" />
+                    <label for="modal_3" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>SMS: Serverless Messaging System </h3>
+                        <label for="modal_3" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                        A javascript library for communication between clients without a preestablished trusted server.
+
+                        </section>
+                      <footer>
+                        <a class="button" href="https://github.com/prnthh/SMS">Project Repo</a> 
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_3">Talker: A Classical Chatbot<div style="float:right"></div></label>
+                  <div class="modal">
+                    <input id="modal_3" type="checkbox" />
+                    <label for="modal_3" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Talker: A Classical Chatbot</h3>
+                        <label for="modal_3" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                        A chatbot built to demonstrate how chat interfaces can make data retrieval seamless.
+                        This was built as a college project, modelled around the use case of a hospital.
+                        </section>
+                      <footer>
+                        <a class="button" href="https://github.com/prnthh/talker-bot">Project Repo</a> 
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_2">VR Glaucoma Test (Carl Zeiss) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_2" type="checkbox" />
+                    <label for="modal_2" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Aut.learn</h3>
+                        <label for="modal_2" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                          A way to test blind spots in the vision using a mobile VR headset. This method is nearly as effective as the Humphrey method, previously used to determine such blind spots.
+                          We were awarded 1 lakh rupees by Carl Zeiss for our demonstration.
+                      </section>
+                      <footer>
+                        <a class="button" href="http://eye-see.glitch.me/">Demo on Glitch</a>
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_2">Haptic Navigation System (InMobi) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_2" type="checkbox" />
+                    <label for="modal_2" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Haptic Navigation System </h3>
+                        <label for="modal_2" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                          Internal navigation - it uses an accelerometer to bridge the gaps between imprecise GPS data. It tries to predict the position of the user where GPS does not provide sufficiently accurate location data. <br>
+                          We were awarded 1 lakh by InMobi for our demonstration.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://devpost.com/software/hans-haptic-automated-navigation-system">Devpost</a> 
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_2">Steam Based Dishwasher (IISc Bangalore)<div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_2" type="checkbox" />
+                    <label for="modal_2" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Aut.learn</h3>
+                        <label for="modal_2" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                          A steam bashed dishwasher that can be powered from the excess heat produced while cooking. This device is designed to be portable enough for use by street vendors in Bangalore. <br>
+                          We were given a stipend to research and build this product at IISc's Center for Product Design and Manufacturing.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://github.com/prnthh/Emote-Inc---Healthcare">Project Repo</a> 
+                        <a class="button" href="http://www.ecell-iitkgp.org/empresario/winner.php">The Award</a>
+
+                      </footer>
+                    </article>
+                  </div>
+
+                  <label for="modal_2">snAPI - REST from JSON (PESU)<div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_2" type="checkbox" />
+                    <label for="modal_2" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Aut.learn</h3>
+                        <label for="modal_2" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                          A wearable sensor capable of detecting emotional outbursts in students, monitoring their stress levels as they solve problems of varying difficulty. <br>
+
+                          Awarded Best Innovative Product by eCell at IIT Kharagpur.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://github.com/prnthh/Emote-Inc---Healthcare">Project Repo</a> 
+                        <a class="button" href="http://www.ecell-iitkgp.org/empresario/winner.php">The Award</a>
+
+                      </footer>
+                    </article>
+                  </div>
+
+              </footer>
+            </article>
+          </div>
+          
+          <div>
+            <article class="card">
+              <header><h3>Resume</h3></header>
+              <footer>
+                
+              </footer>
+            </article>
+          </div>
+          <div>
+            <article class="card">
+              <header><h4>Make Contact 👽 🛸</h4></header>
+              <footer>
+                <div class="flex four">
+                  <div class="three-fourth">
+                  <i class="icon-screen-smartphone icons"></i>  +91 9035559887 <br>
+                  <i class="icon-envelope icons"></i>   pranithhengavalli@gmail.com <br>
+                </div>
+                <div>
+                    <button><i class="icon-target icons"></i></button>
+                </div>
+                </div>
+                  
+              </footer>
+            </article>
+          </div>
+        </div>
+      </div>
+      
+      <div id="art" class="section">
+        <div class="flex one two-700">
+          <div style="font-size:0.8em;background-color:rgba(0, 0, 0, 0.2);padding:2em;color:rgb(235, 235, 235);">
+            <h3>gam·i·fi·ca·tion</h3><br>
+            Games encourage learning and completion of business objectives in processes. Gamification sets time specific milestones to measure progress and attain goals in an objective way, and can make work feel entertaining and even addicting. 
+          </div>
+          <div class="flex two three-700">
+            <div>Quartech</div>
+            <div>Startereum</div>
+            <div>Quartech</div>
+            <div>Pexitics</div>
+            <div>Quartech</div>
+            <div>Quartech</div>
+          </div>
+        </div>
+      </div>
+      <div id="news" class="section">
+        Coming Soon...
+      </div>
+      <div id="social" class="section" style="height:undefined">
+        
+      </div>
     </div>
     <!-- Including Bootstrap JS (with its jQuery dependency) so that dynamic components work -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.2.0/anime.min.js" integrity="sha256-BuxrUdr/4YoztQLxT6xmdO6hSQw2d6BtBUY1pteGds4=" crossorigin="anonymous"></script>
+    <script>
+      function showTwo(){
+        document.getElementById('header1').style.display = 'none';
+        document.getElementById('header2').style.display = 'inline-block';
+      }
+      
+      function showPage() {
+        setTimeout(function(){
+          anime({
+            targets: '.ef',
+            translateX: -1000,
+            duration:800,
+            delay:200,
+            easing: 'easeInQuart'
+          });
+          anime({
+            targets: '.el',
+            rotate: '0.05turn',
+            duration:800,
+            easing: 'easeInQuart'
+          });
+          anime({
+            targets: '#loading',
+            opacity: 0, // Animate all divs opacity to .8
+            delay: 1000,
+            complete: function(anim) {
+              document.getElementById("loading").style.display='none';
+            }
+          });
+          anime({
+            targets: '#header1',
+            color: [
+            {value: 'rgb(0, 0, 0)'},
+            ],
+            easing: 'linear',
+            direction: 'alternate',
+            loop:true
+          });
+          
+        }, 800);
+      }
+      
+    </script>
   </body>
-</html>
+  </html>
