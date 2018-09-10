@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
   <title>Prnth's Homepage</title>
+  <meta property="og:title" content="Pranith Hengavalli" />
+  <meta property="og:type" content="document" />
+  <meta property="og:image" content="https://prnthh.github.io/static/img/screen.png" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.4.1/css/simple-line-icons.css">
   <link rel="stylesheet" href="https://unpkg.com/picnic">
   <link rel="stylesheet" href="/static/style.css">
@@ -14,7 +17,7 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body onload="showPage()" >
+  <body onload="" >
     <div id="loading" style="display:inline-block;z-index: 99999;padding-top:40vh">
       <h1><div style="display:inline-block;" class="el">#</div><div style="display:inline-block;" class="el">!</div></h1>
     </div>
@@ -162,7 +165,7 @@
                     </article>
                   </div>
 
-                  <label for="modal_4">Broget: Rasberry Pi CDN<div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <label for="modal_4">Broget: Raspberry Pi CDN<div style="float:right"><i class="icon-trophy icons"></i></div></label>
                   <div class="modal">
                     <input id="modal_4" type="checkbox" />
                     <label for="modal_4" class="overlay"></label>
@@ -327,19 +330,21 @@
           </div>
           
           <div style="text-align:center;">
-              <button class="button dark" style="margin-top:2em"><a href="/static/prnth-cv.pdf">Resume</a></button>
+              <a href="/static/prnth-cv.pdf"><button class="button dark" style="margin-top:2em">View Resume</button></a>
           </div>
           <div>
             <article class="card">
               <header><h4>Make Contact 👽 🛸</h4></header>
               <footer>
-                <div class="flex four">
-                  <div class="three-fourth">
+                <div class="flex three">
+                  <div class="two-third" style="font-size:0.8em"><br>
                   <i class="icon-screen-smartphone icons"></i> &nbsp&nbsp +91 9035559887 <br>
                   <i class="icon-envelope icons"></i> &nbsp&nbsp pranithhengavalli@gmail.com <br>
                 </div>
-                <div>
-                    <button><i class="icon-target icons"></i></button>
+                <div style="text-align:center;font-size:0.6em;">
+                    <button class="error" style="font-size:2em"><i class="icon-target icons"></i></button><br>
+                    <b>Warning</b><br>
+                    This button buzzes my phone!
                 </div>
                 </div>
                   
@@ -350,23 +355,32 @@
       </div>
       
       <div id="art" class="section">
-        <div class="flex one two-700">
-          <div style="font-size:0.8em;background-color:rgba(0, 0, 0, 0.2);padding:2em;color:rgb(235, 235, 235);">
+        <div class="flex one two-700" style="margin-left:0em">
+          <div style="font-size:0.8em;background-color:rgba(0, 0, 0, 0.2);padding:2em;color:rgb(235, 235, 235);margin-bottom:auto;margin-top:auto">
             <h3>gam·i·fi·ca·tion</h3><br>
             Games encourage learning and completion of business objectives in processes. Gamification sets time specific milestones to measure progress and attain goals in an objective way, and can make work feel entertaining and even addicting. 
           </div>
-          <div class="flex two three-700">
-            <div>Quartech</div>
-            <div>Startereum</div>
-            <div>Coming soon...</div>
-            <div>Coming soon...</div>
-            <div>Coming soon...</div>
-            <div>Coming soon...</div>
+          <div class="flex two">
+            <div><video style="width:100%;border-radius:15px;" autoplay loop>
+                <source src="/static/img/vid.webm" type="video/webm">
+              </video>
+            </div>
+            <div><img style="width:100%;border-radius:15px;" src="/static/img/game2.png" />
+            </div>
+            <div><video style="width:100%;border-radius:15px;" autoplay loop>
+                <source src="/static/img/vid3.webm" type="video/webm">
+            </video>
+            </div>
+            <div>
+                <video style="width:100%;border-radius:15px;" autoplay loop>
+                    <source src="/static/img/vid2.webm" type="video/webm">
+                </video>
+            </div>
           </div>
         </div>
       </div>
       <div id="news" class="section">
-        Coming Soon...
+          <div style="background-color:rgba(0, 0, 0, 0.2);padding:2em;">🚧 Under Construction...👷</div>
       </div>
       <div id="social" class="section" style="height:undefined">
         
@@ -401,6 +415,16 @@
             delay: 1000,
             complete: function(anim) {
               document.getElementById("loading").style.display='none';
+
+              (function(w, d){
+                  var b = d.getElementsByTagName('body')[0];
+                  var s = d.createElement("script"); 
+                  var v = !("IntersectionObserver" in w) ? "8.15.0" : "10.17.0";
+                  s.async = true; // This includes the script as async. See the "recipes" section for more information about async loading of LazyLoad.
+                  s.src = "https://cdnjs.cloudflare.com/ajax/libs/vanilla-lazyload/" + v + "/lazyload.min.js";
+                  w.lazyLoadOptions = {/* Your options here */};
+                  b.appendChild(s);
+              }(window, document));
             }
           });
           anime({
@@ -415,7 +439,7 @@
           
         }, 800);
       }
-      
+      showPage();
     </script>
   </body>
   </html>
