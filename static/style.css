@@ -79,15 +79,28 @@ div.social>a{
 }
 
 #work{
-    background-color:rgb(20, 38, 87);
+    background-color:rgb(240, 240, 240);
+    background-image:url("img/shebg.png")
+}
+
+#comingsoon{
+    background-color:rgb(173, 243, 255);
 }
 
 #art{
-    background-color: rgb(87, 0, 0)
+    background-color: rgb(56, 56, 56)
 }
 
-.worktext{
+.smalltext{
     font-size:0.9em;
+}
+
+.worklink{
+    color: white;
+}
+
+.card{
+    box-shadow:3px 3px 0px #bababa
 }
 
 .dark{
