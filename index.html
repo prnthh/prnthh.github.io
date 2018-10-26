@@ -17,9 +17,10 @@
 
   <title>Prnth's Homepage</title>
   <meta property="og:title" content="Pranith Hengavalli" />
-  <meta property="og:description" content="The Homepage of Pranith Hengavalli: Hacker. Engineer. Futurist." />
+  <meta property="og:description" content="The Homepage of Pranith Hengavalli: Hacker. Full-Stack Engineer. Futurist." />
   <meta property="og:type" content="document" />
   <meta property="og:image" content="https://prnthh.github.io/static/img/screen.png" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css" integrity="sha384-5sAR7xN1Nv6T6+dT2mhtzEpVJvfS3NScPQTrOxhwjIuvcA67KV2R5Jz6kr4abQsz" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-line-icons/2.4.1/css/simple-line-icons.css">
   <link rel="stylesheet" href="https://unpkg.com/picnic">
   <link rel="stylesheet" href="/static/style.css">
@@ -28,11 +29,7 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body onload="" >
-    <div id="loading" style="display:inline-block;z-index: 99999;padding-top:40vh">
-      <h1><div style="display:inline-block;" class="el">#</div><div style="display:inline-block;" class="el">!</div></h1>
-    </div>
-    
+  <body>    
     <div>
       <nav class="menuBar">
         <!-- responsive-->
@@ -87,9 +84,9 @@
       
     </div>
     <div id="content" style="text-align:left;">
-      <div id="headerBox" class="section" style="font-size:0.5em;padding-bottom:0;padding-top:0px;">
+      <div id="headerBox" class="section" style="font-size:0.4em;font-weight:bold;padding-bottom:0;padding-top:0px;">
         <div id="headerB" style="text-align:center">
-        <pre id="header1" onclick="showTwo()" style="background:none;color:rgb(20, 247, 255)">
+        <pre id="header1" onclick="showTwo()" style="background:none;color:rgb(226, 244, 255)">
         ___                 _ _   _       
        / _ \_ __ __ _ _ __ (_) |_| |__   
       / /_)/ '__/ _` | '_ \| | __| '_ \  
@@ -137,13 +134,36 @@
           </div>
           <div>
             <article class="card dark">
-              <header><h4>Hacks</h4><div style="float:right" class="subtle">See anything you like?</div></header>
+              <header><h4>Labs</h4><div style="float:right" class="subtle">A collection of previous projects</div></header>
               <footer style="height:30vh;overflow:scroll" class="smalltext">
 
-                  <a class="worklink" href="https://dev.to/prnthh/muchain---designing-a-voting-system-for-1-billion-on-the-blockchain---part-1-4ab1" target="_blank">Blockchain Voting for 1 Billion<div style="float:right"></div></a><br>
+                  <a class="worklink" href="https://dev.to/prnthh/muchain---designing-a-voting-system-for-1-billion-on-the-blockchain---part-1-4ab1" target="_blank">Blog: Blockchain Voting for 1 Billion<div style="float:right"><i class="fas fa-external-link-alt"></i> </div></a><br>
                   
+                  <label for="modal_7">EyeSee: VR Based Glaucoma Test<div style="float:right"><i class="fas fa-trophy"></i> <i class="fas fa-trophy"></i></div></label>
+                  <div class="modal">
+                    <input id="modal_7" type="checkbox" />
+                    <label for="modal_7" class="overlay"></label>
+                    <article>
+                      <header>
+                        <h3>Eye-See: VR Glaucoma Test</h3>
+                        <label for="modal_7" class="close">&times;</label>
+                      </header>
+                      <section class="content">
+                        Glaucoma is the second leading global cause of blindness. Over 1 million cases occur annually in India, with many going undiagnosed.<br><br>
+                        EyeSee is a portable visual field testing device using a VR headset. It is a frugal alternative to the Humphrey method of testing, commonly used by ophthalmologists to detect blind spots. 
+                        When taking the test, the user is presented with flashing dots at various locations in the field of view and responds by giving signals (button clicks) when they see a dot. 
+                        A DIY test promotes early diagnosis and awareness in remote and rural regions without sophisticated testing labs.
+                        
+                          <br><br>Winner at <b>Carl Zeiss Bi-Nation Hackathon 2018</b> (Manufacturers of Humphrey Apparatus).<br>
+                          <br>Innovate for Society Award from <b>Accenture Innovation Challenge 2018</b>.
+                      </section>
+                      <footer>
+                        <a class="button" href="https://yourstory.com/2018/10/healthcare-innovator-aayush-wins-accenture-innovation-challenge/#eyesee">In The News</a>
+                      </footer>
+                    </article>
+                  </div>
 
-                  <label for="modal_11">snAPI - REST from JSON (PESU)<div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <label for="modal_11">snAPI - REST from JSON (PESU)<div style="float:right"><i class="fas fa-trophy"></i></div></label>
                   <div class="modal">
                     <input id="modal_11" type="checkbox" />
                     <label for="modal_11" class="overlay"></label>
@@ -160,7 +180,7 @@
                     </article>
                   </div>
 
-                  <label for="modal_4">Broget: Raspberry Pi CDN<div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <label for="modal_4">Broget: Raspberry Pi CDN<div style="float:right"><i class="fas fa-trophy"></i></div></label>
                   <div class="modal">
                     <input id="modal_4" type="checkbox" />
                     <label for="modal_4" class="overlay"></label>
@@ -221,26 +241,7 @@
                     </article>
                   </div>
 
-                  <label for="modal_7">VR Glaucoma Test (Carl Zeiss) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
-                  <div class="modal">
-                    <input id="modal_7" type="checkbox" />
-                    <label for="modal_7" class="overlay"></label>
-                    <article>
-                      <header>
-                        <h3>Eye-See: VR Glaucoma Test</h3>
-                        <label for="modal_7" class="close">&times;</label>
-                      </header>
-                      <section class="content">
-                          A way to test blind spots in the vision using a mobile VR headset. This method is nearly as effective as the Humphrey method, previously used to determine such blind spots.
-                          <br><br>We were awarded 1 lakh rupees by Carl Zeiss for our demonstration.
-                      </section>
-                      <footer>
-                        <a class="button" href="http://eye-see.glitch.me/">Demo on Glitch</a>
-                      </footer>
-                    </article>
-                  </div>
-
-                  <label for="modal_8">Haptic Navigation System (InMobi) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <label for="modal_8">Haptic Navigation System (InMobi) <div style="float:right"><i class="fas fa-trophy"></i></div></label>
                   <div class="modal">
                     <input id="modal_8" type="checkbox" />
                     <label for="modal_8" class="overlay"></label>
@@ -259,7 +260,7 @@
                     </article>
                   </div>
 
-                  <label for="modal_1">Frugal Pregnancy Monitor (IESA) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <label for="modal_1">Frugal Pregnancy Monitor (IESA) <div style="float:right"><i class="fas fa-trophy"></i></div></label>
                   <div class="modal">
                     <input id="modal_1" type="checkbox" />
                     <label for="modal_1" class="overlay"></label>
@@ -281,7 +282,7 @@
                     </article>
                   </div>
 
-                  <label for="modal_3">Emote Sensor - Predict Outbursts (IIT KGP) <div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <label for="modal_3">Emote Sensor - Predict Outbursts (IIT KGP) <div style="float:right"><i class="fas fa-trophy"></i></div></label>
                   <div class="modal">
                     <input id="modal_3" type="checkbox" />
                     <label for="modal_3" class="overlay"></label>
@@ -302,7 +303,7 @@
                     </article>
                   </div>
 
-                  <label for="modal_9">Portable Steam Dishwasher (IISc Bangalore)<div style="float:right"><i class="icon-trophy icons"></i></div></label>
+                  <label for="modal_9">Portable Steam Dishwasher (IISc Bangalore)<div style="float:right"><i class="fas fa-trophy"></i></div></label>
                   <div class="modal">
                     <input id="modal_9" type="checkbox" />
                     <label for="modal_9" class="overlay"></label>
@@ -328,7 +329,7 @@
 
           <div>
             <article class="card" id="comingsoon">
-              <header><h4>Coming Soon: dragdrop.site</h4></header>
+              <header><h4><a href="http://dragdrop.site">dragdrop.site</a></h4></header>
               <footer>
                   dragdrop.site is the fastest way to deploy static websites to the web. No installation, no signup, and completely free!                  
               </footer>
@@ -399,49 +400,16 @@
       }
       
       function showPage() {
-        setTimeout(function(){
-          anime({
-            targets: '.ef',
-            translateX: -1000,
-            duration:800,
-            delay:200,
-            easing: 'easeInQuart'
-          });
-          anime({
-            targets: '.el',
-            rotate: '0.05turn',
-            duration:800,
-            easing: 'easeInQuart'
-          });
-          anime({
-            targets: '#loading',
-            opacity: 0, // Animate all divs opacity to .8
-            delay: 1000,
-            complete: function(anim) {
-              document.getElementById("loading").style.display='none';
-
-              (function(w, d){
-                  var b = d.getElementsByTagName('body')[0];
-                  var s = d.createElement("script"); 
-                  var v = !("IntersectionObserver" in w) ? "8.15.0" : "10.17.0";
-                  s.async = true; // This includes the script as async. See the "recipes" section for more information about async loading of LazyLoad.
-                  s.src = "https://cdnjs.cloudflare.com/ajax/libs/vanilla-lazyload/" + v + "/lazyload.min.js";
-                  w.lazyLoadOptions = {/* Your options here */};
-                  b.appendChild(s);
-              }(window, document));
-            }
-          });
+        
           anime({
             targets: '#header1',
             color: [
-            {value: 'rgb(0, 0, 0)'},
+            {value: 'rgb(20, 247, 255)' },
             ],
             easing: 'linear',
             direction: 'alternate',
             loop:true
           });
-          
-        }, 800);
       }
       showPage();
     </script>
