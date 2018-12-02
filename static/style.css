@@ -89,7 +89,26 @@ div.social>a{
 }
 
 #art{
-    background-color: rgb(56, 56, 56)
+    background-color: rgb(0, 0, 0);
+    color:white;
+}
+
+.blog{
+    border:1px solid white;
+    color:white;
+    margin-right:3px;
+    margin-left:3px;
+    margin-bottom:10px;
+    margin-top:3px;
+    padding:0.6em;
+    width:95%;
+}
+
+.blog:hover{
+    box-shadow:3px 3px 0px #FFFFFF;
+    margin-top:0px;
+    margin-left:0px;
+    margin-bottom:13px;
 }
 
 .smalltext{
