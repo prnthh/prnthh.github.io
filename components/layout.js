@@ -86,7 +86,7 @@ const MainLayout = ({ children }) => {
 }
 
 .menubtn {
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: 25px;
   border-radius: 20px;
