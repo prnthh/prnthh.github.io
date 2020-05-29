@@ -1,9 +1,25 @@
 import Head from 'next/head'
+import { FontResizer } from '../components/elements';
 
 export default function Home() {
   return (
-    <div>
-	hello world
+    <div className={"container"}>
+
+
+      <FontResizer small={"8px"} big={"28px"}>
+        <pre id="header1" onclick="showTwo()">{`
+                ___                 _ _   _
+               / _ \\_ __ __ _ _ __ (_) |_| |__
+              / /_)/ '__/ _\` | '_ \\| | __| '_ \\
+             / ___/| | | (_| | | | | | |_| | | |
+             \\/    |_|  \\__,_|_| |_|_|\\__|_| |_|  _ _ _
+           /\\  /\\___ _ __   __ _  __ ___   ____ _| | (_)
+          / /_/ / _ \\ '_ \\ / _\` |/ _\` \\ \\ / / _\` | | | |        
+         / __  /  __/ | | | (_| | (_| |\\ V / (_| | | | |
+         \\/ /_/ \\___|_| |_|\\__, |\\__,_| \\_/ \\__,_|_|_|_|
+                            |___/
+        `}</pre>
+      </FontResizer>
       <style jsx>{`
         .container {
           min-height: 100vh;
@@ -14,22 +30,7 @@ export default function Home() {
           align-items: center;
         }
 		`}
-        </style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
+      </style>
     </div>
   )
 }
