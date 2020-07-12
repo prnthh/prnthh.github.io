@@ -11,9 +11,11 @@ position: fixed; /* Stay in place */
   overflow: auto; /* Enable scroll if needed */
   background-color: rgb(0,0,0); /* Fallback color */
   background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-  transition: 1s;
+  transition: 0.1s;
   backdrop-filter: saturate(180%) blur(4px);
   opacity: 0;
+  text-align: left;
+  white-space: pre-wrap;
   pointer-events: none;
   ${props => props.showModal && `
     opacity: 1;

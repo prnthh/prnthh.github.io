@@ -11,22 +11,28 @@ export const TwoColumns = ({ children }) => {
 export const ColItem = (props) => {
     const { children, action } = props;
     console.log(props)
-    return (<Neuomorphic style={{ width: '200px', height: '200px' }} onClick={() => { console.log(props); action && action() }}>
-        <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+    return (<ContentTile style={{ width: '250px', height: '250px', backgroundColor: getRandomColor(['#53608C', '#8C6671', '#91876A', '#688C6C']) }} onClick={() => { console.log(props); action && action() }}>
+        <div style={{ display: 'flex', height: '100%', alignItems: 'flex-end', fontSize: 24, fontWeight: '300'}}>
             {children}
         </div>
-    </Neuomorphic>)
+    </ContentTile>)
 }
 
-export const Neuomorphic = styled.div`
+export const getRandomColor = (array) => {
+    return array[Math.floor(Math.random() * array.length)];
+}
+
+export const ContentTile = styled.div`
 background-color: white;
-box-shadow:  20px 20px 60px #d9d9d9, 
-             -20px -20px 60px #ffffff;
-border-radius: 30px;
+border-radius: 5px;
+padding: 10px;
 transition: 0.2s;
 background: #ffffff;
+cursor: pointer;
+white-space: pre-wrap;
 &:hover{
-    background: linear-gradient(145deg, #e6e6e6, #ffffff);
+    // background: linear-gradient(145deg, #e6e6e6, #ffffff);
+    
 }
 `
 

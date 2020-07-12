@@ -15,7 +15,7 @@ const MainLayout = ({ children }) => {
     {/* NAVIGATION SECTION  */}
     {<FontResizer small={"38px"} big={"48px"} >
       <div class="menubtn" style={showNav ? { display: "none" } : {}} onClick={() => { setShowNav(true) }}>
-        ...
+        <div style={{marginTop: -25}}>...</div>
       </div>
     </FontResizer>
     }
@@ -87,8 +87,8 @@ const MainLayout = ({ children }) => {
 
 .menubtn {
   position: fixed;
-  top: 20px;
-  right: 25px;
+  top: 40px;
+  right: 35px;
   border-radius: 20px;
   padding:12px;
   background-color: rgba(255, 255, 255, 0.3);
