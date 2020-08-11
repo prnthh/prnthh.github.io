@@ -1,0 +1,136 @@
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-122022361-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-122022361-3');
+    </script>
+
+    <title>Days Since Lockdown Started</title>
+</head>
+
+<body style="display: flex; align-items: center; justify-content: center; font-family: arial">
+    <center>
+        <p id="tab" style="font-size:18px; margin-bottom: 0px; margin-top: 0px">
+        </p><br />
+        <p id="dataRows" style="font-size:18px; margin-bottom: 0px; margin-top: 0px">
+        </p><br />
+        <button onClick="addStamp()">Add +</button><br />
+
+        The counter.<br />
+
+        <button onClick="clearBlob()">Reset all</button>
+
+    </center>
+
+    <script>
+        var _data;
+
+        var addStamp = function () {
+            _data.instances[0].timestamps.push(new Date());
+            loadUI();
+            updateBlob();
+        }
+
+        var updateBlob = function () {
+            localStorage.setItem("data", JSON.stringify(_data));
+        }
+
+        var createNewBlob = function (callback) {
+            var data = {
+                instances: [
+                    {
+                        title: "default",
+                        timestamps: [],
+                        count: 0,
+                    }
+                ]
+            };
+            _data = data;
+            console.log("trying to save: ", data);
+            localStorage.setItem("data", JSON.stringify(_data));
+
+            callback();
+        }
+
+        var clearBlob = function () {
+            createNewBlob(loadUI);
+        }
+
+        var createTab = function (instance) {
+            document.getElementById("tab").innerHTML = instance.title;
+            document.getElementById("dataRows").innerHTML = "";
+            instance.timestamps.forEach(stamp => {
+                var child = document.createElement("div");
+                child.innerHTML = new Date(stamp);
+                child = child.firstChild;
+
+                document.getElementById("dataRows").appendChild(child);
+                document.getElementById("dataRows").appendChild(document.createElement("br"));
+            });
+
+        }
+
+        var loadUI = function () {
+            console.log("loaded data: ", _data)
+            _data.instances.forEach(instance => {
+                createTab(instance);
+            });
+        }
+
+        var initialize = function () {
+            try {
+                _data = JSON.parse(localStorage.getItem("data"));
+            } catch (e) {
+
+            }
+
+            if (_data == null) {
+                createNewBlob();
+            }
+
+            loadUI();
+        }
+
+        if (typeof (Storage) !== "undefined") {
+            initialize();
+        } else {
+            // Sorry! No Web Storage support..
+        }
+
+        // Set the date we're counting down to
+        // var countDownDate = new Date("Mar 25, 2020 00:00:00").getTime();
+
+        // // Update the count down every 1 second
+        // var x = setInterval(function () {
+
+        //     // Get today's date and time
+        //     var now = new Date().getTime();
+
+        //     // Find the distance between now and the count down date
+        //     var distance = countDownDate - now;
+
+        //     // Time calculations for days, hours, minutes and seconds
+        //     var days = -Math.floor(distance / (1000 * 60 * 60 * 24));
+        //     var hours = -Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        //     var minutes = -Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        //     var seconds = -Math.floor((distance % (1000 * 60)) / 1000);
+
+        //     // Display the result in the element with id="demo"
+        //     document.getElementById("demo").innerHTML = days;
+        //     // + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+
+        //     // If the count down is finished, write some text
+        //     if (distance < 0) {
+        //         // document.getElementById("demo").innerHTML = "EXPIRED";
+        //     }
+        // }, 1000);
+    </script>
+</body>
+
+</html>
