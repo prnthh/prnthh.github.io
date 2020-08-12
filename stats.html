@@ -1,0 +1,59 @@
+<html>
+
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-122022361-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-122022361-3');
+    </script>
+    <script src="./scripts/stat.js"></script>
+
+    <title>Stat Tracker</title>
+    <style>
+        .field {
+            display: inline-block;
+            height: 100px;
+            width: 100px;
+            border: 1px solid black;
+        }
+
+        .field>div {
+            font-size: 36px;
+        }
+    </style>
+</head>
+
+<body style="display: flex; align-items: center; justify-content: center; font-family: arial">
+    <center>
+        <div id="title"></div>
+        <button onclick="addStamp()">Add +</button>
+
+        <div>
+            <div class="field">
+                Last 7 days
+                <div id="sevenday"></div>
+            </div>
+            <div class="field">
+                Last 24 hours
+                <div id="oneday"></div>
+            </div>
+        </div>
+
+        <div id="list"></div>
+        <div id="logs" style="max-height: 100px; overflow: scroll; width: 500px; border: 1px solid black;"></div>
+        <button onclick="clearBlob()">Clear Blob</button>
+
+    </center>
+
+    <script>
+
+        log("Initialising app...");
+        initialize();
+    </script>
+</body>
+
+</html>
