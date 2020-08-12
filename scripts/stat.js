@@ -24,6 +24,7 @@ function createNewBlob(callback) {
         }
     };
     _data = data;
+    _activeTab = Object.keys(data.instances)[0];
     log("creating new blob");
     localStorage.setItem("data", JSON.stringify(_data));
 
@@ -81,7 +82,7 @@ function createList(instance) {
 
 function renderAverages(instance) {
     var oneDay = document.getElementById("oneday");
-    oneDay.innerHTML = "lol";
+    oneDay.innerHTML = "";
 
     var sevenDay = document.getElementById("sevenday");
     sevenDay.innerHTML = "";
@@ -113,6 +114,7 @@ function getIndexAfterTimestamp(timeStamps, stamp) {
 
 function addStamp() {
     _data.instances[_activeTab].timestamps.push(new Date());
+    _data.instances[_activeTab].count++;
     updateBlob();
     loadUI();
 }
