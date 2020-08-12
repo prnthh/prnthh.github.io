@@ -25,11 +25,24 @@
         The counter.<br />
 
         <button onClick="clearBlob()">Reset all</button>
+        <div id="logs" style="width:500px;min-height: 40px; border: 1px solid black;">
+
+        </div>
 
     </center>
 
     <script>
         var _data;
+
+        var log = function (data) {
+            var child = document.createElement("div");
+            child.innerHTML = data;
+            child = child.firstChild;
+
+            document.getElementById("logs").appendChild(child);
+            document.getElementById("logs").appendChild(document.createElement("br"));
+            console.log(data);
+        }
 
         var addStamp = function () {
             _data.instances[0].timestamps.push(new Date());
@@ -52,7 +65,7 @@
                 ]
             };
             _data = data;
-            console.log("trying to save: ", data);
+            log("trying to save new blob: " + JSON.stringify(data));
             localStorage.setItem("data", JSON.stringify(_data));
 
             callback();
@@ -60,6 +73,7 @@
 
         var clearBlob = function () {
             createNewBlob(loadUI);
+            log("cleared blob");
         }
 
         var createTab = function (instance) {
@@ -72,12 +86,13 @@
 
                 document.getElementById("dataRows").appendChild(child);
                 document.getElementById("dataRows").appendChild(document.createElement("br"));
+                document.getElementById("dataRows").appendChild(document.createElement("br"));
             });
 
         }
 
         var loadUI = function () {
-            console.log("loaded data: ", _data)
+            log("loaded data: " + JSON.stringify(_data))
             _data.instances.forEach(instance => {
                 createTab(instance);
             });
@@ -86,6 +101,7 @@
         var initialize = function () {
             try {
                 _data = JSON.parse(localStorage.getItem("data"));
+                log("loaded json from saved blob:" + JSON.stringify(_data))
             } catch (e) {
 
             }
@@ -98,8 +114,10 @@
         }
 
         if (typeof (Storage) !== "undefined") {
+            log("storage supported!")
             initialize();
         } else {
+            log("storage not supported :/")
             // Sorry! No Web Storage support..
         }
 
