@@ -9,6 +9,8 @@ function log(data) {
     var div = document.getElementById('logs');
     div.innerHTML += "<br />";
     div.innerHTML += data;
+    div.scrollTop = div.scrollHeight;
+
     console.log(data);
 }
 
@@ -29,6 +31,16 @@ function createNewBlob(callback) {
     localStorage.setItem("data", JSON.stringify(_data));
 
     callback && callback();
+}
+
+function createNewInstance(name) {
+    _data.instances[name] = {
+        timeStamps: [],
+        count: 0,
+    };
+    _activeTab = name;
+    updateBlob();
+    loadUI();
 }
 
 function clearBlob() {
@@ -58,8 +70,8 @@ function loadUI() {
 
 function createTab(tabInstance) {
     var tabHeader = document.getElementById("title");
-    tabHeader.innerHTML += ("<div style='background-color:" + (tabInstance == _activeTab ? "grey" : "red") + ";'>" +
-        _activeTab +
+    tabHeader.innerHTML += ("<div class='tab' style='background-color:" + (tabInstance == _activeTab ? "grey" : "lightgrey") + ";' onClick='switchTab(\"" + tabInstance + "\")'>" +
+        tabInstance +
         "</div>");
 }
 
@@ -75,6 +87,8 @@ function createList(instance) {
             new Date(timeStamps[i]) +
             "</div>");
     }
+    tabList.scrollTop = tabList.scrollHeight;
+
 
     renderAverages(instance);
 
@@ -116,6 +130,22 @@ function addStamp() {
     _data.instances[_activeTab].timestamps.push(new Date());
     _data.instances[_activeTab].count++;
     updateBlob();
+    loadUI();
+}
+
+function removeStamp() {
+    _data.instances[_activeTab].timestamps.pop();
+    _data.instances[_activeTab].count--;
+    updateBlob();
+    loadUI();
+}
+
+function newInstance() {
+    createNewInstance("abc")
+}
+
+function switchTab(tabName) {
+    _activeTab = tabName;
     loadUI();
 }
 

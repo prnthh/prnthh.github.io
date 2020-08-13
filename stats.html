@@ -24,13 +24,30 @@
         .field>div {
             font-size: 36px;
         }
+
+        .tab {
+            display: inline-block;
+            min-width: 80px;
+            margin-left: 20px;
+            margin-right: 20px;
+            border-radius: 5px;
+            padding: 5px;
+        }
+
+        .uiBox {
+            border: 1px solid black;
+            text-align: left;
+            padding: 5px;
+        }
     </style>
 </head>
 
 <body style="display: flex; align-items: center; justify-content: center; font-family: arial">
     <center>
-        <div id="title"></div>
-        <button onclick="addStamp()">Add +</button>
+        <div style="display:inline-block" id="title"></div>
+        <button style="display:inline-block" onclick="newInstance()">New</button><br />
+        <button style="width: 40px; height: 40px; font-size: 40px;line-height: 0px;margin: 20px;"
+            onclick="addStamp()">+</button>
 
         <div>
             <div class="field">
@@ -43,8 +60,15 @@
             </div>
         </div>
 
-        <div id="list"></div>
-        <div id="logs" style="max-height: 100px; overflow: scroll; width: 500px; border: 1px solid black;"></div>
+        <div class="uiBox">
+            <div id="list" style="max-height: 200px; overflow: scroll; width: 500px;"></div>
+        </div>
+        <div class="uiBox">
+            Log:
+            <div id="logs" style="max-height: 100px; overflow: scroll; width: 500px;"></div>
+        </div><br />
+        <button onclick="removeStamp()">Remove last entry</button><br /><br /><br /><br />
+
         <button onclick="clearBlob()">Clear Blob</button>
 
     </center>
