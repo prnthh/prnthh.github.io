@@ -6,7 +6,7 @@
 
 import React, { useMemo, useEffect } from "react";
 import {
-  Router as RouterOriginal,
+  HashRouter as RouterOriginal,
   useParams,
   useLocation,
   useHistory,
