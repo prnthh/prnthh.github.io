@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { history } from "./router";
+import router from "next/router";
 
 /*
   This file (auth.js) is added to your codebase if you chose "None" for your
@@ -30,7 +30,7 @@ const errorFunction = () => Promise.reject(new Error(errorMessage));
 export const requireAuth = (Component) => {
   return (props) => {
     useEffect(() => {
-      history.replace("/auth/signin");
+      router.replace("/auth/signin");
     }, []);
     return null;
   };

@@ -1,6 +1,6 @@
 import Analytics from "analytics";
 import googleAnalyticsPlugin from "@analytics/google-analytics";
-import { history } from "./router.js";
+import Router from "next/router";
 
 // Initialize analytics and plugins
 // Documentation: https://getanalytics.io
@@ -8,7 +8,7 @@ const analytics = Analytics({
   debug: process.env.NODE_ENV !== "production",
   plugins: [
     googleAnalyticsPlugin({
-      trackingId: process.env.REACT_APP_GA_TRACKING_ID,
+      trackingId: process.env.NEXT_PUBLIC_GA_TRACKING_ID,
     }),
   ],
 });
@@ -19,7 +19,7 @@ if (typeof window !== "undefined") {
 }
 
 // Track pageview on route change
-history.listen(() => {
+Router.events.on("routeChangeComplete", (url) => {
   analytics.page();
 });
 

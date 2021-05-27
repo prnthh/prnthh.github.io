@@ -1,0 +1,1 @@
+{"ast":null,"code":"import { apiRequest } from \"./util\";\n\nfunction subscribe(data) {\n  return apiRequest(\"newsletter\", \"POST\", data);\n}\n\nconst newsletter = {\n  subscribe\n};\nexport default newsletter;","map":null,"metadata":{},"sourceType":"module"}

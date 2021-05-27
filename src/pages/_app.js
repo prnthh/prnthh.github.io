@@ -1,26 +1,33 @@
 import React from "react";
-import "./../styles/global.scss";
-import IndexPage from "./index";
-import LabsPage from "./labs";
-import GamesPage from "./games";
-import { Switch, Route, Router } from "./../util/router.js";
-import NotFoundPage from "./not-found.js";
-import "./../util/analytics.js";
+import "styles/global.scss";
+import NavbarCustom from "components/NavbarCustom";
+import Footer from "components/Footer";
+import "util/analytics.js";
 
-function App(props) {
+function MyApp({ Component, pageProps }) {
   return (
-    <Router>
-      <Switch>
-        <Route exact path="/" component={IndexPage} />
+    <>
+      <NavbarCustom
+        bg="dark"
+        variant="dark"
+        expand="md"
+        logo="https://uploads.divjoy.com/logo.svg"
+      />
 
-        <Route exact path="/labs" component={LabsPage} />
+      <Component {...pageProps} />
 
-        <Route exact path="/games" component={GamesPage} />
-
-        <Route component={NotFoundPage} />
-      </Switch>
-    </Router>
+      <Footer
+        bg="dark"
+        textColor="light"
+        size="sm"
+        bgImage=""
+        bgImageOpacity={1}
+        description="A short description of what you do here"
+        copyright="© 2020 Company"
+        logo="https://uploads.divjoy.com/logo.svg"
+      />
+    </>
   );
 }
 
-export default App;
+export default MyApp;

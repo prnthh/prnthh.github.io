@@ -1,14 +1,18 @@
 import React, {useEffect} from "react";
-import Section from "./Section";
+import Section from "components/Section";
 import Container from "react-bootstrap/Container";
-import SectionHeader from "./SectionHeader";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import SectionHeader from "components/SectionHeader";
+import Button from "react-bootstrap/Button";
+import Link from "next/link";
+import Image from "react-bootstrap/Image";
+import "components/HeroSection.scss";
 import * as THREE from 'three/build/three.module';
 import { AsciiEffect } from '../jslib/AsciiEffect.js';
 import { TrackballControls } from '../jslib/TrackballControls.js';
 
 function HeroSection(props) {
-
-
 
 
   let camera, controls, scene, renderer, effect;
@@ -104,28 +108,43 @@ function HeroSection(props) {
     effect.render( scene, camera );
 
   }
-
-
+  
   return (<>
+    <div id="ballDiv"></div>
+
     {/* <Section
       bg={props.bg}
       textColor={props.textColor}
       size={props.size}
       bgImage={props.bgImage}
       bgImageOpacity={props.bgImageOpacity}
-      style={{padding: 0}}
-    > */}
-        {/* <SectionHeader
-          title={props.title}
-          subtitle={props.subtitle}
-          size={1}
-          spaced={true}
-          className="text-center"
-        /> */}
-        <div id="ballDiv"></div>
+    >
+      <Container>
+        <Row className="align-items-center">
+          <Col lg={5} className="text-center text-lg-left">
+            <SectionHeader
+              title={props.title}
+              subtitle={props.subtitle}
+              size={1}
+              spaced={true}
+            />
 
-    {/* </Section> */}
-  </>);
+            <Link href={props.buttonPath} passHref={true}>
+              <Button variant={props.buttonColor} size="lg">
+                {props.buttonText}
+              </Button>
+            </Link>
+          </Col>
+          <Col className="offset-lg-1 mt-5 mt-lg-0 ">
+            <figure className="HeroSection__image-container mx-auto">
+              <Image src={props.image} fluid={true} />
+            </figure>
+          </Col>
+        </Row>
+      </Container>
+    </Section> */}
+    </>
+  );
 }
 
 export default HeroSection;

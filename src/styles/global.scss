@@ -38,7 +38,7 @@ $grid-breakpoints: (
 // IMPORT FONT AWESOME
 @import url("https://use.fontawesome.com/releases/v5.10.1/css/all.css");
 
-#root {
+#__next {
   // Full height of screen and flex so that we can push footer
   // to the bottom even if content is shorter than screen
   min-height: 100vh;

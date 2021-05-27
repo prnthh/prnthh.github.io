@@ -1,5 +1,5 @@
 import React from "react";
-import "./AspectRatio.scss";
+import "components/AspectRatio.scss";
 
 function AspectRatio(props) {
   return (

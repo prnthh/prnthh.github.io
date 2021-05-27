@@ -1,7 +1,8 @@
 import React, {useState} from "react";
-import Section from "./Section";
+import Section from "components/Section";
 import Container from "react-bootstrap/Container";
-import SectionHeader from "./SectionHeader";
+import SectionHeader from "components/SectionHeader";
+import Link from "next/link";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Card from "react-bootstrap/Card";
@@ -18,6 +19,7 @@ function mapStringToP(htmlString) {
 }
 
 function ContentCardsSection(props) {
+
   const [openedPost, setOpenedPost] = useState(null);
 
   return (
@@ -29,7 +31,7 @@ function ContentCardsSection(props) {
       bgImageOpacity={props.bgImageOpacity}
     >
       <Container>
-        <SectionHeader
+      <SectionHeader
           title={props.title}
           subtitle={props.subtitle}
           size={2}
@@ -99,7 +101,6 @@ function ContentCardsSection(props) {
           }
           </>}
         </Modal>
-
       </Container>
     </Section>
   );

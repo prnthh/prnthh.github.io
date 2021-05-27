@@ -7,26 +7,24 @@
   ],
   "dependencies": {
     "@analytics/google-analytics": "0.2.2",
+    "@zeit/next-sass": "0.2.1-canary.4",
     "analytics": "0.3.1",
     "bootstrap": "4.4.1",
-    "history": "4.10.1",
+    "next": "10.0.5",
+    "next-transpile-modules": "^7.2.0",
     "node-sass": "4.14.1",
-    "query-string": "6.13.8",
     "react": "17.0.1",
     "react-bootstrap": "1.0.0-beta.16",
     "react-dom": "17.0.1",
-    "react-helmet": "^6.1.0",
     "react-hook-form": "6.15.1",
-    "react-router-bootstrap": "0.25.0",
-    "react-router-dom": "5.2.0",
-    "react-scripts": "4.0.2",
-    "three": "^0.128.0"
+    "three": "^0.129.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "next dev",
+    "build": "next build",
+    "export": "next build && next export",
+    "start": "next start",
+    "deploy": "next build && next export && rm -r ./docs/* && cp -R ./out/ ./docs/ && cp ./CNAME ./docs/"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -42,6 +40,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "proxy": "http://localhost:8080"
+  }
 }
