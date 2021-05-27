@@ -24,7 +24,7 @@
     "build": "next build",
     "export": "next build && next export",
     "start": "next start",
-    "deploy": "next build && next export && rm -r ./docs/* && cp -R ./out/ ./docs/ && cp ./CNAME ./docs/"
+    "deploy": "next build && next export && rm -r ./docs/* && cp -R ./out/ ./docs/ && cp ./CNAME ./docs/ && touch ./docs/.nojekyll"
   },
   "eslintConfig": {
     "extends": "react-app"
