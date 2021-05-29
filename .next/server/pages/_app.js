@@ -771,6 +771,10 @@ router_default.a.events.on("routeChangeComplete", url => {
   analytics.page();
 });
 /* harmony default export */ var util_analytics = (analytics);
+// EXTERNAL MODULE: external "next/head"
+var head_ = __webpack_require__("xnum");
+var head_default = /*#__PURE__*/__webpack_require__.n(head_);
+
 // CONCATENATED MODULE: ./src/pages/_app.js
 
 
@@ -788,12 +792,31 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
+
 function MyApp({
   Component,
   pageProps
 }) {
   return /*#__PURE__*/Object(jsx_runtime_["jsxs"])(jsx_runtime_["Fragment"], {
-    children: [/*#__PURE__*/Object(jsx_runtime_["jsx"])(components_NavbarCustom, {
+    children: [/*#__PURE__*/Object(jsx_runtime_["jsxs"])(head_default.a, {
+      children: [/*#__PURE__*/Object(jsx_runtime_["jsx"])("title", {
+        children: "Prnth.com - Futurist and Hacker"
+      }), /*#__PURE__*/Object(jsx_runtime_["jsx"])("meta", {
+        charset: "UTF-8"
+      }), /*#__PURE__*/Object(jsx_runtime_["jsx"])("meta", {
+        name: "description",
+        content: "Homepage of Pranith Hengavalli - Futurist and Hacker"
+      }), /*#__PURE__*/Object(jsx_runtime_["jsx"])("meta", {
+        name: "keywords",
+        content: "Pranith, Hengavalli, prnth, prnth.com, cryptocurrency, game developer, game design"
+      }), /*#__PURE__*/Object(jsx_runtime_["jsx"])("meta", {
+        name: "author",
+        content: "prnth"
+      }), /*#__PURE__*/Object(jsx_runtime_["jsx"])("meta", {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1.0"
+      })]
+    }), /*#__PURE__*/Object(jsx_runtime_["jsx"])(components_NavbarCustom, {
       bg: "dark",
       variant: "dark",
       expand: "md",
@@ -3110,6 +3133,13 @@ module.exports = require("react-bootstrap/Button");
 "use strict";
 exports.__esModule=true;exports.normalizePathSep=normalizePathSep;exports.denormalizePagePath=denormalizePagePath;function normalizePathSep(path){return path.replace(/\\/g,'/');}function denormalizePagePath(page){page=normalizePathSep(page);if(page.startsWith('/index/')){page=page.slice(6);}else if(page==='/index'){page='/';}return page;}
 //# sourceMappingURL=denormalize-page-path.js.map
+
+/***/ }),
+
+/***/ "xnum":
+/***/ (function(module, exports) {
+
+module.exports = require("next/head");
 
 /***/ }),
 

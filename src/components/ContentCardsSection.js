@@ -11,13 +11,6 @@ import Button from "react-bootstrap/Button"
 import AspectRatio from "./AspectRatio";
 import items from "./../content/labs";
 
-function mapStringToP(htmlString) {
-  return htmlString.split("\n").map((val)=>{
-    console.log(val)
-    return (<><p>{val}</p></>);
-  })
-}
-
 function ContentCardsSection(props) {
 
   const [openedPost, setOpenedPost] = useState(null);
@@ -42,11 +35,12 @@ function ContentCardsSection(props) {
           {items.map((item, index) => (
             <Col xs={12} md={6} lg={3} className="py-3" key={index}>
               {/* <LinkContainer to={item.url}> */}
-                <Card as="a" text="dark" className="text-decoration-none"
+                <Link href={`/labs/${encodeURIComponent(item.url)}`}><Card as="a" text="dark" className="text-decoration-none"
                   style={{cursor: "pointer"}}
-                  onClick={()=>{
-                    setOpenedPost(item);
-                  }}>
+                  // onClick={()=>{
+                  //   setOpenedPost(item);
+                  // }}
+                  >
                   <AspectRatio ratio={1 / 0.5}>
                     <Card.Img src={item.image ? item.image : "/assets/shebg.png"} alt={item.title} variant="top" />
                   </AspectRatio>
@@ -57,7 +51,7 @@ function ContentCardsSection(props) {
                       <div style={{textAlign: 'right', fontSize: '0.8em', color: 'grey'}}> {Math.max(1, Math.floor(item.body.split(" ").length / 60))} minute read</div>
                     </Card.Text>
                   </Card.Body>
-                </Card>
+                </Card></Link>
               {/* </LinkContainer> */}
             </Col>
           ))}

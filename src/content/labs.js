@@ -7,7 +7,7 @@ const items = [
         Winner at Carl Zeiss Bi-Nation Hackathon 2018 (Manufacturers of Humphrey Apparatus).
         Innovate for Society Award from Accenture Innovation Challenge 2018.
         `,
-        url: "/post/golden-gate",
+        url: "eye-see",
         buttons: [{
             url: "https://yourstory.com/2018/10/healthcare-innovator-aayush-wins-accenture-innovation-challenge/#eyesee",
             label: "In The News"
@@ -19,7 +19,7 @@ const items = [
         `
         A backend server that creates dynamic REST API endpoints from JSON input. We won the Social Media award at PESU InGenius 2015.
         `,
-        url: "/post/beach",
+        url: "snapi",
     },
     {
         title: "Broget: Raspberry Pi Content Distribution Network",
@@ -29,7 +29,7 @@ const items = [
         The Under 25 Summit
         We were given exclusive passes to attend the launch of Startup India by PM Narendra Modi in Delhi. We were the youngest attendees at the event.
         `,
-        url: "/post/road",
+        url: "broget",
         buttons: [{
             url: "https://github.com/EnKrypt/BroGet",
             label: "Github Repo"
@@ -41,7 +41,7 @@ const items = [
         `
         A javascript library for communication between clients without a preestablished trusted server.
         `,
-        url: "/post/ballons",
+        url: "sms",
         buttons: [{
             url: "https://github.com/prnthh/SMS",
             label: "Github Repo"
@@ -56,7 +56,7 @@ const items = [
         
         This was built as a college project, modelled around the use case of a hospital.
         `,
-        url: "/post/ballons",
+        url: "chatbot",
         buttons: [{
             url: "https://github.com/prnthh/talker-bot",
             label: "Github Repo"
@@ -69,7 +69,7 @@ const items = [
         Internal navigation - it uses an accelerometer to bridge the gaps between imprecise GPS data. It tries to predict the position of the user where GPS does not provide sufficiently accurate location data.
         
         We were awarded 1 lakh at InMobi Hackday Spring for our demonstration.`,
-        url: "/post/ballons",
+        url: "haptic-navigation",
         buttons: [{
             url: "https://devpost.com/software/hans-haptic-automated-navigation-system",
             label: "Devpost"
@@ -83,7 +83,7 @@ const items = [
         Jeevan was build using an arduino, one AD8232 ECG sensor, and a Grove piezovibration sensor.
         
         Runners' up at IESA Makeathon 18'.`,
-        url: "/post/ballons",
+        url: "pregnancy-monitor",
         buttons: [{
             url: "https://github.com/nehsus/Jeevan",
             label: "Github Repo"
@@ -97,7 +97,7 @@ const items = [
         A wearable sensor capable of detecting emotional outbursts in students, monitoring their stress levels as they solve problems of varying difficulty.
         
         Awarded Best Innovative Product by eCell at IIT Kharagpur.`,
-        url: "/post/ballons",
+        url: "emote-sensor",
         buttons: [{
             url: "https://github.com/prnthh/Emote-Inc---Healthcare",
             label: "Github Repo"
@@ -115,7 +115,7 @@ const items = [
         A steam bashed dishwasher that can be powered from the excess heat produced while cooking. This device is designed to be portable enough for use by street vendors in Bangalore.
         
         We were given a stipend to research and build this product at IISc Bangalore's Center for Product Design and Manufacturing.`,
-        url: "/post/ballons",
+        url: "steam-dishwasher",
     },
 ];
 

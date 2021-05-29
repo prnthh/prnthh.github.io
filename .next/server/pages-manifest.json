@@ -4,6 +4,7 @@
   "/games": "pages/games.html",
   "/": "pages/index.html",
   "/labs": "pages/labs.html",
+  "/labs/[slug]": "pages/labs/[slug].js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/404": "pages/404.html"
