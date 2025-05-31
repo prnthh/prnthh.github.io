@@ -1,1 +1,247 @@
-{"version":3,"pages404":true,"basePath":"","redirects":[{"source":"/:path+/","destination":"/:path+","internal":true,"statusCode":308,"regex":"^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"}],"rewrites":[],"headers":[],"dynamicRoutes":[{"page":"/labs/[slug]","regex":"^/labs/([^/]+?)(?:/)?$","routeKeys":{"slug":"slug"},"namedRegex":"^/labs/(?<slug>[^/]+?)(?:/)?$"}],"dataRoutes":[{"page":"/labs/[slug]","routeKeys":{"slug":"slug"},"dataRouteRegex":"^/_next/data/Jeb5y5wstceGXZqNEfzQl/labs/([^/]+?)\\.json$","namedDataRouteRegex":"^/_next/data/Jeb5y5wstceGXZqNEfzQl/labs/(?<slug>[^/]+?)\\.json$"}]}
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/barebones",
+      "regex": "^/barebones(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/barebones(?:/)?$"
+    },
+    {
+      "page": "/car/driver",
+      "regex": "^/car/driver(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/car/driver(?:/)?$"
+    },
+    {
+      "page": "/car/model",
+      "regex": "^/car/model(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/car/model(?:/)?$"
+    },
+    {
+      "page": "/car/road",
+      "regex": "^/car/road(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/car/road(?:/)?$"
+    },
+    {
+      "page": "/car/simple",
+      "regex": "^/car/simple(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/car/simple(?:/)?$"
+    },
+    {
+      "page": "/controllers/animations",
+      "regex": "^/controllers/animations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/controllers/animations(?:/)?$"
+    },
+    {
+      "page": "/controllers/click",
+      "regex": "^/controllers/click(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/controllers/click(?:/)?$"
+    },
+    {
+      "page": "/controllers/isocam",
+      "regex": "^/controllers/isocam(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/controllers/isocam(?:/)?$"
+    },
+    {
+      "page": "/controllers/shouldercam",
+      "regex": "^/controllers/shouldercam(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/controllers/shouldercam(?:/)?$"
+    },
+    {
+      "page": "/controllers/wawa",
+      "regex": "^/controllers/wawa(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/controllers/wawa(?:/)?$"
+    },
+    {
+      "page": "/editor/events",
+      "regex": "^/editor/events(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/editor/events(?:/)?$"
+    },
+    {
+      "page": "/editor/store",
+      "regex": "^/editor/store(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/editor/store(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/floor/ground",
+      "regex": "^/floor/ground(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/floor/ground(?:/)?$"
+    },
+    {
+      "page": "/floor/terrain2",
+      "regex": "^/floor/terrain2(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/floor/terrain2(?:/)?$"
+    },
+    {
+      "page": "/floor/terrainCollider",
+      "regex": "^/floor/terrainCollider(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/floor/terrainCollider(?:/)?$"
+    },
+    {
+      "page": "/ik/crawler",
+      "regex": "^/ik/crawler(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/ik/crawler(?:/)?$"
+    },
+    {
+      "page": "/ik/ragdoll",
+      "regex": "^/ik/ragdoll(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/ik/ragdoll(?:/)?$"
+    },
+    {
+      "page": "/interior",
+      "regex": "^/interior(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/interior(?:/)?$"
+    },
+    {
+      "page": "/lighting/cascading",
+      "regex": "^/lighting/cascading(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/lighting/cascading(?:/)?$"
+    },
+    {
+      "page": "/lighting/probe",
+      "regex": "^/lighting/probe(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/lighting/probe(?:/)?$"
+    },
+    {
+      "page": "/lighting/shadowmap",
+      "regex": "^/lighting/shadowmap(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/lighting/shadowmap(?:/)?$"
+    },
+    {
+      "page": "/lighting/simple",
+      "regex": "^/lighting/simple(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/lighting/simple(?:/)?$"
+    },
+    {
+      "page": "/milady/chess",
+      "regex": "^/milady/chess(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/milady/chess(?:/)?$"
+    },
+    {
+      "page": "/npc",
+      "regex": "^/npc(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/npc(?:/)?$"
+    },
+    {
+      "page": "/particles",
+      "regex": "^/particles(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/particles(?:/)?$"
+    },
+    {
+      "page": "/playground",
+      "regex": "^/playground(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/playground(?:/)?$"
+    },
+    {
+      "page": "/retargeting/basic",
+      "regex": "^/retargeting/basic(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/retargeting/basic(?:/)?$"
+    },
+    {
+      "page": "/retargeting/variety",
+      "regex": "^/retargeting/variety(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/retargeting/variety(?:/)?$"
+    },
+    {
+      "page": "/scape",
+      "regex": "^/scape(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/scape(?:/)?$"
+    },
+    {
+      "page": "/shaders/wave",
+      "regex": "^/shaders/wave(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/shaders/wave(?:/)?$"
+    },
+    {
+      "page": "/webgpu",
+      "regex": "^/webgpu(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/webgpu(?:/)?$"
+    },
+    {
+      "page": "/xr",
+      "regex": "^/xr(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/xr(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "RSC",
+    "varyHeader": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+    "prefetchHeader": "Next-Router-Prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "Next-Router-Segment-Prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  },
+  "rewrites": []
+}

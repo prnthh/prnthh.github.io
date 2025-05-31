@@ -1,44 +1,38 @@
 {
-  "name": "my-divjoy-project",
+  "name": "pockitvoid",
   "version": "0.1.0",
   "private": true,
-  "keywords": [
-    "divjoy"
-  ],
-  "dependencies": {
-    "@analytics/google-analytics": "0.2.2",
-    "@zeit/next-sass": "0.2.1-canary.4",
-    "analytics": "0.3.1",
-    "bootstrap": "4.4.1",
-    "next": "10.0.5",
-    "next-transpile-modules": "^7.2.0",
-    "node-sass": "4.14.1",
-    "react": "17.0.1",
-    "react-bootstrap": "1.0.0-beta.16",
-    "react-dom": "17.0.1",
-    "react-hook-form": "6.15.1",
-    "three": "^0.137.0"
-  },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack --experimental-https",
     "build": "next build",
-    "export": "next build && next export",
     "start": "next start",
-    "deploy": "next build && next export && rm -r ./docs/* && cp -R ./out/ ./docs/ && cp ./CNAME ./docs/ && touch ./docs/.nojekyll"
+    "lint": "next lint"
   },
-  "eslintConfig": {
-    "extends": "react-app"
+  "dependencies": {
+    "@react-three/drei": "^10.0.7",
+    "@react-three/fiber": "^9.1.2",
+    "@react-three/rapier": "^2.1.0",
+    "@react-three/xr": "^6.6.16",
+    "@tweenjs/tween.js": "^25.0.0",
+    "arancini": "^8.0.0",
+    "next": "15.3.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.176.0",
+    "three-csm": "^4.2.1",
+    "three-mesh-bvh": "^0.8.0",
+    "xml2js": "^0.6.2"
   },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/xml2js": "^0.4.14",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }
