@@ -28,7 +28,7 @@ interface Drop {
 let drops: Drop[] = [];
 
 // Map entities (trees, ores)
-let mapEntities: MapEntity[] = [];
+const mapEntities: MapEntity[] = [];
 
 // Configs for resource extraction
 const RESOURCE_EXTRACTION_AMOUNT = 1;
