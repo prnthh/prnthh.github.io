@@ -34,17 +34,40 @@ export const OrbitCam = ({
 
     useEffect(() => {
         const dom = gl.domElement;
+        let lastPinchDist: number | null = null; // Track last pinch distance
         const onPointerDown = (e: MouseEvent | TouchEvent) => {
             dragging.current = true;
             if (e instanceof MouseEvent) {
                 last.current = { x: e.clientX, y: e.clientY };
             } else if (e.touches && e.touches[0]) {
                 last.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                if (e.touches.length === 2) {
+                    // Store initial pinch distance
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    lastPinchDist = Math.sqrt(dx * dx + dy * dy);
+                }
             }
         };
-        const onPointerUp = () => { dragging.current = false; };
+        const onPointerUp = () => { dragging.current = false; lastPinchDist = null; };
         const onPointerMove = (e: MouseEvent | TouchEvent) => {
             if (!dragging.current) return;
+            // Pinch to zoom
+            if (e instanceof TouchEvent && e.touches && e.touches.length === 2) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (lastPinchDist !== null) {
+                    const delta = (lastPinchDist - dist) * 0.01; // Sensitivity
+                    radiusRef.current = MathUtils.clamp(
+                        radiusRef.current + delta,
+                        1,
+                        20
+                    );
+                }
+                lastPinchDist = dist;
+                return;
+            }
             let x, y;
             if (e instanceof MouseEvent) {
                 x = e.clientX; y = e.clientY;
