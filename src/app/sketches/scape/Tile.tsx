@@ -5,22 +5,22 @@ interface TileProps {
   position: [number, number, number];
   type: number;
   onClick?: () => void;
-  isTarget?: boolean; // highlight if this is the target
+  onTileClick?: (e: any) => void; // new prop
 }
 
-export default function Tile({ position, type, onClick, isTarget, ...props }: TileProps) {
-  const [hovered, setHovered] = useState(false);
+export default function Tile({ position, type, onClick, onTileClick, ...props }: TileProps) {
   return (
     <mesh
       position={position}
       scale={[1, 0.1, 1]}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-      onClick={onClick}
+      onClick={e => {
+        onClick?.();
+        onTileClick?.(e);
+      }}
       {...props}
     >
       <boxGeometry args={[0.66, 0.1, 0.66]} />
-      <meshStandardMaterial color={isTarget ? "red" : hovered ? "hotpink" : type === 1 ? "gray" : "white"} />
+      <meshStandardMaterial color={"lightgrey"} />
     </mesh>
   );
 }
