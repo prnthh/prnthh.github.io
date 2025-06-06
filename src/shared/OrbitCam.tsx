@@ -5,6 +5,7 @@ import { Vector3, Group, MathUtils } from "three";
 
 export const OrbitCam = ({
     radius = 3,
+    maxRadius = 20,
     minPolar = 0.1,
     maxPolar = Math.PI - 0.1,
     minAzimuth = -Infinity,
@@ -14,6 +15,7 @@ export const OrbitCam = ({
     smoothing = 0.1 // New prop for smoothing
 }: {
     radius?: number,
+    maxRadius?: number,
     minPolar?: number,
     maxPolar?: number,
     minAzimuth?: number,
@@ -95,7 +97,7 @@ export const OrbitCam = ({
             radiusRef.current = MathUtils.clamp(
                 radiusRef.current + delta,
                 1,
-                20
+                maxRadius
             );
         };
         dom.addEventListener("mousedown", onPointerDown);

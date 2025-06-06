@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import Player from "./Player";
 import { useState, useRef, useEffect } from "react";
 import FakeServer from "./FakeServer";
-import { MapEntity } from "./MapEntity";
+import { MapEntity, MapEntityMesh } from "./MapEntity";
 import { InventoryUI } from "./ui/Inventory";
 import MapGrid, { generateHeight } from "./MapGrid";
 
@@ -13,19 +13,13 @@ const GRID_WIDTH = 16;
 const GRID_DEPTH = 16;
 
 export default function Home() {
-    // Store playerId in React state (not persisted)
     const [playerId] = useState(() => Math.random().toString(36).slice(2) + Date.now());
 
-    // Generate map height data once in the parent (must be inside component)
     const [heightData] = useState(() => generateHeight(GRID_WIDTH, GRID_DEPTH));
 
     const [playerPos, setPlayerPos] = useState(FakeServer.getPlayerPos(playerId));
-    // Remove targetPos, use currentAction
-    // Get all players for rendering
     const [allPlayers, setAllPlayers] = useState(FakeServer.getAllPlayers());
-    // Track drops for rendering
     const [drops, setDrops] = useState(FakeServer.getDrops());
-    // Track map entities for rendering
     const [entities, setEntities] = useState<MapEntity[]>(FakeServer.getEntities());
     const [navPointer, setNavPointer] = useState<[number, number, number] | null>(null); // NavPointer world coords
     useEffect(() => {
@@ -41,19 +35,19 @@ export default function Home() {
     // Click a player to attack them
     const handlePlayerClick = (targetId: string) => {
         if (targetId !== playerId) {
-            FakeServer.setAction(playerId, { type: "attack", targetId });
+            FakeServer.setGoal(playerId, { type: "attack", targetId });
         }
     };
 
     // Click a drop to pick it up
     const handleDropClick = (dropId: string) => {
-        FakeServer.setAction(playerId, { type: "pickupDrop", dropId });
+        FakeServer.setGoal(playerId, { type: "pickupDrop", dropId });
     };
 
     // Click a map entity to extract resource
     const handleEntityClick = (entity: MapEntity) => {
         if (!entity.depleted && entity.resourceAmount > 0) {
-            FakeServer.setAction(playerId, { type: "extractResource", entityId: entity.id });
+            FakeServer.setGoal(playerId, { type: "extractResource", entityId: entity.id });
         }
     };
 
@@ -75,7 +69,7 @@ export default function Home() {
                         tileSize={TILE_SIZE}
                         heightData={heightData}
                         onTileClick={({ i, j, x, y, z }) => {
-                            FakeServer.setAction(playerId, { type: "walkTo", pos: [i, j] });
+                            FakeServer.setGoal(playerId, { type: "walkTo", pos: [i, j] });
                             setNavPointer([x, getY(i, j), z]);
                         }}
                     />
@@ -88,43 +82,74 @@ export default function Home() {
                     )}
                     {/* Render map entities (trees, ores) */}
                     {entities.map(entity => (
-                        <mesh
+                        <MapEntityMesh
                             key={entity.id}
-                            position={[(entity.pos[0]) * TILE_SIZE, getY(entity.pos[0], entity.pos[1]), (entity.pos[1]) * TILE_SIZE]}
+                            entity={entity}
+                            position={[
+                                (entity.pos[0]) * TILE_SIZE,
+                                getY(entity.pos[0], entity.pos[1]),
+                                (entity.pos[1]) * TILE_SIZE
+                            ]}
                             onClick={e => {
                                 e.stopPropagation();
                                 handleEntityClick(entity);
                             }}
-                        >
-                            {/* Use different geometry/material for trees vs ores */}
-                            {entity.type.kind === "tree" ? (
-                                <cylinderGeometry args={[0.13 * TILE_SIZE, 0.18 * TILE_SIZE, 0.5 * TILE_SIZE, 12]} />
-                            ) : (
-                                <sphereGeometry args={[0.18 * TILE_SIZE, 12, 12]} />
-                            )}
-                            <meshStandardMaterial color={
-                                entity.depleted ? "gray" : entity.type.kind === "tree" ? "#228B22" : "#888888"
-                            } opacity={entity.depleted ? 0.5 : 1} transparent />
-                        </mesh>
+                        />
                     ))}
-                    {Object.entries(allPlayers).map(([id, state]) => (
-                        <group key={id}>
-                            <Player
-                                key={id}
-                                health={state.health}
-                                position={[
-                                    (state.pos[0]) * TILE_SIZE,
-                                    getY(state.pos[0], state.pos[1]) + 0.3,
-                                    (state.pos[1]) * TILE_SIZE
-                                ]}
-                                color={id === playerId ? "orange" : "blue"}
-                                onClick={e => {
-                                    e.stopPropagation();
-                                    handlePlayerClick(id);
-                                }}
-                            />
-                        </group>
-                    ))}
+                    {Object.entries(allPlayers).map(([id, state]) => {
+                        const currentAction = FakeServer.getCurrentAction(id);
+                        let targetPosition: [number, number, number] | undefined = undefined;
+                        if (
+                            currentAction === "attack" &&
+                            state.currentGoal &&
+                            state.currentGoal.type === "attack" &&
+                            "targetId" in state.currentGoal
+                        ) {
+                            const targetId = (state.currentGoal as { type: "attack"; targetId: string }).targetId;
+                            const target = allPlayers[targetId];
+                            if (target) {
+                                targetPosition = [
+                                    (target.pos[0]) * TILE_SIZE,
+                                    getY(target.pos[0], target.pos[1]) + 0.3,
+                                    (target.pos[1]) * TILE_SIZE
+                                ];
+                            }
+                        } else if (
+                            currentAction === "extract" &&
+                            state.currentGoal &&
+                            state.currentGoal.type === "extractResource"
+                        ) {
+                            const entityId = (state.currentGoal as { type: "extractResource"; entityId: string }).entityId;
+                            const entity = entities.find(e => e.id === entityId);
+                            if (entity) {
+                                targetPosition = [
+                                    (entity.pos[0]) * TILE_SIZE,
+                                    getY(entity.pos[0], entity.pos[1]),
+                                    (entity.pos[1]) * TILE_SIZE
+                                ];
+                            }
+                        }
+                        return (
+                            <group key={id}>
+                                <Player
+                                    key={id}
+                                    health={state.health}
+                                    position={[
+                                        (state.pos[0]) * TILE_SIZE,
+                                        getY(state.pos[0], state.pos[1]) + 0.3,
+                                        (state.pos[1]) * TILE_SIZE
+                                    ]}
+                                    color={id === playerId ? "orange" : "blue"}
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        handlePlayerClick(id);
+                                    }}
+                                    currentAction={currentAction}
+                                    targetPosition={targetPosition}
+                                />
+                            </group>
+                        );
+                    })}
                     {/* Render drops */}
                     {drops.map(drop => (
                         <mesh

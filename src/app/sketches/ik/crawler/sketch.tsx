@@ -46,7 +46,7 @@ import {
     fabrikFixedIterations,
 } from './fabrik';
 import { useControlScheme } from '@/shared/ControlsProvider';
-import { WebGPUCanvas } from '@/app/sketches/webgpu/WebGPUCanvas';
+import { WebGPUCanvas } from '@/app/sketches/tsl/webgpu/WebGPUCanvas';
 
 type EntityType = {
     crawler: CrawlerState;

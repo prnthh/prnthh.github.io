@@ -12,14 +12,17 @@ interface PlayerProps {
   health?: number;
   color?: string;
   onClick?: (e: any) => void;
+  currentAction?: string;
+  targetPosition?: [number, number, number]; // <-- new prop
 }
 
-const tweenGroup = new Group(); // ✅ your own tween group
+const tweenGroup = new Group();
 
-const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, color = "orange", onClick }, ref) => {
+const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, color = "orange", onClick, currentAction, targetPosition }, ref) => {
   const groupRef = useRef<THREE.Group>(null);
   const rotationTweenRef = useRef<Tween<{ y: number }> | null>(null);
   const [animation, setAnimation] = useState("idle");
+  const prevAnimationRef = useRef<string>("idle"); // Track previous animation
   // --- Damage bubble state ---
   const [damage, setDamage] = useState<number | null>(null);
   const [showDamage, setShowDamage] = useState(false);
@@ -27,6 +30,7 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
   const lastTweenedPosRef = useRef<THREE.Vector3>(new THREE.Vector3(...position));
   const targetPosRef = useRef<THREE.Vector3>(new THREE.Vector3(...position));
   const movingRef = useRef(false);
+  const animationTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Forward the ref
   useEffect(() => {
@@ -39,6 +43,10 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
   }, [ref]);
 
   // Helper to get yaw angle to target
+  function normalizeAngle(angle: number) {
+    // Normalize angle to [-π, π]
+    return Math.atan2(Math.sin(angle), Math.cos(angle));
+  }
   function getTargetYaw(from: THREE.Vector3, to: THREE.Vector3) {
     const dx = to.x - from.x;
     const dz = to.z - from.z;
@@ -66,11 +74,12 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
       targetPosRef.current.copy(targetPos);
       movingRef.current = true;
       // --- ROTATION ---
-      const currentYaw = group.rotation.y;
-      const targetYaw = getTargetYaw(currentPos, targetPos);
+      let currentYaw = group.rotation.y;
+      let targetYaw = getTargetYaw(currentPos, targetPos);
+      currentYaw = normalizeAngle(currentYaw);
+      targetYaw = normalizeAngle(targetYaw);
       let deltaYaw = targetYaw - currentYaw;
-      if (deltaYaw > Math.PI) deltaYaw -= 2 * Math.PI;
-      if (deltaYaw < -Math.PI) deltaYaw += 2 * Math.PI;
+      deltaYaw = normalizeAngle(deltaYaw); // always shortest path
       const finalYaw = currentYaw + deltaYaw;
       rotationTweenRef.current?.stop();
       const rotObj = { y: currentYaw };
@@ -78,7 +87,7 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
         .to({ y: finalYaw }, 200)
         .easing(Easing.Linear.None)
         .onUpdate(() => {
-          if (group) group.rotation.y = rotObj.y;
+          if (group) group.rotation.y = normalizeAngle(rotObj.y);
         });
       tweenGroup.add(rotationTween);
       rotationTween.start();
@@ -96,10 +105,74 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
       const dmg = prevHealthRef.current - health;
       setDamage(dmg);
       setShowDamage(true);
-      setTimeout(() => setShowDamage(false), 500);
+      setTimeout(() => setShowDamage(false), 500); // Damage popup timeout (not ref)
+      // Play hurt animation once, then revert
+      prevAnimationRef.current = animation;
+      setAnimation("hurt");
+      // Clear previous animation revert timeout to prevent overlap
+      if (animationTimeout.current) {
+        clearTimeout(animationTimeout.current);
+      }
+      animationTimeout.current = setTimeout(() => {
+        setAnimation(movingRef.current ? "walk" : "idle");
+      }, 600); // Adjust duration to match hurt anim length
     }
     prevHealthRef.current = health;
   }, [health]);
+
+  // Play attack animation for one tick if currentAction is 'attack'
+  useEffect(() => {
+    if (currentAction === "attack") {
+      prevAnimationRef.current = animation;
+      setAnimation("punch");
+      if (animationTimeout.current) clearTimeout(animationTimeout.current);
+      animationTimeout.current = setTimeout(() => {
+        setAnimation(movingRef.current ? "walk" : "idle");
+      }, 500); // punch anim duration
+    }
+    // eslint-disable-next-line
+  }, [currentAction]);
+
+  // Play slash animation as long as currentAction is 'extract'
+  useEffect(() => {
+    if (currentAction === "extract") {
+      setAnimation("slash");
+      if (animationTimeout.current) clearTimeout(animationTimeout.current);
+      // Keep slash animation as long as extracting; no timeout revert
+    } else if (animation === "slash") {
+      // If extract ends, revert to walk or idle
+      setAnimation(movingRef.current ? "walk" : "idle");
+    }
+    // eslint-disable-next-line
+  }, [currentAction]);
+
+  // Face target when attacking or extracting
+  useEffect(() => {
+    if (!groupRef.current) return;
+    if ((currentAction === "attack" || currentAction === "extract") && targetPosition) {
+      const group = groupRef.current;
+      const currentPos = group.position.clone();
+      const targetPos = new THREE.Vector3(...targetPosition);
+      let currentYaw = group.rotation.y;
+      let targetYaw = getTargetYaw(currentPos, targetPos);
+      currentYaw = normalizeAngle(currentYaw);
+      targetYaw = normalizeAngle(targetYaw);
+      let deltaYaw = targetYaw - currentYaw;
+      deltaYaw = normalizeAngle(deltaYaw); // always shortest path
+      const finalYaw = currentYaw + deltaYaw;
+      rotationTweenRef.current?.stop();
+      const rotObj = { y: currentYaw };
+      const rotationTween = new Tween(rotObj)
+        .to({ y: finalYaw }, 180)
+        .easing(Easing.Linear.None)
+        .onUpdate(() => {
+          if (group) group.rotation.y = normalizeAngle(rotObj.y);
+        });
+      tweenGroup.add(rotationTween);
+      rotationTween.start();
+      rotationTweenRef.current = rotationTween;
+    }
+  }, [currentAction, targetPosition]);
 
   useFrame((_, delta) => {
     tweenGroup.update(performance.now());
@@ -139,11 +212,16 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
           debug={true}
           model={"/models/rigga.glb"}
           animation={animation}
+          animationOverrides={{
+            'punch': '/anim/punch.fbx',
+            'hurt': '/anim/hurt.fbx',
+            'slash': '/anim/slash.fbx',
+          }}
           height={0.95}
           onClick={onClick}
           scale={0.8}
         />
-        {color == 'orange' && <OrbitCam maxPolar={Math.PI / 2.2} />}
+        {color == 'orange' && <OrbitCam maxRadius={6} maxPolar={Math.PI / 2.2} />}
       </group>
       {/* HP Bar and Damage Bubble */}
       <Html center position={[position[0], position[1] + .7, position[2]]} style={{ pointerEvents: "none", minWidth: 60 }}>
