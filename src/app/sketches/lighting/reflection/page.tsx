@@ -15,10 +15,6 @@ import {
     WebGPURenderer,
 } from 'three/webgpu';
 
-declare module '@react-three/fiber' {
-    interface ThreeElements extends ThreeToJSXElements<typeof THREE> { }
-}
-
 extend(THREE as any)
 
 function SceneContent() {
@@ -75,7 +71,7 @@ function SceneContent() {
 
         const vignette = screenUV.distance(0.5).mul(1.35).clamp().oneMinus()
 
-        // @ts-ignore
+        // @ts-expect-error Argument of type 'WebGLRenderer' is not assignable to parameter of type 'Renderer'.
         const post = new THREE.PostProcessing(gl)
         post.outputNode = blur.mul(vignette)
 

@@ -130,7 +130,6 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
         setAnimation(movingRef.current ? "walk" : "idle");
       }, 500); // punch anim duration
     }
-    // eslint-disable-next-line
   }, [currentAction]);
 
   // Play slash animation as long as currentAction is 'extract'
@@ -143,7 +142,6 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
       // If extract ends, revert to walk or idle
       setAnimation(movingRef.current ? "walk" : "idle");
     }
-    // eslint-disable-next-line
   }, [currentAction]);
 
   // Face target when attacking or extracting

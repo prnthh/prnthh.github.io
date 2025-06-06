@@ -19,13 +19,6 @@ import {
     WebGPURenderer,
 } from 'three/webgpu';
 
-import * as THREE from 'three';
-
-declare module '@react-three/fiber' {
-    interface ThreeElements extends ThreeToJSXElements<typeof THREE> { }
-}
-
-
 function Scene() {
     const uniforms = useMemo(
         () => ({
@@ -74,7 +67,7 @@ function Scene() {
     );
 }
 
-export const App = () => {
+const App = () => {
     return (
         <Canvas
             camera={{ position: [1, 1, 1] }}

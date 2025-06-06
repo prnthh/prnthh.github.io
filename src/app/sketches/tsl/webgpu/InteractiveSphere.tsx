@@ -48,7 +48,6 @@ const InteractiveSphere: FC = () => {
         mat.positionNode = positionNode;
         mat.shininess = 20;
         return mat;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [colorNode, positionNode, key]);
 
     return (

@@ -37,11 +37,10 @@ export function MapEntityMesh({ entity, position, onClick }: MapEntityMeshProps)
             return null;
         }
         return (
-            <group position={position} onClick={onClick} /* @ts-ignore */ userData={{ entityId: entity.id }}>
+            <group position={position} onClick={onClick} userData={{ entityId: entity.id }}>
                 <primitive
                     object={tree.scene}
                     scale={[0.66, 0.66, 0.66]}
-                    // @ts-ignore
                     userData={{ entityId: entity.id }}
                 />
             </group>
@@ -51,11 +50,10 @@ export function MapEntityMesh({ entity, position, onClick }: MapEntityMeshProps)
             return null;
         }
         return (
-            <group position={position} onClick={onClick} /* @ts-ignore */ userData={{ entityId: entity.id }}>
+            <group position={position} onClick={onClick} userData={{ entityId: entity.id }}>
                 <primitive
                     object={rocks.scene}
                     scale={[0.18 * 0.66, 0.18 * 0.66, 0.18 * 0.66]}
-                    // @ts-ignore
                     userData={{ entityId: entity.id }}
                 />
             </group>

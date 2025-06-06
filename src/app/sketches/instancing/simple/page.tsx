@@ -72,7 +72,7 @@ function Shoe({ random, color = new THREE.Color(), ...props }: ShoeData & { colo
         ref.current.rotation.set(Math.cos(t / 4) / 2, Math.sin(t / 4) / 2, Math.cos(t / 1.5) / 2)
         ref.current.position.y = Math.sin(t / 1.5) / 2
         ref.current.scale.x = ref.current.scale.y = ref.current.scale.z = THREE.MathUtils.lerp(ref.current.scale.z, hovered ? 1.4 : 1, 0.1)
-        // @ts-ignore this works, but types are not defined for color in Instance
+        // @ts-expect-error this works, but types are not defined for color in Instance
         ref.current.color.lerp(color.set(hovered ? 'red' : 'white'), hovered ? 1 : 0.1)
     })
     return (

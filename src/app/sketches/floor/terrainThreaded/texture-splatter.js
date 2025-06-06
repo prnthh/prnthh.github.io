@@ -136,7 +136,7 @@ export const texture_splatter = (function() {
       const normalization = 1.0 / total;
 
       for (let k in types) {
-        types[k].strength / normalization;
+        types[k].strength = types[k].strength / total;
       }
 
       return types;

@@ -1,14 +1,11 @@
 "use client"
 
 import * as THREE from 'three/webgpu'
-import * as TSL from 'three/tsl'
-import { extend, Canvas, useFrame, useThree, ThreeToJSXElements } from '@react-three/fiber'
-import { OrbitControls, useGLTF, useTexture, StatsGl } from '@react-three/drei'
-import { useEffect, useRef, useMemo } from 'react'
-
+import { extend, useThree, ThreeToJSXElements } from '@react-three/fiber'
+import { useTexture } from '@react-three/drei'
+import { useMemo } from 'react'
 import { reflector } from 'three/tsl'
-import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
-import { pass, screenUV, uv, color, texture, normalWorld } from 'three/tsl'
+import { uv, texture } from 'three/tsl'
 
 declare module '@react-three/fiber' {
     interface ThreeElements extends ThreeToJSXElements<typeof THREE> { }

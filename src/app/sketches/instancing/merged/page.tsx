@@ -6,6 +6,7 @@ import { Perf } from "r3f-perf";
 import { createContext, useContext, useMemo } from "react";
 import { MathUtils } from "three";
 import * as THREE from "three";
+import type { ComponentType, ReactNode } from "react";
 
 const positions = Array.from({ length: 1000 }, () => ({
     position: [MathUtils.randFloatSpread(10), MathUtils.randFloatSpread(10), MathUtils.randFloatSpread(10)],
@@ -39,13 +40,12 @@ export default function Home() {
     );
 }
 
-import type { ComponentType, ReactNode } from "react";
 
 type InstancesType = Record<string, ComponentType<any>>;
 
 const context = createContext<InstancesType | undefined>(undefined)
 
-export function Instances({ children, ...props }: { children: ReactNode;[key: string]: any }) {
+function Instances({ children, ...props }: { children: ReactNode;[key: string]: any }) {
     const { nodes } = useGLTF('/models/environment/inst-transformed.glb')
     const instances = useMemo(
         () => ({
@@ -57,13 +57,13 @@ export function Instances({ children, ...props }: { children: ReactNode;[key: st
     )
     return (
         <Merged frames={1} meshes={instances} {...props}>
-            {(instances) => <context.Provider value={instances} children={children} />}
+            {(instances) => <context.Provider value={instances}>{children}</context.Provider>}
         </Merged>
     )
 }
 
 
-export function Model(props: any) {
+function Model(props: any) {
     const instances = useContext(context)
     if (!instances) return null;
     return (
