@@ -1,12 +1,13 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import Player from "./Player";
-import { useState, useRef, useEffect } from "react";
-import FakeServer from "./FakeServer";
+import { useState, useEffect } from "react";
+import FakeServer from "./ScapeServer";
 import { MapEntity, MapEntityMesh } from "./MapEntity";
 import { InventoryUI } from "./ui/Inventory";
 import MapGrid, { generateHeight } from "./MapGrid";
+import FogBG from "../lighting/reflection/FogBG";
+import { WebGPUCanvas } from "../tsl/webgpu/WebGPUCanvas";
 
 const TILE_SIZE = 0.66; // Size of each tile in the tilemap
 const GRID_WIDTH = 16;
@@ -61,8 +62,7 @@ export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Canvas shadows>
-                    {/* Use new MapGrid for terrain and tile rendering */}
+                <WebGPUCanvas shadows>
                     <MapGrid
                         width={GRID_WIDTH}
                         depth={GRID_DEPTH}
@@ -172,7 +172,8 @@ export default function Home() {
                         shadow-mapSize-width={2048}
                         shadow-mapSize-height={2048}
                     />
-                </Canvas>
+                    <FogBG />
+                </WebGPUCanvas>
             </div>
             <InventoryUI playerId={playerId} />
         </div>

@@ -1,4 +1,4 @@
-import FakeServer from "../FakeServer";
+import FakeServer from "../ScapeServer";
 
 export const InventoryUI = ({ playerId }: { playerId: string }) => {
     const inventory = FakeServer.getInventory(playerId);

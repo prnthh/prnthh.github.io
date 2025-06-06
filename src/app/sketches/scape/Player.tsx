@@ -225,49 +225,49 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
           scale={0.8}
         />
         {color == 'orange' && <OrbitCam maxRadius={6} maxPolar={Math.PI / 2.2} />}
-      </group>
-      {/* HP Bar and Damage Bubble */}
-      <Html center position={[position[0], position[1] + .7, position[2]]} style={{ pointerEvents: "none", minWidth: 60 }}>
-        <div style={{ position: 'relative', width: 50, height: 14 }}>
-          {/* HP Bar */}
-          <div style={{
-            width: '100%',
-            height: 7,
-            background: '#a00',
-            borderRadius: 5,
-            overflow: 'hidden',
-            border: '1px solid black',
-          }}>
+
+        {/* HP Bar and Damage Bubble */}
+        <Html center position={[0, .7, 0]} style={{ pointerEvents: "none", minWidth: 60 }}>
+          <div style={{ position: 'relative', width: 50, height: 14 }}>
+            {/* HP Bar */}
             <div style={{
-              width: `${Math.max(0, Math.min(health * 10, 100))}%`,
-              height: '100%',
-              background: 'linear-gradient(90deg, #0f0, #6f6)',
-              transition: 'width 0.2s',
-            }} />
-          </div>
-          {/* Damage Bubble */}
-          {showDamage && damage !== null && (
-            <div style={{
-              position: 'absolute',
-              left: '50%',
-              top: 22,
-              transform: 'translateX(-50%)',
-              background: 'rgba(255,0,0,0.85)',
-              color: '#fff',
-              padding: '2px 8px',
-              borderRadius: 12,
-              fontWeight: 700,
-              fontSize: 13,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              pointerEvents: 'none',
-              zIndex: 2,
-              animation: 'damage-pop 0.5s cubic-bezier(.5,-0.5,.5,1.5)',
+              width: '100%',
+              height: 7,
+              background: '#a00',
+              borderRadius: 5,
+              overflow: 'hidden',
+              border: '1px solid black',
             }}>
-              -{damage}
+              <div style={{
+                width: `${Math.max(0, Math.min(health * 10, 100))}%`,
+                height: '100%',
+                background: 'linear-gradient(90deg, #0f0, #6f6)',
+                transition: 'width 0.2s',
+              }} />
             </div>
-          )}
-        </div>
-        <style>{`
+            {/* Damage Bubble */}
+            {showDamage && damage !== null && (
+              <div style={{
+                position: 'absolute',
+                left: '50%',
+                top: 22,
+                transform: 'translateX(-50%)',
+                background: 'rgba(255,0,0,0.85)',
+                color: '#fff',
+                padding: '2px 8px',
+                borderRadius: 12,
+                fontWeight: 700,
+                fontSize: 13,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                pointerEvents: 'none',
+                zIndex: 2,
+                animation: 'damage-pop 0.5s cubic-bezier(.5,-0.5,.5,1.5)',
+              }}>
+                -{damage}
+              </div>
+            )}
+          </div>
+          <style>{`
           @keyframes damage-pop {
             0% { opacity: 0; transform: translateX(-50%) scale(0.7) translateY(10px); }
             20% { opacity: 1; transform: translateX(-50%) scale(1.1) translateY(-2px); }
@@ -275,7 +275,9 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
             100% { opacity: 0; transform: translateX(-50%) scale(0.9) translateY(-18px); }
           }
         `}</style>
-      </Html>
+        </Html>
+      </group>
+
     </>
   );
 });

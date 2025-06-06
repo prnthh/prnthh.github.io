@@ -14,6 +14,8 @@ import {
     MeshBasicNodeMaterial,
     WebGPURenderer,
 } from 'three/webgpu';
+import Sun from './Sun'
+import FogBG from './FogBG'
 
 extend(THREE as any)
 
@@ -34,31 +36,6 @@ function SceneContent() {
         mixerRef.current = new THREE.AnimationMixer(model)
         mixerRef.current.clipAction(animations[0])?.play()
     }, [model, animations])
-
-    // Fog & background node
-    useEffect(() => {
-        scene.fog = new THREE.Fog(0x0487e2, 7, 25)
-        scene.backgroundNode = normalWorld.y.mix(color(0x0487e2), color(0x0066ff))
-    }, [scene])
-
-    // Lights
-    useEffect(() => {
-        const sun = new THREE.DirectionalLight(0xffe499, 2)
-        sun.castShadow = true
-        sun.shadow.camera.left = -2
-        sun.shadow.camera.right = 2
-        sun.shadow.camera.top = 2
-        sun.shadow.camera.bottom = -2
-        sun.shadow.mapSize.set(2048, 2048)
-        sun.shadow.bias = -0.001
-        sun.position.set(0.5, 3, 0.5)
-
-        const hemi1 = new THREE.HemisphereLight(0x333366, 0x74ccf4, 3)
-        const hemi2 = new THREE.HemisphereLight(0x74ccf4, 0, 1)
-
-        scene.add(sun, hemi1, hemi2)
-    }, [scene])
-
 
     // Postprocessing
     useEffect(() => {
@@ -97,7 +74,8 @@ function SceneContent() {
 
             <primitive ref={modelRef} object={model} />
             <ShinyFloor />
-
+            <Sun />
+            <FogBG />
             <StatsGl />
         </>
     )
