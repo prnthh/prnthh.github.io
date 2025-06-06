@@ -73,7 +73,7 @@ export function execCommand(command: string) {
             if (gameObjects[id]) {
                 if (type && type.toLowerCase() === "mesh") {
                     // ADD_COMPONENT <id> mesh [path]
-                    const path = parts[3] || "/models/rigga.glb";
+                    const path = parts[3] || "/models/human/rigga.glb";
                     store.addComponent(id, "mesh", { path });
                     addLog(`Added mesh component to ${id} with path ${path}`);
                 } else {

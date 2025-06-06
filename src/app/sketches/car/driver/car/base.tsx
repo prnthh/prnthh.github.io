@@ -144,7 +144,7 @@ const Vehicle = ({ driving = true }) => {
             >
                 <CuboidCollider args={[carDimensions[0] / 2, carDimensions[1] / 2, carDimensions[2] / 2]} />
 
-                <AnimatedModel model="/models/milady.glb" animationOverrides={{ idle: '/anim/driving.fbx' }} scale={1} rotation={[-Math.PI / 8, 0, 0]} position={[0, -0.3, 0.7]} />
+                <AnimatedModel model="milady.glb" animationOverrides={{ idle: '/anim/driving.fbx' }} scale={1} rotation={[-Math.PI / 8, 0, 0]} position={[0, -0.3, 0.7]} />
                 <FollowCam height={1.5} />
                 {/* chassis */}
                 <mesh ref={chasisMeshRef} castShadow receiveShadow>

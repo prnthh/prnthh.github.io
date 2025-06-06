@@ -19,7 +19,7 @@ export default function Home() {
                         <meshBasicMaterial wireframe color="red" />
                     </Box>
                     <Physics>
-                        <Ped modelUrl={'/models/rigga.glb'} position={target} />
+                        <Ped modelUrl={'rigga.glb'} position={target} />
                         <Terrain onClick={(coords: number[]) => {
                             const [x = 0, y = 0, z = 0] = coords;
                             setTarget([x, y, z]);

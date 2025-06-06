@@ -65,7 +65,7 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
         const geometry = new THREE.PlaneGeometry(width, height, widthSegments, heightSegments);
 
         heightField.forEach((v, index) => {
-            (geometry.attributes.position.array as THREE.TypedArray)[index * 3 + 2] = v - 0.2;
+            (geometry.attributes.position.array as THREE.TypedArray)[index * 3 + 2] = v; // height offset of collider from mesh
         });
         geometry.scale(-1, 1, 1);
         geometry.rotateX(Math.PI / 2);

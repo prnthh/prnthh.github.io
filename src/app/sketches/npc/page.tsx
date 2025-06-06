@@ -18,7 +18,7 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <Canvas shadows>
                     <Physics>
-                        <Ped modelUrl={'/models/rigga.glb'} position={target} />
+                        <Ped modelUrl={'rigga.glb'} position={target} />
                         <MovableTarget setPosition={setTarget} />
 
 
@@ -56,7 +56,7 @@ const SineWaveTargetFollowingPed = () => {
 
     return (
         <>
-            <Ped modelUrl={'/models/rigga2.glb'} position={target2} />
+            <Ped modelUrl={'rigga/rigga2.glb'} position={target2} />
             <Box position={target2} args={[0.1, 0.1, 0.1]}>
                 <meshBasicMaterial wireframe color="red" />
             </Box>

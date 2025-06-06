@@ -161,9 +161,9 @@ export const CharacterController = () => {
                 <group ref={cameraPosition} position-y={4} position-z={-4} />
                 <group ref={character}>
                     <AnimatedModel
-                        model="/models/rigga.glb"
+                        model="rigga.glb"
                         animation={animation}
-                        height={0.4}
+                        height={0.9}
                     />
                 </group>
             </group>

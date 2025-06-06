@@ -132,8 +132,8 @@ export function Road() {
     // Cars
     const blueCarRef = useRef<THREE.Mesh>(null);
     const redCarRef = useRef<THREE.Mesh>(null);
-    const blueCarGLTF = useGLTF('/models/rigga.glb');
-    const redCarGLTF = useGLTF('/models/rigga2.glb');
+    const blueCarGLTF = useGLTF('/models/environment/rocks.glb');
+    const redCarGLTF = useGLTF('/models/environment/shoe.glb');
     const [blueCarScene, setBlueCarScene] = useState<THREE.Object3D | null>(null);
     const [redCarScene, setRedCarScene] = useState<THREE.Object3D | null>(null);
 

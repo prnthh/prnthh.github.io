@@ -16,7 +16,7 @@ function RetargetedModels() {
     const helpers = useRef<THREE.Group>(new THREE.Group());
 
     // Load animation from FBX file
-    const animationFBX = useLoader(FBXLoader, '/anim/idle3.fbx');
+    const animationFBX = useLoader(FBXLoader, '/models/human/anim/idle.fbx');
     const animationClip = animationFBX.animations[0];
 
     function getSourceWithFBXAnimation(sourceModel: any, clip: THREE.AnimationClip) {

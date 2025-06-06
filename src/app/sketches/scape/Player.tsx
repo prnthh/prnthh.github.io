@@ -208,9 +208,14 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
         <AnimatedModel
           position={[0, -0.3, 0]}
           debug={true}
-          model={"/models/rigga.glb"}
+          basePath="/models/human/rigga/"
+          model={"/rigga.glb"}
           animation={animation}
           animationOverrides={{
+            'idle': '/anim/idle.fbx',
+            'walk': '/anim/walk.fbx',
+            'run': '/anim/run.fbx',
+            'jump': '/anim/jump.fbx',
             'punch': '/anim/punch.fbx',
             'hurt': '/anim/hurt.fbx',
             'slash': '/anim/slash.fbx',

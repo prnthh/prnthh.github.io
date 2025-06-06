@@ -32,7 +32,7 @@ const lerpAngle = (start: number, end: number, t: number): number => {
 export const CharacterController = () => {
     const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 4.5;
 
-    const height = 0.95
+    const height = 1.37
     const roundHeight = 0.25
 
     const { rapier, world } = useRapier();
@@ -195,7 +195,7 @@ export const CharacterController = () => {
                 />
                 <group ref={character}>
                     <AnimatedModel
-                        model="/models/rigga.glb"
+                        model="rigga.glb"
                         animation={animation}
                         height={height}
                     />

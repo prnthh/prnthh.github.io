@@ -26,6 +26,7 @@ function filterNeckAnimations(animation: THREE.AnimationClip): THREE.AnimationCl
 
 export default function useAnimationState(
     clone?: Object3D<Object3DEventMap>,
+    basePath: string = '/models/human/',
     animationOverrides?: { [key: string]: string },
 ) {
     const [thisAnimation, setThisAnimation] = useState<string | undefined>('idle')
@@ -38,14 +39,24 @@ export default function useAnimationState(
     // load animations and set up mixer
 
     const ANIMATIONS = useMemo(() => {
+        const prependBasePath = (path: string) =>
+            basePath + path
+        const overridesWithBase = animationOverrides
+            ? Object.fromEntries(
+                Object.entries(animationOverrides).map(([key, value]) => [
+                    key,
+                    prependBasePath(value),
+                ]),
+            )
+            : {}
         return {
-            idle: '/anim/idle2.fbx',
-            walk: '/anim/walk.fbx',
-            run: '/anim/run.fbx',
-            jump: '/anim/jump.fbx',
-            ...animationOverrides,
+            idle: basePath + '/anim/idle.fbx',
+            walk: basePath + '/anim/walk.fbx',
+            run: basePath + '/anim/run.fbx',
+            jump: basePath + '/anim/jump.fbx',
+            ...overridesWithBase,
         }
-    }, [animationOverrides])
+    }, [animationOverrides, basePath])
 
     const animations = useLoader(FBXLoader, Object.values(ANIMATIONS)).map((f) =>
         (f.animations[0]),

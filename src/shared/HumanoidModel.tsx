@@ -5,8 +5,10 @@ import * as THREE from "three";
 import { SkeletonUtils } from "three-stdlib";
 import useAnimationState from "./useAnimationStateBasic";
 
-const AnimatedModel = ({ model, animation = "idle", onClick, height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0], debug = false, retargetOptions, ...props }: {
-    model: string; animation?: string, height?: number,
+const AnimatedModel = ({ model, basePath = "/models/human/", animation = "idle", onClick, height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0], debug = false, retargetOptions, ...props }: {
+    model: string;
+    basePath?: string,
+    animation?: string, height?: number,
     animationOverrides?: { [key: string]: string },
     position?: [number, number, number],
     scale?: number,
@@ -15,7 +17,7 @@ const AnimatedModel = ({ model, animation = "idle", onClick, height = 1, animati
     retargetOptions?: { boneMap?: Record<string, string>, preserveHipPosition?: boolean }
 }) => {
     const groupRef = useRef<THREE.Group>(null);
-    const { scene, animations } = useGLTF(model);
+    const { scene, animations } = useGLTF(basePath + model);
     const [clonedScene, setClonedScene] = useState<THREE.Object3D | undefined>(undefined);
 
     // Create a clone of the scene to avoid modifying the original
@@ -32,7 +34,7 @@ const AnimatedModel = ({ model, animation = "idle", onClick, height = 1, animati
         }
     }, [scene]);
 
-    const { mixer, setThisAnimation } = useAnimationState(clonedScene, animationOverrides);
+    const { mixer, setThisAnimation } = useAnimationState(clonedScene, basePath, animationOverrides);
 
     useEffect(() => {
         if (animation && mixer) {
@@ -59,6 +61,6 @@ const AnimatedModel = ({ model, animation = "idle", onClick, height = 1, animati
 }
 
 // Preload common models here
-useGLTF.preload('/rigga.glb');
+// useGLTF.preload('/rigga.glb');
 
 export default AnimatedModel;

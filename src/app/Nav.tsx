@@ -9,7 +9,7 @@ const allExperiments = [
     'floor/ground', 'floor/terrainCollider', 'floor/heightmap',
     'lighting/simple', 'lighting/shadowmap', 'lighting/cascading', 'lighting/probe', 'lighting/reflection',
     'instancing/simple', 'instancing/merged',
-    'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/isocam', 'controllers/animations',
+    'controllers/wawa', 'controllers/shouldercam', 'controllers/click',
     'car/simple', 'car/model', 'car/road', 'car/driver',
     'editor/events', 'editor/store',
     'ik/ragdoll', 'ik/kick', 'ik/crawler',

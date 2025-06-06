@@ -8,7 +8,7 @@ export interface MeshData {
 
 export function addMeshComponent(gameObject: any, data: Partial<MeshData> = {}) {
     const meshData: MeshData = {
-        path: data.path || '/models/rigga.glb',
+        path: data.path || '/models/human/rigga.glb',
     };
     return {
         ...gameObject,

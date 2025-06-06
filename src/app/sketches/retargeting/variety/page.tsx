@@ -22,7 +22,7 @@ function RetargetedModels({ model = '/models/Soldier.glb', source = '/models/Mic
     const helpers = useRef<THREE.Group>(new THREE.Group());
 
     // Load animation from FBX file
-    const animationFBX = useLoader(FBXLoader, '/anim/idle3.fbx');
+    const animationFBX = useLoader(FBXLoader, '/models/human/anim/idle.fbx');
     const animationClip = animationFBX.animations[0];
 
     function getSourceWithFBXAnimation(sourceModel: THREE.Object3D, clip: THREE.AnimationClip) {
@@ -174,10 +174,10 @@ export default function Home() {
                             <RetargetedModels />
                         </group>
                         <group position={[-1, 0, 1]}>
-                            <RetargetedModels model="/models/rigga.glb" />
+                            <RetargetedModels model="/models/human/rigga/rigga.glb" />
                         </group>
                         <group position={[-1, 0, -1]}>
-                            <RetargetedModels model="/models/rigga2.glb" />
+                            <RetargetedModels model="/models/human/rigga/rigga2.glb" />
                         </group>
                         <group position={[1, 0, -1]}>
                             <RetargetedModels model="/models/Michelle.glb" />
