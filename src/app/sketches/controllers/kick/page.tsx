@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import React, { useState, useRef, useMemo } from "react";
+import { Canvas, useLoader } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
-import Character from "./Character"; // Import the new Character component
+import Character from "./Character";
 
 const NUM_CUBES = 10;
 const KICK_DISTANCE = 1.2;
@@ -24,39 +24,38 @@ const Scene = () => {
     const characterPositionRef = useRef<THREE.Vector3>(new THREE.Vector3());
 
     const texture = useLoader(THREE.TextureLoader, "/textures/floor/checker/FloorsCheckerboard_S_Diffuse.jpg");
-    const [cubePositions] = useState(() =>
-        Array.from({ length: NUM_CUBES }, () => [
-            Math.random() < 0.5 ? Math.random() * -8 - 2 : Math.random() * 8 + 2,
-            5 + Math.random() * 2,
-            Math.random() < 0.5 ? Math.random() * -8 - 2 : Math.random() * 8 + 2
-        ])
+    const cubePositions = useMemo<[number, number, number][]>(
+        () =>
+            Array.from({ length: NUM_CUBES }, () => [
+                Math.random() < 0.5 ? Math.random() * -8 - 2 : Math.random() * 8 + 2,
+                5 + Math.random() * 2,
+                Math.random() < 0.5 ? Math.random() * -8 - 2 : Math.random() * 8 + 2
+            ] as [number, number, number]),
+        []
     );
 
-    // Handle cube click: set walk target and kick info
     const handleCubeClick = (event: any, i: number) => {
         if (!cameraRef.current) return;
         const x = (event.clientX / window.innerWidth) * 2 - 1;
         const y = -(event.clientY / window.innerHeight) * 2 + 1;
-        raycaster.current.setFromCamera({ x, y }, cameraRef.current);
+        raycaster.current.setFromCamera(new THREE.Vector2(x, y), cameraRef.current);
         const mesh = cubeMeshRefs.current[i];
         if (!mesh) return;
         const intersects = raycaster.current.intersectObject(mesh, false);
-        if (intersects.length === 0) return;
+        if (!intersects.length) return;
         const intersection = intersects[0];
         const p = intersection.point.clone();
         const n = intersection.face?.normal.clone() || new THREE.Vector3(0, 1, 0);
-        const rotationMatrixObject = new THREE.Matrix4().extractRotation(mesh.matrixWorld);
-        const normalWorld = n.applyMatrix4(rotationMatrixObject).normalize();
-        // Walk to a point in front of the cube (along the normal)
+        const normalWorld = n.applyMatrix4(new THREE.Matrix4().extractRotation(mesh.matrixWorld)).normalize();
         const kickPos = p.clone().addScaledVector(normalWorld, KICK_DISTANCE);
         kickPos.y = 0;
         setTargetPosition(kickPos);
         setTargetCubeIndex(i);
         setKickTargetPoint(p.clone());
         setKickNormal(normalWorld.clone());
+        event.stopPropagation();
     };
 
-    // Callback for Character to clear kick state after kicking
     const handleKickReset = () => {
         setTargetCubeIndex(null);
         setKickTargetPoint(null);
@@ -88,18 +87,12 @@ const Scene = () => {
                         colliders="cuboid"
                         mass={1}
                         position={pos}
-                        ref={body => {
-                            cubeBodyRefs.current[i] = body;
-                        }}
+                        ref={body => { cubeBodyRefs.current[i] = body; }}
                     >
                         <mesh
                             castShadow
-                            ref={mesh => {
-                                cubeMeshRefs.current[i] = mesh as THREE.Mesh;
-                            }}
-                            onClick={e => {
-                                handleCubeClick(e, i);
-                            }}
+                            ref={mesh => { cubeMeshRefs.current[i] = mesh as THREE.Mesh; }}
+                            onClick={e => handleCubeClick(e, i)}
                         >
                             <boxGeometry args={[2, 2, 2]} />
                             <meshPhongMaterial map={texture} />
@@ -119,7 +112,6 @@ const Scene = () => {
                     onKickReset={handleKickReset}
                     characterPositionRef={characterPositionRef}
                 />
-                {/* Show a cone at the intersection point */}
                 {kickTargetPoint && kickNormal && (() => {
                     const quat = new THREE.Quaternion().setFromUnitVectors(
                         new THREE.Vector3(0, 1, 0),

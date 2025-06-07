@@ -39,6 +39,10 @@ const Character: React.FC<CharacterProps> = ({
 
     const modelRef = useRef<THREE.Group>(null);
 
+    // --- Debug sphere for left foot ---
+    const [leftFoot, setLeftFoot] = useState<THREE.Object3D | null>(null);
+    const leftFootSphereRef = useRef<THREE.Mesh>(null);
+
     // Load models and animations
     const model = useGLTF("/models/human/kachujin/Kachujin.glb");
     const kick = useGLTF("/models/human/kachujin/Kachujin@kick.glb");
@@ -54,6 +58,10 @@ const Character: React.FC<CharacterProps> = ({
                     child.castShadow = true;
                     child.frustumCulled = false;
                     child.geometry.computeVertexNormals();
+                }
+                // Find left foot bone/object
+                if (child.name === "LeftFoot") {
+                    setLeftFoot(child);
                 }
             });
             // Add kick and walk animations
@@ -97,6 +105,10 @@ const Character: React.FC<CharacterProps> = ({
                     const walkAngle = Math.atan2(direction.x, direction.z);
                     if (Math.abs(modelRef.current.rotation.y - walkAngle) > 0.02) {
                         setDesiredRotationY(walkAngle);
+                        // Play walk animation while turning
+                        if (actions["walk"] && !actions["walk"].isRunning()) {
+                            actions["walk"].reset().fadeIn(0.2).play();
+                        }
                         return;
                     }
                 }
@@ -123,6 +135,10 @@ const Character: React.FC<CharacterProps> = ({
                         if (Math.abs(modelRef.current.rotation.y - kickAngle) > 0.02) {
                             setDesiredRotationY(kickAngle);
                             setReadyToKick(true);
+                            // Play walk animation while turning to kick
+                            if (actions["walk"] && !actions["walk"].isRunning()) {
+                                actions["walk"].reset().fadeIn(0.2).play();
+                            }
                             return;
                         }
                     }
@@ -163,9 +179,25 @@ const Character: React.FC<CharacterProps> = ({
             setKickImpulseApplied(false);
             onKickReset();
         }
+
+        // Update debug sphere position to follow left foot
+        if (leftFoot && leftFootSphereRef.current) {
+            leftFoot.getWorldPosition(leftFootSphereRef.current.position);
+        }
     });
 
-    return <primitive object={model.scene} ref={modelRef} />;
+    return (
+        <>
+            <primitive object={model.scene} ref={modelRef} />
+            {/* Debug sphere for left foot */}
+            {leftFoot && (
+                <mesh ref={leftFootSphereRef}>
+                    <sphereGeometry args={[0.12, 16, 16]} />
+                    <meshBasicMaterial wireframe color={0x00ff00} />
+                </mesh>
+            )}
+        </>
+    );
 };
 
 export default Character;
