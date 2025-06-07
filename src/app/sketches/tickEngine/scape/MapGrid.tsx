@@ -1,5 +1,5 @@
 "use client";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import { ImprovedNoise } from "three/examples/jsm/Addons.js";
 
@@ -192,23 +192,37 @@ export default function MapGrid({
     // Generate texture from height data
     const texture = useMemo(() => generateTexture(heightData, width, depth), [heightData, width, depth]);
 
+    // Track pointer down position to distinguish click vs drag
+    const pointerDownRef = useRef<{ x: number; y: number } | null>(null);
+
     return (
         <>
             <mesh
                 geometry={geometry}
-                position={[-tileSize / 2, 0, -tileSize / 2]} // Offset mesh by half tileSize on x and z in the negative direction
+                position={[-tileSize / 2, 0, -tileSize / 2]}
                 receiveShadow
-                onClick={e => {
-                    if (onTileClick) {
+                onPointerDown={e => {
+                    pointerDownRef.current = { x: e.clientX, y: e.clientY };
+                }}
+                onPointerUp={e => {
+                    if (!onTileClick || !pointerDownRef.current) return;
+                    const dx = e.clientX - pointerDownRef.current.x;
+                    const dy = e.clientY - pointerDownRef.current.y;
+                    const distanceSq = dx * dx + dy * dy;
+                    // Only treat as click if pointer hasn't moved much (e.g., < 5px)
+                    if (distanceSq < 25) {
                         const point = e.point;
-                        // Adjust for mesh offset
                         const x = point.x + tileSize / 2;
                         const z = point.z + tileSize / 2;
-                        // Convert world position to grid indices
                         const i = Math.floor(x / tileSize);
                         const j = Math.floor(z / tileSize);
                         onTileClick({ x: point.x, y: point.y, z: point.z, i, j });
                     }
+                    pointerDownRef.current = null;
+                }}
+                // Optionally clear onPointerOut to avoid stuck state
+                onPointerOut={() => {
+                    pointerDownRef.current = null;
                 }}
             >
                 {texture ? (

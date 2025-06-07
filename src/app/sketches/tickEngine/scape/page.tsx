@@ -3,11 +3,11 @@
 import Player from "./Player";
 import { useState, useEffect } from "react";
 import FakeServer from "./ScapeServer";
-import { MapEntity, MapEntityMesh } from "./MapEntity";
+import { MapEntity, MapEntityMesh, MapEntityInstancesProvider } from "./MapEntity";
 import { InventoryUI } from "./ui/Inventory";
 import MapGrid, { generateHeight } from "./MapGrid";
-import FogBG from "../lighting/reflection/FogBG";
-import { WebGPUCanvas } from "../tsl/webgpu/WebGPUCanvas";
+import { WebGPUCanvas } from "../../tsl/webgpu/WebGPUCanvas";
+import FogBG from "../../lighting/reflection/FogBG";
 
 const TILE_SIZE = 0.66; // Size of each tile in the tilemap
 const GRID_WIDTH = 16;
@@ -81,21 +81,23 @@ export default function Home() {
                         </mesh>
                     )}
                     {/* Render map entities (trees, ores) */}
-                    {entities.map(entity => (
-                        <MapEntityMesh
-                            key={entity.id}
-                            entity={entity}
-                            position={[
-                                (entity.pos[0]) * TILE_SIZE,
-                                getY(entity.pos[0], entity.pos[1]),
-                                (entity.pos[1]) * TILE_SIZE
-                            ]}
-                            onClick={e => {
-                                e.stopPropagation();
-                                handleEntityClick(entity);
-                            }}
-                        />
-                    ))}
+                    <MapEntityInstancesProvider>
+                        {entities.map(entity => (
+                            <MapEntityMesh
+                                key={entity.id}
+                                entity={entity}
+                                position={[
+                                    (entity.pos[0]) * TILE_SIZE,
+                                    getY(entity.pos[0], entity.pos[1]),
+                                    (entity.pos[1]) * TILE_SIZE
+                                ]}
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    handleEntityClick(entity);
+                                }}
+                            />
+                        ))}
+                    </MapEntityInstancesProvider>
                     {Object.entries(allPlayers).map(([id, state]) => {
                         const currentAction = FakeServer.getCurrentAction(id);
                         let targetPosition: [number, number, number] | undefined = undefined;

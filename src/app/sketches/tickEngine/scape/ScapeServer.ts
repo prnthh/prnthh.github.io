@@ -1,4 +1,4 @@
-import { BaseServer, BasePlayerState, BaseDrop, BaseEntity } from "./BaseServer";
+import { BaseServer, BasePlayerState, BaseDrop, BaseEntity } from "../BaseServer";
 import { MapEntity, MapEntityType } from "./MapEntity";
 
 // Centralized fake server for game state

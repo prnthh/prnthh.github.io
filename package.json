@@ -13,6 +13,7 @@
     "@react-three/fiber": "^9.1.2",
     "@react-three/rapier": "^2.1.0",
     "@react-three/xr": "^6.6.16",
+    "@three.ez/instanced-mesh": "^0.3.5",
     "@tweenjs/tween.js": "^25.0.0",
     "arancini": "^8.0.0",
     "next": "15.3.2",

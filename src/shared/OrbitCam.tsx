@@ -12,7 +12,7 @@ export const OrbitCam = ({
     maxAzimuth = Infinity,
     cameraSpeed = 0.03, // Slower default speed
     debug = false,
-    smoothing = 0.1 // New prop for smoothing
+    smoothing = 1 // New prop for smoothing
 }: {
     radius?: number,
     maxRadius?: number,
