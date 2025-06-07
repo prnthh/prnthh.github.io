@@ -47,6 +47,18 @@ const Scene = () => {
     const { actions, mixer } = useAnimations(animations, modelRef);
     mixerRef.current = mixer;
 
+    // Helper to play only the requested action and pause others
+    const playExclusiveAction = (actionName: string) => {
+        if (!actions[actionName]) return;
+        Object.keys(actions).forEach(key => {
+            if (key !== actionName && actions[key].isRunning()) {
+                actions[key].fadeOut(0.2);
+            }
+        });
+        actions[actionName].reset().fadeIn(0.2).play();
+        setActiveAction(actions[actionName]);
+    };
+
     useEffect(() => {
         if (model.scene && kick.animations && walk.animations && modelRef.current) {
             model.scene.traverse((child) => {
@@ -104,16 +116,9 @@ const Scene = () => {
         setTargetPosition(walkToPoint);
         const rotationMatrix = new THREE.Matrix4().lookAt(walkToPoint, modelRef.current.position, modelRef.current.up);
         setTargetQuaternion(new THREE.Quaternion().setFromRotationMatrix(rotationMatrix));
-
         setTargetCubeIndex(i);
-
-        // Start walk animation
-        if (actions["walk"]) {
-            setActiveAction(actions["walk"]);
-            actions["walk"].reset().fadeIn(0.2).play();
-        }
-
-        setKickTargetPoint(p.clone()); // Save intersection point for red box
+        // REMOVE: playExclusiveAction("walk");
+        setKickTargetPoint(p.clone());
     };
 
     // Animation and physics update
@@ -134,25 +139,42 @@ const Scene = () => {
                     if (controlsRef.current) {
                         controlsRef.current.target.set(modelRef.current.position.x, modelRef.current.position.y + 1, modelRef.current.position.z);
                     }
+                    // Always play walk when walking
+                    if (actions["walk"] && !actions["walk"].isRunning()) {
+                        actions["walk"].reset().fadeIn(0.2).play();
+                    }
                 } else {
                     // Only trigger kick if facing target
                     const angle = modelRef.current.quaternion.angleTo(targetQuaternion);
                     if (angle < 0.05) { // ~3 degrees
                         setTargetPosition(null);
+                        // Fade out walk when done walking
+                        if (actions["walk"] && actions["walk"].isRunning()) {
+                            actions["walk"].fadeOut(0.2);
+                        }
                         // Prepare to kick
-                        if (actions["kick"]) {
-                            setActiveAction(actions["kick"]);
+                        if (actions["kick"] && (!actions["kick"].isRunning())) {
+                            playExclusiveAction("kick");
                             actions["kick"].clampWhenFinished = true;
                             actions["kick"].loop = THREE.LoopOnce;
-                            actions["kick"].reset().fadeIn(0.2).play();
                         }
                     }
+                }
+            } else {
+                // Not walking or kicking, clear activeAction if not in kick
+                if (activeAction && (!actions["kick"] || !actions["kick"].isRunning())) {
+                    setActiveAction(null);
                 }
             }
 
             // Rotate towards target
             if (!modelRef.current.quaternion.equals(targetQuaternion)) {
                 modelRef.current.quaternion.slerp(targetQuaternion, delta * 10);
+            }
+
+            // Fade out walk if not walking and it's still running
+            if (!targetPosition && actions["walk"] && actions["walk"].isRunning()) {
+                actions["walk"].fadeOut(0.2);
             }
 
             // Sync left foot physics body to animated foot
@@ -174,9 +196,9 @@ const Scene = () => {
                     setKickImpulseApplied(true);
                     const cubeBody = cubeBodyRefs.current[targetCubeIndex];
                     if (cubeBody) {
-                        // Apply impulse in the direction the character is facing
-                        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(modelRef.current.quaternion);
-                        cubeBody.applyImpulse({ x: forward.x * 10, y: 2, z: forward.z * 10 }, true);
+                        // Apply impulse in the direction the character is facing (reverse direction)
+                        const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(modelRef.current.quaternion);
+                        cubeBody.applyImpulse({ x: forward.x * 50, y: 10, z: forward.z * 50 }, true); // 5x stronger
                     }
                 }
             }
