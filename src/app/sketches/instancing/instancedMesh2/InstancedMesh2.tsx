@@ -44,7 +44,6 @@ const InstanceMeshTest = () => {
     }, []);
 
     return (
-        // @ts-expect-error InstancedMesh2 is not a standard Three.js component, but an extension
         <instancedMesh2
             ref={ref}
             args={[geometry, material]}
