@@ -5,7 +5,6 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { Box, OrbitControls } from "@react-three/drei";
 import Ped from "./ped/ped";
 import { useState } from "react";
-import MovableTarget from "@/shared/MovableTarget";
 import { Terrain } from "@/app/sketches/floor/terrainCollider/terrain";
 
 export default function Home() {

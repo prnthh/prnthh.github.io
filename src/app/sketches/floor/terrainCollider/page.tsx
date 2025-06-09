@@ -4,7 +4,6 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Box, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useState } from "react";
-import MovableTarget from "@/shared/MovableTarget";
 import { Terrain } from "./terrain";
 
 export default function Home() {

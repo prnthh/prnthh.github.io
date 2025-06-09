@@ -4,9 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Box, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useState } from "react";
-import MovableTarget from "@/shared/MovableTarget";
 import { Terrain } from "./terrain";
-import Ped from "../../controllers/click/ped/ped";
 import { ShadowLight } from "@/app/sketches/lighting/shadowmap/ShadowLight";
 
 export default function Home() {
