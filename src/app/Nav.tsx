@@ -109,19 +109,26 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
 }
 
 export default function Nav() {
+    const [hidden, setHidden] = useState(false);
     const [search, setSearch] = useState("");
     const demoTree = buildTree(allExperiments);
     const pathname = usePathname();
+
     return (
-        <div className="absolute top-2 left-2 bg-slate-500 rounded flex flex-col p-2 max-h-[90vh] overflow-auto min-w-[220px] shadow-lg border border-slate-600">
-            <input
-                className="mb-2 px-2 py-1 rounded border border-slate-400 bg-slate-100 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
-                type="text"
-                placeholder="Search..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-            />
-            <DemoTree node={demoTree} search={search} currentPath={pathname} />
+        <div className="absolute top-2 left-2">
+            {!hidden && <div className="bg-slate-500 rounded flex flex-col p-2 max-h-[90vh] overflow-auto min-w-[220px] shadow-lg border border-slate-600">
+                <input
+                    className="mb-2 px-2 py-1 rounded border border-slate-400 bg-slate-100 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    type="text"
+                    placeholder="Search..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                />
+                <DemoTree node={demoTree} search={search} currentPath={pathname} />
+            </div>}
+            <button onClick={() => setHidden(!hidden)} className="text-xs text-center mt-2 text-black/60">
+                {hidden ? '🫥' : '🙂'}
+            </button>
         </div>
     );
 }
