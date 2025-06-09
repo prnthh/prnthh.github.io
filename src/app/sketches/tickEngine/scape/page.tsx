@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import FakeServer from "./ScapeServer";
+import FakeServer, { ScapeAction } from "./ScapeServer";
 import { MapEntity, MapEntityMesh, MapEntityInstancesProvider } from "./MapEntity";
 import { InventoryUI } from "./ui/Inventory";
 import MapGrid, { generateHeight } from "./MapGrid";
@@ -14,26 +14,86 @@ const TILE_SIZE = 0.66; // Size of each tile in the tilemap
 const GRID_WIDTH = 16;
 const GRID_DEPTH = 16;
 
+function applyActions(
+    actions: ScapeAction[],
+    state: {
+        players: Record<string, any>,
+        drops: any[],
+        entities: MapEntity[]
+    }
+) {
+    for (const action of actions) {
+        switch (action.type) {
+            case "addPlayer":
+                state.players[action.player.id] = { ...action.player };
+                break;
+            case "removePlayer":
+                delete state.players[action.playerId];
+                break;
+            case "updatePlayer":
+                state.players[action.player.id] = { ...action.player };
+                break;
+            case "addEntity":
+                state.entities.push({ ...action.entity });
+                break;
+            case "removeEntity":
+                state.entities = state.entities.filter(e => e.id !== action.entityId);
+                break;
+            case "updateEntity":
+                state.entities = state.entities.map(e => e.id === action.entity.id ? { ...action.entity } : e);
+                break;
+            case "addDrop":
+                state.drops.push({ ...action.drop });
+                break;
+            case "removeDrop":
+                state.drops = state.drops.filter(d => d.id !== action.dropId);
+                break;
+            case "updateDrop":
+                state.drops = state.drops.map(d => d.id === action.drop.id ? { ...action.drop } : d);
+                break;
+        }
+    }
+}
+
 export default function Home() {
     const [playerId] = useState(() => Math.random().toString(36).slice(2) + Date.now());
-
     const [heightData] = useState(() => generateHeight(GRID_WIDTH, GRID_DEPTH));
 
-    const [playerPos, setPlayerPos] = useState(FakeServer.getPlayerPos(playerId));
-    const [allPlayers, setAllPlayers] = useState(FakeServer.getAllPlayers());
-    const [drops, setDrops] = useState(FakeServer.getDrops());
-    const [entities, setEntities] = useState<MapEntity[]>(FakeServer.getEntities());
-    const [navPointer, setNavPointer] = useState<[number, number, number] | null>(null); // NavPointer world coords
-    const [navPointerKey, setNavPointerKey] = useState(0); // Key to force GIF replay
+    const [actionLog, setActionLog] = useState<ScapeAction[]>([]);
+
+    // Action-based state
+    const [players, setPlayers] = useState<Record<string, any>>({});
+    const [drops, setDrops] = useState<any[]>([]);
+    const [entities, setEntities] = useState<MapEntity[]>([]);
+    const [navPointer, setNavPointer] = useState<[number, number, number] | null>(null);
+    const [navPointerKey, setNavPointerKey] = useState(0);
+
+    // On mount, get snapshot
+    useEffect(() => {
+        const snapshot = FakeServer.getSnapshotActions();
+        const state = { players: {}, drops: [], entities: [] };
+        applyActions(snapshot, state);
+        setPlayers({ ...state.players });
+        setDrops([...state.drops]);
+        setEntities([...state.entities]);
+    }, []);
+
+    // On tick, apply actions
     useEffect(() => {
         const interval = setInterval(() => {
-            setPlayerPos(FakeServer.getPlayerPos(playerId));
-            setAllPlayers({ ...FakeServer.getAllPlayers() });
-            setDrops([...FakeServer.getDrops()]);
-            setEntities([...FakeServer.getEntities()]);
+            const actions = FakeServer.getAndClearActions();
+            if (actions.length === 0) return;
+            setPlayers(prev => {
+                const state = { players: { ...prev }, drops: [...drops], entities: [...entities] };
+                applyActions(actions, state);
+                setDrops([...state.drops]);
+                setEntities([...state.entities]);
+                return { ...state.players };
+            });
+            setActionLog(prev => [...prev, ...actions]); // Only called if actions.length > 0
         }, 200);
         return () => clearInterval(interval);
-    }, [playerId]);
+    }, [drops, entities]);
 
     // Click a player to attack them
     const handlePlayerClick = (targetId: string) => {
@@ -60,6 +120,8 @@ export default function Home() {
         const idx = j * GRID_WIDTH + i;
         return heightData[idx] * 0.08;
     }
+
+    const playerPos = players[playerId]?.pos || [0, 0];
 
     return (
         <div className="items-center justify-items-center min-h-screen">
@@ -107,8 +169,8 @@ export default function Home() {
                             />
                         ))}
                     </MapEntityInstancesProvider>
-                    {Object.entries(allPlayers).map(([id, state]) => {
-                        const currentAction = FakeServer.getCurrentAction(id);
+                    {Object.entries(players).map(([id, state]) => {
+                        const currentAction = state.currentAction;
                         let targetPosition: [number, number, number] | undefined = undefined;
                         if (
                             currentAction === "attack" &&
@@ -117,7 +179,7 @@ export default function Home() {
                             "targetId" in state.currentGoal
                         ) {
                             const targetId = (state.currentGoal as { type: "attack"; targetId: string }).targetId;
-                            const target = allPlayers[targetId];
+                            const target = players[targetId];
                             if (target) {
                                 targetPosition = [
                                     (target.pos[0]) * TILE_SIZE,
@@ -186,7 +248,7 @@ export default function Home() {
                     <FogBG />
                 </WebGPUCanvas>
             </div>
-            <InventoryUI playerId={playerId} />
+            <InventoryUI playerId={playerId} actionLog={actionLog} />
         </div>
     );
 }
