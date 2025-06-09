@@ -228,7 +228,7 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
 
         {/* HP Bar and Damage Bubble */}
         <Html center position={[0, .7, 0]} style={{ pointerEvents: "none", minWidth: 60 }}>
-          <div style={{ position: 'relative', width: 50, height: 14 }}>
+          <div className="z-20" style={{ position: 'relative', width: 50, height: 14 }}>
             {/* HP Bar */}
             <div style={{
               width: '100%',

@@ -1,6 +1,5 @@
 "use client";
 
-import Player from "./Player";
 import { useState, useEffect } from "react";
 import FakeServer from "./ScapeServer";
 import { MapEntity, MapEntityMesh, MapEntityInstancesProvider } from "./MapEntity";
@@ -8,6 +7,8 @@ import { InventoryUI } from "./ui/Inventory";
 import MapGrid, { generateHeight } from "./MapGrid";
 import { WebGPUCanvas } from "../../tsl/webgpu/WebGPUCanvas";
 import FogBG from "../../lighting/reflection/FogBG";
+import { Html } from "@react-three/drei";
+import Player from "./Player";
 
 const TILE_SIZE = 0.66; // Size of each tile in the tilemap
 const GRID_WIDTH = 16;
@@ -23,6 +24,7 @@ export default function Home() {
     const [drops, setDrops] = useState(FakeServer.getDrops());
     const [entities, setEntities] = useState<MapEntity[]>(FakeServer.getEntities());
     const [navPointer, setNavPointer] = useState<[number, number, number] | null>(null); // NavPointer world coords
+    const [navPointerKey, setNavPointerKey] = useState(0); // Key to force GIF replay
     useEffect(() => {
         const interval = setInterval(() => {
             setPlayerPos(FakeServer.getPlayerPos(playerId));
@@ -71,14 +73,21 @@ export default function Home() {
                         onTileClick={({ i, j, x, y, z }) => {
                             FakeServer.setGoal(playerId, { type: "walkTo", pos: [i, j] });
                             setNavPointer([x, getY(i, j), z]);
+                            setNavPointerKey(k => k + 1); // Increment key to replay GIF
                         }}
                     />
                     {/* NavPointer debug cube */}
                     {navPointer && (
-                        <mesh position={navPointer}>
-                            <boxGeometry args={[0.18, 0.18, 0.18]} />
-                            <meshStandardMaterial color="red" />
-                        </mesh>
+                        <Html position={navPointer} className="pointer-events-none">
+                            <div className="w-4 h-4 -translate-x-1/2 -translate-y-1/2">
+                                <img
+                                    key={navPointerKey}
+                                    src={`/ui/click.gif?key=${navPointerKey}`}
+                                    alt="Nav Pointer"
+                                    className="w-full z-40"
+                                />
+                            </div>
+                        </Html>
                     )}
                     {/* Render map entities (trees, ores) */}
                     <MapEntityInstancesProvider>
