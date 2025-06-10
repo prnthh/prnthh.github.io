@@ -29,6 +29,24 @@ function createNode(type: "object" | "spotlight" | "orthographicCamera" = "objec
     };
 }
 
+// AddMenu component for add button and menu
+function AddMenu({ onAdd }: { onAdd: (type: "object" | "spotlight" | "orthographicCamera") => void }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <span style={{ display: 'inline-block', position: 'relative' }}>
+            <button style={{ marginLeft: 8 }} onClick={e => { e.stopPropagation(); setOpen(true); }}>+</button>
+            {open && (
+                <div style={{ display: 'inline-block', marginLeft: 4, background: '#f8f8f8', border: '1px solid #ccc', borderRadius: 4, padding: 4, zIndex: 10, position: 'absolute', left: 0 }}>
+                    <button style={{ display: 'block', width: '100%' }} onClick={e => { e.stopPropagation(); onAdd("object"); setOpen(false); }}>Object</button>
+                    <button style={{ display: 'block', width: '100%' }} onClick={e => { e.stopPropagation(); onAdd("spotlight"); setOpen(false); }}>Spotlight</button>
+                    <button style={{ display: 'block', width: '100%' }} onClick={e => { e.stopPropagation(); onAdd("orthographicCamera"); setOpen(false); }}>OrthoCam</button>
+                    <button style={{ display: 'block', width: '100%', color: '#888' }} onClick={e => { e.stopPropagation(); setOpen(false); }}>Cancel</button>
+                </div>
+            )}
+        </span>
+    );
+}
+
 function SceneGraphTree({
     node,
     selectedId,
@@ -70,9 +88,7 @@ function SceneGraphTree({
             }}
         >
             {node.name} <span style={{ fontSize: 10, color: '#888' }}>({node.type})</span>
-            <button style={{ marginLeft: 8 }} onClick={e => { e.stopPropagation(); onAdd(node, "object"); }}>+Obj</button>
-            <button style={{ marginLeft: 2 }} onClick={e => { e.stopPropagation(); onAdd(node, "spotlight"); }}>+Spot</button>
-            <button style={{ marginLeft: 2 }} onClick={e => { e.stopPropagation(); onAdd(node, "orthographicCamera"); }}>+OrthoCam</button>
+            <AddMenu onAdd={type => onAdd(node, type)} />
             {node.children.map(child => (
                 <SceneGraphTree
                     key={child.id}
@@ -167,6 +183,8 @@ function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate
 export default function Home() {
     const [root, setRoot] = useState<SceneGraphNode>(() => createNode("object", "Root"));
     const [selected, setSelected] = useState<SceneGraphNode | null>(null);
+    const [showSceneDetails, setShowSceneDetails] = useState(false);
+    const [sceneText, setSceneText] = useState<string>("");
     const dragNode = useRef<SceneGraphNode | null>(null);
 
     // Add a new node as a child
@@ -262,6 +280,26 @@ export default function Home() {
         setSelected(updatedNode);
     };
 
+    // Keep sceneText in sync with root
+    React.useEffect(() => {
+        if (!showSceneDetails) return;
+        setSceneText(JSON.stringify(root, null, 2));
+    }, [root, showSceneDetails]);
+
+    // Handle textarea blur (load scene if valid JSON)
+    const handleSceneTextBlur = () => {
+        try {
+            const parsed = JSON.parse(sceneText);
+            // Basic validation: must have id, name, type, children
+            if (parsed && typeof parsed === 'object' && parsed.id && parsed.name && parsed.type && Array.isArray(parsed.children)) {
+                setRoot(parsed);
+                setSelected(null);
+            }
+        } catch (e) {
+            // ignore parse errors
+        }
+    };
+
     return (
         <>
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -277,7 +315,7 @@ export default function Home() {
                     <OrbitControls />
                 </Canvas>
             </div>
-            <div style={{ position: "absolute", top: 100, left: 0, width: 300, height: "100%", overflow: "auto", background: "#fff", padding: 16 }}>
+            <div className="absolute top-32 left-2 width-[300px] bg-slate-800/20 rounded p-1">
                 <h2>Scene Graph</h2>
                 <SceneGraphTree
                     node={root}
@@ -288,12 +326,39 @@ export default function Home() {
                     onDrop={handleDrop}
                 />
             </div>
-            {selected && (
-                <div style={{ position: "absolute", top: 0, right: 0, width: 300, padding: 16, background: "#fff", borderRight: "1px solid #ddd", height: "100%", overflow: "auto" }}>
-                    <h2>Entity Details</h2>
-                    <EntityDetailsPanel node={selected} onUpdate={handleUpdateSelected} />
+            <div className="absolute top-4 right-2 width-[300px] bg-slate-800/20 rounded p-1">
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <button
+                        style={{ fontWeight: !showSceneDetails ? 'bold' : undefined }}
+                        onClick={() => setShowSceneDetails(false)}
+                    >
+                        Entity Details
+                    </button>
+                    <button
+                        style={{ fontWeight: showSceneDetails ? 'bold' : undefined }}
+                        onClick={() => setShowSceneDetails(true)}
+                    >
+                        Scene Details
+                    </button>
                 </div>
-            )}
+                {!showSceneDetails && selected && (
+                    <>
+                        <h2>Entity Details</h2>
+                        <EntityDetailsPanel node={selected} onUpdate={handleUpdateSelected} />
+                    </>
+                )}
+                {showSceneDetails && (
+                    <>
+                        <h2>Scene</h2>
+                        <textarea
+                            style={{ width: '100%', minHeight: 200, fontFamily: 'monospace', fontSize: 12 }}
+                            value={sceneText}
+                            onChange={e => setSceneText(e.target.value)}
+                            onBlur={handleSceneTextBlur}
+                        />
+                    </>
+                )}
+            </div>
         </>
     );
 }
