@@ -90,7 +90,9 @@ export default function Home() {
                 setEntities([...state.entities]);
                 return { ...state.players };
             });
-            setActionLog(prev => [...prev, ...actions]); // Only called if actions.length > 0
+            // setActionLog(prev => [...prev, ...actions]); // Only called if actions.length > 0
+            setActionLog(prev => [...prev, ...actions.map(a => JSON.parse(JSON.stringify(a)))]); // Only called if actions.length > 0
+
         }, 200);
         return () => clearInterval(interval);
     }, [drops, entities]);

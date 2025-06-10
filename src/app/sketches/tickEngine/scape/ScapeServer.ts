@@ -1,6 +1,16 @@
 import { BaseServer, BasePlayerState, BaseDrop, BaseEntity } from "../BaseServer";
 import { MapEntity, MapEntityType } from "./MapEntity";
 
+// Action log types for ScapeServer
+type ScapeAction =
+    | { type: "addPlayer"; player: ScapePlayerState & { id: string } }
+    | { type: "updatePlayer"; player: ScapePlayerState & { id: string } }
+    | { type: "addDrop"; drop: ScapeDrop }
+    | { type: "removeDrop"; dropId: string }
+    | { type: "updateDrop"; drop: ScapeDrop }
+    | { type: "addEntity"; entity: ScapeEntity }
+    | { type: "updateEntity"; entity: ScapeEntity };
+
 // Centralized fake server for game state
 
 // Action types
@@ -27,13 +37,10 @@ const GRID_SIZE = 16; // Size of each grid cell in the tilemap
 
 const tilemap = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(1));
 
-// Returns true if a tile is occupied by a map entity (always blocks map entity tiles)
+// --- Utility Functions ---
 function isTileBlocked(x: number, y: number, entities: MapEntity[]) {
     return entities.some(e => e.pos[0] === x && e.pos[1] === y);
 }
-
-// Returns the nearest walkable adjacent tile to (x, y) from fromPos
-// Never allows stepping onto a map entity tile
 function getNearestAdjacentTile(fromPos: [number, number], x: number, y: number, entities: MapEntity[]) {
     const directions = [
         [1, 0], [-1, 0], [0, 1], [0, -1],
@@ -57,8 +64,6 @@ function getNearestAdjacentTile(fromPos: [number, number], x: number, y: number,
     }
     return best;
 }
-
-// Basic BFS pathfinding with max depth
 function bfsPathfind(start: [number, number], goal: [number, number], entities: MapEntity[], maxDepth = 32): [number, number][] | null {
     if (start[0] === goal[0] && start[1] === goal[1]) return [start];
     // Never allow path to end on a map entity tile
@@ -102,7 +107,6 @@ function bfsPathfind(start: [number, number], goal: [number, number], entities: 
     }
     return null;
 }
-
 function getStep(from: [number, number], to: [number, number], entities: MapEntity[]) {
     if (from[0] === to[0] && from[1] === to[1]) return from;
     const path = bfsPathfind(from, to, entities, 32);
@@ -111,24 +115,11 @@ function getStep(from: [number, number], to: [number, number], entities: MapEnti
     }
     return from;
 }
-
-// Helper to find entity by id
 function getEntity(entityId: string, entities: MapEntity[]): MapEntity | undefined {
     return entities.find(e => e.id === entityId);
 }
 
-// Action log types for state sync
-export type ScapeAction =
-    | { type: "addPlayer"; player: ScapePlayerState & { id: string } }
-    | { type: "removePlayer"; playerId: string }
-    | { type: "updatePlayer"; player: ScapePlayerState & { id: string } }
-    | { type: "addEntity"; entity: ScapeEntity }
-    | { type: "removeEntity"; entityId: string }
-    | { type: "updateEntity"; entity: ScapeEntity }
-    | { type: "addDrop"; drop: ScapeDrop }
-    | { type: "removeDrop"; dropId: string }
-    | { type: "updateDrop"; drop: ScapeDrop };
-
+// --- ScapeServer Class ---
 class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
     private actionLog: ScapeAction[] = [];
 
@@ -142,6 +133,123 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
         return player;
     }
 
+    // --- Goal Handlers ---
+    private handleWalkTo(player: ScapePlayerState, goal: any, playerId: string) {
+        const prevPos = [...player.pos];
+        player.pos = getStep(player.pos, goal.pos, this.entities);
+        player.actionCooldown = 0;
+        if (player.pos[0] === goal.pos[0] && player.pos[1] === goal.pos[1]) {
+            player.currentGoal = undefined;
+        }
+        if (player.pos[0] !== prevPos[0] || player.pos[1] !== prevPos[1] || player.currentGoal === undefined) {
+            this.logPlayerUpdate(player, playerId);
+        }
+    }
+    private handleAttack(player: ScapePlayerState, goal: any, playerId: string) {
+        const target = this.players[goal.targetId];
+        if (!target || target.health <= 0) {
+            player.currentGoal = undefined;
+            if (target && target.health <= 0) {
+                if (target.currentGoal && target.currentGoal.type === "attack" && target.currentGoal.targetId === playerId) {
+                    target.currentGoal = undefined;
+                }
+                this.drops.push({
+                    id: 'drop_' + Math.random().toString(36).slice(2) + Date.now(),
+                    itemKey: 'bone',
+                    quantity: 1,
+                    pos: [...target.pos],
+                    expiryTicks: 100
+                });
+                this.actionLog.push({ type: "addDrop", drop: this.drops[this.drops.length - 1] });
+                target.health = 10;
+                target.pos = [0, 0];
+                this.logPlayerUpdate(target, goal.targetId);
+            }
+            this.logPlayerUpdate(player, playerId);
+        } else {
+            const adj = getNearestAdjacentTile(player.pos, target.pos[0], target.pos[1], this.entities);
+            if (!adj) {
+                player.currentGoal = undefined;
+                player.actionCooldown = 0;
+                this.logPlayerUpdate(player, playerId);
+            } else if (player.pos[0] !== adj[0] || player.pos[1] !== adj[1]) {
+                player.pos = getStep(player.pos, adj, this.entities);
+                player.actionCooldown = 0;
+                this.logPlayerUpdate(player, playerId);
+            } else {
+                target.health = Math.max(0, target.health - 1);
+                player.actionCooldown = 2;
+                player.currentAction = "attack";
+                this.logPlayerUpdate(target, goal.targetId);
+                if (!target.currentGoal) {
+                    target.currentGoal = { type: "attack", targetId: playerId };
+                }
+                this.logPlayerUpdate(player, playerId);
+            }
+        }
+    }
+    private handlePickupDrop(player: ScapePlayerState, goal: any, playerId: string) {
+        const drop = this.drops.find(d => d.id === goal.dropId);
+        if (!drop) {
+            player.currentGoal = undefined;
+            player.actionCooldown = 0;
+            this.logPlayerUpdate(player, playerId);
+        } else if (player.pos[0] !== drop.pos[0] || player.pos[1] !== drop.pos[1]) {
+            player.pos = getStep(player.pos, drop.pos, this.entities);
+            player.actionCooldown = 0;
+            this.logPlayerUpdate(player, playerId);
+        } else {
+            this.addToInventory(playerId, drop.itemKey, drop.quantity);
+            this.actionLog.push({ type: "removeDrop", dropId: drop.id });
+            this.drops = this.drops.filter(d => d.id !== drop.id);
+            player.currentGoal = undefined;
+            player.actionCooldown = 0;
+            this.logPlayerUpdate(player, playerId);
+        }
+    }
+    private handleExtractResource(player: ScapePlayerState, goal: any, playerId: string) {
+        const entity = getEntity(goal.entityId, this.entities);
+        if (!entity) {
+            player.currentGoal = undefined;
+            player.actionCooldown = 0;
+            this.logPlayerUpdate(player, playerId);
+        } else {
+            const adj = getNearestAdjacentTile(player.pos, entity.pos[0], entity.pos[1], this.entities);
+            if (!adj) {
+                player.currentGoal = undefined;
+                player.actionCooldown = 0;
+                this.logPlayerUpdate(player, playerId);
+            } else if (player.pos[0] !== adj[0] || player.pos[1] !== adj[1]) {
+                player.pos = getStep(player.pos, adj, this.entities);
+                player.actionCooldown = 0;
+                this.logPlayerUpdate(player, playerId);
+            } else if (entity.depleted || entity.resourceAmount <= 0) {
+                player.currentGoal = undefined;
+                player.actionCooldown = 0;
+                this.logPlayerUpdate(player, playerId);
+            } else {
+                entity.resourceAmount -= RESOURCE_EXTRACTION_AMOUNT;
+                if (entity.resourceAmount <= 0) {
+                    entity.resourceAmount = 0;
+                    entity.depleted = true;
+                    entity.replenishTicksLeft = RESOURCE_REPLENISH_TICKS;
+                }
+                let itemKey = "unknown";
+                if (entity.type.kind === "tree") itemKey = entity.type.treeType + "_log";
+                if (entity.type.kind === "ore") itemKey = entity.type.oreType + "_ore";
+                this.addToInventory(playerId, itemKey, 1);
+                player.actionCooldown = RESOURCE_EXTRACTION_COOLDOWN;
+                player.currentAction = "extract";
+                this.actionLog.push({ type: "updateEntity", entity: { ...entity } });
+                if (entity.depleted) player.currentGoal = undefined;
+                this.logPlayerUpdate(player, playerId);
+            }
+        }
+    }
+    private logPlayerUpdate(player: ScapePlayerState, playerId: string) {
+        this.actionLog.push({ type: "updatePlayer", player: { ...player, id: playerId } });
+    }
+
     tick() {
         this.actionLog = [];
         // Clear currentAction for all players at the start of the tick
@@ -153,126 +261,28 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
             const player = this.players[playerId];
             if (player.actionCooldown && player.actionCooldown > 0) {
                 player.actionCooldown -= 1;
-                continue; // Don't broadcast if just ticking cooldown
+                continue;
             }
-            if (!player.currentGoal) {
-                continue; // Don't broadcast if idle
-            }
+            if (!player.currentGoal) continue;
             const goal = player.currentGoal;
-            let didAction = false;
-            if (goal.type === "walkTo") {
-                const prevPos = [...player.pos];
-                player.pos = getStep(player.pos, goal.pos, this.entities);
-                player.actionCooldown = 0;
-                didAction = player.pos[0] !== prevPos[0] || player.pos[1] !== prevPos[1];
-                if (player.pos[0] === goal.pos[0] && player.pos[1] === goal.pos[1]) {
-                    player.currentGoal = undefined;
-                }
-            } else if (goal.type === "attack") {
-                const target = this.players[goal.targetId];
-                if (!target || target.health <= 0) {
-                    player.currentGoal = undefined;
-                    if (target && target.health <= 0) {
-                        if (target.currentGoal && target.currentGoal.type === "attack" && target.currentGoal.targetId === playerId) {
-                            target.currentGoal = undefined;
-                        }
-                        this.drops.push({
-                            id: 'drop_' + Math.random().toString(36).slice(2) + Date.now(),
-                            itemKey: 'bone',
-                            quantity: 1,
-                            pos: [...target.pos],
-                            expiryTicks: 100
-                        });
-                        this.actionLog.push({ type: "addDrop", drop: this.drops[this.drops.length - 1] });
-                        target.health = 10;
-                        target.pos = [0, 0];
-                        this.actionLog.push({ type: "updatePlayer", player: { ...target, id: goal.targetId } });
-                    }
-                    didAction = true;
-                } else {
-                    const adj = getNearestAdjacentTile(player.pos, target.pos[0], target.pos[1], this.entities);
-                    if (!adj) {
-                        player.currentGoal = undefined;
-                        player.actionCooldown = 0;
-                        didAction = true;
-                    } else if (player.pos[0] !== adj[0] || player.pos[1] !== adj[1]) {
-                        player.pos = getStep(player.pos, adj, this.entities);
-                        player.actionCooldown = 0;
-                        didAction = true;
-                    } else {
-                        target.health = Math.max(0, target.health - 1);
-                        player.actionCooldown = 2;
-                        player.currentAction = "attack";
-                        this.actionLog.push({ type: "updatePlayer", player: { ...target, id: goal.targetId } });
-                        if (!target.currentGoal) {
-                            target.currentGoal = { type: "attack", targetId: playerId };
-                        }
-                        didAction = true;
-                    }
-                }
-            } else if (goal.type === "pickUp") {
-                player.currentGoal = undefined;
-                player.actionCooldown = 0;
-                didAction = true;
-            } else if (goal.type === "pickupDrop") {
-                const drop = this.drops.find(d => d.id === goal.dropId);
-                if (!drop) {
+            switch (goal.type) {
+                case "walkTo":
+                    this.handleWalkTo(player, goal, playerId);
+                    break;
+                case "attack":
+                    this.handleAttack(player, goal, playerId);
+                    break;
+                case "pickupDrop":
+                    this.handlePickupDrop(player, goal, playerId);
+                    break;
+                case "extractResource":
+                    this.handleExtractResource(player, goal, playerId);
+                    break;
+                case "pickUp":
                     player.currentGoal = undefined;
                     player.actionCooldown = 0;
-                    didAction = true;
-                } else if (player.pos[0] !== drop.pos[0] || player.pos[1] !== drop.pos[1]) {
-                    player.pos = getStep(player.pos, drop.pos, this.entities);
-                    player.actionCooldown = 0;
-                    didAction = true;
-                } else {
-                    this.addToInventory(playerId, drop.itemKey, drop.quantity);
-                    this.actionLog.push({ type: "removeDrop", dropId: drop.id });
-                    this.drops = this.drops.filter(d => d.id !== drop.id);
-                    player.currentGoal = undefined;
-                    player.actionCooldown = 0;
-                    didAction = true;
-                }
-            } else if (goal.type === "extractResource") {
-                const entity = getEntity(goal.entityId, this.entities);
-                if (!entity) {
-                    player.currentGoal = undefined;
-                    player.actionCooldown = 0;
-                    didAction = true;
-                } else {
-                    const adj = getNearestAdjacentTile(player.pos, entity.pos[0], entity.pos[1], this.entities);
-                    if (!adj) {
-                        player.currentGoal = undefined;
-                        player.actionCooldown = 0;
-                        didAction = true;
-                    } else if (player.pos[0] !== adj[0] || player.pos[1] !== adj[1]) {
-                        player.pos = getStep(player.pos, adj, this.entities);
-                        player.actionCooldown = 0;
-                        didAction = true;
-                    } else if (entity.depleted || entity.resourceAmount <= 0) {
-                        player.currentGoal = undefined;
-                        player.actionCooldown = 0;
-                        didAction = true;
-                    } else {
-                        entity.resourceAmount -= RESOURCE_EXTRACTION_AMOUNT;
-                        if (entity.resourceAmount <= 0) {
-                            entity.resourceAmount = 0;
-                            entity.depleted = true;
-                            entity.replenishTicksLeft = RESOURCE_REPLENISH_TICKS;
-                        }
-                        let itemKey = "unknown";
-                        if (entity.type.kind === "tree") itemKey = entity.type.treeType + "_log";
-                        if (entity.type.kind === "ore") itemKey = entity.type.oreType + "_ore";
-                        this.addToInventory(playerId, itemKey, 1);
-                        player.actionCooldown = RESOURCE_EXTRACTION_COOLDOWN;
-                        player.currentAction = "extract";
-                        this.actionLog.push({ type: "updateEntity", entity: { ...entity } });
-                        if (entity.depleted) player.currentGoal = undefined;
-                        didAction = true;
-                    }
-                }
-            }
-            if (didAction) {
-                this.actionLog.push({ type: "updatePlayer", player: { ...player, id: playerId } });
+                    this.logPlayerUpdate(player, playerId);
+                    break;
             }
         }
         // Tick drops
