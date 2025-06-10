@@ -3,28 +3,29 @@ import { MapEntity, MapEntityType } from "./MapEntity";
 
 // Action log types for ScapeServer
 export type ScapeAction =
-    | { type: "addPlayer"; player: ScapePlayerState & { id: string } }
-    | { type: "updatePlayer"; player: ScapePlayerState & { id: string } }
-    | { type: "removePlayer"; playerId: string }
-    | { type: "addDrop"; drop: ScapeDrop }
-    | { type: "removeDrop"; dropId: string }
-    | { type: "updateDrop"; drop: ScapeDrop }
-    | { type: "addEntity"; entity: ScapeEntity }
-    | { type: "updateEntity"; entity: ScapeEntity }
-    | { type: "removeEntity"; entityId: string };
+| { type: "addPlayer"; player: ScapePlayerState & { id: string } }
+| { type: "updatePlayer"; player: ScapePlayerState & { id: string } }
+| { type: "removePlayer"; playerId: string }
+| { type: "addDrop"; drop: ScapeDrop }
+| { type: "removeDrop"; dropId: string }
+| { type: "updateDrop"; drop: ScapeDrop }
+| { type: "addEntity"; entity: ScapeEntity }
+| { type: "updateEntity"; entity: ScapeEntity }
+| { type: "removeEntity"; entityId: string };
 
 // Centralized fake server for game state
 
 // Action types
 type PlayerGoal = 
-    | { type: "walkTo", pos: [number, number] }
-    | { type: "attack", targetId: string }
-    | { type: "pickUp", itemId: string }
-    | { type: "pickupDrop", dropId: string }
-    | { type: "extractResource", entityId: string };
+| { type: "walkTo", pos: [number, number] }
+| { type: "attack", targetId: string }
+| { type: "pickUp", itemId: string }
+| { type: "pickupDrop", dropId: string }
+| { type: "extractResource", entityId: string };
 
 interface ScapePlayerState extends BasePlayerState {
     currentGoal?: PlayerGoal;
+    behavior?: string;
 }
 interface ScapeDrop extends BaseDrop {}
 interface ScapeEntity extends MapEntity {}
@@ -124,7 +125,7 @@ function getEntity(entityId: string, entities: MapEntity[]): MapEntity | undefin
 // --- ScapeServer Class ---
 class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
     private actionLog: ScapeAction[] = [];
-
+    
     protected createPlayer(playerId: string): ScapePlayerState {
         const player: ScapePlayerState = {
             pos: [Math.floor(Math.random() * GRID_SIZE), Math.floor(Math.random() * GRID_SIZE)] as [number, number],
@@ -134,14 +135,38 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
         this.actionLog.push({ type: "addPlayer", player: { ...player, id: playerId } });
         return player;
     }
-
+    
     // --- Goal Handlers ---
+    // Assign a random wander goal within a 5-tile radius
+    private assignWanderGoal(player: ScapePlayerState, playerId: string) {
+        const radius = 5;
+        const [x, y] = player.pos;
+        let attempts = 10;
+        while (attempts-- > 0) {
+            const dx = Math.floor(Math.random() * (2 * radius + 1)) - radius;
+            const dy = Math.floor(Math.random() * (2 * radius + 1)) - radius;
+            const tx = x + dx;
+            const ty = y + dy;
+            if (
+                (dx !== 0 || dy !== 0) &&
+                tx >= 0 && tx < GRID_SIZE &&
+                ty >= 0 && ty < GRID_SIZE &&
+                !isTileBlocked(tx, ty, this.entities)
+            ) {
+                player.currentGoal = { type: "walkTo", pos: [tx, ty] };
+                player.actionCooldown = 10;
+                this.logPlayerUpdate(player, playerId);
+                break;
+            }
+        }
+    }
+    
     private handleWalkTo(player: ScapePlayerState, goal: any, playerId: string) {
         const prevPos = [...player.pos];
         player.pos = getStep(player.pos, goal.pos, this.entities);
-        player.actionCooldown = 0;
         if (player.pos[0] === goal.pos[0] && player.pos[1] === goal.pos[1]) {
             player.currentGoal = undefined;
+            player.actionCooldown = 0;
         }
         if (player.pos[0] !== prevPos[0] || player.pos[1] !== prevPos[1] || player.currentGoal === undefined) {
             this.logPlayerUpdate(player, playerId);
@@ -252,7 +277,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
     private logPlayerUpdate(player: ScapePlayerState, playerId: string) {
         this.actionLog.push({ type: "updatePlayer", player: { ...player, id: playerId } });
     }
-
+    
     tick() {
         this.actionLog = [];
         // Clear currentAction for all players at the start of the tick
@@ -265,6 +290,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
                 player.currentAction = undefined;
             }
         }
+
         // Tick all players
         for (const playerId in this.players) {
             const player = this.players[playerId];
@@ -272,26 +298,34 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
                 player.actionCooldown -= 1;
                 continue;
             }
+
+            if (player.behavior && !player.currentGoal) {
+                if (player.behavior === "wander") {
+                    this.assignWanderGoal(player, playerId);
+                }
+                // Add more behaviors here if needed
+            }
+
             if (!player.currentGoal) continue;
             const goal = player.currentGoal;
             switch (goal.type) {
                 case "walkTo":
-                    this.handleWalkTo(player, goal, playerId);
-                    break;
+                this.handleWalkTo(player, goal, playerId);
+                break;
                 case "attack":
-                    this.handleAttack(player, goal, playerId);
-                    break;
+                this.handleAttack(player, goal, playerId);
+                break;
                 case "pickupDrop":
-                    this.handlePickupDrop(player, goal, playerId);
-                    break;
+                this.handlePickupDrop(player, goal, playerId);
+                break;
                 case "extractResource":
-                    this.handleExtractResource(player, goal, playerId);
-                    break;
+                this.handleExtractResource(player, goal, playerId);
+                break;
                 case "pickUp":
-                    player.currentGoal = undefined;
-                    player.actionCooldown = 0;
-                    this.logPlayerUpdate(player, playerId);
-                    break;
+                player.currentGoal = undefined;
+                player.actionCooldown = 0;
+                this.logPlayerUpdate(player, playerId);
+                break;
             }
         }
         // Tick drops
@@ -317,7 +351,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
             }
         }
     }
-
+    
     getTilemap() {
         return tilemap;
     }
@@ -351,7 +385,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
     getCurrentAction(playerId: string) {
         return this.players[playerId]?.currentAction;
     }
-
+    
     // Return a snapshot of the current state as a list of actions
     getSnapshotActions(): ScapeAction[] {
         const actions: ScapeAction[] = [];
@@ -366,7 +400,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
         }
         return actions;
     }
-
+    
     // Return and clear the actions from the last tick
     getAndClearActions(): ScapeAction[] {
         const actions = [...this.actionLog];
@@ -383,9 +417,11 @@ setInterval(() => server.tick(), SERVER_TICK);
 if (Object.keys(server.getAllPlayers()).length === 0) {
     for (let i = 0; i < 2; i++) {
         const id = Math.random().toString(36).slice(2) + Date.now() + i;
-        server.getPlayer(id);
+        const player = server.getPlayer(id);
+        player.behavior = "wander"; // Set behavior to 'wander' for initial players
     }
 }
+
 // Populate mapEntities with some trees and ores if empty
 if (server.getEntities().length === 0) {
     server.getEntities().push(
