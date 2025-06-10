@@ -11,7 +11,7 @@ const allExperiments = [
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/model', 'car/road', 'car/driver',
-    'editor/events', 'editor/store',
+    'editor/events', 'editor/store', 'editor/map',
     'ik/ragdoll', 'ik/kick', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
     'tickEngine/scape',
