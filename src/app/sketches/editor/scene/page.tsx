@@ -180,7 +180,87 @@ function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate
     );
 }
 
+function SceneDetailsPanel({ sceneSettings, setSceneSettings, sceneText, setSceneText, onSceneTextBlur }: {
+    sceneSettings: { physics: boolean };
+    setSceneSettings: React.Dispatch<React.SetStateAction<{ physics: boolean }>>;
+    sceneText: string;
+    setSceneText: React.Dispatch<React.SetStateAction<string>>;
+    onSceneTextBlur: () => void;
+}) {
+    return (
+        <>
+            <h2>Scene</h2>
+            <div style={{ marginBottom: 8 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                        type="checkbox"
+                        checked={sceneSettings.physics}
+                        onChange={e => setSceneSettings(s => ({ ...s, physics: e.target.checked }))}
+                    />
+                    Enable Physics
+                </label>
+            </div>
+            <textarea
+                style={{ width: '100%', minHeight: 200, fontFamily: 'monospace', fontSize: 12 }}
+                value={sceneText}
+                onChange={e => setSceneText(e.target.value)}
+                onBlur={onSceneTextBlur}
+            />
+        </>
+    );
+}
+
+// Utility: Remove default values from node for saving
+function stripDefaultsFromNode(node: SceneGraphNode): any {
+    const typeDef = ObjectTypes[node.type];
+    const defaults = typeDef.defaultProps;
+    // Only include props that differ from defaults
+    const props: Record<string, any> = {};
+    for (const key in node.props) {
+        if (
+            Array.isArray(node.props[key]) &&
+            Array.isArray((defaults as any)[key])
+        ) {
+            if (JSON.stringify(node.props[key]) !== JSON.stringify((defaults as any)[key])) {
+                props[key] = node.props[key];
+            }
+        } else if (node.props[key] !== (defaults as any)[key]) {
+            props[key] = node.props[key];
+        }
+    }
+    // Only include name if different from default
+    const result: any = {
+        id: node.id,
+        type: node.type,
+        ...(node.name !== defaults.name ? { name: node.name } : {}),
+        ...(Object.keys(props).length > 0 ? { props } : {}),
+        children: node.children.map(stripDefaultsFromNode),
+    };
+    return result;
+}
+
+// Utility: Apply defaults to node for loading
+function applyDefaultsToNode(
+    node: { id: string; name?: string; type: keyof typeof ObjectTypes; props?: Record<string, any>; children?: any[] }
+): SceneGraphNode {
+    const typeDef = ObjectTypes[node.type];
+    const defaults = typeDef.defaultProps;
+    const props = { ...defaults, ...(node.props || {}) };
+    const name = node.name !== undefined ? node.name : defaults.name;
+    return {
+        id: node.id,
+        name,
+        type: node.type,
+        parent: null,
+        props,
+        children: (node.children || []).map(applyDefaultsToNode),
+    };
+}
+
 export default function Home() {
+    // Scene settings state
+    const [sceneSettings, setSceneSettings] = useState<{ physics: boolean }>({ physics: true });
+    // Root node state
     const [root, setRoot] = useState<SceneGraphNode>(() => createNode("object", "Root"));
     const [selected, setSelected] = useState<SceneGraphNode | null>(null);
     const [showSceneDetails, setShowSceneDetails] = useState(false);
@@ -280,19 +360,32 @@ export default function Home() {
         setSelected(updatedNode);
     };
 
-    // Keep sceneText in sync with root
+    // Keep sceneText in sync with root and settings
     React.useEffect(() => {
         if (!showSceneDetails) return;
-        setSceneText(JSON.stringify(root, null, 2));
-    }, [root, showSceneDetails]);
+        // Only save changed values
+        setSceneText(
+            JSON.stringify(
+                { settings: sceneSettings, graph: stripDefaultsFromNode(root) },
+                null,
+                2
+            )
+        );
+    }, [root, sceneSettings, showSceneDetails]);
 
     // Handle textarea blur (load scene if valid JSON)
     const handleSceneTextBlur = () => {
         try {
             const parsed = JSON.parse(sceneText);
-            // Basic validation: must have id, name, type, children
-            if (parsed && typeof parsed === 'object' && parsed.id && parsed.name && parsed.type && Array.isArray(parsed.children)) {
-                setRoot(parsed);
+            // Must have settings and graph
+            if (
+                parsed && typeof parsed === 'object' &&
+                parsed.settings && typeof parsed.settings === 'object' &&
+                parsed.graph && typeof parsed.graph === 'object' &&
+                parsed.graph.id && parsed.graph.type && Array.isArray(parsed.graph.children)
+            ) {
+                setSceneSettings(parsed.settings);
+                setRoot(applyDefaultsToNode(parsed.graph));
                 setSelected(null);
             }
         } catch (e) {
@@ -306,12 +399,21 @@ export default function Home() {
                 <Canvas>
                     <ambientLight intensity={0.5} />
                     <pointLight position={[10, 10, 10]} />
-                    <Physics>
-                        <group>
-                            <Object3DNode node={root} onSelect={node => setSelected(node)} />
-                        </group>
-                        <gridHelper args={[10, 10, "#888", "#444"]} />
-                    </Physics>
+                    {sceneSettings.physics ? (
+                        <Physics>
+                            <group>
+                                <Object3DNode node={root} onSelect={node => setSelected(node)} />
+                            </group>
+                            <gridHelper args={[10, 10, "#888", "#444"]} />
+                        </Physics>
+                    ) : (
+                        <>
+                            <group>
+                                <Object3DNode node={root} onSelect={node => setSelected(node)} />
+                            </group>
+                            <gridHelper args={[10, 10, "#888", "#444"]} />
+                        </>
+                    )}
                     <OrbitControls />
                 </Canvas>
             </div>
@@ -348,15 +450,13 @@ export default function Home() {
                     </>
                 )}
                 {showSceneDetails && (
-                    <>
-                        <h2>Scene</h2>
-                        <textarea
-                            style={{ width: '100%', minHeight: 200, fontFamily: 'monospace', fontSize: 12 }}
-                            value={sceneText}
-                            onChange={e => setSceneText(e.target.value)}
-                            onBlur={handleSceneTextBlur}
-                        />
-                    </>
+                    <SceneDetailsPanel
+                        sceneSettings={sceneSettings}
+                        setSceneSettings={setSceneSettings}
+                        sceneText={sceneText}
+                        setSceneText={setSceneText}
+                        onSceneTextBlur={handleSceneTextBlur}
+                    />
                 )}
             </div>
         </>
