@@ -138,7 +138,7 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
     const baseSpeed = 1.3;
     const dist = currentPos.distanceTo(targetPos);
     const slowRadius = 0.2;
-    let speed = dist < slowRadius ? Math.max(baseSpeed * dist / slowRadius, 0.2) : baseSpeed;
+    const speed = dist < slowRadius ? Math.max(baseSpeed * dist / slowRadius, 0.2) : baseSpeed;
     if (dist > 0.001) {
       const direction = new THREE.Vector3().subVectors(targetPos, currentPos).normalize();
       const moveDist = Math.min(speed * delta, dist);
