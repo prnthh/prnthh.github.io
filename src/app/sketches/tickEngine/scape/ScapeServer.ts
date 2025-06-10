@@ -2,14 +2,16 @@ import { BaseServer, BasePlayerState, BaseDrop, BaseEntity } from "../BaseServer
 import { MapEntity, MapEntityType } from "./MapEntity";
 
 // Action log types for ScapeServer
-type ScapeAction =
+export type ScapeAction =
     | { type: "addPlayer"; player: ScapePlayerState & { id: string } }
     | { type: "updatePlayer"; player: ScapePlayerState & { id: string } }
+    | { type: "removePlayer"; playerId: string }
     | { type: "addDrop"; drop: ScapeDrop }
     | { type: "removeDrop"; dropId: string }
     | { type: "updateDrop"; drop: ScapeDrop }
     | { type: "addEntity"; entity: ScapeEntity }
-    | { type: "updateEntity"; entity: ScapeEntity };
+    | { type: "updateEntity"; entity: ScapeEntity }
+    | { type: "removeEntity"; entityId: string };
 
 // Centralized fake server for game state
 
@@ -178,6 +180,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
                 this.logPlayerUpdate(player, playerId);
             } else {
                 target.health = Math.max(0, target.health - 1);
+                target.actionCooldown = 1;
                 player.actionCooldown = 2;
                 player.currentAction = "attack";
                 this.logPlayerUpdate(target, goal.targetId);
@@ -254,7 +257,13 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
         this.actionLog = [];
         // Clear currentAction for all players at the start of the tick
         for (const pid in this.players) {
-            this.players[pid].currentAction = undefined;
+            const player = this.players[pid];
+            if (player.currentAction !== undefined) {
+                player.currentAction = undefined;
+                this.logPlayerUpdate(player, pid); // Notify client of cleared action
+            } else {
+                player.currentAction = undefined;
+            }
         }
         // Tick all players
         for (const playerId in this.players) {

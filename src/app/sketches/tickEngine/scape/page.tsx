@@ -207,6 +207,7 @@ export default function Home() {
                         return (
                             <group key={id}>
                                 <Player
+                                    debug
                                     key={id}
                                     health={state.health}
                                     position={[

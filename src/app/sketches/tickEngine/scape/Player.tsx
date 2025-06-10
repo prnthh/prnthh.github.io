@@ -13,12 +13,13 @@ interface PlayerProps {
   color?: string;
   onClick?: (e: any) => void;
   currentAction?: string;
-  targetPosition?: [number, number, number]; // <-- new prop
+  targetPosition?: [number, number, number];
+  debug?: boolean;
 }
 
 const tweenGroup = new Group();
 
-const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, color = "orange", onClick, currentAction, targetPosition }, ref) => {
+const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, color = "orange", onClick, currentAction, targetPosition, debug }, ref) => {
   const groupRef = useRef<THREE.Group>(null);
   const rotationTweenRef = useRef<Tween<{ y: number }> | null>(null);
   const [animation, setAnimation] = useState("idle");
@@ -37,7 +38,7 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
     else (ref as React.MutableRefObject<THREE.Group | null>).current = groupRef.current;
   }, [ref]);
 
-  // Helper
+  // Helpers
   const normalizeAngle = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
   const getTargetYaw = (from: THREE.Vector3, to: THREE.Vector3) => Math.atan2(to.x - from.x, to.z - from.z);
 
@@ -61,16 +62,15 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
       setAnimation("walk");
       targetPosRef.current.copy(targetPos);
       movingRef.current = true;
-      let currentYaw = normalizeAngle(group.rotation.y);
-      let targetYaw = normalizeAngle(getTargetYaw(currentPos, targetPos));
-      let deltaYaw = normalizeAngle(targetYaw - currentYaw);
-      const finalYaw = currentYaw + deltaYaw;
+      const currentYaw = normalizeAngle(group.rotation.y);
+      const targetYaw = normalizeAngle(getTargetYaw(currentPos, targetPos));
+      const finalYaw = currentYaw + normalizeAngle(targetYaw - currentYaw);
       rotationTweenRef.current?.stop();
       const rotObj = { y: currentYaw };
       const rotationTween = new Tween(rotObj)
         .to({ y: finalYaw }, 200)
         .easing(Easing.Linear.None)
-        .onUpdate(() => { if (group) group.rotation.y = normalizeAngle(rotObj.y); });
+        .onUpdate(() => { group.rotation.y = normalizeAngle(rotObj.y); });
       tweenGroup.add(rotationTween);
       rotationTween.start();
       rotationTweenRef.current = rotationTween;
@@ -114,16 +114,15 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
       const group = groupRef.current;
       const currentPos = group.position.clone();
       const targetPos = new THREE.Vector3(...targetPosition);
-      let currentYaw = normalizeAngle(group.rotation.y);
-      let targetYaw = normalizeAngle(getTargetYaw(currentPos, targetPos));
-      let deltaYaw = normalizeAngle(targetYaw - currentYaw);
-      const finalYaw = currentYaw + deltaYaw;
+      const currentYaw = normalizeAngle(group.rotation.y);
+      const targetYaw = normalizeAngle(getTargetYaw(currentPos, targetPos));
+      const finalYaw = currentYaw + normalizeAngle(targetYaw - currentYaw);
       rotationTweenRef.current?.stop();
       const rotObj = { y: currentYaw };
       const rotationTween = new Tween(rotObj)
         .to({ y: finalYaw }, 180)
         .easing(Easing.Linear.None)
-        .onUpdate(() => { if (group) group.rotation.y = normalizeAngle(rotObj.y); });
+        .onUpdate(() => { group.rotation.y = normalizeAngle(rotObj.y); });
       tweenGroup.add(rotationTween);
       rotationTween.start();
       rotationTweenRef.current = rotationTween;
@@ -156,51 +155,49 @@ const Player = forwardRef<THREE.Group, PlayerProps>(({ position, health = 100, c
   });
 
   return (
-    <>
-      <group ref={groupRef}>
-        <AnimatedModel
-          debug
-          position={[0, -0.3, 0]}
-          debug={true}
-          basePath="/models/human/rigga/"
-          model={"/rigga.glb"}
-          animation={animation}
-          animationOverrides={{
-            'idle': '/anim/idle.fbx',
-            'walk': '/anim/walk.fbx',
-            'run': '/anim/run.fbx',
-            'jump': '/anim/jump.fbx',
-            'punch': '/anim/punch.fbx',
-            'hurt': '/anim/hurt.fbx',
-            'slash': '/anim/slash.fbx',
-          }}
-          height={0.95}
-          onClick={onClick}
-          scale={0.8}
-        />
-        {color == 'orange' && <OrbitCam maxRadius={6} maxPolar={Math.PI / 2.2} />}
-        <Html center position={[0, .7, 0]} style={{ pointerEvents: "none", minWidth: 60 }}>
-          <div className="z-20" style={{ position: 'relative', width: 50, height: 14 }}>
-            <div style={{ width: '100%', height: 7, background: '#a00', borderRadius: 5, overflow: 'hidden', border: '1px solid black' }}>
-              <div style={{ width: `${Math.max(0, Math.min(health * 10, 100))}%`, height: '100%', background: 'linear-gradient(90deg, #0f0, #6f6)', transition: 'width 0.2s' }} />
-            </div>
-            {showDamage && damage !== null && (
-              <div style={{ position: 'absolute', left: '50%', top: 22, transform: 'translateX(-50%)', background: 'rgba(255,0,0,0.85)', color: '#fff', padding: '2px 8px', borderRadius: 12, fontWeight: 700, fontSize: 13, boxShadow: '0 2px 8px rgba(0,0,0,0.2)', pointerEvents: 'none', zIndex: 2, animation: 'damage-pop 0.5s cubic-bezier(.5,-0.5,.5,1.5)' }}>
-                -{damage}
-              </div>
-            )}
+    <group ref={groupRef}>
+      <AnimatedModel
+        debug={debug}
+        position={[0, -0.3, 0]}
+        basePath="/models/human/rigga/"
+        model={"/rigga.glb"}
+        animation={animation}
+        animationOverrides={{
+          idle: '/anim/idle.fbx',
+          walk: '/anim/walk.fbx',
+          run: '/anim/run.fbx',
+          jump: '/anim/jump.fbx',
+          punch: '/anim/punch.fbx',
+          hurt: '/anim/hurt.fbx',
+          slash: '/anim/slash.fbx',
+        }}
+        height={0.95}
+        onClick={onClick}
+        scale={0.8}
+      />
+      {color === 'orange' && <OrbitCam maxRadius={6} maxPolar={Math.PI / 2.2} />}
+      <Html center position={[0, .7, 0]} style={{ pointerEvents: "none", minWidth: 60 }}>
+        {debug && JSON.stringify(currentAction)}
+        <div className="z-20" style={{ position: 'relative', width: 50, height: 14 }}>
+          <div style={{ width: '100%', height: 7, background: '#a00', borderRadius: 5, overflow: 'hidden', border: '1px solid black' }}>
+            <div style={{ width: `${Math.max(0, Math.min(health * 10, 100))}%`, height: '100%', background: 'linear-gradient(90deg, #0f0, #6f6)', transition: 'width 0.2s' }} />
           </div>
-          <style>{`
-          @keyframes damage-pop {
-            0% { opacity: 0; transform: translateX(-50%) scale(0.7) translateY(10px); }
-            20% { opacity: 1; transform: translateX(-50%) scale(1.1) translateY(-2px); }
-            80% { opacity: 1; transform: translateX(-50%) scale(1) translateY(-8px); }
-            100% { opacity: 0; transform: translateX(-50%) scale(0.9) translateY(-18px); }
-          }
-        `}</style>
-        </Html>
-      </group>
-    </>
+          {showDamage && damage !== null && (
+            <div style={{ position: 'absolute', left: '50%', top: 22, transform: 'translateX(-50%)', background: 'rgba(255,0,0,0.85)', color: '#fff', padding: '2px 8px', borderRadius: 12, fontWeight: 700, fontSize: 13, boxShadow: '0 2px 8px rgba(0,0,0,0.2)', pointerEvents: 'none', zIndex: 2, animation: 'damage-pop 0.5s cubic-bezier(.5,-0.5,.5,1.5)' }}>
+              -{damage}
+            </div>
+          )}
+        </div>
+        <style>{`
+        @keyframes damage-pop {
+          0% { opacity: 0; transform: translateX(-50%) scale(0.7) translateY(10px); }
+          20% { opacity: 1; transform: translateX(-50%) scale(1.1) translateY(-2px); }
+          80% { opacity: 1; transform: translateX(-50%) scale(1) translateY(-8px); }
+          100% { opacity: 0; transform: translateX(-50%) scale(0.9) translateY(-18px); }
+        }
+      `}</style>
+      </Html>
+    </group>
   );
 });
 
