@@ -6,6 +6,8 @@ import { Physics } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { ObjectTypes } from "./objectTypes";
+import { RigidBody } from "@react-three/rapier";
+import { RigidBodyComponentRow, RigidBodyComponentDefault, RigidBodyComponentData, withRigidBody } from "./components/RigidBodyComponent";
 
 // Types for scene graph
 export type SceneGraphNode = {
@@ -15,6 +17,10 @@ export type SceneGraphNode = {
     children: SceneGraphNode[];
     parent: SceneGraphNode | null;
     props: Record<string, any>;
+    components?: Array<{
+        type: string;
+        data?: any;
+    }>;
 };
 
 function createNode(type: "object" | "spotlight" | "orthographicCamera" = "object", name?: string): SceneGraphNode {
@@ -26,6 +32,7 @@ function createNode(type: "object" | "spotlight" | "orthographicCamera" = "objec
         children: [],
         parent: null,
         props: { ...typeDef.defaultProps },
+        components: [],
     };
 }
 
@@ -106,40 +113,7 @@ function SceneGraphTree({
 
 function Object3DNode({ node, onSelect }: { node: SceneGraphNode, onSelect: (node: SceneGraphNode) => void }) {
     const ref = useRef<THREE.Group>(null);
-    if (node.type === "spotlight") {
-        return (
-            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-                <spotLight
-                    color={node.props.color || "#ffffff"}
-                    intensity={node.props.intensity || 1}
-                    position={[0, 0.5, 0]}
-                />
-                <mesh onClick={e => { e.stopPropagation(); onSelect(node); }}>
-                    <coneGeometry args={[0.2, 0.5, 16]} />
-                    <meshStandardMaterial color={node.props.color || "#ffffff"} />
-                </mesh>
-                {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
-                ))}
-            </group>
-        );
-    }
-    if (node.type === "orthographicCamera") {
-        return (
-            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-                {/* Camera icon */}
-                <mesh onClick={e => { e.stopPropagation(); onSelect(node); }}>
-                    <boxGeometry args={[0.3, 0.2, 0.2]} />
-                    <meshStandardMaterial color="#222" />
-                </mesh>
-                {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
-                ))}
-            </group>
-        );
-    }
-    // Default object
-    return (
+    let children = (
         <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
             <mesh
                 onClick={e => {
@@ -155,13 +129,67 @@ function Object3DNode({ node, onSelect }: { node: SceneGraphNode, onSelect: (nod
             ))}
         </group>
     );
+    // Wrap with components
+    if (node.components) {
+        for (const comp of node.components) {
+            if (comp.type === "RigidBody") {
+                children = withRigidBody(children, comp.data || RigidBodyComponentDefault);
+            }
+        }
+    }
+    return children;
 }
 
 function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate: (updates: Partial<SceneGraphNode>) => void }) {
     const typeDef = ObjectTypes[node.type];
+    const [addMenuOpen, setAddMenuOpen] = React.useState(false);
+    const hasRigidBody = node.components?.some(c => c.type === "RigidBody");
+    // --- COMPONENTS UI ---
+    const handleComponentChange = (idx: number, data: any) => {
+        const newComponents = (node.components || []).map((c, i) => i === idx ? { ...c, data } : c);
+        onUpdate({ components: newComponents });
+    };
+    const handleComponentDelete = (idx: number) => {
+        const newComponents = (node.components || []).filter((_, i) => i !== idx);
+        onUpdate({ components: newComponents });
+    };
+    const handleAddComponent = (type: string) => {
+        if (type === "RigidBody" && !(node.components || []).some(c => c.type === "RigidBody")) {
+            onUpdate({ components: [...(node.components || []), { type: "RigidBody", data: { ...RigidBodyComponentDefault } }] });
+        }
+        setAddMenuOpen(false);
+    };
     if (typeDef && typeDef.DetailsView) {
         const DetailsView = typeDef.DetailsView;
-        return <DetailsView node={node} onUpdate={onUpdate} />;
+        return (
+            <>
+                <DetailsView node={node} onUpdate={onUpdate} />
+                <div style={{ marginTop: 16 }}>
+                    <div style={{ marginBottom: 8 }}>
+                        {(node.components || []).map((comp, idx) => {
+                            if (comp.type === "RigidBody") {
+                                return (
+                                    <RigidBodyComponentRow
+                                        key={"rb"}
+                                        data={comp.data || RigidBodyComponentDefault}
+                                        onChange={data => handleComponentChange(idx, data)}
+                                        onDelete={() => handleComponentDelete(idx)}
+                                    />
+                                );
+                            }
+                            return null;
+                        })}
+                    </div>
+                    <button onClick={() => setAddMenuOpen(v => !v)} style={{ width: '100%' }}>Add Component</button>
+                    {addMenuOpen && (
+                        <div style={{ background: '#222', color: '#fff', borderRadius: 4, marginTop: 4, zIndex: 10, position: 'relative' }}>
+                            <button style={{ display: 'block', width: '100%' }} disabled={hasRigidBody} onClick={() => handleAddComponent("RigidBody")}>RigidBody</button>
+                            <button style={{ display: 'block', width: '100%', color: '#888' }} onClick={() => setAddMenuOpen(false)}>Cancel</button>
+                        </div>
+                    )}
+                </div>
+            </>
+        );
     }
     // fallback generic editor
     return (
@@ -175,7 +203,30 @@ function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate
             <div>
                 ID: <span style={{ fontFamily: 'monospace', fontSize: 10 }}>{node.id}</span>
             </div>
-            {/* Add more generic fields if needed */}
+            <div style={{ marginTop: 16 }}>
+                <div style={{ marginBottom: 8 }}>
+                    {(node.components || []).map((comp, idx) => {
+                        if (comp.type === "RigidBody") {
+                            return (
+                                <RigidBodyComponentRow
+                                    key={"rb"}
+                                    data={comp.data || RigidBodyComponentDefault}
+                                    onChange={data => handleComponentChange(idx, data)}
+                                    onDelete={() => handleComponentDelete(idx)}
+                                />
+                            );
+                        }
+                        return null;
+                    })}
+                </div>
+                <button onClick={() => setAddMenuOpen(v => !v)} style={{ width: '100%' }}>Add Component</button>
+                {addMenuOpen && (
+                    <div style={{ background: '#222', color: '#fff', borderRadius: 4, marginTop: 4, zIndex: 10, position: 'relative' }}>
+                        <button style={{ display: 'block', width: '100%' }} disabled={(node.components || []).some(c => c.type === "RigidBody")} onClick={() => handleAddComponent("RigidBody")}>RigidBody</button>
+                        <button style={{ display: 'block', width: '100%', color: '#888' }} onClick={() => setAddMenuOpen(false)}>Cancel</button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -234,6 +285,7 @@ function stripDefaultsFromNode(node: SceneGraphNode): any {
         type: node.type,
         ...(node.name !== defaults.name ? { name: node.name } : {}),
         ...(Object.keys(props).length > 0 ? { props } : {}),
+        ...(node.components && node.components.length > 0 ? { components: node.components } : {}),
         children: node.children.map(stripDefaultsFromNode),
     };
     return result;
@@ -241,7 +293,7 @@ function stripDefaultsFromNode(node: SceneGraphNode): any {
 
 // Utility: Apply defaults to node for loading
 function applyDefaultsToNode(
-    node: { id: string; name?: string; type: keyof typeof ObjectTypes; props?: Record<string, any>; children?: any[] }
+    node: { id: string; name?: string; type: keyof typeof ObjectTypes; props?: Record<string, any>; children?: any[]; components?: any[] }
 ): SceneGraphNode {
     const typeDef = ObjectTypes[node.type];
     const defaults = typeDef.defaultProps;
@@ -254,6 +306,13 @@ function applyDefaultsToNode(
         parent: null,
         props,
         children: (node.children || []).map(applyDefaultsToNode),
+        components: Array.isArray(node.components)
+            ? node.components.map(comp =>
+                typeof comp === "string"
+                    ? { type: comp }
+                    : comp
+            )
+            : [],
     };
 }
 
