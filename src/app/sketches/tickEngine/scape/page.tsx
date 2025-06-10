@@ -9,6 +9,7 @@ import { WebGPUCanvas } from "../../tsl/webgpu/WebGPUCanvas";
 import FogBG from "../../lighting/reflection/FogBG";
 import { Html } from "@react-three/drei";
 import Player from "./Player";
+import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 
 const TILE_SIZE = 0.66; // Size of each tile in the tilemap
 const GRID_WIDTH = 16;
@@ -241,13 +242,7 @@ export default function Home() {
                         </mesh>
                     ))}
                     <ambientLight intensity={0.5} />
-                    <directionalLight
-                        position={[5, 10, 5]}
-                        intensity={1}
-                        castShadow
-                        shadow-mapSize-width={2048}
-                        shadow-mapSize-height={2048}
-                    />
+                    <ShadowLight />
                     <FogBG />
                 </WebGPUCanvas>
             </div>

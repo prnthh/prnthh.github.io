@@ -15,6 +15,7 @@ export interface MapEntity {
     id: string;
     type: MapEntityType;
     pos: [number, number];
+    extractionCooldown: number; // ticks until next extraction can occur
     resourceAmount: number; // current available resource
     maxResource: number; // max resource
     depleted: boolean;

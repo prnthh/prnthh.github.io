@@ -32,7 +32,6 @@ interface ScapeEntity extends MapEntity {}
 
 // Configs for resource extraction
 const RESOURCE_EXTRACTION_AMOUNT = 1;
-const RESOURCE_EXTRACTION_COOLDOWN = 3; // ticks between extractions
 const RESOURCE_REPLENISH_TICKS = 20; // ticks to replenish after depletion
 
 const SERVER_TICK = 600; // milliseconds
@@ -209,7 +208,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
                 player.actionCooldown = 2;
                 player.currentAction = "attack";
                 this.logPlayerUpdate(target, goal.targetId);
-                if (!target.currentGoal) {
+                if (!target.currentGoal || target.currentGoal.type !== "attack") {
                     target.currentGoal = { type: "attack", targetId: playerId };
                 }
                 this.logPlayerUpdate(player, playerId);
@@ -266,7 +265,7 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
                 if (entity.type.kind === "tree") itemKey = entity.type.treeType + "_log";
                 if (entity.type.kind === "ore") itemKey = entity.type.oreType + "_ore";
                 this.addToInventory(playerId, itemKey, 1);
-                player.actionCooldown = RESOURCE_EXTRACTION_COOLDOWN;
+                player.actionCooldown = entity.extractionCooldown;
                 player.currentAction = "extract";
                 this.actionLog.push({ type: "updateEntity", entity: { ...entity } });
                 if (entity.depleted) player.currentGoal = undefined;
@@ -310,22 +309,22 @@ class ScapeServer extends BaseServer<ScapePlayerState, ScapeDrop, ScapeEntity> {
             const goal = player.currentGoal;
             switch (goal.type) {
                 case "walkTo":
-                this.handleWalkTo(player, goal, playerId);
-                break;
+                    this.handleWalkTo(player, goal, playerId);
+                    break;
                 case "attack":
-                this.handleAttack(player, goal, playerId);
-                break;
+                    this.handleAttack(player, goal, playerId);
+                    break;
                 case "pickupDrop":
-                this.handlePickupDrop(player, goal, playerId);
-                break;
+                    this.handlePickupDrop(player, goal, playerId);
+                    break;
                 case "extractResource":
-                this.handleExtractResource(player, goal, playerId);
-                break;
+                    this.handleExtractResource(player, goal, playerId);
+                    break;
                 case "pickUp":
-                player.currentGoal = undefined;
-                player.actionCooldown = 0;
-                this.logPlayerUpdate(player, playerId);
-                break;
+                    player.currentGoal = undefined;
+                    player.actionCooldown = 0;
+                    this.logPlayerUpdate(player, playerId);
+                    break;
             }
         }
         // Tick drops
@@ -429,6 +428,7 @@ if (server.getEntities().length === 0) {
             id: "tree1",
             type: { kind: "tree", treeType: "star" },
             pos: [2, 2],
+            extractionCooldown: 6,
             resourceAmount: 5,
             maxResource: 5,
             depleted: false,
@@ -438,6 +438,7 @@ if (server.getEntities().length === 0) {
             id: "ore1",
             type: { kind: "ore", oreType: "copper" },
             pos: [3, 6],
+            extractionCooldown: 6,
             resourceAmount: 3,
             maxResource: 3,
             depleted: false,
@@ -447,6 +448,7 @@ if (server.getEntities().length === 0) {
             id: "tree2",
             type: { kind: "tree", treeType: "heart" },
             pos: [8, 3],
+            extractionCooldown: 3,
             resourceAmount: 4,
             maxResource: 4,
             depleted: false,
