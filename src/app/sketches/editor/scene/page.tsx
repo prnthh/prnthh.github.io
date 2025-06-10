@@ -113,22 +113,55 @@ function SceneGraphTree({
 
 function Object3DNode({ node, onSelect }: { node: SceneGraphNode, onSelect: (node: SceneGraphNode) => void }) {
     const ref = useRef<THREE.Group>(null);
-    let children = (
-        <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-            <mesh
-                onClick={e => {
-                    e.stopPropagation();
-                    onSelect(node);
-                }}
-            >
-                <boxGeometry args={[0.5, 0.5, 0.5]} />
-                <meshStandardMaterial color={node.props.material || "#4f8cff"} />
-            </mesh>
-            {node.children.map(child => (
-                <Object3DNode key={child.id} node={child} onSelect={onSelect} />
-            ))}
-        </group>
-    );
+    // Render different objects based on node type
+    let children: React.ReactNode = null;
+    if (node.type === "object") {
+        children = (
+            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+                <mesh
+                    onClick={e => {
+                        e.stopPropagation();
+                        onSelect(node);
+                    }}
+                >
+                    <boxGeometry args={[0.5, 0.5, 0.5]} />
+                    <meshStandardMaterial color={node.props.material || "#4f8cff"} />
+                </mesh>
+                {node.children.map(child => (
+                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
+                ))}
+            </group>
+        );
+    } else if (node.type === "spotlight") {
+        children = (
+            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+                <spotLight
+                    color={node.props.color || "#ffffff"}
+                    intensity={node.props.intensity || 1}
+                    position={[0, 0, 0]}
+                // You can add more props like angle, penumbra, distance, etc. if you add them to your schema
+                />
+                {/* Optionally, add a small sphere to visualize the light position */}
+                <mesh onClick={e => { e.stopPropagation(); onSelect(node); }}>
+                    <sphereGeometry args={[0.1, 16, 16]} />
+                    <meshBasicMaterial color={node.props.color || "#ffffff"} />
+                </mesh>
+                {node.children.map(child => (
+                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
+                ))}
+            </group>
+        );
+    } else if (node.type === "orthographicCamera") {
+        // Optionally render a camera helper or nothing
+        children = (
+            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+                {/* Camera visualization could go here */}
+                {node.children.map(child => (
+                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
+                ))}
+            </group>
+        );
+    }
     // Wrap with components
     if (node.components) {
         for (const comp of node.components) {
