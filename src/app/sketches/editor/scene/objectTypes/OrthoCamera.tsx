@@ -1,7 +1,5 @@
 import React from "react";
 import { Group, Object3DEventMap } from "three";
-import { RigidBody } from "@react-three/rapier";
-import { RigidBodyComponentDefault } from "../components/RigidBodyComponent";
 import { Object3DNode } from "./Object3DNode";
 
 export const OrthoCameraType = {
@@ -106,25 +104,11 @@ export function OrthographicCameraNode({ node, onSelect, selectedId, setTransfor
   const groupRef = selectedId === node.id
     ? (instance: Group<Object3DEventMap> | null) => setTransformTarget(instance)
     : undefined;
-  const rigidBodyComp = node.components?.find((c: any) => c.type === "RigidBody");
-  const group = (
+  return (
     <group ref={groupRef} name={node.name}>
       {node.children.map((child: any) => (
         <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
       ))}
     </group>
   );
-  if (rigidBodyComp) {
-    return (
-      <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-        {group}
-      </RigidBody>
-    );
-  } else {
-    return React.cloneElement(group, {
-      position: node.props.position,
-      rotation: node.props.rotation,
-      scale: node.props.scale,
-    });
-  }
 }
