@@ -1,24 +1,21 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import React, { useState } from "react";
+import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { OrbitControls, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
 import { ObjectTypes } from "./objectTypes";
 import { RigidBody } from "@react-three/rapier";
-import { RigidBodyComponentRow, RigidBodyComponentDefault, RigidBodyComponentData, withRigidBody } from "./components/RigidBodyComponent";
+import { RigidBodyComponentRow, RigidBodyComponentDefault } from "./components/RigidBodyComponent";
 import type { Group, Object3DEventMap } from "three";
-import type { RefObject } from "react";
 import { EditorProvider, useEditorContext } from "./EditorContext";
 import {
-    findNodeById,
     updateNodeById,
-    removeNodeById,
-    addNodeToParent,
-    stripDefaultsFromNode,
-    applyDefaultsToNode,
 } from "./sceneGraphUtils";
+import { ObjectNode } from "./objectTypes/Object3D";
+import { SpotlightNode } from "./objectTypes/SpotLight";
+import { OrthographicCameraNode } from "./objectTypes/OrthoCamera";
 
 // Types for scene graph
 export type SceneGraphNode = {
@@ -107,102 +104,6 @@ function SceneGraphTree({
             ))}
         </div>
     );
-}
-
-function Object3DNode({ node, onSelect, selectedId, setTransformTarget }: { node: SceneGraphNode, onSelect: (node: SceneGraphNode) => void, selectedId?: string, setTransformTarget: (obj: Group<Object3DEventMap> | null) => void }) {
-    // Use callback ref for selected node
-    const groupRef = selectedId === node.id
-        ? (instance: Group<Object3DEventMap> | null) => setTransformTarget(instance)
-        : undefined;
-    // Check for RigidBody component
-    const rigidBodyComp = node.components?.find(c => c.type === "RigidBody");
-    // Render different objects based on node type
-    let children: React.ReactNode = null;
-    if (node.type === "object") {
-        const group = (
-            <group ref={groupRef} name={node.name}>
-                <mesh
-                    onClick={e => {
-                        e.stopPropagation();
-                        onSelect(node);
-                    }}
-                >
-                    <boxGeometry args={[0.5, 0.5, 0.5]} />
-                    <meshStandardMaterial color={node.props.material || "#4f8cff"} />
-                </mesh>
-                {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
-                ))}
-            </group>
-        );
-        if (rigidBodyComp) {
-            // Set transforms on RigidBody
-            return (
-                <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-                    {group}
-                </RigidBody>
-            );
-        } else {
-            // Set transforms on group
-            return React.cloneElement(group, {
-                position: node.props.position,
-                rotation: node.props.rotation,
-                scale: node.props.scale,
-            });
-        }
-    } else if (node.type === "spotlight") {
-        const group = (
-            <group ref={groupRef} name={node.name}>
-                <spotLight
-                    color={node.props.color || "#ffffff"}
-                    intensity={node.props.intensity || 1}
-                    position={[0, 0, 0]}
-                />
-                <mesh onClick={e => { e.stopPropagation(); onSelect(node); }}>
-                    <sphereGeometry args={[0.1, 16, 16]} />
-                    <meshBasicMaterial color={node.props.color || "#ffffff"} />
-                </mesh>
-                {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
-                ))}
-            </group>
-        );
-        if (rigidBodyComp) {
-            return (
-                <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-                    {group}
-                </RigidBody>
-            );
-        } else {
-            return React.cloneElement(group, {
-                position: node.props.position,
-                rotation: node.props.rotation,
-                scale: node.props.scale,
-            });
-        }
-    } else if (node.type === "orthographicCamera") {
-        const group = (
-            <group ref={groupRef} name={node.name}>
-                {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
-                ))}
-            </group>
-        );
-        if (rigidBodyComp) {
-            return (
-                <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-                    {group}
-                </RigidBody>
-            );
-        } else {
-            return React.cloneElement(group, {
-                position: node.props.position,
-                rotation: node.props.rotation,
-                scale: node.props.scale,
-            });
-        }
-    }
-    return null;
 }
 
 function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate: (updates: Partial<SceneGraphNode>) => void }) {
@@ -416,7 +317,7 @@ function EditorCanvas({
                                     }}
                                 />
                             )}
-                            <Object3DNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
+                            <ObjectNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
                         </group>
                         <gridHelper args={[10, 10, "#888", "#444"]} />
                     </Physics>
@@ -467,7 +368,7 @@ function EditorCanvas({
                                     }}
                                 />
                             )}
-                            <Object3DNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
+                            <ObjectNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
                         </group>
                         <gridHelper args={[10, 10, "#888", "#444"]} />
                     </>

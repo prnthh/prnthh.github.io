@@ -1,4 +1,8 @@
 import React from "react";
+import { Group, Object3DEventMap } from "three";
+import { RigidBody } from "@react-three/rapier";
+import { RigidBodyComponentDefault } from "../components/RigidBodyComponent";
+import { Object3DNode } from "./Object3DNode";
 
 export const Object3DType = {
   type: "object",
@@ -82,4 +86,40 @@ export function DetailsView({ node, onUpdate }: { node: any; onUpdate: (updates:
       </div>
     </div>
   );
+}
+
+export function ObjectNode({ node, onSelect, selectedId, setTransformTarget }: { node: any, onSelect: (node: any) => void, selectedId?: string, setTransformTarget: (obj: Group<Object3DEventMap> | null) => void }) {
+  const groupRef = selectedId === node.id
+    ? (instance: Group<Object3DEventMap> | null) => setTransformTarget(instance)
+    : undefined;
+  const rigidBodyComp = node.components?.find((c: any) => c.type === "RigidBody");
+  const group = (
+    <group ref={groupRef} name={node.name}>
+      <mesh
+        onClick={e => {
+          e.stopPropagation();
+          onSelect(node);
+        }}
+      >
+        <boxGeometry args={[0.5, 0.5, 0.5]} />
+        <meshStandardMaterial color={node.props.material || "#4f8cff"} />
+      </mesh>
+      {node.children.map((child: any) => (
+        <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
+      ))}
+    </group>
+  );
+  if (rigidBodyComp) {
+    return (
+      <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+        {group}
+      </RigidBody>
+    );
+  } else {
+    return React.cloneElement(group, {
+      position: node.props.position,
+      rotation: node.props.rotation,
+      scale: node.props.scale,
+    });
+  }
 }
