@@ -300,6 +300,7 @@ function EditorCanvas({
     sceneSettings: { physics: boolean };
 }) {
     const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget, isPlaying } = useEditorContext();
+    const hasRigidBody = selected?.components?.some(c => c.type === "RigidBody");
 
     return (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -312,7 +313,7 @@ function EditorCanvas({
                         <group>
                             {selected && transformTarget && transformTarget.parent && (
                                 <TransformControls
-                                    object={transformTarget}
+                                    object={hasRigidBody ? undefined : transformTarget}
                                     mode="translate"
                                     onObjectChange={() => {
                                         if (selected && transformTarget) {
@@ -361,7 +362,7 @@ function EditorCanvas({
                 ) : (
                     <>
                         <group>
-                            {selected && transformTarget && transformTarget.parent && (
+                            {selected && transformTarget && transformTarget.parent && !hasRigidBody && (
                                 <TransformControls
                                     object={transformTarget}
                                     mode="translate"
