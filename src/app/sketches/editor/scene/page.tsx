@@ -11,6 +11,14 @@ import { RigidBodyComponentRow, RigidBodyComponentDefault, RigidBodyComponentDat
 import type { Group, Object3DEventMap } from "three";
 import type { RefObject } from "react";
 import { EditorProvider, useEditorContext } from "./EditorContext";
+import {
+    findNodeById,
+    updateNodeById,
+    removeNodeById,
+    addNodeToParent,
+    stripDefaultsFromNode,
+    applyDefaultsToNode,
+} from "./sceneGraphUtils";
 
 // Types for scene graph
 export type SceneGraphNode = {
@@ -25,19 +33,6 @@ export type SceneGraphNode = {
         data?: any;
     }>;
 };
-
-function createNode(type: "object" | "spotlight" | "orthographicCamera" = "object", name?: string): SceneGraphNode {
-    const typeDef = ObjectTypes[type];
-    return {
-        id: Math.random().toString(36).substr(2, 9),
-        name: name || typeDef.defaultProps.name,
-        type,
-        children: [],
-        parent: null,
-        props: { ...typeDef.defaultProps },
-        components: [],
-    };
-}
 
 // AddMenu component for add button and menu
 function AddMenu({ onAdd }: { onAdd: (type: "object" | "spotlight" | "orthographicCamera") => void }) {
@@ -331,88 +326,6 @@ function SceneDetailsPanel({ sceneSettings, setSceneSettings, sceneText, setScen
     );
 }
 
-// --- Utility Functions ---
-function findNodeById(node: SceneGraphNode, id: string): SceneGraphNode | null {
-    if (node.id === id) return node;
-    for (let c of node.children) {
-        const found = findNodeById(c, id);
-        if (found) return found;
-    }
-    return null;
-}
-
-function updateNodeById(node: SceneGraphNode, id: string, updates: Partial<SceneGraphNode>): SceneGraphNode {
-    if (node.id === id) {
-        if (updates.props) {
-            return { ...node, props: { ...node.props, ...updates.props } };
-        }
-        return { ...node, ...updates };
-    }
-    return { ...node, children: node.children.map(child => updateNodeById(child, id, updates)) };
-}
-
-function removeNodeById(node: SceneGraphNode, id: string): SceneGraphNode {
-    return {
-        ...node,
-        children: node.children
-            .filter(c => c.id !== id)
-            .map(c => removeNodeById(c, id)),
-    };
-}
-
-function addNodeToParent(node: SceneGraphNode, parentId: string, newNode: SceneGraphNode): SceneGraphNode {
-    if (node.id === parentId) {
-        return { ...node, children: [...node.children, newNode] };
-    }
-    return { ...node, children: node.children.map(child => addNodeToParent(child, parentId, newNode)) };
-}
-
-function stripDefaultsFromNode(node: SceneGraphNode): any {
-    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
-    const result: any = {
-        id: node.id,
-        type: node.type,
-        name: node.name,
-        props: {},
-        components: node.components && node.components.length > 0 ? node.components : undefined,
-        children: node.children.map(stripDefaultsFromNode),
-    };
-    // Only include props that differ from defaults
-    if (typeDef && typeDef.defaultProps) {
-        for (const key in node.props) {
-            if (
-                JSON.stringify(node.props[key]) !==
-                JSON.stringify((typeDef.defaultProps as Record<string, any>)[key])
-            ) {
-                result.props[key] = node.props[key];
-            }
-        }
-    } else {
-        result.props = { ...node.props };
-    }
-    // Remove empty props
-    if (Object.keys(result.props).length === 0) delete result.props;
-    // Remove undefined components
-    if (!result.components) delete result.components;
-    return result;
-}
-
-function applyDefaultsToNode(node: Omit<SceneGraphNode, "parent" | "children"> & { children: any[] }): SceneGraphNode {
-    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
-    const props = typeDef && typeDef.defaultProps
-        ? { ...typeDef.defaultProps, ...(node.props || {}) }
-        : { ...(node.props || {}) };
-    return {
-        id: node.id,
-        type: node.type,
-        name: node.name,
-        props,
-        components: node.components || [],
-        parent: null, // parent is always set at runtime
-        children: (node.children || []).map(applyDefaultsToNode),
-    };
-}
-
 // --- SceneGraphPanel ---
 function SceneGraphPanel({
     root,
@@ -450,7 +363,7 @@ function EditorCanvas({
 }: {
     sceneSettings: { physics: boolean };
 }) {
-    const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget, updateNodeById } = useEditorContext();
+    const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget } = useEditorContext();
     return (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
             <Canvas>

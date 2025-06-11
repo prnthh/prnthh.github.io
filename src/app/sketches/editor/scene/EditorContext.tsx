@@ -2,6 +2,14 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from "react";
 import { ObjectTypes } from "./objectTypes";
 import type { Group, Object3DEventMap } from "three";
+import {
+    findNodeById,
+    updateNodeById,
+    removeNodeById,
+    addNodeToParent,
+    stripDefaultsFromNode,
+    applyDefaultsToNode,
+} from "./sceneGraphUtils";
 
 // Types for scene graph
 export type SceneGraphNode = {
@@ -30,85 +38,6 @@ function createNode(type: "object" | "spotlight" | "orthographicCamera" = "objec
     };
 }
 
-// Utility functions (move from page.tsx)
-function findNodeById(node: SceneGraphNode, id: string): SceneGraphNode | null {
-    if (node.id === id) return node;
-    for (let c of node.children) {
-        const found = findNodeById(c, id);
-        if (found) return found;
-    }
-    return null;
-}
-
-function updateNodeById(node: SceneGraphNode, id: string, updates: Partial<SceneGraphNode>): SceneGraphNode {
-    if (node.id === id) {
-        if (updates.props) {
-            return { ...node, props: { ...node.props, ...updates.props } };
-        }
-        return { ...node, ...updates };
-    }
-    return { ...node, children: node.children.map(child => updateNodeById(child, id, updates)) };
-}
-
-function removeNodeById(node: SceneGraphNode, id: string): SceneGraphNode {
-    return {
-        ...node,
-        children: node.children
-            .filter(c => c.id !== id)
-            .map(c => removeNodeById(c, id)),
-    };
-}
-
-function addNodeToParent(node: SceneGraphNode, parentId: string, newNode: SceneGraphNode): SceneGraphNode {
-    if (node.id === parentId) {
-        return { ...node, children: [...node.children, newNode] };
-    }
-    return { ...node, children: node.children.map(child => addNodeToParent(child, parentId, newNode)) };
-}
-
-function stripDefaultsFromNode(node: SceneGraphNode): any {
-    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
-    const result: any = {
-        id: node.id,
-        type: node.type,
-        name: node.name,
-        props: {},
-        components: node.components && node.components.length > 0 ? node.components : undefined,
-        children: node.children.map(stripDefaultsFromNode),
-    };
-    if (typeDef && typeDef.defaultProps) {
-        for (const key in node.props) {
-            if (
-                JSON.stringify(node.props[key]) !==
-                JSON.stringify((typeDef.defaultProps as Record<string, any>)[key])
-            ) {
-                result.props[key] = node.props[key];
-            }
-        }
-    } else {
-        result.props = { ...node.props };
-    }
-    if (Object.keys(result.props).length === 0) delete result.props;
-    if (!result.components) delete result.components;
-    return result;
-}
-
-function applyDefaultsToNode(node: Omit<SceneGraphNode, "parent" | "children"> & { children: any[] }): SceneGraphNode {
-    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
-    const props = typeDef && typeDef.defaultProps
-        ? { ...typeDef.defaultProps, ...(node.props || {}) }
-        : { ...(node.props || {}) };
-    return {
-        id: node.id,
-        type: node.type,
-        name: node.name,
-        props,
-        components: node.components || [],
-        parent: null,
-        children: (node.children || []).map(applyDefaultsToNode),
-    };
-}
-
 // Context
 export type EditorContextType = {
     root: SceneGraphNode;
@@ -121,12 +50,13 @@ export type EditorContextType = {
     handleDragStart: (node: SceneGraphNode) => void;
     handleDrop: (targetNode: SceneGraphNode) => void;
     handleUpdateSelected: (updates: Partial<SceneGraphNode>) => void;
-    findNodeById: typeof findNodeById;
-    updateNodeById: typeof updateNodeById;
-    removeNodeById: typeof removeNodeById;
-    addNodeToParent: typeof addNodeToParent;
-    stripDefaultsFromNode: typeof stripDefaultsFromNode;
-    applyDefaultsToNode: typeof applyDefaultsToNode;
+    // --- Removed utility functions ---
+    // findNodeById: typeof findNodeById;
+    // updateNodeById: typeof updateNodeById;
+    // removeNodeById: typeof removeNodeById;
+    // addNodeToParent: typeof addNodeToParent;
+    // stripDefaultsFromNode: typeof stripDefaultsFromNode;
+    // applyDefaultsToNode: typeof applyDefaultsToNode;
     // --- Added for scene settings and text ---
     sceneSettings: { physics: boolean };
     setSceneSettings: React.Dispatch<React.SetStateAction<{ physics: boolean }>>;
@@ -229,12 +159,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
             handleDragStart,
             handleDrop,
             handleUpdateSelected,
-            findNodeById,
-            updateNodeById,
-            removeNodeById,
-            addNodeToParent,
-            stripDefaultsFromNode,
-            applyDefaultsToNode,
+            // --- Removed ---
+            // findNodeById,
+            // updateNodeById,
+            // removeNodeById,
+            // addNodeToParent,
+            // stripDefaultsFromNode,
+            // applyDefaultsToNode,
             // --- Added ---
             sceneSettings,
             setSceneSettings,
