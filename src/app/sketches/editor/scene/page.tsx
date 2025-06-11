@@ -118,11 +118,13 @@ function Object3DNode({ node, onSelect, selectedId, setTransformTarget }: { node
     const groupRef = selectedId === node.id
         ? (instance: Group<Object3DEventMap> | null) => setTransformTarget(instance)
         : undefined;
+    // Check for RigidBody component
+    const rigidBodyComp = node.components?.find(c => c.type === "RigidBody");
     // Render different objects based on node type
     let children: React.ReactNode = null;
     if (node.type === "object") {
-        return (
-            <group ref={groupRef} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+        const group = (
+            <group ref={groupRef} name={node.name}>
                 <mesh
                     onClick={e => {
                         e.stopPropagation();
@@ -137,9 +139,24 @@ function Object3DNode({ node, onSelect, selectedId, setTransformTarget }: { node
                 ))}
             </group>
         );
+        if (rigidBodyComp) {
+            // Set transforms on RigidBody
+            return (
+                <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+                    {group}
+                </RigidBody>
+            );
+        } else {
+            // Set transforms on group
+            return React.cloneElement(group, {
+                position: node.props.position,
+                rotation: node.props.rotation,
+                scale: node.props.scale,
+            });
+        }
     } else if (node.type === "spotlight") {
-        children = (
-            <group ref={groupRef} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+        const group = (
+            <group ref={groupRef} name={node.name}>
                 <spotLight
                     color={node.props.color || "#ffffff"}
                     intensity={node.props.intensity || 1}
@@ -154,24 +171,42 @@ function Object3DNode({ node, onSelect, selectedId, setTransformTarget }: { node
                 ))}
             </group>
         );
+        if (rigidBodyComp) {
+            return (
+                <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+                    {group}
+                </RigidBody>
+            );
+        } else {
+            return React.cloneElement(group, {
+                position: node.props.position,
+                rotation: node.props.rotation,
+                scale: node.props.scale,
+            });
+        }
     } else if (node.type === "orthographicCamera") {
-        children = (
-            <group ref={groupRef} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+        const group = (
+            <group ref={groupRef} name={node.name}>
                 {node.children.map(child => (
                     <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
                 ))}
             </group>
         );
-    }
-    // Wrap with components
-    if (node.components) {
-        for (const comp of node.components) {
-            if (comp.type === "RigidBody") {
-                children = withRigidBody(children, comp.data || RigidBodyComponentDefault);
-            }
+        if (rigidBodyComp) {
+            return (
+                <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+                    {group}
+                </RigidBody>
+            );
+        } else {
+            return React.cloneElement(group, {
+                position: node.props.position,
+                rotation: node.props.rotation,
+                scale: node.props.scale,
+            });
         }
     }
-    return children;
+    return null;
 }
 
 function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate: (updates: Partial<SceneGraphNode>) => void }) {
