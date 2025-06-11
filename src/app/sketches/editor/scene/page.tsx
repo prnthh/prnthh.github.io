@@ -10,6 +10,7 @@ import { RigidBody } from "@react-three/rapier";
 import { RigidBodyComponentRow, RigidBodyComponentDefault, RigidBodyComponentData, withRigidBody } from "./components/RigidBodyComponent";
 import type { Group, Object3DEventMap } from "three";
 import type { RefObject } from "react";
+import { EditorProvider, useEditorContext } from "./EditorContext";
 
 // Types for scene graph
 export type SceneGraphNode = {
@@ -413,13 +414,20 @@ function applyDefaultsToNode(node: Omit<SceneGraphNode, "parent" | "children"> &
 }
 
 // --- SceneGraphPanel ---
-function SceneGraphPanel({ root, selectedId, onSelect, onAdd, onDragStart, onDrop }: {
-    root: SceneGraphNode;
+function SceneGraphPanel({
+    root,
+    selectedId,
+    onSelect,
+    onAdd,
+    onDragStart,
+    onDrop,
+}: {
+    root: any;
     selectedId: string | undefined;
-    onSelect: (node: SceneGraphNode) => void;
-    onAdd: (parent: SceneGraphNode, type?: "object" | "spotlight" | "orthographicCamera") => void;
-    onDragStart: (node: SceneGraphNode) => void;
-    onDrop: (targetNode: SceneGraphNode) => void;
+    onSelect: (node: any) => void;
+    onAdd: (parent: any, type?: "object" | "spotlight" | "orthographicCamera") => void;
+    onDragStart: (node: any) => void;
+    onDrop: (targetNode: any) => void;
 }) {
     return (
         <div className="absolute top-32 left-2 width-[300px] bg-slate-800/20 rounded p-1">
@@ -438,22 +446,11 @@ function SceneGraphPanel({ root, selectedId, onSelect, onAdd, onDragStart, onDro
 
 // --- EditorCanvas ---
 function EditorCanvas({
-    root,
-    selected,
-    setSelected,
-    setRoot,
-    transformTarget,
-    setTransformTarget,
     sceneSettings,
 }: {
-    root: SceneGraphNode;
-    selected: SceneGraphNode | null;
-    setSelected: (node: SceneGraphNode) => void;
-    setRoot: React.Dispatch<React.SetStateAction<SceneGraphNode>>;
-    transformTarget: Group<Object3DEventMap> | null;
-    setTransformTarget: (obj: Group<Object3DEventMap> | null) => void;
     sceneSettings: { physics: boolean };
 }) {
+    const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget, updateNodeById } = useEditorContext();
     return (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
             <Canvas>
@@ -484,22 +481,24 @@ function EditorCanvas({
                                             }
                                             const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
                                             // Update both selected and root
-                                            setSelected(prev => prev ? {
-                                                ...prev,
-                                                props: {
-                                                    ...prev.props,
-                                                    position: [localPos.x, localPos.y, localPos.z],
-                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                    scale: [localScale.x, localScale.y, localScale.z],
-                                                }
-                                            } : null);
-                                            setRoot(prev => updateNodeById(prev, selected.id, {
-                                                props: {
-                                                    position: [localPos.x, localPos.y, localPos.z],
-                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                    scale: [localScale.x, localScale.y, localScale.z],
-                                                }
-                                            }));
+                                            if (selected) {
+                                                setSelected(selected ? {
+                                                    ...selected,
+                                                    props: {
+                                                        ...selected.props,
+                                                        position: [localPos.x, localPos.y, localPos.z],
+                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                        scale: [localScale.x, localScale.y, localScale.z],
+                                                    }
+                                                } : null);
+                                                setRoot(prev => updateNodeById(prev, selected.id, {
+                                                    props: {
+                                                        position: [localPos.x, localPos.y, localPos.z],
+                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                        scale: [localScale.x, localScale.y, localScale.z],
+                                                    }
+                                                }));
+                                            }
                                         }
                                     }}
                                 />
@@ -533,22 +532,24 @@ function EditorCanvas({
                                             }
                                             const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
                                             // Update both selected and root
-                                            setSelected(prev => prev ? {
-                                                ...prev,
-                                                props: {
-                                                    ...prev.props,
-                                                    position: [localPos.x, localPos.y, localPos.z],
-                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                    scale: [localScale.x, localScale.y, localScale.z],
-                                                }
-                                            } : null);
-                                            setRoot(prev => updateNodeById(prev, selected.id, {
-                                                props: {
-                                                    position: [localPos.x, localPos.y, localPos.z],
-                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                    scale: [localScale.x, localScale.y, localScale.z],
-                                                }
-                                            }));
+                                            if (selected) {
+                                                setSelected({
+                                                    ...selected,
+                                                    props: {
+                                                        ...selected.props,
+                                                        position: [localPos.x, localPos.y, localPos.z],
+                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                        scale: [localScale.x, localScale.y, localScale.z],
+                                                    }
+                                                });
+                                                setRoot(prev => updateNodeById(prev, selected.id, {
+                                                    props: {
+                                                        position: [localPos.x, localPos.y, localPos.z],
+                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                        scale: [localScale.x, localScale.y, localScale.z],
+                                                    }
+                                                }));
+                                            }
                                         }
                                     }}
                                 />
@@ -566,89 +567,35 @@ function EditorCanvas({
 
 // --- Main Editor Page ---
 export default function Home() {
-    // Scene settings state
-    const [sceneSettings, setSceneSettings] = useState<{ physics: boolean }>({ physics: true });
-    // Root node state
-    const [root, setRoot] = useState<SceneGraphNode>(() => createNode("object", "Root"));
-    const [selected, setSelected] = useState<SceneGraphNode | null>(null);
-    const [showSceneDetails, setShowSceneDetails] = useState(false);
-    const [sceneText, setSceneText] = useState<string>("");
-    const dragNode = useRef<SceneGraphNode | null>(null);
-    const [transformTarget, setTransformTarget] = useState<Group<Object3DEventMap> | null>(null);
+    return (
+        <EditorProvider>
+            <EditorContent />
+        </EditorProvider>
+    );
+}
 
-    // Add a new node as a child
-    const handleAdd = (parent: SceneGraphNode, type: "object" | "spotlight" | "orthographicCamera" = "object") => {
-        setRoot(prev => addNodeToParent(prev, parent.id, createNode(type)));
-    };
-
-    // Drag-and-drop reparenting
-    const handleDragStart = (node: SceneGraphNode) => {
-        dragNode.current = node;
-    };
-    const handleDrop = (targetNode: SceneGraphNode) => {
-        if (!dragNode.current || dragNode.current.id === targetNode.id) return;
-        setRoot(prev => {
-            const dragged = findNodeById(prev, dragNode.current!.id);
-            if (!dragged) return prev;
-            const withoutDragged = removeNodeById(prev, dragNode.current!.id);
-            return addNodeToParent(withoutDragged, targetNode.id, dragged);
-        });
-        dragNode.current = null;
-    };
-
-    // Update a node in the tree and selected
-    const handleUpdateSelected = (updates: Partial<SceneGraphNode>) => {
-        if (!selected) return;
-        setRoot(prev => updateNodeById(prev, selected.id, updates));
-        setSelected(prev => prev ? { ...prev, ...updates, props: { ...prev.props, ...updates.props } } : null);
-    };
-
-    // Keep sceneText in sync with root and settings
-    useEffect(() => {
-        if (!showSceneDetails) return;
-        setSceneText(
-            JSON.stringify(
-                { settings: sceneSettings, graph: stripDefaultsFromNode(root) },
-                null,
-                2
-            )
-        );
-    }, [root, sceneSettings, showSceneDetails]);
-
-    // Handle textarea blur (load scene if valid JSON)
-    const handleSceneTextBlur = () => {
-        try {
-            const parsed = JSON.parse(sceneText);
-            if (
-                parsed && typeof parsed === 'object' &&
-                parsed.settings && typeof parsed.settings === 'object' &&
-                parsed.graph && typeof parsed.graph === 'object' &&
-                parsed.graph.id && parsed.graph.type && Array.isArray(parsed.graph.children)
-            ) {
-                setSceneSettings(parsed.settings);
-                setRoot(applyDefaultsToNode(parsed.graph));
-                setSelected(null);
-            }
-        } catch (e) {
-            // ignore parse errors
-        }
-    };
-
-    useEffect(() => {
-        setTransformTarget(null);
-    }, [selected?.id]);
+function EditorContent() {
+    const {
+        root,
+        setRoot,
+        selected,
+        setSelected,
+        handleAdd,
+        handleDragStart,
+        handleDrop,
+        handleUpdateSelected,
+        sceneSettings,
+        setSceneSettings,
+        showSceneDetails,
+        setShowSceneDetails,
+        sceneText,
+        setSceneText,
+        handleSceneTextBlur,
+    } = useEditorContext();
 
     return (
         <>
-            <EditorCanvas
-                root={root}
-                selected={selected}
-                setSelected={setSelected}
-                setRoot={setRoot}
-                transformTarget={transformTarget}
-                setTransformTarget={setTransformTarget}
-                sceneSettings={sceneSettings}
-            />
+            <EditorCanvas sceneSettings={sceneSettings} />
             <SceneGraphPanel
                 root={root}
                 selectedId={selected?.id}
