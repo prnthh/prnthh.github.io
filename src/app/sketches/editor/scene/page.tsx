@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
-import { OrbitControls } from "@react-three/drei";
+import { OrbitControls, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
 import { ObjectTypes } from "./objectTypes";
 import { RigidBody } from "@react-three/rapier";
 import { RigidBodyComponentRow, RigidBodyComponentDefault, RigidBodyComponentData, withRigidBody } from "./components/RigidBodyComponent";
+import type { Group, Object3DEventMap } from "three";
+import type { RefObject } from "react";
 
 // Types for scene graph
 export type SceneGraphNode = {
@@ -111,13 +113,16 @@ function SceneGraphTree({
     );
 }
 
-function Object3DNode({ node, onSelect }: { node: SceneGraphNode, onSelect: (node: SceneGraphNode) => void }) {
-    const ref = useRef<THREE.Group>(null);
+function Object3DNode({ node, onSelect, selectedId, setTransformTarget }: { node: SceneGraphNode, onSelect: (node: SceneGraphNode) => void, selectedId?: string, setTransformTarget: (obj: Group<Object3DEventMap> | null) => void }) {
+    // Use callback ref for selected node
+    const groupRef = selectedId === node.id
+        ? (instance: Group<Object3DEventMap> | null) => setTransformTarget(instance)
+        : undefined;
     // Render different objects based on node type
     let children: React.ReactNode = null;
     if (node.type === "object") {
-        children = (
-            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+        return (
+            <group ref={groupRef} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
                 <mesh
                     onClick={e => {
                         e.stopPropagation();
@@ -128,36 +133,32 @@ function Object3DNode({ node, onSelect }: { node: SceneGraphNode, onSelect: (nod
                     <meshStandardMaterial color={node.props.material || "#4f8cff"} />
                 </mesh>
                 {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
+                    <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
                 ))}
             </group>
         );
     } else if (node.type === "spotlight") {
         children = (
-            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+            <group ref={groupRef} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
                 <spotLight
                     color={node.props.color || "#ffffff"}
                     intensity={node.props.intensity || 1}
                     position={[0, 0, 0]}
-                // You can add more props like angle, penumbra, distance, etc. if you add them to your schema
                 />
-                {/* Optionally, add a small sphere to visualize the light position */}
                 <mesh onClick={e => { e.stopPropagation(); onSelect(node); }}>
                     <sphereGeometry args={[0.1, 16, 16]} />
                     <meshBasicMaterial color={node.props.color || "#ffffff"} />
                 </mesh>
                 {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
+                    <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
                 ))}
             </group>
         );
     } else if (node.type === "orthographicCamera") {
-        // Optionally render a camera helper or nothing
         children = (
-            <group ref={ref} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
-                {/* Camera visualization could go here */}
+            <group ref={groupRef} name={node.name} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
                 {node.children.map(child => (
-                    <Object3DNode key={child.id} node={child} onSelect={onSelect} />
+                    <Object3DNode key={child.id} node={child} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />
                 ))}
             </group>
         );
@@ -358,6 +359,8 @@ export default function Home() {
     const [showSceneDetails, setShowSceneDetails] = useState(false);
     const [sceneText, setSceneText] = useState<string>("");
     const dragNode = useRef<SceneGraphNode | null>(null);
+    // Remove selectedObjectRef, use transformTarget state instead
+    const [transformTarget, setTransformTarget] = useState<Group<Object3DEventMap> | null>(null);
 
     // Add a new node as a child
     const handleAdd = (parent: SceneGraphNode, type: "object" | "spotlight" | "orthographicCamera" = "object") => {
@@ -485,6 +488,11 @@ export default function Home() {
         }
     };
 
+    // Clear the ref when selection changes
+    React.useEffect(() => {
+        setTransformTarget(null);
+    }, [selected?.id]);
+
     return (
         <>
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -494,19 +502,25 @@ export default function Home() {
                     {sceneSettings.physics ? (
                         <Physics>
                             <group>
-                                <Object3DNode node={root} onSelect={node => setSelected(node)} />
+                                {selected && transformTarget && (
+                                    <TransformControls object={transformTarget} mode="translate" />
+                                )}
+                                <Object3DNode node={root} onSelect={node => setSelected(node)} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
                             </group>
                             <gridHelper args={[10, 10, "#888", "#444"]} />
                         </Physics>
                     ) : (
                         <>
                             <group>
-                                <Object3DNode node={root} onSelect={node => setSelected(node)} />
+                                {selected && transformTarget && (
+                                    <TransformControls object={transformTarget} mode="translate" />
+                                )}
+                                <Object3DNode node={root} onSelect={node => setSelected(node)} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
                             </group>
                             <gridHelper args={[10, 10, "#888", "#444"]} />
                         </>
                     )}
-                    <OrbitControls />
+                    <OrbitControls makeDefault />
                 </Canvas>
             </div>
             <div className="absolute top-32 left-2 width-[300px] bg-slate-800/20 rounded p-1">
