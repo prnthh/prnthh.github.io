@@ -4,7 +4,7 @@ import type { SceneGraphNode } from "./EditorContext";
 
 export function findNodeById(node: SceneGraphNode, id: string): SceneGraphNode | null {
     if (node.id === id) return node;
-    for (let c of node.children) {
+    for (const c of node.children) {
         const found = findNodeById(c, id);
         if (found) return found;
     }

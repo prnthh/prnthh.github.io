@@ -321,9 +321,9 @@ function EditorCanvas({
                                             const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
                                             const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
                                             const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
-                                            let localPos = worldPos.clone();
-                                            let localQuat = worldQuat.clone();
-                                            let localScale = worldScale.clone();
+                                            const localPos = worldPos.clone();
+                                            const localQuat = worldQuat.clone();
+                                            const localScale = worldScale.clone();
                                             if (parent) {
                                                 parent.worldToLocal(localPos);
                                                 const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
@@ -372,9 +372,9 @@ function EditorCanvas({
                                             const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
                                             const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
                                             const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
-                                            let localPos = worldPos.clone();
-                                            let localQuat = worldQuat.clone();
-                                            let localScale = worldScale.clone();
+                                            const localPos = worldPos.clone();
+                                            const localQuat = worldQuat.clone();
+                                            const localScale = worldScale.clone();
                                             if (parent) {
                                                 parent.worldToLocal(localPos);
                                                 const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
