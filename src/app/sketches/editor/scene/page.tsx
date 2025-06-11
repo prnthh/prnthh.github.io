@@ -210,7 +210,7 @@ function Object3DNode({ node, onSelect, selectedId, setTransformTarget }: { node
 }
 
 function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate: (updates: Partial<SceneGraphNode>) => void }) {
-    const typeDef = ObjectTypes[node.type];
+    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
     const [addMenuOpen, setAddMenuOpen] = React.useState(false);
     const hasRigidBody = node.components?.some(c => c.type === "RigidBody");
     // --- COMPONENTS UI ---
@@ -330,61 +330,241 @@ function SceneDetailsPanel({ sceneSettings, setSceneSettings, sceneText, setScen
     );
 }
 
-// Utility: Remove default values from node for saving
-function stripDefaultsFromNode(node: SceneGraphNode): any {
-    const typeDef = ObjectTypes[node.type];
-    const defaults = typeDef.defaultProps;
-    // Only include props that differ from defaults
-    const props: Record<string, any> = {};
-    for (const key in node.props) {
-        if (
-            Array.isArray(node.props[key]) &&
-            Array.isArray((defaults as any)[key])
-        ) {
-            if (JSON.stringify(node.props[key]) !== JSON.stringify((defaults as any)[key])) {
-                props[key] = node.props[key];
-            }
-        } else if (node.props[key] !== (defaults as any)[key]) {
-            props[key] = node.props[key];
-        }
+// --- Utility Functions ---
+function findNodeById(node: SceneGraphNode, id: string): SceneGraphNode | null {
+    if (node.id === id) return node;
+    for (let c of node.children) {
+        const found = findNodeById(c, id);
+        if (found) return found;
     }
-    // Only include name if different from default
+    return null;
+}
+
+function updateNodeById(node: SceneGraphNode, id: string, updates: Partial<SceneGraphNode>): SceneGraphNode {
+    if (node.id === id) {
+        if (updates.props) {
+            return { ...node, props: { ...node.props, ...updates.props } };
+        }
+        return { ...node, ...updates };
+    }
+    return { ...node, children: node.children.map(child => updateNodeById(child, id, updates)) };
+}
+
+function removeNodeById(node: SceneGraphNode, id: string): SceneGraphNode {
+    return {
+        ...node,
+        children: node.children
+            .filter(c => c.id !== id)
+            .map(c => removeNodeById(c, id)),
+    };
+}
+
+function addNodeToParent(node: SceneGraphNode, parentId: string, newNode: SceneGraphNode): SceneGraphNode {
+    if (node.id === parentId) {
+        return { ...node, children: [...node.children, newNode] };
+    }
+    return { ...node, children: node.children.map(child => addNodeToParent(child, parentId, newNode)) };
+}
+
+function stripDefaultsFromNode(node: SceneGraphNode): any {
+    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
     const result: any = {
         id: node.id,
         type: node.type,
-        ...(node.name !== defaults.name ? { name: node.name } : {}),
-        ...(Object.keys(props).length > 0 ? { props } : {}),
-        ...(node.components && node.components.length > 0 ? { components: node.components } : {}),
+        name: node.name,
+        props: {},
+        components: node.components && node.components.length > 0 ? node.components : undefined,
         children: node.children.map(stripDefaultsFromNode),
     };
+    // Only include props that differ from defaults
+    if (typeDef && typeDef.defaultProps) {
+        for (const key in node.props) {
+            if (
+                JSON.stringify(node.props[key]) !==
+                JSON.stringify((typeDef.defaultProps as Record<string, any>)[key])
+            ) {
+                result.props[key] = node.props[key];
+            }
+        }
+    } else {
+        result.props = { ...node.props };
+    }
+    // Remove empty props
+    if (Object.keys(result.props).length === 0) delete result.props;
+    // Remove undefined components
+    if (!result.components) delete result.components;
     return result;
 }
 
-// Utility: Apply defaults to node for loading
-function applyDefaultsToNode(
-    node: { id: string; name?: string; type: keyof typeof ObjectTypes; props?: Record<string, any>; children?: any[]; components?: any[] }
-): SceneGraphNode {
-    const typeDef = ObjectTypes[node.type];
-    const defaults = typeDef.defaultProps;
-    const props = { ...defaults, ...(node.props || {}) };
-    const name = node.name !== undefined ? node.name : defaults.name;
+function applyDefaultsToNode(node: Omit<SceneGraphNode, "parent" | "children"> & { children: any[] }): SceneGraphNode {
+    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
+    const props = typeDef && typeDef.defaultProps
+        ? { ...typeDef.defaultProps, ...(node.props || {}) }
+        : { ...(node.props || {}) };
     return {
         id: node.id,
-        name,
         type: node.type,
-        parent: null,
+        name: node.name,
         props,
+        components: node.components || [],
+        parent: null, // parent is always set at runtime
         children: (node.children || []).map(applyDefaultsToNode),
-        components: Array.isArray(node.components)
-            ? node.components.map(comp =>
-                typeof comp === "string"
-                    ? { type: comp }
-                    : comp
-            )
-            : [],
     };
 }
 
+// --- SceneGraphPanel ---
+function SceneGraphPanel({ root, selectedId, onSelect, onAdd, onDragStart, onDrop }: {
+    root: SceneGraphNode;
+    selectedId: string | undefined;
+    onSelect: (node: SceneGraphNode) => void;
+    onAdd: (parent: SceneGraphNode, type?: "object" | "spotlight" | "orthographicCamera") => void;
+    onDragStart: (node: SceneGraphNode) => void;
+    onDrop: (targetNode: SceneGraphNode) => void;
+}) {
+    return (
+        <div className="absolute top-32 left-2 width-[300px] bg-slate-800/20 rounded p-1">
+            <h2>Scene Graph</h2>
+            <SceneGraphTree
+                node={root}
+                selectedId={selectedId}
+                onSelect={onSelect}
+                onAdd={onAdd}
+                onDragStart={onDragStart}
+                onDrop={onDrop}
+            />
+        </div>
+    );
+}
+
+// --- EditorCanvas ---
+function EditorCanvas({
+    root,
+    selected,
+    setSelected,
+    setRoot,
+    transformTarget,
+    setTransformTarget,
+    sceneSettings,
+}: {
+    root: SceneGraphNode;
+    selected: SceneGraphNode | null;
+    setSelected: (node: SceneGraphNode) => void;
+    setRoot: React.Dispatch<React.SetStateAction<SceneGraphNode>>;
+    transformTarget: Group<Object3DEventMap> | null;
+    setTransformTarget: (obj: Group<Object3DEventMap> | null) => void;
+    sceneSettings: { physics: boolean };
+}) {
+    return (
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+            <Canvas>
+                <ambientLight intensity={0.5} />
+                <pointLight position={[10, 10, 10]} />
+                {sceneSettings.physics ? (
+                    <Physics>
+                        <group>
+                            {selected && transformTarget && (
+                                <TransformControls
+                                    object={transformTarget}
+                                    mode="translate"
+                                    onObjectChange={() => {
+                                        if (selected && transformTarget) {
+                                            const parent = transformTarget.parent;
+                                            const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
+                                            const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
+                                            const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
+                                            let localPos = worldPos.clone();
+                                            let localQuat = worldQuat.clone();
+                                            let localScale = worldScale.clone();
+                                            if (parent) {
+                                                parent.worldToLocal(localPos);
+                                                const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
+                                                localQuat.premultiply(parentWorldQuat.invert());
+                                                const parentWorldScale = parent.getWorldScale(new THREE.Vector3());
+                                                localScale.divide(parentWorldScale);
+                                            }
+                                            const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
+                                            // Update both selected and root
+                                            setSelected(prev => prev ? {
+                                                ...prev,
+                                                props: {
+                                                    ...prev.props,
+                                                    position: [localPos.x, localPos.y, localPos.z],
+                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                    scale: [localScale.x, localScale.y, localScale.z],
+                                                }
+                                            } : null);
+                                            setRoot(prev => updateNodeById(prev, selected.id, {
+                                                props: {
+                                                    position: [localPos.x, localPos.y, localPos.z],
+                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                    scale: [localScale.x, localScale.y, localScale.z],
+                                                }
+                                            }));
+                                        }
+                                    }}
+                                />
+                            )}
+                            <Object3DNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
+                        </group>
+                        <gridHelper args={[10, 10, "#888", "#444"]} />
+                    </Physics>
+                ) : (
+                    <>
+                        <group>
+                            {selected && transformTarget && (
+                                <TransformControls
+                                    object={transformTarget}
+                                    mode="translate"
+                                    onObjectChange={() => {
+                                        if (selected && transformTarget) {
+                                            const parent = transformTarget.parent;
+                                            const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
+                                            const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
+                                            const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
+                                            let localPos = worldPos.clone();
+                                            let localQuat = worldQuat.clone();
+                                            let localScale = worldScale.clone();
+                                            if (parent) {
+                                                parent.worldToLocal(localPos);
+                                                const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
+                                                localQuat.premultiply(parentWorldQuat.invert());
+                                                const parentWorldScale = parent.getWorldScale(new THREE.Vector3());
+                                                localScale.divide(parentWorldScale);
+                                            }
+                                            const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
+                                            // Update both selected and root
+                                            setSelected(prev => prev ? {
+                                                ...prev,
+                                                props: {
+                                                    ...prev.props,
+                                                    position: [localPos.x, localPos.y, localPos.z],
+                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                    scale: [localScale.x, localScale.y, localScale.z],
+                                                }
+                                            } : null);
+                                            setRoot(prev => updateNodeById(prev, selected.id, {
+                                                props: {
+                                                    position: [localPos.x, localPos.y, localPos.z],
+                                                    rotation: [localEuler.x, localEuler.y, localEuler.z],
+                                                    scale: [localScale.x, localScale.y, localScale.z],
+                                                }
+                                            }));
+                                        }
+                                    }}
+                                />
+                            )}
+                            <Object3DNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
+                        </group>
+                        <gridHelper args={[10, 10, "#888", "#444"]} />
+                    </>
+                )}
+                <OrbitControls makeDefault />
+            </Canvas>
+        </div>
+    );
+}
+
+// --- Main Editor Page ---
 export default function Home() {
     // Scene settings state
     const [sceneSettings, setSceneSettings] = useState<{ physics: boolean }>({ physics: true });
@@ -394,21 +574,11 @@ export default function Home() {
     const [showSceneDetails, setShowSceneDetails] = useState(false);
     const [sceneText, setSceneText] = useState<string>("");
     const dragNode = useRef<SceneGraphNode | null>(null);
-    // Remove selectedObjectRef, use transformTarget state instead
     const [transformTarget, setTransformTarget] = useState<Group<Object3DEventMap> | null>(null);
 
     // Add a new node as a child
     const handleAdd = (parent: SceneGraphNode, type: "object" | "spotlight" | "orthographicCamera" = "object") => {
-        setRoot(prev => {
-            const newNode = createNode(type);
-            function addChild(node: SceneGraphNode): SceneGraphNode {
-                if (node.id === parent.id) {
-                    return { ...node, children: [...node.children, newNode] };
-                }
-                return { ...node, children: node.children.map(addChild) };
-            }
-            return addChild(prev);
-        });
+        setRoot(prev => addNodeToParent(prev, parent.id, createNode(type)));
     };
 
     // Drag-and-drop reparenting
@@ -418,46 +588,10 @@ export default function Home() {
     const handleDrop = (targetNode: SceneGraphNode) => {
         if (!dragNode.current || dragNode.current.id === targetNode.id) return;
         setRoot(prev => {
-            function removeNode(node: SceneGraphNode, id: string): SceneGraphNode {
-                return {
-                    ...node,
-                    children: node.children
-                        .filter(c => c.id !== id)
-                        .map(c => removeNode(c, id)),
-                };
-            }
-            function findNode(node: SceneGraphNode, id: string): SceneGraphNode | null {
-                if (node.id === id) return node;
-                for (let c of node.children) {
-                    const found = findNode(c, id);
-                    if (found) return found;
-                }
-                return null;
-            }
-            if (!dragNode.current) return prev; // Extra safety check
-            const dragged = findNode(prev, dragNode.current.id);
+            const dragged = findNodeById(prev, dragNode.current!.id);
             if (!dragged) return prev;
-            function addToTarget(node: SceneGraphNode): SceneGraphNode {
-                if (node.id === targetNode.id && dragged) {
-                    return {
-                        ...node,
-                        children: [
-                            ...node.children,
-                            {
-                                id: dragged.id,
-                                name: dragged.name,
-                                type: dragged.type,
-                                children: dragged.children,
-                                parent: node,
-                                props: { ...dragged.props },
-                            }
-                        ]
-                    };
-                }
-                return { ...node, children: node.children.map(addToTarget) };
-            }
-            const withoutDragged = removeNode(prev, dragNode.current!.id);
-            return addToTarget(withoutDragged);
+            const withoutDragged = removeNodeById(prev, dragNode.current!.id);
+            return addNodeToParent(withoutDragged, targetNode.id, dragged);
         });
         dragNode.current = null;
     };
@@ -465,35 +599,13 @@ export default function Home() {
     // Update a node in the tree and selected
     const handleUpdateSelected = (updates: Partial<SceneGraphNode>) => {
         if (!selected) return;
-        function updateNode(node: SceneGraphNode): SceneGraphNode {
-            if (selected && node.id === selected.id) {
-                // If props is being updated, merge props
-                if (updates.props) {
-                    return { ...node, props: { ...node.props, ...updates.props } };
-                }
-                return { ...node, ...updates };
-            }
-            return { ...node, children: node.children.map(updateNode) };
-        }
-        const newRoot = updateNode(root);
-        setRoot(newRoot);
-        // Find the updated node reference
-        function findNode(node: SceneGraphNode, id: string): SceneGraphNode | null {
-            if (node.id === id) return node;
-            for (let c of node.children) {
-                const found = findNode(c, id);
-                if (found) return found;
-            }
-            return null;
-        }
-        const updatedNode = findNode(newRoot, selected.id);
-        setSelected(updatedNode);
+        setRoot(prev => updateNodeById(prev, selected.id, updates));
+        setSelected(prev => prev ? { ...prev, ...updates, props: { ...prev.props, ...updates.props } } : null);
     };
 
     // Keep sceneText in sync with root and settings
-    React.useEffect(() => {
+    useEffect(() => {
         if (!showSceneDetails) return;
-        // Only save changed values
         setSceneText(
             JSON.stringify(
                 { settings: sceneSettings, graph: stripDefaultsFromNode(root) },
@@ -507,7 +619,6 @@ export default function Home() {
     const handleSceneTextBlur = () => {
         try {
             const parsed = JSON.parse(sceneText);
-            // Must have settings and graph
             if (
                 parsed && typeof parsed === 'object' &&
                 parsed.settings && typeof parsed.settings === 'object' &&
@@ -523,52 +634,29 @@ export default function Home() {
         }
     };
 
-    // Clear the ref when selection changes
-    React.useEffect(() => {
+    useEffect(() => {
         setTransformTarget(null);
     }, [selected?.id]);
 
     return (
         <>
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-                <Canvas>
-                    <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 10, 10]} />
-                    {sceneSettings.physics ? (
-                        <Physics>
-                            <group>
-                                {selected && transformTarget && (
-                                    <TransformControls object={transformTarget} mode="translate" />
-                                )}
-                                <Object3DNode node={root} onSelect={node => setSelected(node)} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
-                            </group>
-                            <gridHelper args={[10, 10, "#888", "#444"]} />
-                        </Physics>
-                    ) : (
-                        <>
-                            <group>
-                                {selected && transformTarget && (
-                                    <TransformControls object={transformTarget} mode="translate" />
-                                )}
-                                <Object3DNode node={root} onSelect={node => setSelected(node)} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
-                            </group>
-                            <gridHelper args={[10, 10, "#888", "#444"]} />
-                        </>
-                    )}
-                    <OrbitControls makeDefault />
-                </Canvas>
-            </div>
-            <div className="absolute top-32 left-2 width-[300px] bg-slate-800/20 rounded p-1">
-                <h2>Scene Graph</h2>
-                <SceneGraphTree
-                    node={root}
-                    selectedId={selected?.id}
-                    onSelect={setSelected}
-                    onAdd={handleAdd}
-                    onDragStart={handleDragStart}
-                    onDrop={handleDrop}
-                />
-            </div>
+            <EditorCanvas
+                root={root}
+                selected={selected}
+                setSelected={setSelected}
+                setRoot={setRoot}
+                transformTarget={transformTarget}
+                setTransformTarget={setTransformTarget}
+                sceneSettings={sceneSettings}
+            />
+            <SceneGraphPanel
+                root={root}
+                selectedId={selected?.id}
+                onSelect={setSelected}
+                onAdd={handleAdd}
+                onDragStart={handleDragStart}
+                onDrop={handleDrop}
+            />
             <div className="absolute top-4 right-2 width-[300px] bg-slate-800/20 rounded p-1">
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                     <button
