@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { OrbitControls, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
@@ -258,22 +258,59 @@ function SceneGraphPanel({
     );
 }
 
+// --- PlaybackController ---
+function PlaybackController() {
+    const { isPlaying, isPaused } = useEditorContext();
+    useFrame(() => {
+        if (isPlaying && !isPaused) {
+            // TODO: Insert simulation step logic here
+            // For now, just log for demonstration
+            // console.log('Sim step');
+        }
+    });
+    return null;
+}
+
+// --- PlaybackControls ---
+function PlaybackControls({ isPlaying, onPlay, onPause, onStop }: {
+    isPlaying: boolean;
+    onPlay: () => void;
+    onPause: () => void;
+    onStop: () => void;
+}) {
+    return (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 gap-2 flex">
+            {!isPlaying && (
+                <button onClick={onPlay}>▶️</button>
+            )}
+            {isPlaying && (
+                <>
+                    <button onClick={onPause}>⏸️</button>
+                    <button onClick={onStop}>⏹️</button>
+                </>
+            )}
+        </div>
+    );
+}
+
 // --- EditorCanvas ---
 function EditorCanvas({
     sceneSettings,
 }: {
     sceneSettings: { physics: boolean };
 }) {
-    const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget } = useEditorContext();
+    const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget, isPlaying } = useEditorContext();
+
     return (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
             <Canvas>
+                <PlaybackController />
                 <ambientLight intensity={0.5} />
                 <pointLight position={[10, 10, 10]} />
                 {sceneSettings.physics ? (
-                    <Physics>
+                    <Physics paused={!isPlaying}>
                         <group>
-                            {selected && transformTarget && (
+                            {selected && transformTarget && transformTarget.parent && (
                                 <TransformControls
                                     object={transformTarget}
                                     mode="translate"
@@ -324,7 +361,7 @@ function EditorCanvas({
                 ) : (
                     <>
                         <group>
-                            {selected && transformTarget && (
+                            {selected && transformTarget && transformTarget.parent && (
                                 <TransformControls
                                     object={transformTarget}
                                     mode="translate"
@@ -405,11 +442,31 @@ function EditorContent() {
         sceneText,
         setSceneText,
         handleSceneTextBlur,
+        isPlaying,
+        setIsPlaying,
+        isPaused,
+        setIsPaused,
+        resetScene,
     } = useEditorContext();
+    const { saveSceneForReset } = useEditorContext();
+    // Add a key to force remount of EditorCanvas
+    const [canvasKey, setCanvasKey] = React.useState(0);
+
+    const handlePlay = () => {
+        saveSceneForReset();
+        setIsPlaying(true);
+        setIsPaused(false);
+    };
+    const handlePause = () => setIsPaused(v => !v);
+    const handleStop = () => {
+        setIsPlaying(false); // Ensure isPlaying is false immediately
+        setIsPaused(false); // Also reset pause state
+        setCanvasKey(k => k + 1); // Remount EditorCanvas/Canvas
+    };
 
     return (
         <>
-            <EditorCanvas sceneSettings={sceneSettings} />
+            <EditorCanvas key={canvasKey} sceneSettings={sceneSettings} />
             <SceneGraphPanel
                 root={root}
                 selectedId={selected?.id}
@@ -418,6 +475,14 @@ function EditorContent() {
                 onDragStart={handleDragStart}
                 onDrop={handleDrop}
             />
+
+            <PlaybackControls
+                isPlaying={isPlaying}
+                onPlay={handlePlay}
+                onPause={handlePause}
+                onStop={handleStop}
+            />
+
             <div className="absolute top-4 right-2 width-[300px] bg-slate-800/20 rounded p-1">
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                     <button

@@ -50,14 +50,7 @@ export type EditorContextType = {
     handleDragStart: (node: SceneGraphNode) => void;
     handleDrop: (targetNode: SceneGraphNode) => void;
     handleUpdateSelected: (updates: Partial<SceneGraphNode>) => void;
-    // --- Removed utility functions ---
-    // findNodeById: typeof findNodeById;
-    // updateNodeById: typeof updateNodeById;
-    // removeNodeById: typeof removeNodeById;
-    // addNodeToParent: typeof addNodeToParent;
-    // stripDefaultsFromNode: typeof stripDefaultsFromNode;
-    // applyDefaultsToNode: typeof applyDefaultsToNode;
-    // --- Added for scene settings and text ---
+
     sceneSettings: { physics: boolean };
     setSceneSettings: React.Dispatch<React.SetStateAction<{ physics: boolean }>>;
     showSceneDetails: boolean;
@@ -65,6 +58,14 @@ export type EditorContextType = {
     sceneText: string;
     setSceneText: React.Dispatch<React.SetStateAction<string>>;
     handleSceneTextBlur: () => void;
+    // --- Playback state ---
+    isPlaying: boolean;
+    setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+    isPaused: boolean;
+    setIsPaused: React.Dispatch<React.SetStateAction<boolean>>;
+    // --- For stop/reset ---
+    resetScene: () => void;
+    saveSceneForReset: () => void;
 };
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -84,8 +85,13 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     const [sceneSettings, setSceneSettings] = useState<{ physics: boolean }>({ physics: true });
     const [showSceneDetails, setShowSceneDetails] = useState(false);
     const [sceneText, setSceneText] = useState<string>("");
+    // --- Playback state ---
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    // --- Store last saved scene for reset ---
+    const lastSavedScene = useRef<{ root: SceneGraphNode; sceneSettings: { physics: boolean } } | null>(null);
 
-    // --- Scene text blur handler ---
+    // Save scene on text blur (for stop/reset)
     const handleSceneTextBlur = () => {
         try {
             const parsed = JSON.parse(sceneText);
@@ -98,9 +104,38 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
                 setSceneSettings(parsed.settings);
                 setRoot(applyDefaultsToNode(parsed.graph));
                 setSelected(null);
+                // Save for reset
+                lastSavedScene.current = {
+                    root: applyDefaultsToNode(parsed.graph),
+                    sceneSettings: parsed.settings
+                };
             }
         } catch (e) {
             // ignore parse errors
+        }
+    };
+
+    // Save scene for reset when play is pressed
+    const saveSceneForReset = () => {
+        lastSavedScene.current = {
+            root: JSON.parse(JSON.stringify(root)),
+            sceneSettings: JSON.parse(JSON.stringify(sceneSettings)),
+        };
+    };
+
+    // On mount, save initial scene for reset
+    React.useEffect(() => {
+        lastSavedScene.current = { root, sceneSettings };
+    }, []);
+
+    // --- Reset scene to last saved ---
+    const resetScene = () => {
+        if (lastSavedScene.current) {
+            setRoot(lastSavedScene.current.root);
+            setSceneSettings(lastSavedScene.current.sceneSettings);
+            setSelected(null);
+            setIsPlaying(false);
+            setIsPaused(false);
         }
     };
 
@@ -159,14 +194,6 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
             handleDragStart,
             handleDrop,
             handleUpdateSelected,
-            // --- Removed ---
-            // findNodeById,
-            // updateNodeById,
-            // removeNodeById,
-            // addNodeToParent,
-            // stripDefaultsFromNode,
-            // applyDefaultsToNode,
-            // --- Added ---
             sceneSettings,
             setSceneSettings,
             showSceneDetails,
@@ -174,6 +201,12 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
             sceneText,
             setSceneText,
             handleSceneTextBlur,
+            isPlaying,
+            setIsPlaying,
+            isPaused,
+            setIsPaused,
+            resetScene,
+            saveSceneForReset,
         }}>
             {children}
         </EditorContext.Provider>
