@@ -9,8 +9,8 @@ const InstanceMeshesContext = createContext<any>(undefined);
 export type MeshOption = { name: string; path: string };
 
 export function InstancedMeshProvider({ meshOptions, children }: { meshOptions: MeshOption[]; children: React.ReactNode }) {
-    // Load all models dynamically from meshOptions
-    const gltfs = meshOptions.map(opt => useGLTF(opt.path));
+    // Use useGLTF with an array of paths
+    const gltfs = useGLTF(meshOptions.map(opt => opt.path));
 
     function getMeshesFromScene(root: THREE.Object3D, modelKey: string) {
         const meshes: Record<string, THREE.Mesh> = {};
