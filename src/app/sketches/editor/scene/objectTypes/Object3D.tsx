@@ -1,5 +1,7 @@
 import React from "react";
 import { Group, Object3DEventMap } from "three";
+import { RigidBody } from "@react-three/rapier";
+import { RigidBodyComponentDefault } from "../components/RigidBodyComponent";
 import { Object3DNode } from "./Object3DNode";
 
 export const Object3DType = {
@@ -90,7 +92,8 @@ export function ObjectNode({ node, onSelect, selectedId, setTransformTarget }: {
   const groupRef = selectedId === node.id
     ? (instance: Group<Object3DEventMap> | null) => setTransformTarget(instance)
     : undefined;
-  return (
+  const rigidBodyComp = node.components?.find((c: any) => c.type === "RigidBody");
+  const group = (
     <group ref={groupRef} name={node.name}>
       <mesh
         onClick={e => {
@@ -106,4 +109,17 @@ export function ObjectNode({ node, onSelect, selectedId, setTransformTarget }: {
       ))}
     </group>
   );
+  if (rigidBodyComp) {
+    return (
+      <RigidBody type={rigidBodyComp.data?.type || RigidBodyComponentDefault.type} position={node.props.position} rotation={node.props.rotation} scale={node.props.scale}>
+        {group}
+      </RigidBody>
+    );
+  } else {
+    return React.cloneElement(group, {
+      position: node.props.position,
+      rotation: node.props.rotation,
+      scale: node.props.scale,
+    });
+  }
 }

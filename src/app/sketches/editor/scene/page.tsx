@@ -300,7 +300,6 @@ function EditorCanvas({
     sceneSettings: { physics: boolean };
 }) {
     const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget, isPlaying } = useEditorContext();
-    const hasRigidBody = selected?.components?.some(c => c.type === "RigidBody");
 
     return (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -313,7 +312,7 @@ function EditorCanvas({
                         <group>
                             {selected && transformTarget && transformTarget.parent && (
                                 <TransformControls
-                                    object={hasRigidBody ? undefined : transformTarget}
+                                    object={transformTarget}
                                     mode="translate"
                                     onObjectChange={() => {
                                         if (selected && transformTarget) {
@@ -321,9 +320,9 @@ function EditorCanvas({
                                             const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
                                             const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
                                             const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
-                                            const localPos = worldPos.clone();
-                                            const localQuat = worldQuat.clone();
-                                            const localScale = worldScale.clone();
+                                            let localPos = worldPos.clone();
+                                            let localQuat = worldQuat.clone();
+                                            let localScale = worldScale.clone();
                                             if (parent) {
                                                 parent.worldToLocal(localPos);
                                                 const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
@@ -362,7 +361,7 @@ function EditorCanvas({
                 ) : (
                     <>
                         <group>
-                            {selected && transformTarget && transformTarget.parent && !hasRigidBody && (
+                            {selected && transformTarget && transformTarget.parent && (
                                 <TransformControls
                                     object={transformTarget}
                                     mode="translate"
@@ -372,9 +371,9 @@ function EditorCanvas({
                                             const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
                                             const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
                                             const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
-                                            const localPos = worldPos.clone();
-                                            const localQuat = worldQuat.clone();
-                                            const localScale = worldScale.clone();
+                                            let localPos = worldPos.clone();
+                                            let localQuat = worldQuat.clone();
+                                            let localScale = worldScale.clone();
                                             if (parent) {
                                                 parent.worldToLocal(localPos);
                                                 const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
