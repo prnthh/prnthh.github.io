@@ -27,7 +27,7 @@ export default function Home() {
                         <Physics>
                             <CharacterController lookTarget={ballRef} />
 
-                            <Football ref={ballRef} position={[5, 0.1, 0]} />
+                            <Football ref={ballRef} position={[0, 2, 5]} />
 
                             <GoalFollowingPed ballRef={ballRef} />
 

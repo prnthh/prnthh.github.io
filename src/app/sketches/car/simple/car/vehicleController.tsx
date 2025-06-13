@@ -45,6 +45,7 @@ export const useVehicleController = (
             vehicle.setWheelSuspensionStiffness(index, wheel.suspensionStiffness)
             vehicle.setWheelMaxSuspensionTravel(index, wheel.maxSuspensionTravel)
         })
+        vehicle.wheelFrictionSlip(1)
 
         vehicleController.current = vehicle
 

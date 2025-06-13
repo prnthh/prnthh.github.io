@@ -10,11 +10,6 @@ import { useControlScheme } from '@/shared/ControlsProvider'
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js'
 import React from 'react'
 
-const spawn = {
-    position: [-7, 2, -130] as THREE.Vector3Tuple,
-    rotation: [0, 0, 0] as THREE.Vector3Tuple,
-}
-
 const wheelInfo: Omit<WheelInfo, 'position'> = {
     axleCs: new THREE.Vector3(1, 0, 0),
     suspensionRestLength: 0.25,
@@ -39,11 +34,15 @@ const wheels: WheelInfo[] = [
 
 const _airControlAngVel = new THREE.Vector3()
 
-const Vehicle = ({ driving = true, debug = false, chassisModel, wheelModel }: {
+const Vehicle = ({ driving = true, debug = false, chassisModel, wheelModel, spawn = {
+    position: [-7, 2, -130] as THREE.Vector3Tuple,
+    rotation: [0, 0, 0] as THREE.Vector3Tuple,
+} }: {
     driving?: boolean,
     debug?: boolean,
     chassisModel?: string,
     wheelModel?: string,
+    spawn?: { position: THREE.Vector3Tuple, rotation: THREE.Vector3Tuple }
 }) => {
     const { world, rapier } = useRapier()
     const threeControls = useThree((s) => s.controls)
@@ -99,7 +98,16 @@ const Vehicle = ({ driving = true, debug = false, chassisModel, wheelModel }: {
             ground.current = collider
         }
 
-        const engineForce = Number(controls.forward) * accelerateForce - Number(controls.backward)
+        // Get current speed
+        const linvel = chassisRigidBody.linvel();
+        const speed = Math.sqrt(linvel.x * linvel.x + linvel.y * linvel.y + linvel.z * linvel.z);
+        const maxSpeed = 15; // meters per second
+
+        let engineForce = Number(controls.forward) * accelerateForce - Number(controls.backward);
+        // Clamp engine force if above max speed and still accelerating
+        if (speed > maxSpeed && engineForce > 0) {
+            engineForce = 0;
+        }
 
         controller.setWheelEngineForce(2, -engineForce)
         controller.setWheelEngineForce(3, -engineForce)

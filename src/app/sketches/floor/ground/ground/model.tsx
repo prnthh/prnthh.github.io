@@ -4,16 +4,16 @@ import * as THREE from 'three';
 import { Suspense, useEffect, useRef } from 'react';
 
 
-export default function MapModel({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+export default function MapModel({ position = [0, 0, 0], scale = 1, modelUrl = '/models/maps/galactic_arena.glb' }: { position?: [number, number, number], scale?: number, modelUrl?: string }) {
     return (
-        <RigidBody type="fixed" colliders='trimesh' position={position} >
-            <Model />
+        <RigidBody type="fixed" colliders='trimesh' position={position} ccd>
+            <Model modelUrl={modelUrl} scale={scale} />
         </RigidBody>
     );
 };
 
-const Model = () => {
-    const { scene } = useGLTF('/models/maps/galactic_arena.glb');
+const Model = ({ modelUrl, scale }: { modelUrl: string, scale: number }) => {
+    const { scene } = useGLTF(modelUrl);
     const ref = useRef<THREE.Group>(null);
 
     useEffect(() => {
@@ -31,6 +31,7 @@ const Model = () => {
         <primitive
             object={scene}
             ref={ref}
+            scale={scale}
             receiveShadow
             castShadow
         // Optionally, you can set position/rotation/scale here
