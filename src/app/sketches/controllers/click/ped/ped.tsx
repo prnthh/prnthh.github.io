@@ -4,21 +4,26 @@ import AnimatedModel from "../../../../../shared/HumanoidModel";
 import usePhysicsWalk from "./usePhysicsWalk";
 import * as THREE from "three"
 
-const Ped = memo(({ modelUrl, position, height = 0.95, roundHeight = 0.25 }: {
-    modelUrl: string, position: [number, number, number] | undefined,
+const Ped = memo(({ debug, modelUrl, position, lookTarget, height = 0.95, modelOffset, roundHeight = 0.25 }: {
+    debug?: boolean,
+    modelUrl: string,
+    position: [number, number, number] | undefined,
+    lookTarget?: React.RefObject<THREE.Object3D | null>,
     height?: number,
+    modelOffset?: [number, number, number],
     roundHeight?: number
 }) => {
 
-
     const rigidBodyRef = useRef<RapierRigidBody>(null);
     const [animation, setAnimation] = useState<string>("idle");
+    const initialPositionSet = useRef(false);
 
     useEffect(() => {
-        if (position) {
-            rigidBodyRef.current?.setTranslation(new THREE.Vector3(position[0], position[1], position[2]), true);
+        if (!initialPositionSet.current && position && rigidBodyRef.current) {
+            rigidBodyRef.current.setTranslation(new THREE.Vector3(position[0], position[1], position[2]), true);
+            initialPositionSet.current = true;
         }
-    }, [rigidBodyRef.current]);
+    }, [position, rigidBodyRef.current]);
 
     const { isMoving, targetReached } = usePhysicsWalk(
         rigidBodyRef,
@@ -38,7 +43,10 @@ const Ped = memo(({ modelUrl, position, height = 0.95, roundHeight = 0.25 }: {
             >
                 <CapsuleCollider args={[(height - (roundHeight * 1.9)) / 2, roundHeight]} position={[0, (height / 2), 0]} />
                 <AnimatedModel model={modelUrl} animation={animation}
-                    height={0.95}
+                    debug={debug}
+                    height={height}
+                    modelOffset={modelOffset}
+                    lookTarget={lookTarget}
                     onClick={() => {
                         // Handling click
                     }} />

@@ -56,7 +56,7 @@ export function usePointerLockControls() {
         };
         const onTouchMove = (e: TouchEvent) => {
             if (lastTouch.current) {
-                // Only process move if the tracked touch is still on the canvas
+                // Only process move for the tracked touch identifier
                 const touch = Array.from(e.touches).find(
                     t => t.identifier === lastTouch.current!.id && (t.target as HTMLElement) === canvas
                 );
@@ -76,8 +76,8 @@ export function usePointerLockControls() {
         const onTouchEnd = (e: TouchEvent) => {
             if (lastTouch.current) {
                 // If the tracked touch ended, clear it (do not switch to another active touch)
-                const stillActive = Array.from(e.touches).find(t => t.identifier === lastTouch.current!.id);
-                if (!stillActive) {
+                const ended = Array.from(e.changedTouches).some(t => t.identifier === lastTouch.current!.id);
+                if (ended) {
                     lastTouch.current = null;
                 }
             }

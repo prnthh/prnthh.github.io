@@ -28,13 +28,12 @@ export default function useAnimationState(
     clone?: Object3D<Object3DEventMap>,
     basePath: string = '/models/human/',
     animationOverrides?: { [key: string]: string },
+    onActions?: (actions: { [key: string]: AnimationAction }) => void
 ) {
     const [thisAnimation, setThisAnimation] = useState<string | undefined>('idle')
-    const [lastAction, setLastAction] = useState<AnimationAction | undefined>()
     const [mixer, setMixer] = useState<AnimationMixer | null>(null)
-
-    const currentTweenRef = useRef<any | null>(null)
-    const currentTimeoutRef = useRef<any | null>(null)
+    // Track the currently playing action
+    const prevActionRef = useRef<AnimationAction | null>(null)
 
     // load animations and set up mixer
 
@@ -59,7 +58,7 @@ export default function useAnimationState(
     }, [animationOverrides, basePath])
 
     const animations = useLoader(FBXLoader, Object.values(ANIMATIONS)).map((f) =>
-        (f.animations[0]),
+        filterNeckAnimations(f.animations[0]),
     )
     // const defaultAnims = useAnimations(clone?.animations, mesh);
 
@@ -76,6 +75,10 @@ export default function useAnimationState(
                 : {},
         [mixer, clone, animations],
     )
+
+    useEffect(() => {
+        if (onActions && actions) onActions(actions);
+    }, [actions, onActions]);
 
     useEffect(() => {
         if (!clone) return
@@ -102,14 +105,19 @@ export default function useAnimationState(
                 loops = 100
             } else if (thisAnimation === 'eating') loops = 4
             action.clampWhenFinished = true
-
-            action?.reset().setLoop(LoopRepeat, loops).fadeIn(0.5).play()
-
+            // Fade out previous action if different
+            if (prevActionRef.current && prevActionRef.current !== action) {
+                prevActionRef.current.fadeOut(0.2)
+            }
+            action.reset().setLoop(LoopRepeat, loops).fadeIn(0.2).play()
+            prevActionRef.current = action
             return () => {
-                action.fadeOut(0.5)
+                if (prevActionRef.current) {
+                    prevActionRef.current.fadeOut(0.2)
+                }
             }
         }
-    }, [mixer, thisAnimation])
+    }, [mixer, thisAnimation, actions])
 
     return {
         thisAnimation,

@@ -8,7 +8,7 @@
 import { Box, useKeyboardControls } from "@react-three/drei";
 import { Camera, useFrame } from "@react-three/fiber";
 import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
-import { useEffect, useRef, useState, MutableRefObject, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, MutableRefObject, useMemo, useCallback, RefObject } from "react";
 import { MathUtils, Vector3, Group, PerspectiveCamera, Euler, Quaternion } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
 import AnimatedModel from "@/shared/HumanoidModel";
@@ -17,10 +17,13 @@ import { FollowCam } from "../../../../shared/FollowCam";
 import { usePointerLockControls } from "./usePointerLockControls";
 
 
-export const CharacterController = () => {
-    const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 2;
+export const CharacterController = ({ lookTarget, name = 'bob' }: {
+    lookTarget?: RefObject<THREE.Object3D | null>
+    name?: string
+}) => {
+    const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 1;
 
-    const height = 1.37
+    const height = 1.2
     const roundHeight = 0.25
 
     const { rapier, world } = useRapier();
@@ -29,10 +32,12 @@ export const CharacterController = () => {
     const character = useRef<Group>(null);
 
     const [, get] = useKeyboardControls();
-    const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump">("idle");
+    const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft">("idle");
     const [jumping, setJumping] = useState(false); // Track jump state
 
     const velocityRef = useRef<Vector3>(new Vector3(0, 0, 0));
+    const walkActionRef = useRef<THREE.AnimationAction | null>(null);
+    const runActionRef = useRef<THREE.AnimationAction | null>(null);
 
     // Use the custom hook for pointer lock and mouse controls
     const { rotationTarget, verticalRotation, shoulderCamMode, setShoulderCamMode } = usePointerLockControls();
@@ -47,8 +52,31 @@ export const CharacterController = () => {
         if (keyInputs.right) moveX -= 1;
         const speed = keyInputs.run ? RUN_SPEED : WALK_SPEED;
 
-        // Animation state
-        setAnimation(jumping ? "jump" : (moveX || moveZ) ? (speed === RUN_SPEED ? "run" : "walk") : "idle");
+        // Animation state and walkLeft logic
+        let nextAnimation: typeof animation = "idle";
+        let walkLeftDirection = 0; // 0: not playing, 1: left, -1: right
+        if (jumping) {
+            nextAnimation = "jump";
+        } else if ((moveX || moveZ)) {
+            if (moveX && !moveZ) {
+                nextAnimation = "walkLeft" as any; // We'll handle this in onActions
+                walkLeftDirection = moveX; // 1 for left, -1 for right
+            } else {
+                nextAnimation = (speed === RUN_SPEED ? "run" : "walk");
+            }
+        }
+        setAnimation(nextAnimation);
+
+        // Set walkLeft animation playback direction
+        if (walkActionRef.current && nextAnimation === "walkLeft") {
+            walkActionRef.current.timeScale = walkLeftDirection; // 1 for left, -1 for right
+            if (walkActionRef.current.paused) walkActionRef.current.paused = false;
+        } else if (walkActionRef.current) {
+            walkActionRef.current.timeScale = 1;
+        }
+        if (runActionRef.current) runActionRef.current.timeScale = moveZ;
+
+
 
         // Rotation
         if (container.current) container.current.rotation.y = rotationTarget.current;
@@ -117,18 +145,26 @@ export const CharacterController = () => {
 
     return (
         <>
-            <RigidBody colliders={false} lockRotations ref={rb} position={[0, 4, 0]}>
+            <RigidBody colliders={false} lockRotations ref={rb} position={[0, 4, 0]} name={name} >
                 <group ref={container}>
-                    <FollowCam height={height}
+                    <FollowCam height={1 / height}
                         verticalRotation={verticalRotation}
-                        cameraOffset={shoulderCamMode ? new Vector3(-0.5, 0.8, -0.3) : new Vector3(0, 0.5, -0.5)}
-                        targetOffset={shoulderCamMode ? new Vector3(0, height / 3, 3) : new Vector3(0, height / 2, 1.5)}
+                        cameraOffset={shoulderCamMode ? new Vector3(-0.5, 0.8, -0.3) : new Vector3(0, 0.2, -0.8)}
+                        targetOffset={shoulderCamMode ? new Vector3(0, 0.5, 1.5) : new Vector3(0, 0.5, 1.5)}
                     />
                     <group ref={character}>
                         <AnimatedModel
                             model="rigga.glb"
+                            animationOverrides={{
+                                walkLeft: "/anim/walkLeft.fbx",
+                            }}
                             animation={animation}
-                            height={height}
+                            height={1.5}
+                            lookTarget={lookTarget}
+                            onActions={actions => {
+                                walkActionRef.current = actions["walkLeft"] || actions["walk"] || null;
+                                runActionRef.current = actions["run"] || null;
+                            }}
                         />
                     </group>
                 </group>

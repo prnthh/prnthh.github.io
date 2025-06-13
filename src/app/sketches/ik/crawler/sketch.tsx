@@ -10,7 +10,7 @@ import {
     type RigidBodyProps,
     useRapier,
 } from '@react-three/rapier';
-import { World } from 'arancini';
+import { World } from './dist/index';
 import {
     type Ref,
     useEffect,

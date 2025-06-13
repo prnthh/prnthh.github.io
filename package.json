@@ -16,7 +16,6 @@
     "@recast-navigation/three": "^0.39.0",
     "@three.ez/instanced-mesh": "^0.3.5",
     "@tweenjs/tween.js": "^25.0.0",
-    "arancini": "^8.0.0",
     "next": "15.3.2",
     "r3f-perf": "^7.2.3",
     "react": "^19.0.0",

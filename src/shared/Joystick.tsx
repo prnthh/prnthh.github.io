@@ -96,21 +96,51 @@ const Joystick: React.FC<JoystickProps> = ({ controlScheme, onMove }) => {
         };
     }, [knob.x, knob.y]);
 
+    // Helper to update knob and call onMove
+    const updateKnobFromCoords = (clientX: number, clientY: number) => {
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+        const pos = getRelativePosition(clientX, clientY, rect);
+        setKnob(pos);
+        if (onMove) {
+            onMove({
+                x: clamp(pos.x / (radius - knobRadius / 2), -1, 1),
+                y: clamp(pos.y / (radius - knobRadius / 2), -1, 1),
+            });
+        }
+    };
+
+    // Only start joystick drag if touch starts on joystick area and not already dragging
     const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
         if ('touches' in e) {
             if (e.touches.length === 0) return;
             // Only start if not already dragging
             if (!dragging.current) {
-                dragging.current = true;
-                activeTouchId.current = e.touches[0].identifier;
-                handleMove(e);
+                // Find the touch that started on the joystick area
+                const rect = containerRef.current?.getBoundingClientRect();
+                if (!rect) return;
+                let found = false;
+                for (let i = 0; i < e.touches.length; i++) {
+                    const t = e.touches[i];
+                    const x = t.clientX - rect.left;
+                    const y = t.clientY - rect.top;
+                    if (x >= 0 && x <= size && y >= 0 && y <= size) {
+                        dragging.current = true;
+                        activeTouchId.current = t.identifier;
+                        updateKnobFromCoords(t.clientX, t.clientY);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) return;
             }
         } else {
             dragging.current = true;
-            handleMove(e);
+            updateKnobFromCoords((e as React.MouseEvent).clientX, (e as React.MouseEvent).clientY);
         }
     };
 
+    // Only track the active touch for joystick
     const handleMove = (e: React.TouchEvent | React.MouseEvent) => {
         if ('touches' in e) {
             if (!dragging.current || activeTouchId.current === null) return;
@@ -119,33 +149,15 @@ const Joystick: React.FC<JoystickProps> = ({ controlScheme, onMove }) => {
                 t => t.identifier === activeTouchId.current
             );
             if (!touch) return;
-            const rect = containerRef.current?.getBoundingClientRect();
-            if (!rect) return;
-            const pos = getRelativePosition(touch.clientX, touch.clientY, rect);
-            setKnob(pos);
-            if (onMove) {
-                onMove({
-                    x: clamp(pos.x / (radius - knobRadius / 2), -1, 1),
-                    y: clamp(pos.y / (radius - knobRadius / 2), -1, 1),
-                });
-            }
+            updateKnobFromCoords(touch.clientX, touch.clientY);
         } else {
             if (!dragging.current) return;
-            const rect = containerRef.current?.getBoundingClientRect();
-            if (!rect) return;
-            const pos = getRelativePosition(e.clientX, e.clientY, rect);
-            setKnob(pos);
-            if (onMove) {
-                onMove({
-                    x: clamp(pos.x / (radius - knobRadius / 2), -1, 1),
-                    y: clamp(pos.y / (radius - knobRadius / 2), -1, 1),
-                });
-            }
+            updateKnobFromCoords((e as React.MouseEvent).clientX, (e as React.MouseEvent).clientY);
         }
     };
 
+    // On touchend/touchcancel, only end if the released touch is the one tracked by joystick
     const handleEnd = (e?: React.TouchEvent | React.MouseEvent) => {
-        // Only end if the active touch is released (for touch events)
         if (e && 'changedTouches' in e) {
             if (activeTouchId.current === null) return;
             const ended = Array.from(e.changedTouches).some(
