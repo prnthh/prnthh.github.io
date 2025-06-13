@@ -18,12 +18,22 @@ const Ped = memo(({ debug, modelUrl, position, lookTarget, height = 0.95, modelO
     const [animation, setAnimation] = useState<string>("idle");
     const initialPositionSet = useRef(false);
 
-    useEffect(() => {
-        if (!initialPositionSet.current && position && rigidBodyRef.current) {
-            rigidBodyRef.current.setTranslation(new THREE.Vector3(position[0], position[1], position[2]), true);
+    // Use a callback ref to set initial position as soon as the rigid body is available
+    const setRigidBodyRef = React.useCallback((rb: RapierRigidBody | null) => {
+        rigidBodyRef.current = rb;
+        if (rb && position && !initialPositionSet.current) {
+            rb.setTranslation(new THREE.Vector3(position[0], position[1], position[2]), true);
             initialPositionSet.current = true;
         }
-    }, [position, rigidBodyRef.current]);
+    }, [position]);
+
+    useEffect(() => {
+        if (rigidBodyRef.current && position) {
+            const rb = rigidBodyRef.current;
+            rb.setTranslation(new THREE.Vector3(position[0], position[1], position[2]), true);
+        }
+    }
+        , [rigidBodyRef.current]);
 
     const { isMoving, targetReached } = usePhysicsWalk(
         rigidBodyRef,
@@ -34,7 +44,7 @@ const Ped = memo(({ debug, modelUrl, position, lookTarget, height = 0.95, modelO
     return (
         <Suspense fallback={null}>
             <RigidBody
-                ref={rigidBodyRef}
+                ref={setRigidBodyRef}
                 type="dynamic"
                 colliders={false}
                 linearDamping={0.5}

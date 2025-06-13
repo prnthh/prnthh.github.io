@@ -11,7 +11,7 @@ export function ShadowLight({ followCamera = true, debug = false }: { followCame
 
     useFrame((state) => {
         const t = state.clock.getElapsedTime();
-        if (t - lastUpdate.current < 1) return; // Only update every 1 second
+        if (t - lastUpdate.current < 0.5) return; // Only update every 1 second
         lastUpdate.current = t;
 
         const radius = 10;
@@ -50,11 +50,11 @@ export function ShadowLight({ followCamera = true, debug = false }: { followCame
                 <orthographicCamera
                     attach="shadow-camera"
                     near={0.1}
-                    far={20}
-                    top={10}
-                    bottom={-10}
-                    left={-10}
-                    right={10}
+                    far={50}
+                    top={20}
+                    bottom={-20}
+                    left={-20}
+                    right={20}
                 >
                     {debug && <Helper type={CameraHelper} />}
                 </orthographicCamera>

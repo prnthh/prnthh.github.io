@@ -20,6 +20,23 @@ const usePhysicsWalk = (
 
     useEffect(() => {
         const newTarget = position;
+        const rigidBody = rigidBodyRef.current;
+        if (!rigidBody || !newTarget) return;
+        const pos = rigidBody.translation();
+        const currentPos = [pos.x, pos.y, pos.z];
+        const distance = Math.sqrt(
+            Math.pow(currentPos[0] - newTarget[0], 2) +
+            Math.pow(currentPos[1] - newTarget[1], 2) +
+            Math.pow(currentPos[2] - newTarget[2], 2)
+        );
+        if (distance <= IDLE_THRESHOLD) {
+            // Already at target, don't trigger walk
+            target.current = undefined;
+            targetReached.current = true;
+            setAnimation("idle");
+            rigidBody.setLinvel({ x: 0, y: rigidBody.linvel().y, z: 0 }, true);
+            return;
+        }
         if (JSON.stringify(target.current) !== JSON.stringify(newTarget)) {
             target.current = newTarget;
             targetReached.current = false;

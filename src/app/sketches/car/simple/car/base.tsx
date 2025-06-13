@@ -34,27 +34,28 @@ const wheels: WheelInfo[] = [
 
 const _airControlAngVel = new THREE.Vector3()
 
-const Vehicle = ({ driving = true, debug = false, chassisModel, wheelModel, spawn = {
-    position: [-7, 2, -130] as THREE.Vector3Tuple,
-    rotation: [0, 0, 0] as THREE.Vector3Tuple,
-} }: {
+// Convert Vehicle to forwardRef with robust ref handling
+const Vehicle = React.forwardRef<RapierRigidBody, {
     driving?: boolean,
     debug?: boolean,
     chassisModel?: string,
     wheelModel?: string,
     spawn?: { position: THREE.Vector3Tuple, rotation: THREE.Vector3Tuple }
-}) => {
+}>(({ driving = true, debug = false, chassisModel, wheelModel, spawn = {
+    position: [-7, 2, -130] as THREE.Vector3Tuple,
+    rotation: [0, 0, 0] as THREE.Vector3Tuple,
+} }, ref) => {
     const { world, rapier } = useRapier()
     const threeControls = useThree((s) => s.controls)
     const [, getKeyboardControls] = useKeyboardControls()
-    const { scheme, setScheme } = useControlScheme(); // added
+    const { scheme, setScheme } = useControlScheme();
 
     useEffect(() => {
         if (driving) setScheme("drive");
     }, [driving, setScheme]);
 
     const chasisMeshRef = useRef<THREE.Mesh>(null!)
-    const chasisBodyRef = useRef<RapierRigidBody>(null!)
+    const chasisBodyRef = (ref && typeof ref !== "function" ? ref : null) as React.RefObject<RapierRigidBody>
     const wheelsRef: RefObject<(THREE.Object3D | null)[]> = useRef([])
 
     const { vehicleController } = useVehicleController(chasisBodyRef, wheelsRef as RefObject<THREE.Object3D[]>, wheels)
@@ -215,7 +216,7 @@ const Vehicle = ({ driving = true, debug = false, chassisModel, wheelModel, spaw
             </RigidBody>
         </>
     )
-}
+})
 
 export default Vehicle
 
