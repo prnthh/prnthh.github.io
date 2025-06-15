@@ -6,7 +6,7 @@ import { Suspense, useEffect, useRef } from 'react';
 
 export default function MapModel({ position = [0, 0, 0], scale = 1, modelUrl = '/models/maps/galactic_arena.glb' }: { position?: [number, number, number], scale?: number, modelUrl?: string }) {
     return (
-        <RigidBody type="fixed" colliders='trimesh' position={position} ccd>
+        <RigidBody type="fixed" colliders='trimesh' position={position}>
             <Model modelUrl={modelUrl} scale={scale} />
         </RigidBody>
     );

@@ -8,6 +8,7 @@ import useLookAtTarget from "./useLookAtTarget";
 import BoneCollider from "./BoneCollider";
 
 const AnimatedModel = forwardRef<THREE.Object3D, {
+    name?: string,
     model: string;
     basePath?: string,
     animation?: string, height?: number,
@@ -21,7 +22,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
     retargetOptions?: { boneMap?: Record<string, string>, preserveHipPosition?: boolean }
     onActions?: (actions: { [key: string]: THREE.AnimationAction }) => void
 }>(
-    ({ model, basePath = "/models/human/", animation = "idle", onClick,
+    ({ name, model, basePath = "/models/human/", animation = "idle", onClick,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
         debug = false, lookTarget, retargetOptions, onActions, ...props
@@ -70,7 +71,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
                     <meshBasicMaterial wireframe color="red" />
                 </Box>}
                 <group position={modelOffset}>
-                    {clonedScene && <primitive scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
+                    {clonedScene && <primitive name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
                     {clonedScene && <BoneCollider rootModel={clonedScene} boneName="RightHand" />}
                 </group>
             </group>

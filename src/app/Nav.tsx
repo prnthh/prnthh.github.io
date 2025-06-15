@@ -8,7 +8,7 @@ const allExperiments = [
     'barebones',
     'floor/ground', 'floor/terrainCollider', 'floor/heightmap',
     'lighting/simple', 'lighting/shadowmap', 'lighting/cascading', 'lighting/probe', 'lighting/reflection',
-    'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2',
+    'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/model', 'car/road', 'car/driver',
     'editor/events', 'editor/store', 'editor/scene',

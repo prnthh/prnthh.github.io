@@ -36,12 +36,13 @@ const _airControlAngVel = new THREE.Vector3()
 
 // Convert Vehicle to forwardRef with robust ref handling
 const Vehicle = React.forwardRef<RapierRigidBody, {
+    name?: string,
     driving?: boolean,
     debug?: boolean,
     chassisModel?: string,
     wheelModel?: string,
     spawn?: { position: THREE.Vector3Tuple, rotation: THREE.Vector3Tuple }
-}>(({ driving = true, debug = false, chassisModel, wheelModel, spawn = {
+}>(({ name = 'bob', driving = true, debug = false, chassisModel, wheelModel, spawn = {
     position: [-7, 2, -130] as THREE.Vector3Tuple,
     rotation: [0, 0, 0] as THREE.Vector3Tuple,
 } }, ref) => {
@@ -110,6 +111,14 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
             engineForce = 0;
         }
 
+        let baseSteerAngle = steerAngle;
+        if (speed > maxSpeed / 2) {
+            controller.wheelFrictionSlip(0.2)
+            baseSteerAngle *= 0.5; // Reduce steering angle at high speeds
+        } else {
+            controller.wheelFrictionSlip(1.0)
+        }
+
         controller.setWheelEngineForce(2, -engineForce)
         controller.setWheelEngineForce(3, -engineForce)
 
@@ -122,10 +131,11 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
         const currentSteering = controller.wheelSteering(0) || 0
         const steerDirection = Number(controls.left) - Number(controls.right)
 
-        const steering = THREE.MathUtils.lerp(currentSteering, steerAngle * steerDirection, 0.5)
+        const steering = THREE.MathUtils.lerp(currentSteering, baseSteerAngle * steerDirection, 0.5)
 
         controller.setWheelSteering(0, steering)
         controller.setWheelSteering(1, steering)
+
 
         // air control
         if (!ground.current) {
@@ -140,19 +150,26 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
         }
 
         if (controls.reset || outOfBounds) {
-            const chassis = controller.chassis()
-            chassis.setTranslation(new rapier.Vector3(...spawn.position), true)
-            const spawnRot = new THREE.Euler(...spawn.rotation)
-            const spawnQuat = new THREE.Quaternion().setFromEuler(spawnRot)
-            chassis.setRotation(spawnQuat, true)
-            chassis.setLinvel(new rapier.Vector3(0, 0, 0), true)
-            chassis.setAngvel(new rapier.Vector3(0, 0, 0), true)
+            resetVehicle();
         }
     })
+
+    const resetVehicle = () => {
+        if (!chasisBodyRef.current) return
+        const chassis = chasisBodyRef.current
+        chassis.setTranslation(new rapier.Vector3(...spawn.position), true)
+        const spawnRot = new THREE.Euler(...spawn.rotation)
+        const spawnQuat = new THREE.Quaternion().setFromEuler(spawnRot)
+        chassis.setRotation(spawnQuat, true)
+        chassis.setLinvel(new rapier.Vector3(0, 0, 0), true)
+        chassis.setAngvel(new rapier.Vector3(0, 0, 0), true)
+    }
+
 
     return (
         <>
             <RigidBody
+                name={name}
                 canSleep={false}
                 ref={chasisBodyRef}
                 colliders={false}
@@ -232,6 +249,7 @@ const ChassisModel = ({ model, ...props }: { model: string, [key: string]: any }
             clone.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true
+                    child.receiveShadow = true
                 }
             })
             cloneRef.current = clone

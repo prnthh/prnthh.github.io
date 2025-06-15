@@ -4,6 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import Ground from "./ground/flat";
+import TerrainComponent from "./ground/terrain";
 
 export default function Home() {
     return (
@@ -17,9 +18,9 @@ export default function Home() {
                                 <meshStandardMaterial color="orange" />
                             </mesh>
                         </RigidBody>
-                        <Ground position={[0, -2, 0]} />
+                        <TerrainComponent />
                         <ambientLight intensity={0.5} />
-                        <pointLight position={[10, 10, 10]} />
+                        <pointLight position={[0, 100, 0]} intensity={20000} />
                         <OrbitControls />
                     </Physics>
                 </Canvas>

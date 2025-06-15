@@ -1,8 +1,10 @@
-import { Helper } from "@react-three/drei";
+import { Box, Helper } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { CameraHelper, DirectionalLight } from "three";
+import { CameraHelper, DirectionalLight, MeshBasicMaterial } from "three";
 import { Vector3 } from "three";
+
+const camOffset = new Vector3(-5, 60, -5); // Adjust the target offset as needed
 
 export function ShadowLight({ followCamera = true, debug = false }: { followCamera?: boolean, debug?: boolean }) {
     const directionalLight = useRef<DirectionalLight>(null);
@@ -14,22 +16,17 @@ export function ShadowLight({ followCamera = true, debug = false }: { followCame
         if (t - lastUpdate.current < 0.5) return; // Only update every 1 second
         lastUpdate.current = t;
 
-        const radius = 10;
-        const y = 10; // fixed height
-        const x = Math.cos(t) * radius;
-        const z = Math.sin(t) * radius;
 
-        if (!directionalLight.current || !followCamera) {
-            // If not following camera, use circular path
-            const camPosition = new Vector3(x, y, z);
-            directionalLight.current?.position.copy(camPosition);
-            // Target the center of the scene
-            directionalLight.current?.target.position.set(0, 0, 0);
-            directionalLight.current?.target.updateMatrixWorld();
+        if (!directionalLight.current) {
             return;
         }
-        const camPosition = new Vector3().copy(state.camera.position);
-        camPosition.add(new Vector3(0, 5, 0)); // Adjust the offset as needed
+        const camPosition = followCamera ? new Vector3().copy(state.camera.position) : new Vector3(0, 0, 0);
+        camPosition.add(camOffset); // Adjust the offset as needed
+
+        // snap to grid
+        camPosition.x = Math.round(camPosition.x);
+        camPosition.z = Math.round(camPosition.z);
+        camPosition.y = Math.round(camPosition.y);
 
         directionalLight.current?.position.copy(camPosition);
         camPosition.add(new Vector3(offset[0], offset[1], offset[2])); // Adjust the offset as needed
@@ -44,19 +41,23 @@ export function ShadowLight({ followCamera = true, debug = false }: { followCame
                 castShadow
                 ref={directionalLight}
                 intensity={1.5}
-                shadow-normalBias={0.05}
+                shadow-normalBias={0.1}
                 shadow-mapSize={[1024, 1024]}
             >
                 <orthographicCamera
                     attach="shadow-camera"
                     near={0.1}
-                    far={50}
-                    top={20}
-                    bottom={-20}
-                    left={-20}
-                    right={20}
+                    far={100}
+                    top={40}
+                    bottom={-40}
+                    left={-40}
+                    right={40}
                 >
                     {debug && <Helper type={CameraHelper} />}
+                    {debug && <mesh position={[0, 0, 0]} scale={[40, 40, 40]} rotation={[-Math.PI / 2, 0, 0]}>
+                        <boxGeometry args={[1, 1, 1]} />
+                        <meshBasicMaterial color="red" />
+                    </mesh>}
                 </orthographicCamera>
             </directionalLight>
         </>

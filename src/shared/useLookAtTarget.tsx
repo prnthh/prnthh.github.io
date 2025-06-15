@@ -31,28 +31,8 @@ export default function useLookAtTarget(
         const target = lookAtTarget?.current
         if (!neck || !enabled || !target) return
 
-        // Get world positions
-        const neckPos = neck.getWorldPosition(new Vector3())
         const targetPos = target.getWorldPosition(new Vector3()).add(new Vector3(0, 0.5, 0))
-        const dir = targetPos.clone().sub(neckPos)
-        if (dir.lengthSq() === 0) return
-
-        // Calculate yaw angle to target in world space
-        const lookYaw = Math.atan2(dir.x, dir.z)
-        // Get parent's world yaw
-        const parentQuat = neck.parent?.getWorldQuaternion(new THREE.Quaternion()) ?? new THREE.Quaternion()
-        const parentYaw = new THREE.Euler().setFromQuaternion(parentQuat, 'YXZ').y
-        // Local yaw is the difference
-        let localYaw = lookYaw - parentYaw
-        // Normalize to [-PI, PI]
-        localYaw = THREE.MathUtils.euclideanModulo(localYaw + Math.PI, Math.PI * 2) - Math.PI
-        // Clamp to max rotation
-        const clampedYaw = THREE.MathUtils.clamp(localYaw, -config.maxRotation, config.maxRotation)
-        // Lerp current neck rotation.y to target clampedYaw
-        const lerpSpeed = config.lerpSpeed ?? 0.15 // default speed if not provided
-        neck.rotation.y = THREE.MathUtils.lerp(neck.rotation.y, clampedYaw, lerpSpeed)
-        neck.rotation.x = 0
-        neck.rotation.z = 0
+        neck.lookAt(targetPos)
     })
 
     return { neckBone: neckBoneRef.current }

@@ -37,6 +37,7 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
 
     const velocityRef = useRef<Vector3>(new Vector3(0, 0, 0));
     const walkActionRef = useRef<THREE.AnimationAction | null>(null);
+    const walkLeftActionRef = useRef<THREE.AnimationAction | null>(null);
     const runActionRef = useRef<THREE.AnimationAction | null>(null);
 
     // Use the custom hook for pointer lock and mouse controls
@@ -54,7 +55,6 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
 
         // Animation state and walkLeft logic
         let nextAnimation: typeof animation = "idle";
-        let walkLeftDirection = 0; // 0: not playing, 1: left, -1: right
         if (keyInputs.use) {
             nextAnimation = "rpunch";
         } else if (keyInputs.altUse) {
@@ -63,22 +63,19 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
             nextAnimation = "jump";
         } else if ((moveX || moveZ)) {
             if (moveX && !moveZ) {
-                nextAnimation = "walkLeft" as any; // We'll handle this in onActions
-                walkLeftDirection = moveX; // 1 for left, -1 for right
+                nextAnimation = "walkLeft";
+                if (walkLeftActionRef.current)
+                    walkLeftActionRef.current.timeScale = moveX;
             } else {
                 nextAnimation = (speed === RUN_SPEED ? "run" : "walk");
+                if (walkActionRef.current)
+                    walkActionRef.current.timeScale = moveZ;
+                if (runActionRef.current)
+                    runActionRef.current.timeScale = moveZ
             }
         }
         setAnimation(nextAnimation);
 
-        // Set walkLeft animation playback direction
-        if (walkActionRef.current && nextAnimation === "walkLeft") {
-            walkActionRef.current.timeScale = walkLeftDirection; // 1 for left, -1 for right
-            if (walkActionRef.current.paused) walkActionRef.current.paused = false;
-        } else if (walkActionRef.current) {
-            walkActionRef.current.timeScale = 1;
-        }
-        if (runActionRef.current) runActionRef.current.timeScale = moveZ;
 
         // Rotation
         if (container.current) container.current.rotation.y = rotationTarget.current;
@@ -159,6 +156,7 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
                     />
                     <group ref={character}>
                         <AnimatedModel
+                            name={name}
                             model="rigga.glb"
                             animationOverrides={{
                                 walkLeft: "/anim/walkLeft.fbx",
@@ -169,7 +167,8 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
                             height={1.5}
                             lookTarget={lookTarget}
                             onActions={actions => {
-                                walkActionRef.current = actions["walkLeft"] || actions["walk"] || null;
+                                walkActionRef.current = actions["walk"] || null;
+                                walkLeftActionRef.current = actions["walkLeft"] || null;
                                 runActionRef.current = actions["run"] || null;
                             }}
                         />

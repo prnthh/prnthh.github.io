@@ -13,6 +13,7 @@ const usePhysicsWalk = (
     rigidBodyRef: RefObject<RapierRigidBody | null>,
     setAnimation: any,
     position: [number, number, number] | undefined,
+    paused: boolean = false,
     onDestinationReached?: () => void
 ) => {
     const target = useRef<number[] | undefined>(undefined);
@@ -51,9 +52,13 @@ const usePhysicsWalk = (
 
     const getGroundNormal = () => new THREE.Vector3(0, 1, 0);
 
+    useEffect(() => {
+        if (paused) setAnimation("idle");
+    }, [paused, setAnimation]);
+
     useFrame((_, delta) => {
         const rigidBody = rigidBodyRef.current;
-        if (!rigidBody || !target.current || targetReached.current) return;
+        if (!rigidBody || !target.current || targetReached.current || paused) return;
 
         const pos = rigidBody.translation();
         const currentPos = new THREE.Vector3(pos.x, pos.y, pos.z);
