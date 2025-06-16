@@ -5,7 +5,6 @@ import { Physics, RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { Bvh, Environment, OrbitControls } from "@react-three/drei";
 import Controls from "@/shared/ControlsProvider";
 import { ShadowLight } from "@/app/sketches/lighting/shadowmap/ShadowLight";
-import Vehicle from "../simple/car/base";
 import MapModel from "../../floor/ground/ground/model";
 import { useRef } from "react";
 import PedSpawner from "./PedSpawner";
@@ -13,6 +12,7 @@ import { EffectComposer, SSAO } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import { GameCanvas } from "@/shared/GameCanvas";
 import { Perf } from "r3f-perf";
+import Vehicle from "../../car/simple/car/base";
 
 export default function Home() {
     const carRBRef = useRef<RapierRigidBody | null>(null);

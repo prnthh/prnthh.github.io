@@ -3,16 +3,16 @@
 import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import Controls from "@/shared/ControlsProvider";
-import { CharacterController } from "./CharacterController";
 import MapModel from "../../floor/ground/ground/model";
 import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
-import Ped from "../click/ped/ped";
 import Ground from "../../floor/ground/ground/flat";
-import DialogCollider from "./DialogCollider";
 import { forwardRef } from "react";
 import { WebGPUCanvas } from "@/shared/WebGPUCanvas";
+import Ped from "../../controllers/click/ped/ped";
+import { CharacterController } from "../../controllers/shouldercam/CharacterController";
+import DialogCollider from "../../controllers/shouldercam/DialogCollider";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -26,7 +26,13 @@ export default function Home() {
 
                         <Physics>
                             <CharacterController lookTarget={ballRef} />
-                            <Ground />
+
+                            <Football ref={ballRef} position={[0, 2, 5]} />
+
+                            <GoalFollowingPed ballRef={ballRef} />
+
+                            <MapModel />
+                            {/* <Ground /> */}
                             <ambientLight intensity={0.5} />
                             <pointLight position={[10, 10, 10]} />
                         </Physics>

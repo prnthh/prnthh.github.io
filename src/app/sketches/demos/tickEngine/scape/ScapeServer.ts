@@ -1,5 +1,5 @@
 import { BaseServer, BasePlayerState, BaseDrop, BaseEntity } from "../BaseServer";
-import { MapEntity, MapEntityType } from "./MapEntity";
+import { MapEntity, MapEntityType } from "./map/MapEntity";
 
 // Action log types for ScapeServer
 export type ScapeAction =

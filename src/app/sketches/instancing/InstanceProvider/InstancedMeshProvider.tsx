@@ -16,14 +16,14 @@ export function InstancedMeshProvider({ meshOptions, children }: { meshOptions: 
         const meshes: Record<string, THREE.Mesh> = {};
         let meshIndex = 0;
         function collectMeshes(obj: THREE.Object3D) {
-            if ((obj as THREE.Mesh).isMesh) {
+            if ((obj as unknown as THREE.Mesh).isMesh) {
                 // Use a unique key based on modelKey and meshIndex
                 const key = `${modelKey}_${meshIndex}`;
-                meshes[key] = obj as THREE.Mesh;
+                meshes[key] = obj as unknown as THREE.Mesh;
                 meshIndex++;
             }
             if (obj.children && obj.children.length > 0) {
-                obj.children.forEach(child => collectMeshes(child));
+                obj.children.forEach(child => collectMeshes(child as unknown as THREE.Object3D));
             }
         }
         collectMeshes(root);
@@ -38,7 +38,7 @@ export function InstancedMeshProvider({ meshOptions, children }: { meshOptions: 
 
     // Merge meshes from all loaded models
     const meshes = useMemo(() => (
-        Object.assign({}, ...gltfs.map((gltf, i) => getMeshesFromScene(gltf.scene, meshOptions[i].name)))
+        Object.assign({}, ...gltfs.map((gltf, i) => getMeshesFromScene(gltf.scene as unknown as THREE.Object3D, meshOptions[i].name)))
     ), [gltfs, meshOptions]);
 
     return (

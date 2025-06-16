@@ -15,17 +15,15 @@ export const GameCanvas = ({
     return (
         <>
             <ui.Out />
-            <Suspense fallback={<Loading />}>
-                <Canvas
-                    shadows
-                    {...props}
-                >
-                    <Suspense fallback={<ui.In><Loading /></ui.In>}>
-                        {children}
-                    </Suspense>
+            <Canvas
+                shadows
+                {...props}
+            >
+                <Suspense fallback={<ui.In><Loading /></ui.In>}>
+                    {children}
+                </Suspense>
 
-                </Canvas>
-            </Suspense>
+            </Canvas>
         </>
     );
 };

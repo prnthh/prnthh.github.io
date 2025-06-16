@@ -37,7 +37,7 @@ const Character: React.FC<CharacterProps> = ({
     const [desiredRotationY, setDesiredRotationY] = useState<number | null>(null);
     const [readyToKick, setReadyToKick] = useState(false);
 
-    const modelRef = useRef<THREE.Group>(null);
+    const modelRef = useRef<THREE.Object3D>(null);
 
     // --- Debug sphere for left foot ---
     const [leftFoot, setLeftFoot] = useState<THREE.Object3D | null>(null);
@@ -61,7 +61,7 @@ const Character: React.FC<CharacterProps> = ({
                 }
                 // Find left foot bone/object
                 if (child.name === "LeftFoot") {
-                    setLeftFoot(child);
+                    setLeftFoot(child as unknown as THREE.Object3D);
                 }
             });
             // Add kick and walk animations

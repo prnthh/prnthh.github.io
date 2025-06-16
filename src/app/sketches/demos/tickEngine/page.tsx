@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import FakeServer, { ScapeAction } from "./ScapeServer";
-import { MapEntity, MapEntityMesh, MapEntityInstancesProvider } from "./MapEntity";
-import { InventoryUI } from "./ui/Inventory";
-import MapGrid, { generateHeight } from "./MapGrid";
+import FakeServer, { ScapeAction } from "./scape/ScapeServer";
+import { MapEntity, MapEntityMesh, MapEntityInstancesProvider } from "./scape/map/MapEntity";
+import { InventoryUI } from "./scape/ui/Inventory";
+import MapGrid, { generateHeight } from "./scape/map/MapGrid";
 import { WebGPUCanvas } from "../../../../shared/WebGPUCanvas";
 import FogBG from "../../lighting/reflection/FogBG";
 import { Html } from "@react-three/drei";
-import Player from "./Player";
+import Player from "./scape/Player";
 import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 import { Canvas } from "@react-three/fiber";
 
