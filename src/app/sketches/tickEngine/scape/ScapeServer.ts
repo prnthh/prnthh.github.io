@@ -445,6 +445,16 @@ if (server.getEntities().length === 0) {
             replenishTicksLeft: 0
         },
         {
+            id: "ore2",
+            type: { kind: "ore", oreType: "copper" },
+            pos: [3, 8],
+            extractionCooldown: 6,
+            resourceAmount: 3,
+            maxResource: 3,
+            depleted: false,
+            replenishTicksLeft: 0
+        },
+        {
             id: "tree2",
             type: { kind: "tree", treeType: "heart" },
             pos: [8, 3],

@@ -1,7 +1,7 @@
 "use client";
 
 import Controls from "@/shared/ControlsProvider";
-import { WebGPUCanvas } from "../../tsl/webgpu/WebGPUCanvas";
+import { WebGPUCanvas } from "../../../../shared/WebGPUCanvas";
 import { DirectionalLightHelper, PCFSoftShadowMap } from "three";
 import { Helper, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";

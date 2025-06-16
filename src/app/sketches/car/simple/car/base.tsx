@@ -245,7 +245,7 @@ const ChassisModel = ({ model, ...props }: { model: string, [key: string]: any }
     const cloneRef = useRef<THREE.Object3D>(null)
     useEffect(() => {
         if (scene && !cloneRef.current) {
-            const clone = SkeletonUtils.clone(scene)
+            const clone = SkeletonUtils.clone(scene as unknown as THREE.Object3D)
             clone.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true
@@ -265,7 +265,7 @@ const WheelModel = ({ model, ...props }: { model: string, [key: string]: any }) 
     const cloneRef = useRef<THREE.Object3D>(null)
     useEffect(() => {
         if (scene && !cloneRef.current) {
-            cloneRef.current = SkeletonUtils.clone(scene)
+            cloneRef.current = SkeletonUtils.clone(scene as unknown as THREE.Object3D)
         }
     }, [scene])
     if (!cloneRef.current) return null

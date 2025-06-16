@@ -7,12 +7,12 @@ import { CharacterController } from "./CharacterController";
 import MapModel from "../../floor/ground/ground/model";
 import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 import { useRef, useState, useEffect } from "react";
-import { Object3D } from "three";
+import { Object3D, Vector3 } from "three";
 import Ped from "../click/ped/ped";
 import Ground from "../../floor/ground/ground/flat";
 import DialogCollider from "./DialogCollider";
-import { Perf } from "r3f-perf";
 import { forwardRef } from "react";
+import { WebGPUCanvas } from "@/shared/WebGPUCanvas";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -20,9 +20,9 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls >
-                    <Canvas shadows>
-                        <Perf />
-                        <ShadowLight />
+                    <WebGPUCanvas shadows>
+                        {/* <Perf /> */}
+                        <ShadowLight debug camOffset={new Vector3(2, 10, 2)} />
 
                         <Physics>
                             <CharacterController lookTarget={ballRef} />
@@ -36,7 +36,7 @@ export default function Home() {
                             <ambientLight intensity={0.5} />
                             <pointLight position={[10, 10, 10]} />
                         </Physics>
-                    </Canvas>
+                    </WebGPUCanvas>
                 </Controls>
             </div>
         </div >

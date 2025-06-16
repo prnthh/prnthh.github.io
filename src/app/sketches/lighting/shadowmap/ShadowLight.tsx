@@ -4,9 +4,8 @@ import { useEffect, useRef } from "react";
 import { CameraHelper, DirectionalLight, MeshBasicMaterial } from "three";
 import { Vector3 } from "three";
 
-const camOffset = new Vector3(-5, 60, -5); // Adjust the target offset as needed
 
-export function ShadowLight({ followCamera = true, debug = false }: { followCamera?: boolean, debug?: boolean }) {
+export function ShadowLight({ followCamera = true, debug = false, camOffset = new Vector3(-5, 60, -5) }: { followCamera?: boolean, debug?: boolean, camOffset?: Vector3 }) {
     const directionalLight = useRef<DirectionalLight>(null);
     const offset: [number, number, number] = [2, -6, 2]; // Adjust the target offset as needed
     const lastUpdate = useRef(0);

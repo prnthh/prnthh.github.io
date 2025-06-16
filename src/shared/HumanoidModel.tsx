@@ -34,8 +34,8 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
         // Create a clone of the scene to avoid modifying the original
         useEffect(() => {
             if (scene) {
-                const cloned = SkeletonUtils.clone(scene);
-                cloned.traverse((child: THREE.Object3D) => {
+                const cloned = SkeletonUtils.clone(scene as unknown as THREE.Object3D);
+                cloned.traverse((child) => {
                     if ('isMesh' in child) {
                         child.castShadow = true;
                         child.receiveShadow = true;

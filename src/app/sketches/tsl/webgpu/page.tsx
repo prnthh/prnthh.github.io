@@ -1,6 +1,6 @@
 "use client";
 import InteractiveSphere from "./InteractiveSphere";
-import { WebGPUCanvas } from "./WebGPUCanvas";
+import { WebGPUCanvas } from "../../../../shared/WebGPUCanvas";
 
 export default function BasicInteractiveSpherePage() {
     return (

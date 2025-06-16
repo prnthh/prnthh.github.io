@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Terrain } from "@/app/sketches/floor/terrainCollider/terrain";
 
 export default function Home() {
-    const [target, setTarget] = useState<[number, number, number] | undefined>()
+    const [target, setTarget] = useState<[number, number, number]>([0, 5, 0])
 
     return (
         <div className="items-center justify-items-center min-h-screen">

@@ -5,11 +5,12 @@ import FakeServer, { ScapeAction } from "./ScapeServer";
 import { MapEntity, MapEntityMesh, MapEntityInstancesProvider } from "./MapEntity";
 import { InventoryUI } from "./ui/Inventory";
 import MapGrid, { generateHeight } from "./MapGrid";
-import { WebGPUCanvas } from "../../tsl/webgpu/WebGPUCanvas";
+import { WebGPUCanvas } from "../../../../shared/WebGPUCanvas";
 import FogBG from "../../lighting/reflection/FogBG";
 import { Html } from "@react-three/drei";
 import Player from "./Player";
 import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
+import { Canvas } from "@react-three/fiber";
 
 const TILE_SIZE = 0.66; // Size of each tile in the tilemap
 const GRID_WIDTH = 16;
@@ -129,7 +130,7 @@ export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <WebGPUCanvas shadows>
+                <Canvas shadows>
                     <MapGrid
                         width={GRID_WIDTH}
                         depth={GRID_DEPTH}
@@ -244,7 +245,7 @@ export default function Home() {
                     <ambientLight intensity={0.5} />
                     <ShadowLight />
                     <FogBG />
-                </WebGPUCanvas>
+                </Canvas>
             </div>
             <InventoryUI playerId={playerId} actionLog={actionLog} />
         </div>

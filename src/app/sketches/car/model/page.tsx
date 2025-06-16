@@ -11,6 +11,8 @@ import { useRef } from "react";
 import PedSpawner from "./PedSpawner";
 import { EffectComposer, SSAO } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
+import { GameCanvas } from "@/shared/GameCanvas";
+import { Perf } from "r3f-perf";
 
 export default function Home() {
     const carRBRef = useRef<RapierRigidBody | null>(null);
@@ -18,9 +20,7 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls>
-                    <Canvas shadows
-                    // dpr={[0.2, 0.5]}
-                    >
+                    <GameCanvas>
                         <Physics>
                             <Vehicle
                                 ref={carRBRef}
@@ -56,7 +56,7 @@ export default function Home() {
                         </EffectComposer> */}
 
 
-                    </Canvas>
+                    </GameCanvas>
                 </Controls>
             </div>
         </div >
