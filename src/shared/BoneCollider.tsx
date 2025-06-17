@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 
 /**
  * BoneCollider
@@ -11,18 +12,20 @@ import * as THREE from "three";
  */
 export default function BoneCollider({
     rootModel = undefined,
-    boneName = "LeftFoot"
+    boneName,
+    parentName = "bob",
 }: {
     rootModel?: THREE.Object3D,
-    boneName: string
+    boneName?: string,
+    parentName?: string
 }) {
     const [bone, setBone] = useState<THREE.Object3D | null>(null);
-    const sphereRef = useRef<THREE.Mesh>(null);
-    const [spherePosition, setSpherePosition] = useState<[number, number, number]>([0, 0, 0]);
+
+    const rbRef = useRef<RapierRigidBody>(null);
 
     // Find the bone once the model is loaded
     useEffect(() => {
-        if (!rootModel) return;
+        if (!rootModel || !boneName) { setBone(null); return; }
         let found: THREE.Object3D | null = null;
         // Check if rootModel has traverse method
         if (typeof (rootModel as any).traverse === "function") {
@@ -46,20 +49,48 @@ export default function BoneCollider({
         if (bone && rootModel) {
             const boneWorldPos = new THREE.Vector3();
             bone.getWorldPosition(boneWorldPos);
-            // Convert world position to rootModel's local space
-            const localPos = rootModel.worldToLocal(boneWorldPos.clone());
-            // Apply rootModel's scale to the local position
-            const scale = rootModel.scale;
-            setSpherePosition([
-                localPos.x * scale.x,
-                localPos.y * scale.y,
-                localPos.z * scale.z
-            ]);
+            // Use world position directly for the collider
+            const newPos: [number, number, number] = [
+                boneWorldPos.x,
+                boneWorldPos.y,
+                boneWorldPos.z
+            ];
+            if (rbRef.current) {
+                rbRef.current.setTranslation({ x: newPos[0], y: newPos[1], z: newPos[2] }, true);
+            }
         }
     });
 
-    return <mesh ref={sphereRef} position={spherePosition}>
-        <sphereGeometry args={[0.12, 16, 16]} />
-        <meshBasicMaterial wireframe color={bone ? 0x00ff00 : 0xff0000} />
-    </mesh>
+    return <>
+        {rootModel && boneName && bone && <RigidBody name="hand" ref={rbRef} sensor colliders="ball" type="fixed" onIntersectionEnter={(e) => {
+            if (!e.other || e.other.rigidBodyObject?.name == "" || e.other.rigidBodyObject?.name == parentName) return;
+            const otherRb = e.other.rigidBody;
+
+            if (otherRb && bone) {
+                // Get positions
+                const boneWorldPos = new THREE.Vector3();
+                bone.getWorldPosition(boneWorldPos);
+                const otherPos = otherRb.translation();
+                // Compute direction from collider to other body
+                const dir = new THREE.Vector3(
+                    otherPos.x - boneWorldPos.x,
+                    otherPos.y - boneWorldPos.y,
+                    otherPos.z - boneWorldPos.z
+                ).normalize();
+                // Scale impulse
+                const impulseStrength = 10;
+                otherRb.applyImpulse({
+                    x: dir.x * impulseStrength,
+                    y: dir.y * impulseStrength,
+                    z: dir.z * impulseStrength
+                }, true);
+            }
+        }}>
+            <mesh>
+                <sphereGeometry args={[0.12, 16, 16]} />
+                <meshBasicMaterial wireframe color={bone ? 0x00ff00 : 0xff0000} />
+            </mesh>
+        </RigidBody>}
+
+    </>
 }

@@ -27,15 +27,11 @@ export default function Home() {
                         <Physics>
                             <CharacterController lookTarget={ballRef} />
 
-                            <Football ref={ballRef} position={[0, 8, 5]} />
+                            <GoalFollowingPed />
 
-                            <HeavyBox position={[5, 2, 0]} />
-
-                            <GoalFollowingPed ballRef={ballRef} />
-
-                            <MapModel />
+                            <MapModel scale={0.6} position={[-3, 3, 0]} modelUrl="/models/maps/burgerpiz.glb" />
                             {/* <Ground /> */}
-                            <ambientLight intensity={0.5} />
+                            <ambientLight intensity={0.8} />
                             <pointLight position={[10, 10, 10]} />
                         </Physics>
                     </WebGPUCanvas>
@@ -68,27 +64,17 @@ const HeavyBox = forwardRef<Object3D, { position: [number, number, number] }>(({
 }
 );
 
-const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
+const GoalFollowingPed = () => {
     const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);
     const [dialogVisible, setDialogVisible] = useState(false);
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (ballRef.current) {
-                const pos = new Object3D();
-                ballRef.current.getWorldPosition(pos.position);
-                setBallPosition([pos.position.x, pos.position.y, pos.position.z]);
-            }
-        }, 2000);
-        return () => clearInterval(interval);
-    }, [ballRef]);
 
     return <DialogCollider onTrigger={setDialogVisible}>
         <Ped modelUrl="rigga/rigga2.glb"
             dialog={dialogVisible ? <div className="text-3xl text-yellow-300 text-center p-2 rounded drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
                 hi
             </div> : undefined}
-            position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef} />
+            position={ballPosition} modelOffset={[2, 4, 0]} />
     </DialogCollider>
 }
 

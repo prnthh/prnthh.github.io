@@ -72,7 +72,11 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
                 </Box>}
                 <group position={modelOffset}>
                     {clonedScene && <primitive name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
-                    {clonedScene && <BoneCollider rootModel={clonedScene} boneName="RightHand" />}
+                    {clonedScene && <BoneCollider parentName={name} rootModel={clonedScene}
+                        boneName={animation == 'rpunch' ? "RightHand" :
+                            animation == 'lpunch' ? "LeftHand" :
+                                undefined}
+                    />}
                 </group>
             </group>
         );
