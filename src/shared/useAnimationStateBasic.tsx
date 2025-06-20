@@ -97,26 +97,33 @@ export default function useAnimationState(
         if (!thisAnimation) {
             return
         }
-        if (mixer && actions && thisAnimation && actions[thisAnimation]) {
-            const action = (thisAnimation && actions[thisAnimation]) || actions.idle
-            let loops = 1
+        let animationKey: string | undefined;
+        if (typeof thisAnimation === 'string') {
+            animationKey = thisAnimation;
+        } else if (Array.isArray(thisAnimation) && thisAnimation.length > 0) {
+            animationKey = thisAnimation[0]; // Use the first animation in the array, or handle as needed
+        }
+
+        if (mixer && actions && animationKey && actions[animationKey]) {
+            const action = actions[animationKey] || actions.idle;
+            let loops = 1;
 
             // biome-ignore lint/correctness/noConstantCondition: <always loop multiplayer animations>
             if (true) {
-                loops = 100
-            } else if (thisAnimation === 'eating') loops = 4
-            action.clampWhenFinished = true
+                loops = 100;
+            } else if (animationKey === 'eating') loops = 4;
+            action.clampWhenFinished = true;
             // Fade out previous action if different
             if (prevActionRef.current && prevActionRef.current !== action) {
-                prevActionRef.current.fadeOut(0.2)
+                prevActionRef.current.fadeOut(0.2);
             }
-            action.reset().setLoop(LoopRepeat, loops).fadeIn(0.2).play()
-            prevActionRef.current = action
+            action.reset().setLoop(LoopRepeat, loops).fadeIn(0.2).play();
+            prevActionRef.current = action;
             return () => {
                 if (prevActionRef.current) {
-                    prevActionRef.current.fadeOut(0.2)
+                    prevActionRef.current.fadeOut(0.2);
                 }
-            }
+            };
         }
     }, [mixer, thisAnimation, actions])
 
