@@ -66,6 +66,7 @@ export const useVehicleController = (
         const { current: wheels } = wheelsRef
 
         wheels?.forEach((wheel, index) => {
+            if (!wheel) return;
             const wheelAxleCs = controller.wheelAxleCs(index)!
             const connection = controller.wheelChassisConnectionPointCs(index)?.y || 0
             const suspension = controller.wheelSuspensionLength(index) || 0

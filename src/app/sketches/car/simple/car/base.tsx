@@ -57,8 +57,8 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
 
     const chasisMeshRef = useRef<THREE.Mesh>(null!)
     // Always use an internal ref
-    const internalChasisBodyRef = useRef<RapierRigidBody | null>(null)
-    const chasisBodyRef: React.RefObject<RapierRigidBody | null> = internalChasisBodyRef
+    const internalChasisBodyRef = useRef<RapierRigidBody>(null!)
+    const chasisBodyRef: React.RefObject<RapierRigidBody> = internalChasisBodyRef
     const wheelsRef: RefObject<(THREE.Object3D | null)[]> = useRef([])
 
     const { vehicleController } = useVehicleController(chasisBodyRef, wheelsRef as RefObject<THREE.Object3D[]>, wheels)
