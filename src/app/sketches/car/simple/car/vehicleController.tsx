@@ -18,8 +18,8 @@ export type WheelInfo = {
 }
 
 export const useVehicleController = (
-    chassisRef: RefObject<RapierRigidBody>,
-    wheelsRef: RefObject<THREE.Object3D[]>,
+    chassisRef: RefObject<RapierRigidBody | null>,
+    wheelsRef: RefObject<(THREE.Object3D | null)[]>,
     wheelsInfo: WheelInfo[],
 ) => {
     const { world } = useRapier()
@@ -27,8 +27,9 @@ export const useVehicleController = (
     const vehicleController = useRef<DynamicRayCastVehicleController | null>(null)
 
     useEffect(() => {
-        const { current: chassis } = chassisRef
-        const { current: wheels } = wheelsRef
+        if (!chassisRef || !wheelsRef) return;
+        const chassis = chassisRef.current;
+        const wheels = wheelsRef.current;
 
         if (!chassis || !wheels) return
 

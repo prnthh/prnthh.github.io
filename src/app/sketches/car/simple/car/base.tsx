@@ -2,7 +2,7 @@ import { Collider } from '@dimforge/rapier3d-compat'
 import { useKeyboardControls, useGLTF, Box, Cylinder } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { CuboidCollider, RapierRigidBody, RigidBody, useRapier } from '@react-three/rapier'
-import { RefObject, useEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { WheelInfo, useVehicleController } from './vehicleController'
 import { FollowCam } from '@/shared/FollowCam'
@@ -56,7 +56,9 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
     }, [driving, setScheme]);
 
     const chasisMeshRef = useRef<THREE.Mesh>(null!)
-    const chasisBodyRef = (ref && typeof ref !== "function" ? ref : null) as React.RefObject<RapierRigidBody>
+    // Always use an internal ref
+    const internalChasisBodyRef = useRef<RapierRigidBody | null>(null)
+    const chasisBodyRef: React.RefObject<RapierRigidBody | null> = internalChasisBodyRef
     const wheelsRef: RefObject<(THREE.Object3D | null)[]> = useRef([])
 
     const { vehicleController } = useVehicleController(chasisBodyRef, wheelsRef as RefObject<THREE.Object3D[]>, wheels)
@@ -165,6 +167,7 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
         chassis.setAngvel(new rapier.Vector3(0, 0, 0), true)
     }
 
+    React.useImperativeHandle(ref, () => internalChasisBodyRef.current)
 
     return (
         <>

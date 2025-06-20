@@ -11,7 +11,8 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
     name?: string,
     model: string;
     basePath?: string,
-    animation?: string, height?: number,
+    animation?: string | string[], // <-- allow string or array
+    height?: number,
     animationOverrides?: { [key: string]: string },
     position?: [number, number, number],
     scale?: number,
@@ -51,7 +52,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
 
         useEffect(() => {
             if (animation && mixer) {
-                setThisAnimation(animation);
+                setThisAnimation(animation); // <-- pass string or array
             }
         }, [animation, mixer, setThisAnimation]);
 

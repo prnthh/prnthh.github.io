@@ -13,7 +13,7 @@ export default function Home() {
                 <Controls>
                     <Canvas>
                         <Physics>
-                            <Vehicle />
+                            <Vehicle debug />
                             <RigidBody type="fixed">
                                 <mesh position={[0, -2, 0]} scale={[10, 0.5, 10]}>
                                     <boxGeometry />

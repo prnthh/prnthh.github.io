@@ -29,7 +29,7 @@ export default function Home() {
 
                             <GoalFollowingPed />
 
-                            <MapModel scale={0.6} position={[-3, 3, 0]} modelUrl="/models/maps/burgerpiz.glb" />
+                            <MapModel scale={0.6} position={[-3, 2, 0]} modelUrl="/models/maps/burgerpiz.glb" />
                             {/* <Ground /> */}
                             <ambientLight intensity={0.8} />
                             <pointLight position={[10, 10, 10]} />
@@ -74,7 +74,7 @@ const GoalFollowingPed = () => {
             dialog={dialogVisible ? <div className="text-3xl text-yellow-300 text-center p-2 rounded drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
                 hi
             </div> : undefined}
-            position={ballPosition} modelOffset={[2, 4, 0]} />
+            position={ballPosition} modelOffset={[0, -0.5, 0]} />
     </DialogCollider>
 }
 

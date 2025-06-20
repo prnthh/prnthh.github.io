@@ -9,13 +9,20 @@ export function RagdollR3F() {
     const { world } = useRapier();
     const { scene } = useThree();
     const ragdoll = useRef<Ragdoll | null>(null);
-    const gltf = useGLTF('/models/character.glb');
+    const gltf = useGLTF('/models/human/onimilio/rigged.glb');
 
     useEffect(() => {
         if (world && scene && gltf) {
             const clonedGltf = SkeletonUtils.clone(gltf.scene)
             ragdoll.current = new Ragdoll(world, scene, clonedGltf);
         }
+        // Cleanup to ensure only one ragdoll exists
+        return () => {
+            if (ragdoll.current && ragdoll.current.mesh) {
+                scene.remove(ragdoll.current.mesh);
+                ragdoll.current = null;
+            }
+        };
     }, [world, scene, gltf]);
 
     useFrame((_, delta) => {

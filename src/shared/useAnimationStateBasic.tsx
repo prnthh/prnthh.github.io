@@ -30,7 +30,8 @@ export default function useAnimationState(
     animationOverrides?: { [key: string]: string },
     onActions?: (actions: { [key: string]: AnimationAction }) => void
 ) {
-    const [thisAnimation, setThisAnimation] = useState<string | undefined>('idle')
+    // Allow thisAnimation to be a string or an array of strings
+    const [thisAnimation, setThisAnimation] = useState<string | string[] | undefined>('idle')
     const [mixer, setMixer] = useState<AnimationMixer | null>(null)
     // Track the currently playing action
     const prevActionRef = useRef<AnimationAction | null>(null)

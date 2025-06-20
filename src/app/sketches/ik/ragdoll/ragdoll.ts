@@ -1,15 +1,11 @@
 import RAPIER, { World } from "@dimforge/rapier3d-compat";
-import { Group, Mesh, MeshStandardMaterial, Object3D, Object3DEventMap, Quaternion, Scene, Vector3 } from "three";
-import { GLTF } from "three/examples/jsm/Addons.js";
+import { Mesh, Object3D, Object3DEventMap, Quaternion, Scene, Vector3 } from "three";
+import * as THREE from "three";
 
 type RagdollParts = 'head' | 'torso' | 'armUpperRight' | 'armLowerRight' | 'armUpperLeft' | 'armLowerLeft' | 'thighRight' | 'shinRight' | 'thighLeft' | 'shinLeft';
 
-/**
- * Live demo: https://mavon.ie/demos/rapierjs-ragdoll
- */
 export class Ragdoll extends Object3D {
     world: World;
-
     head!: RAPIER.RigidBody;
     torso!: RAPIER.RigidBody;
     armUpperRight!: RAPIER.RigidBody;
@@ -20,49 +16,36 @@ export class Ragdoll extends Object3D {
     shinRight!: RAPIER.RigidBody;
     thighLeft!: RAPIER.RigidBody;
     shinLeft!: RAPIER.RigidBody;
-
     mesh: Object3D<Object3DEventMap> | null = null;
-
     private static readonly boneMapping = {
-        head: 'head',
-        torso: 'spine',
-        armUpperLeft: 'upperArml',
-        armUpperRight: 'upperArmr',
-        armLowerLeft: 'lowerArmL',
-        armLowerRight: 'lowerArmR',
-        thighLeft: 'hipl',
-        thighRight: 'hipr',
-        shinLeft: 'shinl',
-        shinRight: 'shinr'
+        head: 'mixamorigHead',
+        torso: 'mixamorigHips',
+        armUpperLeft: 'mixamorigLeftArm',
+        armUpperRight: 'mixamorigRightArm',
+        armLowerLeft: 'mixamorigLeftForeArm',
+        armLowerRight: 'mixamorigRightForeArm',
+        thighLeft: 'mixamorigLeftUpLeg',
+        thighRight: 'mixamorigRightUpLeg',
+        shinLeft: 'mixamorigLeftLeg',
+        shinRight: 'mixamorigRightLeg'
     };
     private initialBoneWorldQuaternions: Map<string, Quaternion> = new Map();
 
     constructor(world: World, scene: Scene, object: Object3D<Object3DEventMap>) {
-        super()
-
+        super();
         this.world = world;
-        
         object.traverse(o => {
             if (o instanceof Mesh) {
-                const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
-                o.material = new MeshStandardMaterial({ color: randomColor });
-
-                o.castShadow = true
-                o.receiveShadow = true
-                o.frustumCulled = false
+                o.castShadow = true;
+                o.receiveShadow = true;
+                o.frustumCulled = false;
             }
-        })
-
-        this.mesh = object
-        this.mesh.position.set(0, 10, 0)
-        scene.add(this.mesh)
-
-        /**
-         * Store initial bone orientation from the blender mesh
-         * This is very important otherwise your mesh will be twisted
-         */
-        for (const [_, boneName] of Object.entries(Ragdoll.boneMapping)) {
+        });
+        this.mesh = object;
+        this.mesh.position.set(0, 1, 0);
+        this.mesh.rotation.set(-Math.PI / 2, 0, 0); // Rotate -90 degrees around X to lay on back (opposite direction)
+        scene.add(this.mesh);
+        for (const boneName of Object.values(Ragdoll.boneMapping)) {
             const bone = this.mesh.getObjectByName(boneName);
             if (bone) {
                 const quat = new Quaternion();
@@ -70,179 +53,234 @@ export class Ragdoll extends Object3D {
                 this.initialBoneWorldQuaternions.set(boneName, quat);
             }
         }
-
         this.createRagdoll();
-    }
-
-    private createRagdoll() {
-
-        // Adjust this to make it more flexible
-        const stiffness = 0.02
-
-        const torsoWidth = 0.4
-        const torsoHeight = .4
-
-        const initialSpawn = new Vector3(0, 10, 0)
-
-        const torsoDesc = RAPIER.ColliderDesc.cuboid(torsoWidth / 2, torsoHeight / 2, 0.1);
-        const torsoBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(...initialSpawn.toArray())
-        this.torso = this.world.createRigidBody(torsoBodyDesc);
-        this.world.createCollider(torsoDesc, this.torso);
-
-        const headSize = 0.2;
-        const headDesc = RAPIER.ColliderDesc.cuboid(headSize / 2, headSize / 2, headSize / 2);
-        const headBodyDesc = RAPIER.RigidBodyDesc
-            .dynamic()
-            .setTranslation(0, this.torso.translation().y + headSize / 2 + torsoHeight / 2 + stiffness, 0)
-        this.head = this.world.createRigidBody(headBodyDesc);
-        this.world.createCollider(headDesc, this.head);
-
-        const armLength = 0.4
-        const armThickness = 0.15
-
-        const armUpperRDesc = RAPIER.ColliderDesc.cuboid(armLength / 2, armThickness / 2, armThickness / 2);
-        const armUpperRBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(torsoWidth + stiffness, this.torso.translation().y + 0.1, 0);
-        this.armUpperRight = this.world.createRigidBody(armUpperRBodyDesc);
-        this.world.createCollider(armUpperRDesc, this.armUpperRight);
-
-        const armLowerRDesc = RAPIER.ColliderDesc.cuboid(armLength / 2, armThickness / 2, armThickness / 2);
-        const armLowerRBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(torsoWidth + armLength + stiffness * 2, this.torso.translation().y + 0.1, 0)
-        this.armLowerRight = this.world.createRigidBody(armLowerRBodyDesc);
-        this.world.createCollider(armLowerRDesc, this.armLowerRight);
-
-        const armUpperLDesc = RAPIER.ColliderDesc.cuboid(armLength / 2, armThickness / 2, armThickness / 2);
-        const armUpperLBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(-torsoWidth - stiffness, this.torso.translation().y + 0.1, 0)
-        this.armUpperLeft = this.world.createRigidBody(armUpperLBodyDesc);
-        this.world.createCollider(armUpperLDesc, this.armUpperLeft);
-
-        const armLowerLDesc = RAPIER.ColliderDesc.cuboid(armLength / 2, armThickness / 2, armThickness / 2);
-        const armLowerLBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(-torsoWidth - armLength - stiffness * 2, this.torso.translation().y + 0.1, 0)
-        this.armLowerLeft = this.world.createRigidBody(armLowerLBodyDesc);
-        this.world.createCollider(armLowerLDesc, this.armLowerLeft);
-
-        const legSegmentHeight = torsoHeight * 0.8
-        const legthickness = 0.18
-
-        const legUpperRDesc = RAPIER.ColliderDesc.cuboid(legthickness / 2, legSegmentHeight / 2, legthickness / 2)
-        const legUpperRBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(torsoWidth / 2 - 0.1, torsoBodyDesc.translation.y - torsoHeight / 2 - legSegmentHeight / 2 - stiffness, 0)
-        this.thighRight = this.world.createRigidBody(legUpperRBodyDesc)
-        this.world.createCollider(legUpperRDesc, this.thighRight);
-
-        const legLowerRDesc = RAPIER.ColliderDesc.cuboid(legthickness / 2, legSegmentHeight / 2, legthickness / 2)
-        const legLowerRBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(legUpperRBodyDesc.translation.x, legUpperRBodyDesc.translation.y - legSegmentHeight - stiffness, 0)
-        this.shinRight = this.world.createRigidBody(legLowerRBodyDesc)
-        this.world.createCollider(legLowerRDesc, this.shinRight);
-
-        const legUpperLDesc = RAPIER.ColliderDesc.cuboid(legthickness / 2, legSegmentHeight / 2, legthickness / 2)
-        const legUpperLBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(-torsoWidth / 2 + 0.1, torsoBodyDesc.translation.y - torsoHeight / 2 - legSegmentHeight / 2 - stiffness, 0)
-        this.thighLeft = this.world.createRigidBody(legUpperLBodyDesc)
-        this.world.createCollider(legUpperLDesc, this.thighLeft);
-
-        const legLowerLDesc = RAPIER.ColliderDesc.cuboid(legthickness / 2, legSegmentHeight / 2, legthickness / 2)
-        const legLowerLBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(legUpperLBodyDesc.translation.x, legUpperRBodyDesc.translation.y - legSegmentHeight - stiffness, 0)
-        this.shinLeft = this.world.createRigidBody(legLowerLBodyDesc)
-        this.world.createCollider(legLowerLDesc, this.shinLeft);
-
-        const localAnchorHead = { x: 0, y: -headSize / 2 - stiffness, z: 0 };
-        const localAnchorNeck = { x: 0, y: torsoHeight / 2, z: 0 };
-
-        const localAnchorRTorso = { x: (torsoWidth / 2) + stiffness, y: 0.1, z: 0 };
-        const localAnchorRArm = { x: -armLength / 2, y: 0, z: 0 };
-
-        const localAnchorRArmBottom = { x: (armLength / 2) + stiffness, y: 0 / 2, z: 0.0 };
-        const localAnchorRArmLower = { x: -armLength / 2, y: 0 / 2, z: 0 };
-
-        const localAnchorLTorso = { x: -(torsoWidth / 2) - stiffness, y: 0.1, z: 0 };
-        const localAnchorLArm = { x: armLength / 2, y: 0, z: 0 };
-
-        const localAnchorLArmBottom = { x: -(armLength / 2) - stiffness, y: 0 / 2, z: 0.0 };
-        const localAnchorLArmLower = { x: armLength / 2, y: 0 / 2, z: 0 };
-
-        const localAnchorRTorsoBottom = { x: (torsoWidth / 2) - legthickness / 2, y: -torsoHeight / 2 - stiffness, z: 0 };
-        const localAnchorRLegUpper = { x: 0, y: legSegmentHeight / 2, z: 0 };
-
-        const localAnchorLTorsoBottom = { x: -(torsoWidth / 2) + legthickness / 2, y: -torsoHeight / 2 - stiffness, z: 0 };
-        const localAnchorLLegUpper = { x: 0, y: legSegmentHeight / 2, z: 0 };
-
-        const localAnchorRLegUpperLower = { x: 0, y: -legSegmentHeight / 2 - stiffness, z: 0 };
-        const localAnchorRLegLowerTop = { x: 0, y: legSegmentHeight / 2, z: 0 };
-
-        const localAnchorLLegUpperLower = { x: 0, y: -legSegmentHeight / 2 - stiffness, z: 0 };
-        const localAnchorLLegLowerTop = { x: 0, y: legSegmentHeight / 2, z: 0 };
-
-        const createJoint = (anchor1: RAPIER.Vector, anchor2: RAPIER.Vector, parent1: RAPIER.RigidBody, parent2: RAPIER.RigidBody ) => {
-            const joint = RAPIER.JointData.spherical(anchor1, anchor2);
-            this.world.createImpulseJoint(joint, parent1, parent2, true);
-        }
-
-        createJoint(localAnchorHead, localAnchorNeck, this.head, this.torso)                                // Neck Joint
-        createJoint(localAnchorRTorso, localAnchorRArm, this.torso, this.armUpperRight)                     // Shoulder Joint Right
-        createJoint(localAnchorRArmBottom, localAnchorRArmLower, this.armUpperRight, this.armLowerRight)    // Elbow Joint right
-        createJoint(localAnchorLTorso, localAnchorLArm, this.torso, this.armUpperLeft)                      // Shoulder Joint Left
-        createJoint(localAnchorLArmBottom, localAnchorLArmLower, this.armUpperLeft, this.armLowerLeft)      // Elbow joint left
-        createJoint(localAnchorLTorsoBottom, localAnchorLLegUpper, this.torso, this.thighLeft)              // hip joint left
-        createJoint(localAnchorRTorsoBottom, localAnchorRLegUpper, this.torso, this.thighRight)             // hip joint right
-        createJoint(localAnchorRLegUpperLower, localAnchorRLegLowerTop, this.thighRight, this.shinRight)    // knee joint right
-        createJoint(localAnchorLLegUpperLower, localAnchorLLegLowerTop, this.thighLeft, this.shinLeft)      // knee joint left
-
-        // For debuging you can disable this to freeze it and see joints in initial state
-        const enabled = true;
-
-        for (const [key, _] of Object.entries(Ragdoll.boneMapping)) {
-            this[key as RagdollParts].setEnabled(enabled)
-        }
-    }
-
-    public update(_delta: number) {
-
-        if (!this.mesh) return
-
-        this.updateRagdoll()
-
-        const keys = ["torso"]
-        const positions = keys.map(k => this[k as RagdollParts].translation())
-
-        const avgX = positions.reduce((sum, p) => sum + p.x, 0) / positions.length
-        const avgY = positions.reduce((sum, p) => sum + p.y, 0) / positions.length
-        const avgZ = positions.reduce((sum, p) => sum + p.z, 0) / positions.length
-
-        this.position.set(avgX, avgY, avgZ)
-        this.mesh?.position.set(this.position.x, this.position.y, this.position.z)
-    }
-
-    updateRagdoll() {
-        if (!this.mesh) return;
-    
-        for (const [key, boneName] of Object.entries(Ragdoll.boneMapping)) {
-            const bone = this.mesh.getObjectByName(boneName);
-            const body = this[key as RagdollParts];
-    
-            if (bone && body) {
-                const translation = body.translation();
-                const rotation = body.rotation();
-    
-                const bodyPos = new Vector3(translation.x, translation.y, translation.z);
-                const bodyQuat = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
-    
-                const parent = bone.parent as Object3D;
-                if (parent) {
-                    parent.worldToLocal(bodyPos);
-                    bone.position.copy(bodyPos);
-    
-                    const parentQuat = new Quaternion();
-                    parent.getWorldQuaternion(parentQuat);
-    
-                    const initialQuat = this.initialBoneWorldQuaternions.get(boneName);
-                    if (initialQuat) {
-                        const relativeQuat = bodyQuat.multiply(initialQuat);
-                        bone.quaternion.copy(parentQuat.invert()).multiply(relativeQuat);
-                    } else {
-                        const combinedQuat = bodyQuat.multiply(parentQuat);
-                        bone.quaternion.copy(combinedQuat);
-                    }
-                }
+        // Set all rigidbodies to disabled at start
+        for (const key of Object.keys(Ragdoll.boneMapping)) {
+            if (this[key as RagdollParts]) {
+                // this[key as RagdollParts].setEnabled(false);
             }
         }
     }
 
+    private createRigidBodyWithCollider(
+        desc: RAPIER.ColliderDesc,
+        bodyDesc: RAPIER.RigidBodyDesc
+    ): RAPIER.RigidBody {
+        const body = this.world.createRigidBody(bodyDesc);
+        this.world.createCollider(desc, body);
+        return body;
+    }
+
+    private createRagdollJoint(
+        anchor1: RAPIER.Vector,
+        anchor2: RAPIER.Vector,
+        parent1: RAPIER.RigidBody,
+        parent2: RAPIER.RigidBody,
+        type: 'spherical' | 'revolute' = 'spherical',
+        axis?: RAPIER.Vector
+    ) {
+        let joint;
+        const maxAngle = Math.PI / 2;
+        const defaultLimits = [-maxAngle, maxAngle];
+        if (type === 'revolute' && axis) {
+            joint = RAPIER.JointData.revolute(anchor1, anchor2, axis);
+        } else {
+            joint = RAPIER.JointData.spherical(anchor1, anchor2);
+        }
+        joint.limits = defaultLimits;
+        this.world.createImpulseJoint(joint, parent1, parent2, true);
+    }
+
+    private createRagdoll() {
+        if (!this.mesh) return;
+        // Gather bone transforms
+        const boneTransforms: Partial<Record<RagdollParts, { pos: Vector3, quat: Quaternion, scale: Vector3 }>> = {};
+        for (const [key, boneName] of Object.entries(Ragdoll.boneMapping)) {
+            const bone = this.mesh.getObjectByName(boneName);
+            if (bone) {
+                const pos = new Vector3();
+                const quat = new Quaternion();
+                const scale = new Vector3();
+                bone.getWorldPosition(pos);
+                bone.getWorldQuaternion(quat);
+                bone.getWorldScale(scale);
+                boneTransforms[key as RagdollParts] = { pos, quat, scale };
+            }
+        }
+        // Helper to get transform (no fallback)
+        const getTransform = (part: RagdollParts) => {
+            if (!boneTransforms[part]) throw new Error(`Missing bone transform for ${part}`);
+            return {
+                pos: boneTransforms[part]!.pos.clone(),
+                quat: boneTransforms[part]!.quat.clone(),
+                scale: boneTransforms[part]!.scale.clone(),
+            };
+        };
+        // Use bone distances for sizing (no fallback)
+        const getBoneLength = (start: string, end: string): number => {
+            const a = this.mesh!.getObjectByName(start);
+            const b = this.mesh!.getObjectByName(end);
+            if (a && b) {
+                return a.getWorldPosition(new Vector3()).distanceTo(b.getWorldPosition(new Vector3()));
+            }
+            throw new Error(`Missing bone(s) for length: ${start}, ${end}`);
+        };
+        // Get transforms (no fallback)
+        const torsoT = getTransform('torso');
+        const headT = getTransform('head');
+        const thighLeftT = getTransform('thighLeft');
+        const thighRightT = getTransform('thighRight');
+        // Sizing from bones (no fallback)
+        const torsoHeight = torsoT.pos.distanceTo(headT.pos) * 0.6;
+        const torsoWidth = thighLeftT.pos.distanceTo(thighRightT.pos);
+        const headSize = torsoHeight * 0.5;
+        const upperArmRightLength = getBoneLength('mixamorigRightArm', 'mixamorigRightForeArm');
+        const lowerArmRightLength = getBoneLength('mixamorigRightForeArm', 'mixamorigRightHand');
+        const upperArmLeftLength = getBoneLength('mixamorigLeftArm', 'mixamorigLeftForeArm');
+        const lowerArmLeftLength = getBoneLength('mixamorigLeftForeArm', 'mixamorigLeftHand');
+        const thighRightLength = getBoneLength('mixamorigRightUpLeg', 'mixamorigRightLeg');
+        const shinRightLength = getBoneLength('mixamorigRightLeg', 'mixamorigRightFoot');
+        const thighLeftLength = getBoneLength('mixamorigLeftUpLeg', 'mixamorigLeftLeg');
+        const shinLeftLength = getBoneLength('mixamorigLeftLeg', 'mixamorigLeftFoot');
+        // Directly compute segment sizes (no constants)
+        const computedArmLength = Math.max(upperArmRightLength, upperArmLeftLength);
+        const computedArmLowerLength = Math.max(lowerArmRightLength, lowerArmLeftLength);
+        const computedLegSegmentHeight = Math.max(thighRightLength, thighLeftLength);
+        const computedLegLowerSegmentHeight = Math.max(shinRightLength, shinLeftLength);
+        const armThickness = computedArmLength * 0.25;
+        const legThickness = computedLegSegmentHeight * 0.25;
+        // Use bone positions for all parts (no fallback)
+        const armUpperRightT = getTransform('armUpperRight');
+        const armLowerRightT = getTransform('armLowerRight');
+        const armUpperLeftT = getTransform('armUpperLeft');
+        const armLowerLeftT = getTransform('armLowerLeft');
+        const shinRightT = getTransform('shinRight');
+        const shinLeftT = getTransform('shinLeft');
+
+        // Modular creation of each body part
+        // For arms, rotate collider 90 deg around Z to align X axis (bone) to Y axis (collider)
+        const armAlignQuat = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), Math.PI / 2);
+        this.torso = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(torsoWidth / 2, torsoHeight / 2, 0.1),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(torsoT.pos.x, torsoT.pos.y, torsoT.pos.z).setRotation({ x: torsoT.quat.x, y: torsoT.quat.y, z: torsoT.quat.z, w: torsoT.quat.w })
+        );
+        this.head = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(headSize / 2, headSize / 2, headSize / 2),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(headT.pos.x, headT.pos.y, headT.pos.z).setRotation({ x: headT.quat.x, y: headT.quat.y, z: headT.quat.z, w: headT.quat.w })
+        );
+        this.armUpperRight = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(computedArmLength / 2, armThickness / 2, armThickness / 2).setRotation({ x: armAlignQuat.x, y: armAlignQuat.y, z: armAlignQuat.z, w: armAlignQuat.w }),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(armUpperRightT.pos.x, armUpperRightT.pos.y, armUpperRightT.pos.z).setRotation({ x: armUpperRightT.quat.x, y: armUpperRightT.quat.y, z: armUpperRightT.quat.z, w: armUpperRightT.quat.w })
+        );
+        this.armLowerRight = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(computedArmLowerLength / 2, armThickness / 2, armThickness / 2).setRotation({ x: armAlignQuat.x, y: armAlignQuat.y, z: armAlignQuat.z, w: armAlignQuat.w }),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(armLowerRightT.pos.x, armLowerRightT.pos.y, armLowerRightT.pos.z).setRotation({ x: armLowerRightT.quat.x, y: armLowerRightT.quat.y, z: armLowerRightT.quat.z, w: armLowerRightT.quat.w })
+        );
+        this.armUpperLeft = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(computedArmLength / 2, armThickness / 2, armThickness / 2).setRotation({ x: armAlignQuat.x, y: armAlignQuat.y, z: armAlignQuat.z, w: armAlignQuat.w }),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(armUpperLeftT.pos.x, armUpperLeftT.pos.y, armUpperLeftT.pos.z).setRotation({ x: armUpperLeftT.quat.x, y: armUpperLeftT.quat.y, z: armUpperLeftT.quat.z, w: armUpperLeftT.quat.w })
+        );
+        this.armLowerLeft = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(computedArmLowerLength / 2, armThickness / 2, armThickness / 2).setRotation({ x: armAlignQuat.x, y: armAlignQuat.y, z: armAlignQuat.z, w: armAlignQuat.w }),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(armLowerLeftT.pos.x, armLowerLeftT.pos.y, armLowerLeftT.pos.z).setRotation({ x: armLowerLeftT.quat.x, y: armLowerLeftT.quat.y, z: armLowerLeftT.quat.z, w: armLowerLeftT.quat.w })
+        );
+        this.thighRight = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(legThickness / 2, computedLegSegmentHeight / 2, legThickness / 2),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(thighRightT.pos.x, thighRightT.pos.y, thighRightT.pos.z).setRotation({ x: thighRightT.quat.x, y: thighRightT.quat.y, z: thighRightT.quat.z, w: thighRightT.quat.w })
+        );
+        this.shinRight = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(legThickness / 2, computedLegLowerSegmentHeight / 2, legThickness / 2),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(shinRightT.pos.x, shinRightT.pos.y, shinRightT.pos.z).setRotation({ x: shinRightT.quat.x, y: shinRightT.quat.y, z: shinRightT.quat.z, w: shinRightT.quat.w })
+        );
+        this.thighLeft = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(legThickness / 2, computedLegSegmentHeight / 2, legThickness / 2),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(thighLeftT.pos.x, thighLeftT.pos.y, thighLeftT.pos.z).setRotation({ x: thighLeftT.quat.x, y: thighLeftT.quat.y, z: thighLeftT.quat.z, w: thighLeftT.quat.w })
+        );
+        this.shinLeft = this.createRigidBodyWithCollider(
+            RAPIER.ColliderDesc.cuboid(legThickness / 2, computedLegLowerSegmentHeight / 2, legThickness / 2),
+            RAPIER.RigidBodyDesc.dynamic().setTranslation(shinLeftT.pos.x, shinLeftT.pos.y, shinLeftT.pos.z).setRotation({ x: shinLeftT.quat.x, y: shinLeftT.quat.y, z: shinLeftT.quat.z, w: shinLeftT.quat.w })
+        );
+
+        // Modular creation of joints
+        const stiffness = 0.05;
+        this.createRagdollJoint(
+            { x: 0, y: -headSize / 2 - stiffness, z: 0 },
+            { x: 0, y: torsoHeight / 2, z: 0 },
+            this.head, this.torso, 'spherical'
+        );
+        // SWAP LEFT/RIGHT ARM JOINTS
+        this.createRagdollJoint(
+            { x: (torsoWidth / 2) + stiffness, y: 0.1, z: 0 }, // was right, now left
+            { x: -computedArmLength / 2, y: 0, z: 0 },
+            this.torso, this.armUpperRight, 'spherical'
+        );
+        this.createRagdollJoint(
+            { x: -(torsoWidth / 2) - stiffness, y: 0.1, z: 0 }, // was left, now right
+            { x: computedArmLength / 2, y: 0, z: 0 },
+            this.torso, this.armUpperLeft, 'spherical'
+        );
+        // SWAP LOWER ARM JOINTS
+        this.createRagdollJoint(
+            { x: (computedArmLength / 2) + stiffness, y: 0, z: 0.0 }, // was right, now left
+            { x: -computedArmLength / 2, y: 0, z: 0 },
+            this.armUpperRight, this.armLowerRight, 'spherical'
+        );
+        this.createRagdollJoint(
+            { x: -(computedArmLength / 2) - stiffness, y: 0, z: 0.0 }, // was left, now right
+            { x: computedArmLength / 2, y: 0, z: 0 },
+            this.armUpperLeft, this.armLowerLeft, 'spherical'
+        );
+        this.createRagdollJoint(
+            { x: (torsoWidth / 2) - legThickness / 2, y: -torsoHeight / 2 - stiffness, z: 0 },
+            { x: 0, y: -computedLegSegmentHeight / 2, z: 0 },
+            this.torso, this.thighLeft, 'spherical'
+        );
+        this.createRagdollJoint(
+            { x: -(torsoWidth / 2) + legThickness / 2, y: -torsoHeight / 2 - stiffness, z: 0 },
+            { x: 0, y: -computedLegSegmentHeight / 2, z: 0 },
+            this.torso, this.thighRight, 'spherical'
+        );
+        this.createRagdollJoint(
+            { x: 0, y: computedLegSegmentHeight / 2 + stiffness, z: 0 },
+            { x: 0, y: -computedLegSegmentHeight / 2, z: 0 },
+            this.thighRight, this.shinRight, 'spherical'
+        );
+        this.createRagdollJoint(
+            { x: 0, y: computedLegSegmentHeight / 2 + stiffness, z: 0 },
+            { x: 0, y: -computedLegSegmentHeight / 2, z: 0 },
+            this.thighLeft, this.shinLeft, 'spherical'
+        );
+
+        for (const key of Object.keys(Ragdoll.boneMapping)) {
+            this[key as RagdollParts].setEnabled(true);
+        }
+    }
+
+    public update(_delta: number) {
+        if (!this.mesh) return;
+        this.updateRagdoll();
+    }
+
+    updateRagdoll() {
+        if (!this.mesh) return;
+        for (const [key, boneName] of Object.entries(Ragdoll.boneMapping)) {
+            const bone = this.mesh.getObjectByName(boneName);
+            const body = this[key as RagdollParts];
+            if (bone && body) {
+                const translation = body.translation();
+                const rotation = body.rotation();
+                const bodyPos = new Vector3(translation.x, translation.y, translation.z);
+                const parent = bone.parent as Object3D;
+                if (parent) {
+                    parent.worldToLocal(bodyPos);
+                    bone.position.copy(bodyPos);
+                    const bodyQuat = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+                    const parentQuat = new Quaternion();
+                    parent.getWorldQuaternion(parentQuat);
+                    bone.quaternion.copy(parentQuat.clone().invert().multiply(bodyQuat));
+                    bone.updateMatrix();
+                }
+            }
+        }
+    }
 }

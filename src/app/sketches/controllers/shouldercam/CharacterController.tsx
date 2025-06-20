@@ -32,7 +32,7 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
     const character = useRef<Group>(null);
 
     const [, get] = useKeyboardControls();
-    const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch">("idle");
+    const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");
     const jumping = useRef(false);
 
     const velocityRef = useRef<Vector3>(new Vector3(0, 0, 0));
@@ -54,7 +54,7 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
         const speed = keyInputs.run ? RUN_SPEED : WALK_SPEED;
 
         // Animation state and walkLeft logic
-        let nextAnimation: typeof animation = "idle";
+        let nextAnimation: typeof animation | string[] = "idle";
         if (keyInputs.use) {
             nextAnimation = "rpunch";
         } else if (keyInputs.altUse) {
