@@ -12,10 +12,10 @@ import { EffectComposer, SSAO } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import { GameCanvas } from "@/shared/GameCanvas";
 import { Perf } from "r3f-perf";
-import Vehicle from "../../car/simple/car/base";
+import Vehicle, { ObjectRef } from "../../car/simple/car/base";
 
 export default function Home() {
-    const carRBRef = useRef<RapierRigidBody | null>(null);
+    const carRBRef = useRef<ObjectRef | null>(null);
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
