@@ -1,9 +1,11 @@
 import { RapierRigidBody } from "@react-three/rapier";
 import { useEffect, useState } from "react";
 import Ped from "../../controllers/click/ped/ped";
+import { ObjectRef } from "../../car/simple/car/base";
+import * as THREE from "three";
 
 type PedSpawnerProps = {
-    carRBRef: React.RefObject<RapierRigidBody | null>;
+    carRBRef: React.RefObject<ObjectRef | null>;
 };
 
 const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
@@ -14,32 +16,23 @@ const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
         console.log("car found", carRBRef.current);
         const interval = setInterval(() => {
             const car = carRBRef.current;
-            if (car) {
-                const translation = car.translation();
-                const rotation = car.rotation();
-                // Calculate forward vector from quaternion
-                const q = rotation;
-                // Forward vector for Z-
-                const forward = [
-                    2 * (q.x * q.z + q.w * q.y),
-                    2 * (q.y * q.z - q.w * q.x),
-                    1 - 2 * (q.x * q.x + q.y * q.y)
-                ];
-                // Normalize forward
-                const len = Math.sqrt(forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2]);
-                const normForward = forward.map((v) => v / len);
+            if (car && car.meshRef && car.rbRef) {
+                const translation = car.meshRef.getWorldPosition(new THREE.Vector3());
+                const rotation = car.meshRef.getWorldQuaternion(new THREE.Quaternion());
+                // Calculate forward vector using quaternion
+                const forwardVec = new THREE.Vector3(-1, 0, 0).applyQuaternion(rotation).normalize();
                 // Place NPC 5 units in front of car
                 const spawnPos: [number, number, number] = [
-                    translation.x + normForward[0] * 5,
+                    translation.x + forwardVec.x * 5,
                     translation.y + 1,
-                    translation.z + normForward[2] * 5
+                    translation.z + forwardVec.z * 5
                 ];
                 console.log("Spawning NPC at", spawnPos);
                 setNpcs((prev) => [...prev, { position: spawnPos }]);
             }
         }, 5000);
         return () => clearInterval(interval);
-    }, [carRBRef.current]); // Depend on carRBRef.current
+    }, [carRBRef]); // Depend on carRBRef
 
     return (
         <>

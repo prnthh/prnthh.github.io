@@ -34,8 +34,15 @@ const wheels: WheelInfo[] = [
 
 const _airControlAngVel = new THREE.Vector3()
 
+
+export type ObjectRef = {
+    rbRef: RapierRigidBody | null
+    meshRef: THREE.Group | THREE.Object3D | null
+}
+
+
 // Convert Vehicle to forwardRef with robust ref handling
-const Vehicle = React.forwardRef<RapierRigidBody, {
+const Vehicle = React.forwardRef<ObjectRef, {
     name?: string,
     driving?: boolean,
     debug?: boolean,
@@ -165,7 +172,10 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
         chassis.setAngvel(new rapier.Vector3(0, 0, 0), true)
     }
 
-    useImperativeHandle(ref, () => chasisBodyRef.current, [chasisBodyRef.current])
+    useImperativeHandle(ref, () => ({
+        meshRef: chasisMeshRef.current,
+        rbRef: chasisBodyRef.current
+    }), [chasisMeshRef.current, chasisBodyRef.current])
 
     return (
         <>
