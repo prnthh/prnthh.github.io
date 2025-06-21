@@ -56,9 +56,7 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
     }, [driving, setScheme]);
 
     const chasisMeshRef = useRef<THREE.Mesh>(null!)
-    // Always use an internal ref
-    const internalChasisBodyRef = useRef<RapierRigidBody>(null!)
-    const chasisBodyRef: React.RefObject<RapierRigidBody> = internalChasisBodyRef
+    const chasisBodyRef = useRef<RapierRigidBody>(null!)
     const wheelsRef: RefObject<(THREE.Object3D | null)[]> = useRef([])
 
     const { vehicleController } = useVehicleController(chasisBodyRef, wheelsRef as RefObject<THREE.Object3D[]>, wheels)
@@ -167,7 +165,7 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
         chassis.setAngvel(new rapier.Vector3(0, 0, 0), true)
     }
 
-    useImperativeHandle(ref, () => internalChasisBodyRef.current)
+    useImperativeHandle(ref, () => chasisBodyRef.current)
 
     return (
         <>
