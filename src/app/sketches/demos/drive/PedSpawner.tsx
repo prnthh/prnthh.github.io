@@ -10,7 +10,7 @@ const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
     const [npcs, setNpcs] = useState<{ position: [number, number, number] }[]>([]);
 
     useEffect(() => {
-        if (!carRBRef.current) { console.log("car not found"); return; }
+        if (!carRBRef.current) return; // Wait until carRBRef.current is set
         console.log("car found", carRBRef.current);
         const interval = setInterval(() => {
             const car = carRBRef.current;
@@ -39,7 +39,7 @@ const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
             }
         }, 5000);
         return () => clearInterval(interval);
-    }, [carRBRef]);
+    }, [carRBRef.current]); // Depend on carRBRef.current
 
     return (
         <>
