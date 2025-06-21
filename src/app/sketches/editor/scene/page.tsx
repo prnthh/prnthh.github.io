@@ -1,21 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { OrbitControls, TransformControls } from "@react-three/drei";
 import * as THREE from "three";
 import { ObjectTypes } from "./objectTypes";
-import { RigidBody } from "@react-three/rapier";
 import { RigidBodyComponentRow, RigidBodyComponentDefault } from "./components/RigidBodyComponent";
 import type { Group, Object3DEventMap } from "three";
 import { EditorProvider, useEditorContext } from "./EditorContext";
 import {
     updateNodeById,
 } from "./sceneGraphUtils";
-import { ObjectNode } from "./objectTypes/Object3D";
-import { SpotlightNode } from "./objectTypes/SpotLight";
-import { OrthographicCameraNode } from "./objectTypes/OrthoCamera";
+import { BaseNode as RootNode } from "./objectTypes/Node";
 
 // Types for scene graph
 export type SceneGraphNode = {
@@ -110,18 +107,26 @@ function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate
     const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
     const [addMenuOpen, setAddMenuOpen] = React.useState(false);
     const hasRigidBody = node.components?.some(c => c.type === "RigidBody");
+    const { setTransformTarget, selected } = useEditorContext();
     // --- COMPONENTS UI ---
     const handleComponentChange = (idx: number, data: any) => {
         const newComponents = (node.components || []).map((c, i) => i === idx ? { ...c, data } : c);
         onUpdate({ components: newComponents });
     };
     const handleComponentDelete = (idx: number) => {
+        const isRigidBody = (node.components || [])[idx]?.type === "RigidBody";
         const newComponents = (node.components || []).filter((_, i) => i !== idx);
         onUpdate({ components: newComponents });
+        if (isRigidBody && selected && selected.id === node.id) {
+            setTransformTarget(null);
+        }
     };
     const handleAddComponent = (type: string) => {
         if (type === "RigidBody" && !(node.components || []).some(c => c.type === "RigidBody")) {
             onUpdate({ components: [...(node.components || []), { type: "RigidBody", data: { ...RigidBodyComponentDefault } }] });
+            if (selected && selected.id === node.id) {
+                setTransformTarget(null);
+            }
         }
         setAddMenuOpen(false);
     };
@@ -204,6 +209,7 @@ function SceneDetailsPanel({ sceneSettings, setSceneSettings, sceneText, setScen
     setSceneText: React.Dispatch<React.SetStateAction<string>>;
     onSceneTextBlur: () => void;
 }) {
+    const { resetScene } = useEditorContext();
     return (
         <>
             <h2>Scene</h2>
@@ -223,6 +229,11 @@ function SceneDetailsPanel({ sceneSettings, setSceneSettings, sceneText, setScen
                 onChange={e => setSceneText(e.target.value)}
                 onBlur={onSceneTextBlur}
             />
+            <div style={{ marginTop: 8, textAlign: 'right' }}>
+                <button onClick={resetScene} style={{ background: '#222', color: '#fff', borderRadius: 4, padding: '4px 12px', border: 'none' }}>
+                    Reset Scene
+                </button>
+            </div>
         </>
     );
 }
@@ -300,6 +311,7 @@ function EditorCanvas({
     sceneSettings: { physics: boolean };
 }) {
     const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget, isPlaying } = useEditorContext();
+    const transformControlsRef = useRef<any>(null);
 
     return (
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
@@ -307,109 +319,54 @@ function EditorCanvas({
                 <PlaybackController />
                 <ambientLight intensity={0.5} />
                 <pointLight position={[10, 10, 10]} />
-                {sceneSettings.physics ? (
-                    <Physics paused={!isPlaying}>
-                        <group>
-                            {selected && transformTarget && transformTarget.parent && (
-                                <TransformControls
-                                    object={transformTarget}
-                                    mode="translate"
-                                    onObjectChange={() => {
-                                        if (selected && transformTarget) {
-                                            const parent = transformTarget.parent;
-                                            const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
-                                            const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
-                                            const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
-                                            const localPos = worldPos.clone();
-                                            const localQuat = worldQuat.clone();
-                                            const localScale = worldScale.clone();
-                                            if (parent) {
-                                                parent.worldToLocal(localPos);
-                                                const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
-                                                localQuat.premultiply(parentWorldQuat.invert());
-                                                const parentWorldScale = parent.getWorldScale(new THREE.Vector3());
-                                                localScale.divide(parentWorldScale);
-                                            }
-                                            const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
-                                            // Update both selected and root
-                                            if (selected) {
-                                                setSelected(selected ? {
-                                                    ...selected,
-                                                    props: {
-                                                        ...selected.props,
-                                                        position: [localPos.x, localPos.y, localPos.z],
-                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                        scale: [localScale.x, localScale.y, localScale.z],
-                                                    }
-                                                } : null);
-                                                setRoot(prev => updateNodeById(prev, selected.id, {
-                                                    props: {
-                                                        position: [localPos.x, localPos.y, localPos.z],
-                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                        scale: [localScale.x, localScale.y, localScale.z],
-                                                    }
-                                                }));
-                                            }
+                <Physics paused={!sceneSettings.physics || !isPlaying}>
+                    <group>
+                        {selected && transformTarget && transformTarget.parent && !isPlaying && (
+                            <TransformControls
+                                ref={transformControlsRef}
+                                object={transformTarget}
+                                mode="translate"
+                                onObjectChange={() => {
+                                    if (selected && transformTarget) {
+                                        const parent = transformTarget.parent;
+                                        const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
+                                        const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
+                                        const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
+                                        const localPos = worldPos.clone();
+                                        const localQuat = worldQuat.clone();
+                                        const localScale = worldScale.clone();
+                                        if (parent) {
+                                            parent.worldToLocal(localPos);
+                                            const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
+                                            localQuat.premultiply(parentWorldQuat.invert());
+                                            const parentWorldScale = parent.getWorldScale(new THREE.Vector3());
+                                            localScale.divide(parentWorldScale);
                                         }
-                                    }}
-                                />
-                            )}
-                            <ObjectNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
-                        </group>
-                        <gridHelper args={[10, 10, "#888", "#444"]} />
-                    </Physics>
-                ) : (
-                    <>
-                        <group>
-                            {selected && transformTarget && transformTarget.parent && (
-                                <TransformControls
-                                    object={transformTarget}
-                                    mode="translate"
-                                    onObjectChange={() => {
-                                        if (selected && transformTarget) {
-                                            const parent = transformTarget.parent;
-                                            const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
-                                            const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
-                                            const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
-                                            const localPos = worldPos.clone();
-                                            const localQuat = worldQuat.clone();
-                                            const localScale = worldScale.clone();
-                                            if (parent) {
-                                                parent.worldToLocal(localPos);
-                                                const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
-                                                localQuat.premultiply(parentWorldQuat.invert());
-                                                const parentWorldScale = parent.getWorldScale(new THREE.Vector3());
-                                                localScale.divide(parentWorldScale);
-                                            }
-                                            const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
-                                            // Update both selected and root
-                                            if (selected) {
-                                                setSelected({
-                                                    ...selected,
-                                                    props: {
-                                                        ...selected.props,
-                                                        position: [localPos.x, localPos.y, localPos.z],
-                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                        scale: [localScale.x, localScale.y, localScale.z],
-                                                    }
-                                                });
-                                                setRoot(prev => updateNodeById(prev, selected.id, {
-                                                    props: {
-                                                        position: [localPos.x, localPos.y, localPos.z],
-                                                        rotation: [localEuler.x, localEuler.y, localEuler.z],
-                                                        scale: [localScale.x, localScale.y, localScale.z],
-                                                    }
-                                                }));
-                                            }
+                                        const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
+                                        // Only update the property matching the current mode
+                                        const mode = transformControlsRef.current?.mode || "translate";
+                                        const updates: any = {};
+                                        if (mode === "translate") {
+                                            updates.position = [localPos.x, localPos.y, localPos.z];
                                         }
-                                    }}
-                                />
-                            )}
-                            <ObjectNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
-                        </group>
-                        <gridHelper args={[10, 10, "#888", "#444"]} />
-                    </>
-                )}
+                                        if (mode === "rotate") {
+                                            updates.rotation = [localEuler.x, localEuler.y, localEuler.z];
+                                        }
+                                        if (mode === "scale") {
+                                            updates.scale = [localScale.x, localScale.y, localScale.z];
+                                        }
+                                        if (selected) {
+                                            setSelected({ ...selected, props: { ...selected.props, ...updates } });
+                                            setRoot(prev => updateNodeById(prev, selected.id, { props: updates }));
+                                        }
+                                    }
+                                }}
+                            />
+                        )}
+                        <RootNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
+                    </group>
+                    <gridHelper args={[10, 10, "#888", "#444"]} />
+                </Physics>
                 <OrbitControls makeDefault />
             </Canvas>
         </div>

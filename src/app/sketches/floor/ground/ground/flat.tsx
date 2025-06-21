@@ -3,8 +3,12 @@ import { useTexture } from "@react-three/drei";
 import * as THREE from 'three';
 import { Suspense, useEffect, useRef } from 'react';
 
+export type GroundPropsType = {
+    position?: [number, number, number];
+};
 
-export default function Ground({ position = [0, 0, 0] }: { position?: [number, number, number] }) {
+
+export default function Ground({ position = [0, 0, 0] }: GroundPropsType) {
     return (
         <RigidBody type="fixed" colliders='trimesh' position={position} >
             <Suspense fallback={<>

@@ -1,17 +1,17 @@
 import React from "react";
-import { ObjectNode } from "./Object3D";
-import { SpotlightNode } from "./SpotLight";
-import { OrthographicCameraNode } from "./OrthoCamera";
+import { BaseNode } from "./Node";
 import type { Group, Object3DEventMap } from "three";
 import type { SceneGraphNode } from "../page";
 
-export function Object3DNode({ node, onSelect, selectedId, setTransformTarget }: { node: SceneGraphNode, onSelect: (node: SceneGraphNode) => void, selectedId?: string, setTransformTarget: (obj: Group<Object3DEventMap> | null) => void }) {
-    if (node.type === "object") {
-        return <ObjectNode node={node} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />;
-    } else if (node.type === "spotlight") {
-        return <SpotlightNode node={node} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />;
-    } else if (node.type === "orthographicCamera") {
-        return <OrthographicCameraNode node={node} onSelect={onSelect} selectedId={selectedId} setTransformTarget={setTransformTarget} />;
-    }
-    return null;
+// Unified node renderer: delegates to BaseNode for all types
+export function Object3DNode({ node, onSelect, selectedId, setTransformTarget, isPlaying }: { node: SceneGraphNode, onSelect: (node: SceneGraphNode) => void, selectedId?: string, setTransformTarget: (obj: Group<Object3DEventMap> | null) => void, isPlaying?: boolean }) {
+    return (
+        <BaseNode
+            node={node}
+            onSelect={onSelect}
+            selectedId={selectedId}
+            setTransformTarget={setTransformTarget}
+            isPlaying={isPlaying}
+        />
+    );
 }

@@ -66,6 +66,7 @@ export type EditorContextType = {
     // --- For stop/reset ---
     resetScene: () => void;
     saveSceneForReset: () => void;
+    clearLocalStorage: () => void;
 };
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -90,6 +91,20 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     const [isPaused, setIsPaused] = useState(false);
     // --- Store last saved scene for reset ---
     const lastSavedScene = useRef<{ root: SceneGraphNode; sceneSettings: { physics: boolean } } | null>(null);
+    const LOCAL_STORAGE_KEY = "editorSceneState";
+
+    // Save scene to localStorage
+    const saveToLocalStorage = (scene: { root: SceneGraphNode; sceneSettings: { physics: boolean } }) => {
+        try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(scene));
+        } catch (e) {
+            // ignore
+        }
+    };
+    // Clear scene from localStorage
+    const clearLocalStorage = () => {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+    };
 
     // Save scene on text blur (for stop/reset)
     const handleSceneTextBlur = () => {
@@ -109,6 +124,10 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
                     root: applyDefaultsToNode(parsed.graph),
                     sceneSettings: parsed.settings
                 };
+                saveToLocalStorage({
+                    root: applyDefaultsToNode(parsed.graph),
+                    sceneSettings: parsed.settings
+                });
             }
         } catch (e) {
             // ignore parse errors
@@ -117,26 +136,46 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
 
     // Save scene for reset when play is pressed
     const saveSceneForReset = () => {
-        lastSavedScene.current = {
+        const scene = {
             root: JSON.parse(JSON.stringify(root)),
             sceneSettings: JSON.parse(JSON.stringify(sceneSettings)),
         };
+        lastSavedScene.current = scene;
+        saveToLocalStorage(scene);
     };
 
-    // On mount, save initial scene for reset
+    // On mount, restore from localStorage if present, else save initial scene for reset
     React.useEffect(() => {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (
+                    parsed && typeof parsed === 'object' &&
+                    parsed.root && typeof parsed.root === 'object' &&
+                    parsed.sceneSettings && typeof parsed.sceneSettings === 'object'
+                ) {
+                    setRoot(parsed.root);
+                    setSceneSettings(parsed.sceneSettings);
+                    lastSavedScene.current = parsed;
+                    return;
+                }
+            } catch (e) { /* ignore */ }
+        }
         lastSavedScene.current = { root, sceneSettings };
+        saveToLocalStorage({ root, sceneSettings });
     }, []);
 
-    // --- Reset scene to last saved ---
+    // --- Reset scene to default state ---
     const resetScene = () => {
-        if (lastSavedScene.current) {
-            setRoot(lastSavedScene.current.root);
-            setSceneSettings(lastSavedScene.current.sceneSettings);
-            setSelected(null);
-            setIsPlaying(false);
-            setIsPaused(false);
-        }
+        const defaultRoot = createNode("object", "Root");
+        const defaultSettings = { physics: true };
+        setRoot(defaultRoot);
+        setSceneSettings(defaultSettings);
+        setSelected(null);
+        setIsPlaying(false);
+        setIsPaused(false);
+        saveToLocalStorage({ root: defaultRoot, sceneSettings: defaultSettings });
     };
 
     // --- Sync sceneText with root/settings when showing scene details ---
@@ -182,6 +221,11 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
         setSelected(sel => sel ? { ...sel, ...updates, props: { ...sel.props, ...(updates.props || {}) } } : sel);
     };
 
+    // --- Sync localStorage on every update ---
+    useEffect(() => {
+        saveToLocalStorage({ root, sceneSettings });
+    }, [root, sceneSettings]);
+
     return (
         <EditorContext.Provider value={{
             root,
@@ -207,6 +251,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
             setIsPaused,
             resetScene,
             saveSceneForReset,
+            clearLocalStorage, // <-- add to context
         }}>
             {children}
         </EditorContext.Provider>

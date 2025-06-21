@@ -6,7 +6,7 @@ import usePhysicsRecover from "./usePhysicsRecover";
 import * as THREE from "three"
 import { Html } from "@react-three/drei";
 
-const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, height = 0.95, modelOffset, roundHeight = 0.25, dialog }: {
+export type PedPropsType = {
     name?: string,
     debug?: boolean,
     modelUrl: string,
@@ -16,7 +16,9 @@ const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, heigh
     modelOffset?: [number, number, number],
     roundHeight?: number,
     dialog?: React.ReactElement
-}) => {
+};
+
+const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, height = 0.95, modelOffset, roundHeight = 0.25, dialog }: PedPropsType) => {
     const [initialPosition, setInitialPosition] = useState<[number, number, number] | undefined>(position);
 
     const rigidBodyRef = useRef<RapierRigidBody>(null);
