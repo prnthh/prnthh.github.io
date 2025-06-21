@@ -19,9 +19,9 @@ export const GameCanvas = ({
                 shadows
                 {...props}
             >
-                <Suspense fallback={<ui.In><Loading /></ui.In>}>
-                    {children}
-                </Suspense>
+                {/* <Suspense fallback={<ui.In><Loading /></ui.In>}> */}
+                {children}
+                {/* </Suspense> */}
 
             </Canvas>
         </>
