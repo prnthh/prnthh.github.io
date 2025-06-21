@@ -165,7 +165,7 @@ const Vehicle = React.forwardRef<RapierRigidBody, {
         chassis.setAngvel(new rapier.Vector3(0, 0, 0), true)
     }
 
-    useImperativeHandle(ref, () => chasisBodyRef.current)
+    useImperativeHandle(ref, () => chasisBodyRef.current, [chasisBodyRef.current])
 
     return (
         <>
