@@ -5,9 +5,14 @@ import { CameraHelper, DirectionalLight, MeshBasicMaterial } from "three";
 import { Vector3 } from "three";
 
 
-export function ShadowLight({ followCamera = true, debug = false, camOffset = new Vector3(-5, 60, -5) }: { followCamera?: boolean, debug?: boolean, camOffset?: Vector3 }) {
+export function ShadowLight({
+    followCamera = true,
+    debug = false,
+    offset = [2, -6, 2], // Adjust the target offset as needed
+    camOffset = new Vector3(-5, 60, -5) }:
+    { followCamera?: boolean, debug?: boolean, offset?: [number, number, number], camOffset?: Vector3 }
+) {
     const directionalLight = useRef<DirectionalLight>(null);
-    const offset: [number, number, number] = [2, -6, 2]; // Adjust the target offset as needed
     const lastUpdate = useRef(0);
 
     useFrame((state) => {

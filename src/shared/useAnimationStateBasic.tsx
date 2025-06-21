@@ -51,9 +51,6 @@ export default function useAnimationState(
             : {}
         return {
             idle: basePath + '/anim/idle.fbx',
-            walk: basePath + '/anim/walk.fbx',
-            run: basePath + '/anim/run.fbx',
-            jump: basePath + '/anim/jump.fbx',
             ...overridesWithBase,
         }
     }, [animationOverrides, basePath])

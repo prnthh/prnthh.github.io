@@ -8,28 +8,14 @@ import * as THREE from "three";
 import { ObjectTypes } from "./objectTypes";
 import { RigidBodyComponentRow, RigidBodyComponentDefault } from "./components/RigidBodyComponent";
 import type { Group, Object3DEventMap } from "three";
-import { EditorProvider, useEditorContext } from "./EditorContext";
+import { EditorProvider, GameObjectTypes, SceneGraphNode, useEditorContext } from "./EditorContext";
 import {
     updateNodeById,
 } from "./sceneGraphUtils";
 import { BaseNode as RootNode } from "./objectTypes/Node";
 
-// Types for scene graph
-export type SceneGraphNode = {
-    id: string;
-    name: string;
-    type: "object" | "spotlight" | "orthographicCamera";
-    children: SceneGraphNode[];
-    parent: SceneGraphNode | null;
-    props: Record<string, any>;
-    components?: Array<{
-        type: string;
-        data?: any;
-    }>;
-};
-
 // AddMenu component for add button and menu
-function AddMenu({ onAdd }: { onAdd: (type: "object" | "spotlight" | "orthographicCamera") => void }) {
+function AddMenu({ onAdd }: { onAdd: (type: GameObjectTypes) => void }) {
     const [open, setOpen] = useState(false);
     return (
         <span style={{ display: 'inline-block', position: 'relative' }}>

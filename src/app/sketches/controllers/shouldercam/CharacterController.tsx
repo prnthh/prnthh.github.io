@@ -159,6 +159,9 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
                             name={name}
                             model="rigga.glb"
                             animationOverrides={{
+                                walk: 'anim/walk.fbx',
+                                run: 'anim/run.fbx',
+                                jump: 'anim/jump.fbx',
                                 walkLeft: "/anim/walkLeft.fbx",
                                 lpunch: "/anim/lpunch.fbx",
                                 rpunch: "/anim/rpunch.fbx",

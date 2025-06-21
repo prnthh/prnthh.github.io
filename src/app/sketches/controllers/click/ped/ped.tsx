@@ -60,6 +60,10 @@ const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, heigh
                     height={height}
                     modelOffset={modelOffset}
                     lookTarget={lookTarget}
+                    animationOverrides={{
+                        walk: 'anim/walk.fbx',
+                        run: 'anim/run.fbx',
+                    }}
                     onClick={() => {
                         // Handling click
                     }} />

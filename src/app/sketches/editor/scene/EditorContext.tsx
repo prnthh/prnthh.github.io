@@ -11,11 +11,13 @@ import {
     applyDefaultsToNode,
 } from "./sceneGraphUtils";
 
+export type GameObjectTypes = "object" | "spotlight" | "orthographicCamera";
+
 // Types for scene graph
 export type SceneGraphNode = {
     id: string;
     name: string;
-    type: "object" | "spotlight" | "orthographicCamera";
+    type: GameObjectTypes;
     children: SceneGraphNode[];
     parent: SceneGraphNode | null;
     props: Record<string, any>;
@@ -25,7 +27,7 @@ export type SceneGraphNode = {
     }>;
 };
 
-function createNode(type: "object" | "spotlight" | "orthographicCamera" = "object", name?: string): SceneGraphNode {
+function createNode(type: GameObjectTypes = "object", name?: string): SceneGraphNode {
     const typeDef = ObjectTypes[type];
     return {
         id: Math.random().toString(36).substr(2, 9),
@@ -46,7 +48,7 @@ export type EditorContextType = {
     setSelected: (node: SceneGraphNode | null) => void;
     transformTarget: Group<Object3DEventMap> | null;
     setTransformTarget: (obj: Group<Object3DEventMap> | null) => void;
-    handleAdd: (parent: SceneGraphNode, type?: "object" | "spotlight" | "orthographicCamera") => void;
+    handleAdd: (parent: SceneGraphNode, type?: GameObjectTypes) => void;
     handleDragStart: (node: SceneGraphNode) => void;
     handleDrop: (targetNode: SceneGraphNode) => void;
     handleUpdateSelected: (updates: Partial<SceneGraphNode>) => void;
@@ -195,7 +197,7 @@ export function EditorProvider({ children }: { children: React.ReactNode }) {
     }, [selected?.id]);
 
     // --- Add node handler ---
-    const handleAdd = (parent: SceneGraphNode, type: "object" | "spotlight" | "orthographicCamera" = "object") => {
+    const handleAdd = (parent: SceneGraphNode, type: GameObjectTypes = "object") => {
         const newNode = createNode(type);
         setRoot(prev => addNodeToParent(prev, parent.id, newNode));
     };
