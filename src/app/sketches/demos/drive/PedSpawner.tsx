@@ -11,6 +11,7 @@ const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
 
     useEffect(() => {
         if (!carRBRef.current) { console.log("car not found"); return; }
+        console.log("car found", carRBRef.current);
         const interval = setInterval(() => {
             const car = carRBRef.current;
             if (car) {
@@ -33,6 +34,7 @@ const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
                     translation.y + 1,
                     translation.z + normForward[2] * 5
                 ];
+                console.log("Spawning NPC at", spawnPos);
                 setNpcs((prev) => [...prev, { position: spawnPos }]);
             }
         }, 5000);
