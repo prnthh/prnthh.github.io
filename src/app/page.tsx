@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Html, OrbitControls } from "@react-three/drei";
+import { Box, Html, OrbitControls, Text } from "@react-three/drei";
 import { GameCanvas } from "@/shared/GameCanvas";
 import AnimatedModel from "@/shared/HumanoidModel";
 import { ShadowLight } from "./sketches/lighting/shadowmap/ShadowLight";
@@ -25,11 +25,9 @@ export default function Home() {
             />
             <ambientLight intensity={0.8} />
             <Box position={[0, 1.5, 0.24]} args={[0.7, 0.09, 0.05]} castShadow receiveShadow />
-            <Html transform center scale={0.01} position={[0, 1.5, 0.24]} className="text-center">
-              <div className="w-[285px] backdrop-blur-sm scale-[10]">
-                hi im prnth, nothing to see here
-              </div>
-            </Html>
+            <Text color="black" textAlign="center" scale={0.04} position={[0, 1.5, 0.27]}>
+              hi im prnth, nothing to see here
+            </Text>
             <ShadowLight offset={[-2, -6, -2]} />
             {/* <OrbitControls /> */}
           </GameCanvas>
