@@ -190,7 +190,8 @@ function Fire({ color, ...props }: FireProps) {
     }, [])
     return (
         <mesh ref={ref} {...props}>
-            <boxGeometry />
+            <boxGeometry args={[10, 1, 1]} />
+            {/* @ts-ignore fire node */}
             <fireMaterial transparent depthWrite={false} depthTest={false} />
         </mesh>
     )
