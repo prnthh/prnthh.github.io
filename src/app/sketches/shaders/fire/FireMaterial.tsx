@@ -5,28 +5,28 @@ import { extend, useFrame, useLoader } from '@react-three/fiber'
 
 
 class FireMaterial extends THREE.ShaderMaterial {
-    constructor() {
-        super({
-            defines: { ITERATIONS: '10', OCTIVES: '3' },
-            uniforms: {
-                fireTex: { value: null },
-                color: { value: null },
-                time: { value: 0.0 },
-                seed: { value: 0.0 },
-                invModelMatrix: { value: null },
-                scale: { value: null },
-                noiseScale: { value: new THREE.Vector4(1, 2, 1, 0.3) },
-                magnitude: { value: 2.5 },
-                lacunarity: { value: 3.0 },
-                gain: { value: 0.6 }
-            },
-            vertexShader: `
+  constructor() {
+    super({
+      defines: { ITERATIONS: '10', OCTIVES: '3' },
+      uniforms: {
+        fireTex: { value: null },
+        color: { value: null },
+        time: { value: 0.0 },
+        seed: { value: 0.0 },
+        invModelMatrix: { value: null },
+        scale: { value: null },
+        noiseScale: { value: new THREE.Vector4(1, 2, 1, 0.3) },
+        magnitude: { value: 2.5 },
+        lacunarity: { value: 3.0 },
+        gain: { value: 0.6 }
+      },
+      vertexShader: `
           varying vec3 vWorldPos;
           void main() {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
           }`,
-            fragmentShader: `
+      fragmentShader: `
           // Simplex 3D Noise 
           // Author: Ian McEwan, Ashima Arts
           // https://github.com/ashima/webgl-noise
@@ -152,49 +152,49 @@ class FireMaterial extends THREE.ShaderMaterial {
             col.a = col.r;
             gl_FragColor = col;
           }`
-        })
-    }
+    })
+  }
 }
 
 extend({ FireMaterial })
 
 type FireProps = {
-    color?: THREE.Color | string | number
-    [key: string]: any
+  color?: THREE.Color | string | number
+  [key: string]: any
 }
 
 function Fire({ color, ...props }: FireProps) {
-    const ref = useRef<THREE.Mesh>(null)
-    const texture = useLoader(THREE.TextureLoader, '/fire.png')
-    useFrame((state) => {
-        if (!ref.current) return
-        const material = ref.current.material as FireMaterial
-        const invModelMatrix = material.uniforms.invModelMatrix.value
-        ref.current.updateMatrixWorld()
-        invModelMatrix.copy(ref.current.matrixWorld).invert()
-        material.uniforms.time.value = state.clock.elapsedTime
-        material.uniforms.invModelMatrix.value = invModelMatrix
-        material.uniforms.scale.value = ref.current.scale
-    })
-    useLayoutEffect(() => {
-        texture.magFilter = texture.minFilter = THREE.LinearFilter
-        texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping
-        if (ref.current) {
-            const material = ref.current.material as FireMaterial
-            material.uniforms.fireTex.value = texture
-            material.uniforms.color.value = color || new THREE.Color(0xeeeeee)
-            material.uniforms.invModelMatrix.value = new THREE.Matrix4()
-            material.uniforms.scale.value = new THREE.Vector3(1, 1, 1)
-            material.uniforms.seed.value = Math.random() * 19.19
-        }
-    }, [])
-    return (
-        <mesh ref={ref} {...props}>
-            <boxGeometry args={[10, 1, 1]} />
-            {/* @ts-expect-error fire node */}
-            <fireMaterial transparent depthWrite={false} depthTest={false} />
-        </mesh>
-    )
+  const ref = useRef<THREE.Mesh>(null)
+  const texture = useLoader(THREE.TextureLoader, '/fire.png')
+  useFrame((state) => {
+    if (!ref.current) return
+    const material = ref.current.material as FireMaterial
+    const invModelMatrix = material.uniforms.invModelMatrix.value
+    ref.current.updateMatrixWorld()
+    invModelMatrix.copy(ref.current.matrixWorld).invert()
+    material.uniforms.time.value = state.clock.elapsedTime
+    material.uniforms.invModelMatrix.value = invModelMatrix
+    material.uniforms.scale.value = ref.current.scale
+  })
+  useLayoutEffect(() => {
+    texture.magFilter = texture.minFilter = THREE.LinearFilter
+    texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping
+    if (ref.current) {
+      const material = ref.current.material as FireMaterial
+      material.uniforms.fireTex.value = texture
+      material.uniforms.color.value = color || new THREE.Color(0xeeeeee)
+      material.uniforms.invModelMatrix.value = new THREE.Matrix4()
+      material.uniforms.scale.value = new THREE.Vector3(1, 1, 1)
+      material.uniforms.seed.value = Math.random() * 19.19
+    }
+  }, [])
+  return (
+    <mesh ref={ref} {...props}>
+      <boxGeometry args={[1, 1, 1]} />
+      {/* @ts-expect-error fire node */}
+      <fireMaterial transparent depthWrite={false} depthTest={true} />
+    </mesh>
+  )
 }
 
 export default Fire
