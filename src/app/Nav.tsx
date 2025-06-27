@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 const allExperiments = [
     'barebones',
     'demos/drive', 'demos/punchball', 'demos/tickEngine',
-    'floor/ground', 'floor/terrainCollider', 'floor/heightmap',
+    'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/webgpu',
     'lighting/simple', 'lighting/shadowmap', 'lighting/cascading', 'lighting/probe', 'lighting/reflection',
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
@@ -27,6 +27,38 @@ const geistMono = Geist_Mono({
     variable: "--font-geist-mono",
     subsets: ["latin"],
 });
+
+// Separate demos and others
+const demos = allExperiments.filter(e => e.startsWith("sketches/demos/"));
+const others = allExperiments.filter(e => !e.startsWith("sketches/demos/"));
+
+// For demos, strip 'sketches/demos/' prefix for a flat tree, but keep original path for links
+const demoEntries = demos.map(e => ({
+    display: e.replace(/^sketches\/demos\//, ""),
+    full: e
+}));
+// Build a tree using display names, but store full path for links
+function buildDemoTree(entries: { display: string, full: string }[]) {
+    const tree: any = {};
+    for (const { display, full } of entries) {
+        const parts = display.split("/");
+        let node = tree;
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (i === parts.length - 1) {
+                node[part] = full; // store full path at leaf
+            } else {
+                if (!node[part]) node[part] = {};
+                node = node[part];
+            }
+        }
+    }
+    return tree;
+}
+const demoTreeObj = buildDemoTree(demoEntries);
+// For others, keep as before (still nested under 'sketches')
+const otherTreeObj = buildTree(others);
+
 
 // Helper to build a tree from the flat list
 function buildTree(paths: string[]) {
@@ -64,17 +96,17 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
     return (
         <div className="">
             {entries.map(([key, value]) => {
-                if (value === null) {
+                if (typeof value === "string" || value === null) {
                     // Leaf node
                     const displayName = key;
-                    const fullPath = prefix + key;
+                    const fullPath = typeof value === "string" ? value : prefix + key;
                     // Normalize paths: remove trailing slashes, ignore query/hash
                     const normalize = (p: string) => p.replace(/[?#].*$/, '').replace(/\/$/, '');
-                    // Adjusted: currentPath may start with /sketches, so match accordingly
                     const isActive = normalize(currentPath || '') === `/${normalize(fullPath)}`;
                     return (
                         <Link
                             href={`/${fullPath}`}
+                            prefetch={true}
                             key={fullPath}
                             className={`block tracking-[-.01em] ${geistMono.variable} rounded px-2 py-1 transition-colors cursor-pointer select-none
                                 ${isActive ? "bg-blue-600 text-white font-bold" : "hover:bg-slate-400 bg-slate-200 text-black"}`}
@@ -109,26 +141,46 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
 }
 
 export default function Nav() {
-    const [hidden, setHidden] = useState(false);
+    const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
-    const demoTree = buildTree(allExperiments);
+    // Use the new trees
     const pathname = usePathname();
 
     return (
-        <div className="absolute top-2 left-2">
-            {!hidden && <div className="bg-slate-500 rounded flex flex-col p-2 max-h-[90vh] overflow-auto min-w-[220px] shadow-lg border border-slate-600">
-                <input
-                    className="mb-2 px-2 py-1 rounded border border-slate-400 bg-slate-100 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    type="text"
-                    placeholder="Search..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
-                <DemoTree node={demoTree} search={search} currentPath={pathname} />
-            </div>}
-            <button onClick={() => setHidden(!hidden)} className="text-xs text-center mt-2 text-black/60">
-                {hidden ? '🫥' : '🙂'}
+        <div>
+            {/* Minimal floating menu button */}
+            <button
+                onClick={() => setOpen(o => !o)}
+                className="fixed top-3 left-3 z-50 bg-white/80 hover:bg-white/95 border border-slate-300 shadow-md rounded-full p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
+                aria-label={open ? 'Close menu' : 'Open menu'}
+            >
+                {/* Hamburger icon */}
+                <span className="block w-5 h-5">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+                        <line x1="3" y1="6" x2="17" y2="6" strokeLinecap="round" />
+                        <line x1="3" y1="10" x2="17" y2="10" strokeLinecap="round" />
+                        <line x1="3" y1="14" x2="17" y2="14" strokeLinecap="round" />
+                    </svg>
+                </span>
             </button>
+            {/* Minimal floating menu panel, now to the right of the icon */}
+            {open && (
+                <div className="fixed top-3 left-14 z-40 bg-white/95 rounded-xl flex flex-col p-3 max-h-[80vh] min-w-[220px] shadow-2xl border border-slate-200 animate-fade-in">
+                    <input
+                        className="mb-2 px-2 py-1 rounded border border-slate-200 bg-slate-50 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        type="text"
+                        placeholder="Search..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        autoFocus
+                    />
+                    {/* Render Demos and Other as top-level categories */}
+                    <div className="mb-2 font-bold text-lg">Demos</div>
+                    <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />
+                    <div className="mb-2 mt-4 font-bold text-lg">Other</div>
+                    <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
+                </div>
+            )}
         </div>
     );
 }
