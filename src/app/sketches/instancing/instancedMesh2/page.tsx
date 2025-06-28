@@ -3,7 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { Perf } from "r3f-perf";
-import InstanceMeshTest from "./InstancedMesh2";
+import InstanceMeshTest from "./InstancedMeshTest";
 
 export default function Home() {
     return (

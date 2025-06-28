@@ -1,5 +1,5 @@
 import { RapierRigidBody } from "@react-three/rapier";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Ped from "../../controllers/click/ped/ped";
 import { ObjectRef } from "../../car/simple/car/base";
 import * as THREE from "three";
@@ -8,12 +8,15 @@ type PedSpawnerProps = {
     carRBRef: React.RefObject<ObjectRef | null>;
 };
 
+type NpcType = { id: string; position: [number, number, number] };
+
 const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
-    const [npcs, setNpcs] = useState<{ position: [number, number, number] }[]>([]);
+    const [npcs, setNpcs] = useState<NpcType[]>([]);
 
     useEffect(() => {
         if (!carRBRef.current) return; // Wait until carRBRef.current is set
         console.log("car found", carRBRef.current);
+        let pedId = 0; // Unique id for each ped
         const interval = setInterval(() => {
             const car = carRBRef.current;
             if (car && car.meshRef && car.rbRef) {
@@ -21,29 +24,43 @@ const PedSpawner = ({ carRBRef }: PedSpawnerProps) => {
                 const rotation = car.meshRef.getWorldQuaternion(new THREE.Quaternion());
                 // Calculate forward vector using quaternion
                 const forwardVec = new THREE.Vector3(-1, 0, 0).applyQuaternion(rotation).normalize();
-                // Place NPC 5 units in front of car
-                const spawnPos: [number, number, number] = [
-                    translation.x + forwardVec.x * 5,
-                    translation.y + 1,
-                    translation.z + forwardVec.z * 5
-                ];
-                console.log("Spawning NPC at", spawnPos);
-                setNpcs((prev) => [...prev, { position: spawnPos }]);
+                // Spawn 2-4 NPCs each time, at varying distances ahead
+                const numToSpawn = 1 //Math.floor(Math.random() * 3) + 2; // 2 to 4
+                const newNpcs = Array.from({ length: numToSpawn }, () => {
+                    // Distance ahead: 10 to 40 units
+                    const distAhead = 10 + Math.random() * 30;
+                    // Lateral offset: -8 to +8
+                    const lateral = (Math.random() - 0.5) * 16;
+                    // Calculate spawn position in front of car, with lateral offset
+                    const forward = forwardVec.clone().multiplyScalar(distAhead);
+                    const rightVec = new THREE.Vector3(0, 1, 0).cross(forwardVec).normalize();
+                    const lateralOffset = rightVec.multiplyScalar(lateral);
+                    const spawnPosVec = translation.clone().add(forward).add(lateralOffset);
+                    pedId += 1;
+                    return { id: pedId + '_' + Date.now() + '_' + Math.random(), position: [spawnPosVec.x, translation.y + 1, spawnPosVec.z] as [number, number, number] };
+                });
+                setNpcs((prev) => {
+                    const combined = [...prev, ...newNpcs];
+                    // If more than 40, remove the oldest
+                    if (combined.length > 40) {
+                        return combined.slice(combined.length - 40);
+                    }
+                    return combined;
+                });
             }
-        }, 5000);
+        }, 1500); // Increased frequency (was 5000)
         return () => clearInterval(interval);
     }, [carRBRef]); // Depend on carRBRef
 
     return (
         <>
-            {npcs.map((npc, i) => (
-                <PedBehavior key={i} npc={npc} />
+            {npcs.map((npc) => (
+                <Suspense key={npc.id} ><PedBehavior npc={npc} /></Suspense>
             ))}
         </>
     );
 };
-
-const PedBehavior = ({ npc }: { npc: { position: [number, number, number] } }) => {
+const PedBehavior = ({ npc }: { npc: NpcType }) => {
     const [position, setPosition] = useState<[number, number, number]>(npc.position);
 
     useEffect(() => {
