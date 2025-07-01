@@ -15,6 +15,7 @@ import { useThree, useFrame, useLoader } from "@react-three/fiber";
 import { WebGPUCanvas } from "@/shared/WebGPUCanvas";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
 import { ShinyFloor } from "../lighting/reflection/ShinyFloor";
+import { Stats } from '@react-three/drei'
 
 const INSTANCE_COUNT = 50;
 const MODEL_URL = "/models/human/rigga/rigga2.glb";
@@ -25,6 +26,7 @@ export default function Home() {
         <div className="items-center justify-items-center h-screen">
             <WebGPUCanvas shadows camera={{ position: [1, 2, 3], fov: 75 }}>
                 <SceneContent />
+                <Stats className="!left-auto right-0" />
             </WebGPUCanvas>
         </div>
     );
