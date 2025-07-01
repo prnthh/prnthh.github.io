@@ -101,7 +101,7 @@ const RandomPedBehavior = ({ npc }: { npc: { id: string; position: [number, numb
     const [position, setPosition] = useState<[number, number, number]>(npc.position);
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
-        let scheduleNext = () => {
+        const scheduleNext = () => {
             const nextDelay = 3000 + Math.random() * 4000;
             intervalId = setTimeout(() => {
                 setPosition(prev => {
