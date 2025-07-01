@@ -10,8 +10,7 @@ import {
     range,
     time
 } from "three/tsl";
-import { MeshStandardNodeMaterial, PostProcessing, WebGPURenderer } from "three/webgpu";
-import { gaussianBlur } from "three/examples/jsm/tsl/display/GaussianBlurNode.js";
+import { MeshStandardNodeMaterial, PostProcessing } from "three/webgpu";
 import { useThree, useFrame, useLoader } from "@react-three/fiber";
 import { WebGPUCanvas } from "@/shared/WebGPUCanvas";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
@@ -47,20 +46,6 @@ const SceneContent = () => {
 
     return (
         <>
-            {/* Lights */}
-            {/* <pointLight
-                position={[0, 4.5, -2]}
-                color={0xff9900}
-                intensity={100}
-                distance={100}
-            />
-            <pointLight
-                position={camera.position}
-                color={0x0099ff}
-                intensity={100}
-                distance={100}
-            /> */}
-
             <directionalLight position={[4, 4, 4]} castShadow intensity={2} />
             <ambientLight intensity={1.5} />
 
@@ -103,13 +88,7 @@ const AnimatedModel = () => {
                     child.castShadow = true;
                     child.receiveShadow = true;
 
-                    // const oscNode = oscSine(time.mul(.1));
-                    // const randomColors = range(color(0x000000), color(0xFFFFFF));
-                    // const randomMetalness = range(0, 1);
-                    // child.material = new MeshStandardNodeMaterial();
-                    // child.material.roughness = .1;
-                    // child.material.metalnessNode = mix(0.0, randomMetalness, oscNode);
-                    // child.material.colorNode = mix(color(0xFFFFFF), randomColors, oscNode);
+                    // applyTexture(child);
 
                     child.isInstancedMesh = true;
                     child.instanceMatrix = new THREE.InstancedBufferAttribute(new Float32Array(INSTANCE_COUNT * 16), 16);
@@ -138,3 +117,17 @@ const AnimatedModel = () => {
     return gltf ? <primitive ref={modelRef} object={gltf.scene} /> : null;
 };
 
+const applyTexture = (child: THREE.Object3D) => {
+    if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+
+        const oscNode = oscSine(time.mul(.1));
+        const randomColors = range(color(0x000000), color(0xFFFFFF));
+        const randomMetalness = range(0, 1);
+        child.material = new MeshStandardNodeMaterial();
+        child.material.roughness = .1;
+        child.material.metalnessNode = mix(0.0, randomMetalness, oscNode);
+        child.material.colorNode = mix(color(0xFFFFFF), randomColors, oscNode);
+    }
+}
