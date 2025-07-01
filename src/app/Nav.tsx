@@ -17,7 +17,7 @@ const allExperiments = [
     'retargeting/basic', 'retargeting/variety',
     'interior',
     'particles', 'tsl/webgpu', 'tsl/tiny',
-    'npc', 'npc4',
+    'npc', 'npc3', 'npc4',
     'xr',
     'milady/chess', 'milady/surfer',
     '../wfc/index.html', '../chainreaction.html'
