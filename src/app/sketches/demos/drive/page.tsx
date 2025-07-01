@@ -6,7 +6,7 @@ import { Bvh, Environment, OrbitControls } from "@react-three/drei";
 import Controls from "@/shared/ControlsProvider";
 import { ShadowLight } from "@/app/sketches/lighting/shadowmap/ShadowLight";
 import MapModel from "../../floor/ground/ground/model";
-import { useRef } from "react";
+import { Suspense, useRef } from "react";
 import PedSpawner from "./PedSpawner";
 import { EffectComposer, SSAO } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
@@ -31,7 +31,9 @@ export default function Home() {
                             <Bvh firstHitOnly>
                                 <MapModel modelUrl="/models/maps/burnin_rubber_4_city.glb" position={[-572, -10, 710]} scale={0.4} />
 
-                                <PedSpawner carRBRef={carRBRef} />
+                                <Suspense fallback={null}>
+                                    <PedSpawner carRBRef={carRBRef} />
+                                </Suspense>
                             </Bvh>
 
                             <ambientLight intensity={0.5} />

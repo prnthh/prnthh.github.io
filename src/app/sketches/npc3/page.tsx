@@ -4,17 +4,20 @@ import { Environment, OrbitControls, Stats, useGLTF } from '@react-three/drei';
 import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 import * as THREE from 'three';
 import { useEffect, useMemo, useRef } from 'react';
-import { extend, useFrame } from '@react-three/fiber';
-import { GameCanvas } from '@/shared/GameCanvas';
+import { extend, useFrame, useLoader } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
+import { FBXLoader } from 'three/examples/jsm/Addons.js';
+import { GameCanvas } from '@/shared/GameCanvas';
 
 extend({ InstancedMesh2 });
 
-const MODEL_URL = "/models/Michelle.glb";
+const MODEL_URL = "/models/human/rigga/rigga2.glb";
+const ANIM_URL = "/models/human/anim/run.fbx";
 const INSTANCE_COUNT = 100;
 
 function SimpleInstances() {
-    const { scene: modelScene, animations } = useGLTF(MODEL_URL);
+    const { scene: modelScene } = useGLTF(MODEL_URL);
+    const animations = useLoader(FBXLoader, ANIM_URL);
     const instancedMeshRef = useRef<InstancedMesh2>(null);
     const mixer = useRef<THREE.AnimationMixer | null>(null);
     const action = useRef<THREE.AnimationAction | null>(null);
@@ -36,10 +39,10 @@ function SimpleInstances() {
     type InstancedEntityWithOffset = InstanceType<typeof InstancedMesh2>["instances"][number] & { offset?: number };
 
     useEffect(() => {
-        if (!instancedMeshRef.current || !skinnedMesh || !animations.length) return;
+        if (!instancedMeshRef.current || !skinnedMesh || !animations.animations?.length) return;
 
         mixer.current = new THREE.AnimationMixer(skinnedMesh);
-        action.current = mixer.current.clipAction(animations[0]);
+        action.current = mixer.current.clipAction(animations.animations[0]);
         action.current.play();
 
         instancedMeshRef.current.addInstances(INSTANCE_COUNT, (instance: InstancedEntityWithOffset, index: number) => {
@@ -79,7 +82,6 @@ function SimpleInstances() {
         />
     );
 }
-
 
 export default function Page() {
     return (

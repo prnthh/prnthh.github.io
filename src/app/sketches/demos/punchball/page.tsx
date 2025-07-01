@@ -83,12 +83,8 @@ const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | nul
         return () => clearInterval(interval);
     }, [ballRef]);
 
-    return <DialogCollider onTrigger={setDialogVisible}>
-        <Ped modelUrl="rigga/rigga2.glb"
-            dialog={dialogVisible ? <div className="text-3xl text-yellow-300 text-center p-2 rounded drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-                hi
-            </div> : undefined}
-            position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef} />
-    </DialogCollider>
+    return <Ped modelUrl="rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
+        <DialogCollider />
+    </Ped>
 }
 

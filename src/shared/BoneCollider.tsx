@@ -30,7 +30,6 @@ export default function BoneCollider({
         // Check if rootModel has traverse method
         if (typeof (rootModel as any).traverse === "function") {
             (rootModel as any).traverse((child: THREE.Object3D) => {
-                console.log("Checking child:", child.name);
                 if (child.name.includes(boneName)) {
                     found = child;
                 }
@@ -56,36 +55,38 @@ export default function BoneCollider({
                 boneWorldPos.z
             ];
             if (rbRef.current) {
-                rbRef.current.setTranslation({ x: newPos[0], y: newPos[1], z: newPos[2] }, true);
+                rbRef.current.setTranslation?.({ x: newPos[0], y: newPos[1], z: newPos[2] }, true);
             }
         }
     });
 
     return <>
-        {rootModel && boneName && bone && <RigidBody name="hand" ref={rbRef} sensor colliders="ball" type="fixed" onIntersectionEnter={(e) => {
-            if (!e.other || e.other.rigidBodyObject?.name == "" || e.other.rigidBodyObject?.name == parentName) return;
-            const otherRb = e.other.rigidBody;
+        {rootModel && boneName && bone && <RigidBody name="hand" ref={rbRef}
+            sensor colliders="ball" type="fixed"
+            onIntersectionEnter={(e) => {
+                if (!e.other || e.other.rigidBodyObject?.name == "" || e.other.rigidBodyObject?.name == parentName) return;
+                const otherRb = e.other.rigidBody;
 
-            if (otherRb && bone) {
-                // Get positions
-                const boneWorldPos = new THREE.Vector3();
-                bone.getWorldPosition(boneWorldPos);
-                const otherPos = otherRb.translation();
-                // Compute direction from collider to other body
-                const dir = new THREE.Vector3(
-                    otherPos.x - boneWorldPos.x,
-                    otherPos.y - boneWorldPos.y,
-                    otherPos.z - boneWorldPos.z
-                ).normalize();
-                // Scale impulse
-                const impulseStrength = 10;
-                otherRb.applyImpulse({
-                    x: dir.x * impulseStrength,
-                    y: dir.y * impulseStrength,
-                    z: dir.z * impulseStrength
-                }, true);
-            }
-        }}>
+                if (otherRb && bone) {
+                    // Get positions
+                    const boneWorldPos = new THREE.Vector3();
+                    bone.getWorldPosition(boneWorldPos);
+                    const otherPos = otherRb.translation();
+                    // Compute direction from collider to other body
+                    const dir = new THREE.Vector3(
+                        otherPos.x - boneWorldPos.x,
+                        otherPos.y - boneWorldPos.y,
+                        otherPos.z - boneWorldPos.z
+                    ).normalize();
+                    // Scale impulse
+                    const impulseStrength = 10;
+                    otherRb.applyImpulse({
+                        x: dir.x * impulseStrength,
+                        y: dir.y * impulseStrength,
+                        z: dir.z * impulseStrength
+                    }, true);
+                }
+            }}>
             <mesh>
                 <sphereGeometry args={[0.12, 16, 16]} />
                 <meshBasicMaterial wireframe color={bone ? 0x00ff00 : 0xff0000} />

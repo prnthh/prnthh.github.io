@@ -9,8 +9,8 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
     const width = 30;
     const height = 30;
     const tileSize = 4; // New tile size
-    const widthSegments = Math.floor(width / tileSize);
-    const heightSegments = Math.floor(height / tileSize);
+    const widthSegments = Math.floor(width / tileSize / 2); // Halved resolution
+    const heightSegments = Math.floor(height / tileSize / 2); // Halved resolution
 
     // Low-res height map (for collider and as base for HD mesh)
     const lowResWidthSegments = widthSegments;
@@ -27,8 +27,8 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
     }, []);
 
     // HD mesh height map by bilinear interpolation from low-res
-    const meshWidthSegments = 1024;
-    const meshHeightSegments = 1024;
+    const meshWidthSegments = 512; // Halved resolution
+    const meshHeightSegments = 512; // Halved resolution
     const meshHeights = useMemo(() => {
         const arr = new Array((meshWidthSegments + 1) * (meshHeightSegments + 1));
         for (let h = 0; h <= meshHeightSegments; h++) {
@@ -69,10 +69,7 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
         for (let i = 0; i < pos.count; i++) {
             pos.setZ(i, meshHeights[i]);
         }
-        geometry.scale(-1, 1, 1);
-        geometry.rotateX(Math.PI / 2);
-        geometry.rotateY(Math.PI / 2);
-        geometry.rotateZ(-Math.PI);
+        geometry.rotateX(-Math.PI / 2);
         geometry.computeVertexNormals();
         return geometry;
     }, [meshHeights]);
@@ -136,10 +133,10 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
                 >
                     <meshStandardMaterial
                         color="white"
-                        displacementScale={-0.2} // Increased for stronger effect
+                        displacementScale={0.2} // Increased for stronger effect
                         {...textures}
-                        side={THREE.BackSide}
-                        shadowSide={THREE.BackSide}
+                        side={THREE.FrontSide}
+                        shadowSide={THREE.FrontSide}
                     />
                 </mesh>
 

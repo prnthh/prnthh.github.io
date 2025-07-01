@@ -184,9 +184,10 @@ const Vehicle = React.forwardRef<ObjectRef, {
                 canSleep={false}
                 ref={chasisBodyRef}
                 colliders={false}
+                position={spawn.position}
                 type="dynamic"
             >
-                <FollowCam height={1.5} />
+                {driving && <FollowCam height={1.5} />}
                 <CuboidCollider args={[carDimensions[0] / 2, carDimensions[1] / 2, carDimensions[2] / 2]} />
 
                 {/* chassis */}
@@ -253,32 +254,32 @@ export default Vehicle
 // ChassisModel component
 const ChassisModel = ({ model, ...props }: { model: string, [key: string]: any }) => {
     const { scene } = useGLTF(model)
-    const cloneRef = useRef<THREE.Object3D>(null)
+    const [clone, setClone] = useState<THREE.Object3D | null>(null)
     useEffect(() => {
-        if (scene && !cloneRef.current) {
-            const clone = SkeletonUtils.clone(scene as unknown as THREE.Object3D)
-            clone.traverse((child) => {
+        if (scene) {
+            const cloned = SkeletonUtils.clone(scene as unknown as THREE.Object3D)
+            cloned.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
                     child.castShadow = true
                     child.receiveShadow = true
                 }
             })
-            cloneRef.current = clone
+            setClone(cloned)
         }
     }, [scene])
-    if (!cloneRef.current) return null
-    return <primitive object={cloneRef.current} {...props} />
+    if (!clone) return null
+    return <primitive object={clone} {...props} />
 }
 
 // WheelModel component
 const WheelModel = ({ model, ...props }: { model: string, [key: string]: any }) => {
     const { scene } = useGLTF(model)
-    const cloneRef = useRef<THREE.Object3D>(null)
+    const [clone, setClone] = useState<THREE.Object3D | null>(null)
     useEffect(() => {
-        if (scene && !cloneRef.current) {
-            cloneRef.current = SkeletonUtils.clone(scene as unknown as THREE.Object3D)
+        if (scene) {
+            setClone(SkeletonUtils.clone(scene as unknown as THREE.Object3D))
         }
     }, [scene])
-    if (!cloneRef.current) return null
-    return <primitive object={SkeletonUtils.clone(cloneRef.current)} {...props} />
+    if (!clone) return null
+    return <primitive object={SkeletonUtils.clone(clone)} {...props} />
 }

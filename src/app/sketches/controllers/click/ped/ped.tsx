@@ -15,10 +15,10 @@ export type PedPropsType = {
     height?: number,
     modelOffset?: [number, number, number],
     roundHeight?: number,
-    dialog?: React.ReactElement
+    children?: React.ReactNode,
 };
 
-const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, height = 0.95, modelOffset, roundHeight = 0.25, dialog }: PedPropsType) => {
+const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, height = 0.95, modelOffset, roundHeight = 0.25, children }: PedPropsType) => {
     const [initialPosition, setInitialPosition] = useState<[number, number, number] | undefined>(position);
 
     const rigidBodyRef = useRef<RapierRigidBody>(null);
@@ -67,9 +67,7 @@ const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, heigh
                     onClick={() => {
                         // Handling click
                     }} />
-                {dialog && <Html center position={[0, height * 1.1, 0]}>
-                    {dialog}
-                </Html>}
+                {children}
             </RigidBody>
         </Suspense>
     );

@@ -17,9 +17,10 @@ import { FollowCam } from "../../../../shared/FollowCam";
 import { usePointerLockControls } from "./usePointerLockControls";
 
 
-export const CharacterController = ({ lookTarget, name = 'bob' }: {
+export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person' }: {
     lookTarget?: RefObject<THREE.Object3D | null>
-    name?: string
+    name?: string,
+    mode?: "third-person" | "first-person" | "simple"
 }) => {
     const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 0.8;
 
@@ -40,8 +41,64 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
     const walkLeftActionRef = useRef<THREE.AnimationAction | null>(null);
     const runActionRef = useRef<THREE.AnimationAction | null>(null);
 
-    // Use the custom hook for pointer lock and mouse controls
-    const { rotationTarget, verticalRotation, shoulderCamMode, setShoulderCamMode } = usePointerLockControls();
+    // Use the custom hook for pointer lock and mouse controls only if not in simple mode
+    const { rotationTarget, verticalRotation, shoulderCamMode, setShoulderCamMode } = mode !== "simple" ? usePointerLockControls() : {
+        rotationTarget: undefined,
+        verticalRotation: undefined,
+        shoulderCamMode: undefined,
+        setShoulderCamMode: undefined
+    };
+
+    // --- Mode handlers ---
+    function handleSimpleMode(keyInputs: any) {
+        if (container.current) {
+            const ROT_SPEED = 0.04;
+            if (keyInputs.left) container.current.rotation.y += ROT_SPEED;
+            if (keyInputs.right) container.current.rotation.y -= ROT_SPEED;
+        }
+        let localDir = new Vector3(0, 0, 0);
+        if (keyInputs.forward) localDir.z += 1;
+        if (keyInputs.backward) localDir.z -= 1;
+        if (localDir.lengthSq() > 0) {
+            localDir.normalize();
+            if (container.current) localDir.applyAxisAngle(new Vector3(0, 1, 0), container.current.rotation.y);
+            if (rb.current) {
+                velocityRef.current.set(localDir.x * (keyInputs.run ? RUN_SPEED : WALK_SPEED), rb.current.linvel().y, localDir.z * (keyInputs.run ? RUN_SPEED : WALK_SPEED));
+                rb.current.setLinvel(velocityRef.current, true);
+            }
+        } else {
+            if (rb.current) {
+                velocityRef.current.set(0, rb.current.linvel().y, 0);
+                rb.current.setLinvel(velocityRef.current, true);
+            }
+        }
+        if (container.current && rotationTarget?.current !== undefined) {
+            rotationTarget.current = container.current.rotation.y;
+        }
+    }
+
+    function handleThirdPersonMode(keyInputs: any) {
+        if (!rotationTarget) return;
+        if (container.current && rotationTarget) container.current.rotation.y = rotationTarget.current;
+        let moveX = 0, moveZ = 0;
+        if (keyInputs.forward) moveZ += 1;
+        if (keyInputs.backward) moveZ -= 1;
+        if (keyInputs.left) moveX += 1;
+        if (keyInputs.right) moveX -= 1;
+        const speed = keyInputs.run ? RUN_SPEED : WALK_SPEED;
+        if (moveX || moveZ) {
+            const dir = new Vector3(moveX, 0, moveZ).normalize().applyAxisAngle(new Vector3(0, 1, 0), rotationTarget.current);
+            if (rb.current) {
+                velocityRef.current.set(dir.x * speed, rb.current.linvel().y, dir.z * speed);
+                rb.current.setLinvel(velocityRef.current, true);
+            }
+        } else {
+            if (rb.current) {
+                velocityRef.current.set(0, rb.current.linvel().y, 0);
+                rb.current.setLinvel(velocityRef.current, true);
+            }
+        }
+    }
 
     useFrame(() => {
         if (!rb.current) return;
@@ -62,7 +119,9 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
         } else if (jumping.current) {
             nextAnimation = "jump";
         } else if ((moveX || moveZ)) {
-            if (moveX && !moveZ) {
+            if (mode === "simple" && (moveX && !moveZ)) {
+                nextAnimation = "idle"; // No strafe anim in simple mode
+            } else if (moveX && !moveZ) {
                 nextAnimation = "walkLeft";
                 if (walkLeftActionRef.current)
                     walkLeftActionRef.current.timeScale = moveX;
@@ -76,11 +135,22 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
         }
         setAnimation(nextAnimation);
 
+        if (keyInputs.use || keyInputs.altUse) {
+            if (rb.current) {
+                velocityRef.current.set(0, rb.current.linvel().y, 0);
+                rb.current.setLinvel(velocityRef.current, true);
+            }
+        } else {
+            // --- Mode-specific logic ---
+            if (mode === "simple") {
+                handleSimpleMode(keyInputs);
+            } else {
+                handleThirdPersonMode(keyInputs);
+            }
+        }
 
-        // Rotation
-        if (container.current) container.current.rotation.y = rotationTarget.current;
 
-        // Jump/grounded logic
+        // Jump/grounded logic (shared)
         if (jumping.current && checkGrounded()) {
             jumping.current = false;
         }
@@ -88,21 +158,6 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
             rb.current.wakeUp?.();
             rb.current.applyImpulse({ x: 0, y: JUMP_FORCE, z: 0 }, true);
             jumping.current = true;
-        }
-
-        // Movement
-        if (keyInputs.use || keyInputs.altUse) {
-            // If using or altUsing, stop movement (keep y velocity)
-            velocityRef.current.set(0, rb.current.linvel().y, 0);
-            rb.current.setLinvel(velocityRef.current, true);
-        } else if (moveX || moveZ) {
-            const dir = new Vector3(moveX, 0, moveZ).normalize().applyAxisAngle(new Vector3(0, 1, 0), rotationTarget.current);
-            velocityRef.current.set(dir.x * speed, rb.current.linvel().y, dir.z * speed);
-            rb.current.setLinvel(velocityRef.current, true);
-        } else {
-            // Update velocityRef for y only, so idle doesn't accumulate drift
-            velocityRef.current.set(0, rb.current.linvel().y, 0);
-            rb.current.setLinvel(velocityRef.current, true);
         }
     });
 
@@ -151,8 +206,8 @@ export const CharacterController = ({ lookTarget, name = 'bob' }: {
                 <group ref={container}>
                     <FollowCam height={1 / height}
                         verticalRotation={verticalRotation}
-                        cameraOffset={shoulderCamMode ? new Vector3(-0.5, 0.8, -0.3) : new Vector3(0, 0.2, -0.8)}
-                        targetOffset={shoulderCamMode ? new Vector3(0, 0.5, 1.5) : new Vector3(0, 0.5, 1.5)}
+                        cameraOffset={mode === "first-person" ? new Vector3(0, 0, 0) : (shoulderCamMode ? new Vector3(-0.5, 0.8, -0.3) : new Vector3(0, 0.2, -0.8))}
+                        targetOffset={mode === "first-person" ? new Vector3(0, 0, 0) : (shoulderCamMode ? new Vector3(0, 0.5, 1.5) : new Vector3(0, 0.5, 1.5))}
                     />
                     <group ref={character}>
                         <AnimatedModel
