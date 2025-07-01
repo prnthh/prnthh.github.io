@@ -13,7 +13,7 @@ extend({ InstancedMesh2 });
 const MODEL_URL = "/models/Michelle.glb";
 const INSTANCE_COUNT = 100;
 
-export function SimpleInstances() {
+function SimpleInstances() {
     const { scene: modelScene, animations } = useGLTF(MODEL_URL);
     const instancedMeshRef = useRef<InstancedMesh2>(null);
     const mixer = useRef<THREE.AnimationMixer | null>(null);

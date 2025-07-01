@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const allExperiments = [
     'barebones',
-    'demos/drive', 'demos/punchball', 'demos/tickEngine',
+    'demos/drive', 'demos/punchball', 'demos/tickEngine', 'demos/walkingsimulator',
     'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/webgpu',
     'lighting/simple', 'lighting/shadowmap', 'lighting/cascading', 'lighting/probe', 'lighting/reflection',
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider',
