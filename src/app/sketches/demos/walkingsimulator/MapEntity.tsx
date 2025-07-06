@@ -17,9 +17,10 @@ type EntityInstancesType = Record<string, React.FC<any>>;
 const EntityInstancesContext = createContext<EntityInstancesType | undefined>(undefined);
 
 export function MapEntityInstancesProvider({ children, mapEntities }: { children: React.ReactNode, mapEntities: MapEntity[] }) {
-    // Dynamically load all GLTFs from mapEntities
-    const uniqueGltfPaths = Array.from(new Set(mapEntities.map(e => e.gltf)));
-    const gltfEntries: [string, any][] = uniqueGltfPaths.map((gltf: string) => [gltf, useGLTF(gltf)]);
+    const uniqueGltfPaths = useMemo(() => Array.from(new Set(mapEntities.map(e => e.gltf))), [mapEntities]);
+    // useGLTF can take an array and returns an array of models
+    const gltfObjects = useGLTF(uniqueGltfPaths);
+    const gltfEntries = uniqueGltfPaths.map((gltf, i) => [gltf, gltfObjects[i]] as [string, any]);
 
     // Collect all meshes from each scene
     function getMeshesFromScene(scene: THREE.Group) {
@@ -66,10 +67,8 @@ export function MapEntityMesh({ position, onClick, gltf, transforms }: MapEntity
     if (!instances) return null;
 
     // Render instanced mesh for the given gltf
-    let filterFn: (name: string) => boolean;
-    let scale: [number, number, number];
-    filterFn = (name) => name.toLowerCase().includes(gltf.split('/').pop()?.split('.')[0] || '');
-    scale = (typeof transforms !== 'undefined' && transforms.scale) ? transforms.scale : [1, 1, 1];
+    const filterFn = (name: string) => name.toLowerCase().includes(gltf.split('/').pop()?.split('.')[0] || '');
+    const scale = (typeof transforms !== 'undefined' && transforms.scale) ? transforms.scale : [1, 1, 1];
 
     return (
         <group position={position} onClick={onClick}>
@@ -90,8 +89,9 @@ useGLTF.preload("/models/environment/rocks.glb");
 useGLTF.preload("/models/environment/tree.glb");
 
 export function useMapEntityMeshes(mapEntities: MapEntity[]) {
-    const uniqueGltfPaths = Array.from(new Set(mapEntities.map(e => e.gltf)));
-    const gltfEntries: [string, any][] = uniqueGltfPaths.map((gltf) => [gltf, useGLTF(gltf)]);
+    const uniqueGltfPaths = useMemo(() => Array.from(new Set(mapEntities.map(e => e.gltf))), [mapEntities]);
+    const gltfObjects = useGLTF(uniqueGltfPaths);
+    const gltfEntries = uniqueGltfPaths.map((gltf, i) => [gltf, gltfObjects[i]] as [string, any]);
 
     // Find the first mesh for each gltf
     const meshMap: Record<string, { geometry: THREE.BufferGeometry; material: THREE.Material } | undefined> = {};
@@ -112,23 +112,20 @@ export function useMapEntityMeshes(mapEntities: MapEntity[]) {
     return meshMap;
 }
 
-// Utility to get merged mesh for a gltf path
-function useMergedMeshFromGLTF(gltfPath: string) {
-    const { scene } = useGLTF(gltfPath);
-    return React.useMemo(() => {
-        const geometries: THREE.BufferGeometry[] = [];
-        let material: THREE.Material | undefined;
-        scene.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-                const mesh = child as THREE.Mesh;
-                geometries.push(mesh.geometry.clone());
-                if (!material) material = mesh.material as THREE.Material;
-            }
-        });
-        if (geometries.length === 0) return undefined;
-        const mergedGeometry = mergeGeometries(geometries, false);
-        return { geometry: mergedGeometry, material };
-    }, [scene]);
+// Utility to get merged mesh for a gltf scene (NOT a hook)
+function getMergedMeshFromScene(scene: THREE.Group) {
+    const geometries: THREE.BufferGeometry[] = [];
+    let material: THREE.Material | undefined;
+    scene.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+            const mesh = child as THREE.Mesh;
+            geometries.push(mesh.geometry.clone());
+            if (!material) material = mesh.material as THREE.Material;
+        }
+    });
+    if (geometries.length === 0) return undefined;
+    const mergedGeometry = mergeGeometries(geometries, false);
+    return { geometry: mergedGeometry, material };
 }
 
 export function MapEntities({ mapEntities }: { mapEntities: MapEntity[] }) {
@@ -147,10 +144,17 @@ export function MapEntities({ mapEntities }: { mapEntities: MapEntity[] }) {
         return grouped;
     }, [mapEntities]);
 
-    // Get mesh for each gltf
-    const meshData = Object.fromEntries(
-        Object.keys(entitiesByGltf).map((gltf) => [gltf, useMergedMeshFromGLTF(gltf)])
-    );
+    // Get mesh for each gltf (load all GLTFs at once)
+    const gltfPaths = useMemo(() => Object.keys(entitiesByGltf), [entitiesByGltf]);
+    const gltfObjects = useGLTF(gltfPaths);
+    const meshDataArr = gltfPaths.map((gltf, i) => {
+        const gltfObj = gltfObjects[i];
+        if (gltfObj && gltfObj.scene) {
+            return [gltf, getMergedMeshFromScene(gltfObj.scene)];
+        }
+        return [gltf, undefined];
+    });
+    const meshData = Object.fromEntries(meshDataArr);
 
     return (
         <>
