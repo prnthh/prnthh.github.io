@@ -41,13 +41,12 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
     const walkLeftActionRef = useRef<THREE.AnimationAction | null>(null);
     const runActionRef = useRef<THREE.AnimationAction | null>(null);
 
-    // Use the custom hook for pointer lock and mouse controls only if not in simple mode
-    const { rotationTarget, verticalRotation, shoulderCamMode, setShoulderCamMode } = mode !== "simple" ? usePointerLockControls() : {
-        rotationTarget: undefined,
-        verticalRotation: undefined,
-        shoulderCamMode: undefined,
-        setShoulderCamMode: undefined
-    };
+    // Always call the hook to comply with React rules
+    const pointerLockControls = usePointerLockControls();
+    const rotationTarget = mode !== "simple" ? pointerLockControls.rotationTarget : undefined;
+    const verticalRotation = mode !== "simple" ? pointerLockControls.verticalRotation : undefined;
+    const shoulderCamMode = mode !== "simple" ? pointerLockControls.shoulderCamMode : undefined;
+    const setShoulderCamMode = mode !== "simple" ? pointerLockControls.setShoulderCamMode : undefined;
 
     // --- Mode handlers ---
     function handleSimpleMode(keyInputs: any) {
@@ -191,14 +190,6 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
             return !!hit && hit.timeOfImpact < 0.02 && Math.abs(rb.current.linvel().y) < 0.1;
         };
     }, [rb, rapier, world, height, roundHeight]);
-
-    // Helper to convert world to local coordinates for the container group
-    function worldToLocalArray(world: [number, number, number]): [number, number, number] {
-        if (!container.current) return world;
-        const v = new Vector3(...world);
-        container.current.worldToLocal(v);
-        return [v.x, v.y, v.z];
-    }
 
     return (
         <>
