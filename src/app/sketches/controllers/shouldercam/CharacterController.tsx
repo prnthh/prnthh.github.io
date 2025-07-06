@@ -55,7 +55,7 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
             if (keyInputs.left) container.current.rotation.y += ROT_SPEED;
             if (keyInputs.right) container.current.rotation.y -= ROT_SPEED;
         }
-        let localDir = new Vector3(0, 0, 0);
+        const localDir = new Vector3(0, 0, 0);
         if (keyInputs.forward) localDir.z += 1;
         if (keyInputs.backward) localDir.z -= 1;
         if (localDir.lengthSq() > 0) {
