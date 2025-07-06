@@ -22,7 +22,6 @@ export const GameCanvas = ({
                 <Suspense fallback={<ui.In><Loading /></ui.In>}>
                     {children}
                 </Suspense>
-
             </Canvas>
         </>
     );

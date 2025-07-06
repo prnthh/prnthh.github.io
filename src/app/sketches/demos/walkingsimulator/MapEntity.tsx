@@ -189,6 +189,7 @@ export function MapEntities({ mapEntities }: { mapEntities: MapEntity[] }) {
                             args={[mesh.geometry, mesh.material, entities.length]}
                             dispose={null}
                             castShadow
+                            frustumCulled={false}
                             onClick={e => {
                                 e.stopPropagation();
                                 const idx = e.instanceId;

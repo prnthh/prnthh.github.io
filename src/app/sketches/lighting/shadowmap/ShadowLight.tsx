@@ -8,9 +8,18 @@ import { Vector3 } from "three";
 export function ShadowLight({
     followCamera = true,
     debug = false,
+    intensity = 1.5,
+    color = "white",
     offset = [2, -6, 2], // Adjust the target offset as needed
     camOffset = new Vector3(-5, 60, -5) }:
-    { followCamera?: boolean, debug?: boolean, offset?: [number, number, number], camOffset?: Vector3 }
+    {
+        followCamera?: boolean,
+        debug?: boolean,
+        intensity?: number,
+        color?: string,
+        offset?: [number, number, number],
+        camOffset?: Vector3
+    }
 ) {
     const directionalLight = useRef<DirectionalLight>(null);
     const lastUpdate = useRef(0);
@@ -44,18 +53,19 @@ export function ShadowLight({
             <directionalLight
                 castShadow
                 ref={directionalLight}
-                intensity={1.5}
-                shadow-normalBias={0.1}
+                intensity={intensity}
+                shadow-normalBias={0.05}
                 shadow-mapSize={[1024, 1024]}
+                color={color}
             >
                 <orthographicCamera
                     attach="shadow-camera"
                     near={0.1}
                     far={100}
-                    top={40}
-                    bottom={-40}
-                    left={-40}
-                    right={40}
+                    top={20}
+                    bottom={-20}
+                    left={-20}
+                    right={20}
                 >
                     {debug && <Helper type={CameraHelper} />}
                     {debug && <mesh position={[0, 0, 0]} scale={[40, 40, 40]} rotation={[-Math.PI / 2, 0, 0]}>

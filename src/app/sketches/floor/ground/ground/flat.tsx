@@ -5,10 +5,11 @@ import { Suspense, useEffect, useRef } from 'react';
 
 export type GroundPropsType = {
     position?: [number, number, number];
+    image?: string;
 };
 
 
-export default function Ground({ position = [0, 0, 0] }: GroundPropsType) {
+export default function Ground({ position = [0, 0, 0], image }: GroundPropsType) {
     return (
         <RigidBody type="fixed" colliders='trimesh' position={position} >
             <Suspense fallback={<>
@@ -16,15 +17,17 @@ export default function Ground({ position = [0, 0, 0] }: GroundPropsType) {
                     <planeGeometry args={[100, 100]} />
                 </mesh>
             </>}>
-                <ImageGround />
+                <ImageGround image={image} />
             </Suspense>
         </RigidBody>
     );
 };
 
-const ImageGround = () => {
+const ImageGround = ({
+    image = "/textures/road.jpg"
+}) => {
     const textures = useTexture({
-        map: "/textures/road.jpg",
+        map: image,
         // roughnessMap: "/textures/grass_roughness.jpg"
     });
 
@@ -36,7 +39,7 @@ const ImageGround = () => {
             textures.map.wrapS = textures.map.wrapT = THREE.RepeatWrapping;
 
             // Set repeat to a much higher value to avoid stretching
-            textures.map.repeat.set(5, 7); // Increase tiling frequency
+            textures.map.repeat.set(10, 10); // Increase tiling frequency
 
             // Improve texture quality when viewed at an angle
             textures.map.anisotropy = 16;

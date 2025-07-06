@@ -1,20 +1,19 @@
 "use client";
 
-import { CylinderCollider, Physics } from "@react-three/rapier";
+import { Physics } from "@react-three/rapier";
 import Controls from "@/shared/ControlsProvider";
 import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 import { useRef, useState, useEffect, Suspense } from "react";
-import { Object3D, Vector3 } from "three";
+import { HemisphereLight, Object3D, PCFShadowMap, Vector3 } from "three";
 import { CharacterController } from "../../controllers/shouldercam/CharacterController";
 import { GameCanvas } from "@/shared/GameCanvas";
-import { Terrain } from "../../floor/ground/ground/DSGround";
-import { Environment, Html } from "@react-three/drei";
+import { Environment, Html, Stats } from "@react-three/drei";
 import Ground from "../../floor/ground/ground/flat";
 import { MapEntities, MapEntity } from "./MapEntity";
 import Ped from "../../controllers/click/ped/ped";
 import Vehicle from "../../car/simple/car/base";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
-;
+
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -24,34 +23,43 @@ export default function Home() {
     useEffect(() => {
         // Generate random trees and rocks
         const entities: MapEntity[] = [];
-        const numTrees = 10;
-        const numRocks = 8;
+        const numTrees = 100;
+        const numRocks = 80;
+        const SPAWN_RADIUS = 10;
         // Trees
         for (let i = 0; i < numTrees; i++) {
+            let pos: [number, number, number];
+            do {
+                pos = [
+                    Math.random() * 50 - 25,
+                    0,
+                    Math.random() * 50 - 25
+                ];
+            } while (Math.sqrt(pos[0] * pos[0] + pos[2] * pos[2]) < SPAWN_RADIUS);
             entities.push({
                 id: `tree-${i}`,
                 gltf: '/models/environment/tree2.glb',
                 transforms: {
-                    pos: [
-                        Math.random() * 20 - 10, // x: -10 to 10
-                        0,
-                        Math.random() * 20 - 10 // z: -10 to 10
-                    ],
+                    pos,
                     scale: [0.66, 0.66, 0.66]
                 }
             });
         }
         // Rocks
         for (let i = 0; i < numRocks; i++) {
+            let pos: [number, number, number];
+            do {
+                pos = [
+                    Math.random() * 50 - 25,
+                    0,
+                    Math.random() * 50 - 25
+                ];
+            } while (Math.sqrt(pos[0] * pos[0] + pos[2] * pos[2]) < SPAWN_RADIUS);
             entities.push({
                 id: `rock-${i}`,
                 gltf: '/models/environment/rocks.glb',
                 transforms: {
-                    pos: [
-                        Math.random() * 20 - 10, // x: -10 to 10
-                        0,
-                        Math.random() * 20 - 10 // z: -10 to 10
-                    ],
+                    pos,
                     scale: [0.18 * 0.66, 0.18 * 0.66, 0.18 * 0.66]
                 }
             });
@@ -63,16 +71,14 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls >
-                    <GameCanvas shadows>
+                    <GameCanvas>
                         {/* <Perf /> */}
-                        <ShadowLight debug camOffset={new Vector3(5, 10, 10)} />
+                        <ShadowLight color="#d9c78b" intensity={1} camOffset={new Vector3(0, 10, 0)} />
 
                         <Physics>
                             <CharacterController lookTarget={ballRef} />
-                            {/* <Terrain /> */}
-                            <Ground />
-                            {/* <ambientLight intensity={0.5} /> */}
-
+                            <Ground image="/textures/floor/terrain/dirt-512.jpg" />
+                            {/* <hemisphereLight intensity={0.4} color={'#cccccc'} groundColor={"#000000"} /> */}
                             <GoalFollowingPed />
 
                             <Suspense fallback={null}>
@@ -82,9 +88,9 @@ export default function Home() {
                             <MapEntities mapEntities={mapEntitiesState} />
                         </Physics>
 
-                        <fog attach="fog" args={["#8cb8ff", 20, 30]} />
-                        <color attach="background" args={["#8cb8ff"]} />
-                        <Environment preset="park" background={true} blur={0.5} />
+                        <fogExp2 attach="fog" args={["#000000", 0.03]} />
+                        <color attach="background" args={["#3d3c39"]} />
+                        <Environment preset="night" background={true} backgroundIntensity={0.2} environmentIntensity={0.5} blur={0.01} />
                     </GameCanvas>
                 </Controls>
             </div>
@@ -102,7 +108,7 @@ const GoalFollowingPed = () => {
                 2,
                 Math.random() * 20 - 10
             ]);
-        }, 3000);
+        }, 10000);
         return () => clearInterval(interval);
     }, []);
 

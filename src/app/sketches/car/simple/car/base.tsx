@@ -14,7 +14,7 @@ const wheelInfo: Omit<WheelInfo, 'position'> = {
     axleCs: new THREE.Vector3(1, 0, 0),
     suspensionRestLength: 0.25,
     suspensionStiffness: 48,
-    maxSuspensionTravel: 1,
+    maxSuspensionTravel: 0.1,
     radius: 0.15,
 }
 

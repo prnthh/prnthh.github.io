@@ -83,11 +83,11 @@ const Terrain = () => {
     }, [props2]);
 
     return (
-        <RigidBody type="fixed" colliders="cuboid" position={[0, -3, 0]}>
+        <RigidBody type="fixed" colliders="cuboid" position={[0, 0, 0]}>
             <Plane
                 rotation={[-Math.PI / 2, 0, 0]}
-                position={[-32, -3, 0]}
-                args={[64, 64, 1024, 1024]}
+                position={[-16, 0, 0]}
+                args={[32, 32, 1024, 1024]}
                 receiveShadow
                 castShadow
             >
@@ -95,14 +95,14 @@ const Terrain = () => {
                     ref={matRef1}
                     attach="material"
                     color="white"
-                    displacementScale={1}
+                    displacementScale={0.1}
                     {...props}
                 />
             </Plane>
             <Plane
                 rotation={[-Math.PI / 2, 0, 0]}
-                position={[32, -3, 0]}
-                args={[64, 64, 1024, 1024]}
+                position={[16, 0, 0]}
+                args={[32, 32, 1024, 1024]}
                 receiveShadow
                 castShadow
             >
@@ -110,7 +110,7 @@ const Terrain = () => {
                     ref={matRef2}
                     attach="material"
                     color="white"
-                    displacementScale={1}
+                    displacementScale={0.1}
                     {...props2}
                 />
             </Plane>
