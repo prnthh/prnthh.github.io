@@ -6,7 +6,6 @@ import { Box, OrbitControls, useTexture } from "@react-three/drei";
 import { useEffect, useState } from "react";
 import MovableTarget from "@/shared/MovableTarget";
 import Ped from "../controllers/click/ped/ped";
-import { Perf } from "r3f-perf";
 
 export default function Home() {
     const [target, setTarget] = useState<[number, number, number] | undefined>([0, 0, -2])
@@ -15,7 +14,6 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Canvas camera={{ position: [0, 4, 4] }} shadows>
-                    <Perf />
                     <Physics debug>
                         <Ped modelOffset={[0, -0.5, 0]} modelUrl="/rigga/rigga.glb" position={target} />
                         <MovableTarget setPosition={setTarget} />

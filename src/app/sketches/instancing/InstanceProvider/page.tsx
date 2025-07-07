@@ -1,7 +1,6 @@
 "use client";
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment } from '@react-three/drei'
-import { Perf } from 'r3f-perf';
 import InstanceViewer, { InstanceData } from './InstanceViewer';
 
 export default function App() {
@@ -15,7 +14,6 @@ export default function App() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Canvas camera={{ position: [0, 0, 20], fov: 50 }}>
-                    <Perf />
                     <InstanceViewer data={data} />
                     <Environment preset="city" />
                     <OrbitControls makeDefault />

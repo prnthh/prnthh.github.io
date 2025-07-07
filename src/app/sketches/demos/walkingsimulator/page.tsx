@@ -3,18 +3,18 @@
 import { Physics } from "@react-three/rapier";
 import Controls from "@/shared/ControlsProvider";
 import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
-import { useRef, useState, useEffect, Suspense } from "react";
-import { HemisphereLight, Object3D, PCFShadowMap, Vector3 } from "three";
+import { useRef, useState, useEffect } from "react";
+import { Object3D, Vector3 } from "three";
 import { CharacterController } from "../../controllers/shouldercam/CharacterController";
 import { GameCanvas } from "@/shared/GameCanvas";
-import { Environment, Html, Stats } from "@react-three/drei";
+import { Environment, Preload, useGLTF } from "@react-three/drei";
 import Ground from "../../floor/ground/ground/flat";
 import { MapEntities, MapEntity } from "./MapEntity";
 import Ped from "../../controllers/click/ped/ped";
 import Vehicle from "../../car/simple/car/base";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
 import { EffectComposer, Scanline, SSAO } from "@react-three/postprocessing";
-import { useThree } from "@react-three/fiber";
+import { ThreeElement, useThree } from "@react-three/fiber";
 
 
 export default function Home() {
@@ -72,7 +72,6 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls >
                     <GameCanvas>
-                        {/* <Perf /> */}
                         <ShadowLight color="#d9c78b" intensity={1} camOffset={new Vector3(0, 10, 0)} />
 
                         <Physics>
@@ -82,6 +81,8 @@ export default function Home() {
                             <hemisphereLight intensity={0.4} color={'#cccccc'} groundColor={"#000000"} />
 
                             <MapEntities mapEntities={mapEntitiesState} />
+
+                            <Model scale={1} position={[4, 0, 0]} model="/models/environment/lamppost2.glb" />
                         </Physics>
 
                         <fogExp2 attach="fog" args={["#000000", 0.03]} />
@@ -94,23 +95,52 @@ export default function Home() {
     );
 }
 
+const Model = ({ model, ...props }: { model: string } & ThreeElement<any>) => {
+    const { scene } = useGLTF(model);
+    return <primitive object={scene} {...props} />;
+}
+
 const Actors = () => {
     const ballRef = useRef<Object3D | null>(null);
     const [playerState, setPlayerState] = useState<string | undefined>(undefined);
 
     return <>
         <GoalFollowingPed />
+        <GoalCompletingPed />
         {playerState == undefined && <CharacterController lookTarget={ballRef} />}
 
-        <Suspense fallback={null}>
-            {/* <DrivableCar setPlayerState={setPlayerState} /> */}
-            <DrivableCar name={'car1'} position={[5, 2, 4]} setPlayerState={setPlayerState} />
-            <DrivableCar name={'car2'} position={[8, 2, 4]} setPlayerState={setPlayerState} />
-        </Suspense>
+        <DrivableCar name={'car1'} position={[5, 1, 4]} setPlayerState={setPlayerState} />
+        <DrivableCar name={'car2'} position={[8, 1, 4]} setPlayerState={setPlayerState} />
     </>
 }
 
 const GoalFollowingPed = () => {
+    const [goalPosition, setGoalPosition] = useState<[number, number, number]>([0, 2, 10]);
+    const { scene } = useThree();
+
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const bob = scene.getObjectByName("bob");
+            if (bob) {
+                const { x, y, z } = bob.position;
+                setGoalPosition([x, y, z]);
+            }
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    return <Ped modelUrl="rigga/rigga2.glb"
+        position={goalPosition} modelOffset={[0, -0.5, 0]}
+    >
+        <DialogCollider>
+            Tralalero tralala
+        </DialogCollider>
+
+    </Ped>
+}
+
+const GoalCompletingPed = () => {
     const [goalPosition, setGoalPosition] = useState<[number, number, number]>([0, 2, 10]);
     const { scene } = useThree();
 
@@ -169,23 +199,25 @@ const DrivableCar = ({ position = [2, 5, 4], setPlayerState, name }: {
         setPlayerState?.(isDriving ? "driving" : undefined);
     }, [isDriving, setPlayerState]);
 
-    return <Vehicle
-        name={name || "drivable-car"}
-        spawn={{
-            position: position || [2, 0, 4],
-            rotation: [0, Math.PI / 2, 0]
-        }}
-        driving={isDriving}
-        chassisModel="/models/cars/taxi/chassis.glb"
-        wheelModel="/models/cars/taxi/wheel.glb"
-    >
-        {!isDriving && <DialogCollider height={1} radius={2}
-            onEnter={() => setCanEnter(true)} onExit={() => setCanEnter(false)}
+    return <><Preload all />
+        <Vehicle
+            name={name || "drivable-car"}
+            spawn={{
+                position: position || [2, 0, 4],
+                rotation: [0, Math.PI / 2, 0]
+            }}
+            driving={isDriving}
+            chassisModel="/models/cars/taxi/chassis.glb"
+            wheelModel="/models/cars/taxi/wheel.glb"
         >
-            <button onClick={() => setIsDriving(true)} className="bg-yellow-300 text-black p-2 rounded text-sm w-[600px]]">
-                press e to enter
-            </button>
-        </DialogCollider>
-        }
-    </Vehicle>
+            {!isDriving && <DialogCollider height={1} radius={2}
+                onEnter={() => setCanEnter(true)} onExit={() => setCanEnter(false)}
+            >
+                <button onClick={() => setIsDriving(true)} className="bg-yellow-300 text-black p-2 rounded text-sm w-[600px]]">
+                    press e to enter
+                </button>
+            </DialogCollider>
+            }
+        </Vehicle>
+    </>
 }

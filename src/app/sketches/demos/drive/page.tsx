@@ -11,7 +11,6 @@ import PedSpawner from "./PedSpawner";
 import { EffectComposer, SSAO } from '@react-three/postprocessing'
 import { BlendFunction } from 'postprocessing'
 import { GameCanvas } from "@/shared/GameCanvas";
-import { Perf } from "r3f-perf";
 import Vehicle, { ObjectRef } from "../../car/simple/car/base";
 
 export default function Home() {

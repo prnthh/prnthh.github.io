@@ -2,7 +2,6 @@
 
 import { Canvas } from "@react-three/fiber";
 import { Merged, OrbitControls, useGLTF } from "@react-three/drei";
-import { Perf } from "r3f-perf";
 import { createContext, useContext, useMemo } from "react";
 import { MathUtils } from "three";
 import * as THREE from "three";
@@ -18,8 +17,6 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
-                    <Perf matrixUpdate />
-
                     <ambientLight />
                     <directionalLight position={[10, 10, 10]} />
                     <Instances>

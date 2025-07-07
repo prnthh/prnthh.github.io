@@ -18,7 +18,6 @@
     "@tweenjs/tween.js": "^25.0.0",
     "gl-matrix": "^3.4.3",
     "next": "15.3.2",
-    "r3f-perf": "^7.2.3",
     "react": "^19.1.0",
     "react-dom": "^19.0.0",
     "recast-navigation": "^0.39.0",
