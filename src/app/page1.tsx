@@ -73,6 +73,7 @@ export default function Home() {
             </Text>
             <pointLight position={[0, -1, 2]} intensity={50} color={'orange'} />
             {/* <ShadowLight offset={[-2, -6, -2]} /> */}
+            <Fire scale={[2, 2, 1]} position={[0, 0, 0]} />
             <EffectComposer>
               <Scanline density={2} opacity={0.1} />
             </EffectComposer>

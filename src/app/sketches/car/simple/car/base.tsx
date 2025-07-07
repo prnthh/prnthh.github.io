@@ -48,18 +48,27 @@ const Vehicle = React.forwardRef<ObjectRef, {
     debug?: boolean,
     chassisModel?: string,
     wheelModel?: string,
-    spawn?: { position: THREE.Vector3Tuple, rotation: THREE.Vector3Tuple }
-}>(({ name = 'bob', driving = true, debug = false, chassisModel, wheelModel, spawn = {
-    position: [-7, 2, -130] as THREE.Vector3Tuple,
-    rotation: [0, 0, 0] as THREE.Vector3Tuple,
-} }, ref) => {
+    spawn?: { position: THREE.Vector3Tuple, rotation: THREE.Vector3Tuple },
+    children?: React.ReactNode
+}>(({
+    name = 'bobcar', driving = true, debug = false, chassisModel, wheelModel,
+    spawn = {
+        position: [-7, 2, -130] as THREE.Vector3Tuple,
+        rotation: [0, 0, 0] as THREE.Vector3Tuple,
+    },
+    children
+}, ref) => {
     const { world, rapier } = useRapier()
     const threeControls = useThree((s) => s.controls)
     const [, getKeyboardControls] = useKeyboardControls()
     const { scheme, setScheme } = useControlScheme();
 
     useEffect(() => {
-        if (driving) setScheme("drive");
+        if (driving) {
+            setScheme("drive");
+        } else {
+            setScheme("simple");
+        }
     }, [driving, setScheme]);
 
     const chasisMeshRef = useRef<THREE.Mesh>(null!)
@@ -77,6 +86,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
     const ground = useRef<Collider | null>(null)
 
     useFrame((state, delta) => {
+        if (!driving) return;
         if (!chasisMeshRef.current || !vehicleController.current || !!threeControls) return
 
         const t = 1.0 - Math.pow(0.01, delta)
@@ -177,6 +187,19 @@ const Vehicle = React.forwardRef<ObjectRef, {
         rbRef: chasisBodyRef.current
     }), [chasisMeshRef.current, chasisBodyRef.current])
 
+    useEffect(() => {
+        if (!driving) return;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'r' || event.code === 'KeyR') {
+                resetVehicle();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [driving]);
+
     return (
         <>
             <RigidBody
@@ -187,7 +210,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
                 position={spawn.position}
                 type="dynamic"
             >
-                {driving && <FollowCam height={1.5} />}
+                {driving && <FollowCam key={'cam' + name} height={1.5} />}
                 <CuboidCollider args={[carDimensions[0] / 2, carDimensions[1] / 2, carDimensions[2] / 2]} />
 
                 {/* chassis */}
@@ -212,6 +235,8 @@ const Vehicle = React.forwardRef<ObjectRef, {
                         <meshBasicMaterial color="red" wireframe />
                     </mesh>
                 )}
+
+                {children}
 
                 {/* wheels */}
                 {wheels.map((wheel, index) => (

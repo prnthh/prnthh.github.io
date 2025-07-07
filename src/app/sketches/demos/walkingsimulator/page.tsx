@@ -13,11 +13,11 @@ import { MapEntities, MapEntity } from "./MapEntity";
 import Ped from "../../controllers/click/ped/ped";
 import Vehicle from "../../car/simple/car/base";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
+import { EffectComposer, Scanline, SSAO } from "@react-three/postprocessing";
+import { useThree } from "@react-three/fiber";
 
 
 export default function Home() {
-    const ballRef = useRef<Object3D | null>(null);
-
     const [mapEntitiesState, setMapEntitiesState] = useState<MapEntity[]>([]);
 
     useEffect(() => {
@@ -76,15 +76,11 @@ export default function Home() {
                         <ShadowLight color="#d9c78b" intensity={1} camOffset={new Vector3(0, 10, 0)} />
 
                         <Physics>
-                            <CharacterController lookTarget={ballRef} />
                             <Ground image="/textures/floor/terrain/dirt-512.jpg" />
-                            {/* <hemisphereLight intensity={0.4} color={'#cccccc'} groundColor={"#000000"} /> */}
-                            <GoalFollowingPed />
 
-                            <Suspense fallback={null}>
-                                <DrivableCar />
-                                <DrivableCar position={[5, 2, 4]} />
-                            </Suspense>
+                            <Actors />
+                            <hemisphereLight intensity={0.4} color={'#cccccc'} groundColor={"#000000"} />
+
                             <MapEntities mapEntities={mapEntitiesState} />
                         </Physics>
 
@@ -98,16 +94,34 @@ export default function Home() {
     );
 }
 
+const Actors = () => {
+    const ballRef = useRef<Object3D | null>(null);
+    const [playerState, setPlayerState] = useState<string | undefined>(undefined);
+
+    return <>
+        <GoalFollowingPed />
+        {playerState == undefined && <CharacterController lookTarget={ballRef} />}
+
+        <Suspense fallback={null}>
+            {/* <DrivableCar setPlayerState={setPlayerState} /> */}
+            <DrivableCar name={'car1'} position={[5, 2, 4]} setPlayerState={setPlayerState} />
+            <DrivableCar name={'car2'} position={[8, 2, 4]} setPlayerState={setPlayerState} />
+        </Suspense>
+    </>
+}
+
 const GoalFollowingPed = () => {
     const [goalPosition, setGoalPosition] = useState<[number, number, number]>([0, 2, 10]);
+    const { scene } = useThree();
+
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setGoalPosition([
-                Math.random() * 20 - 10,
-                2,
-                Math.random() * 20 - 10
-            ]);
+            const bob = scene.getObjectByName("bob");
+            if (bob) {
+                const { x, y, z } = bob.position;
+                setGoalPosition([x, y, z]);
+            }
         }, 10000);
         return () => clearInterval(interval);
     }, []);
@@ -115,23 +129,63 @@ const GoalFollowingPed = () => {
     return <Ped modelUrl="rigga/rigga2.glb"
         position={goalPosition} modelOffset={[0, -0.5, 0]}
     >
-        <DialogCollider />
+        <DialogCollider>
+            Tralalero tralala
+        </DialogCollider>
 
     </Ped>
 }
 
-const DrivableCar = ({ position }: { position?: [number, number, number] } = { position: [2, 5, 4] }
-) => {
-    const [dialogVisible, setDialogVisible] = useState(false);
+const DrivableCar = ({ position = [2, 5, 4], setPlayerState, name }: {
+    position?: [number, number, number],
+    setPlayerState?: (state: string | undefined) => void
+    name?: string
+}) => {
+    const [canEnter, setCanEnter] = useState(false);
+    const [isDriving, setIsDriving] = useState(false);
+
+    // Listen for 'e' to enter only when canEnter && !isDriving
+    useEffect(() => {
+        let handler: ((event: KeyboardEvent) => void) | null = null;
+        if (canEnter && !isDriving) {
+            handler = (event: KeyboardEvent) => {
+                if (event.key === 'e') setIsDriving(true);
+            };
+        } else if (isDriving) {
+            handler = (event: KeyboardEvent) => {
+                if (event.key === 'e') {
+                    setIsDriving(false);
+                    setCanEnter(false); // Prevent immediate re-entry after exit
+                }
+            };
+        }
+        if (handler) window.addEventListener('keydown', handler);
+        return () => {
+            if (handler) window.removeEventListener('keydown', handler);
+        };
+    }, [canEnter, isDriving]);
+
+    useEffect(() => {
+        setPlayerState?.(isDriving ? "driving" : undefined);
+    }, [isDriving, setPlayerState]);
+
     return <Vehicle
+        name={name || "drivable-car"}
         spawn={{
             position: position || [2, 0, 4],
             rotation: [0, Math.PI / 2, 0]
         }}
-        driving={false}
-        // ref={carRBRef}
+        driving={isDriving}
         chassisModel="/models/cars/taxi/chassis.glb"
         wheelModel="/models/cars/taxi/wheel.glb"
-    />
+    >
+        {!isDriving && <DialogCollider height={1} radius={2}
+            onEnter={() => setCanEnter(true)} onExit={() => setCanEnter(false)}
+        >
+            <button onClick={() => setIsDriving(true)} className="bg-yellow-300 text-black p-2 rounded text-sm w-[600px]]">
+                press e to enter
+            </button>
+        </DialogCollider>
+        }
+    </Vehicle>
 }
-
