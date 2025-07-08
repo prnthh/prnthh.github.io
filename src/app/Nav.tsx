@@ -12,7 +12,7 @@ const allExperiments = [
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/road', 'car/driver',
-    'editor/events', 'editor/store', 'editor/scene',
+    'editor/events', 'editor/store', 'editor/scene', 'editor/dragdrop',
     'ik/ragdoll', 'ik/kick', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
     'interior',

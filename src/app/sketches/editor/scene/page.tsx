@@ -1,462 +1,174 @@
 "use client";
 
-import React, { useState, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Physics } from "@react-three/rapier";
+import { Physics, RapierRigidBody, RigidBody } from "@react-three/rapier";
+import { GameCanvas } from "@/shared/GameCanvas";
+import { DragDropLoader } from "../dragdrop/DragDropLoader";
+import React, { ReactElement, useRef, useState } from "react";
+import SceneEditor, { type SceneNode } from "./editor/SceneEditor";
 import { OrbitControls, TransformControls } from "@react-three/drei";
-import * as THREE from "three";
-import { ObjectTypes } from "./objectTypes";
-import { RigidBodyComponentRow, RigidBodyComponentDefault } from "./components/RigidBodyComponent";
-import type { Group, Object3DEventMap } from "three";
-import { EditorProvider, GameObjectTypes, SceneGraphNode, useEditorContext } from "./EditorContext";
-import {
-    updateNodeById,
-} from "./sceneGraphUtils";
-import { BaseNode as RootNode } from "./objectTypes/Node";
+import { Object3D, Object3DEventMap } from "three";
 
-// AddMenu component for add button and menu
-function AddMenu({ onAdd }: { onAdd: (type: GameObjectTypes) => void }) {
-    const [open, setOpen] = useState(false);
-    return (
-        <span style={{ display: 'inline-block', position: 'relative' }}>
-            <button style={{ marginLeft: 8 }} onClick={e => { e.stopPropagation(); setOpen(true); }}>+</button>
-            {open && (
-                <div style={{ display: 'inline-block', marginLeft: 4, background: '#f8f8f8', border: '1px solid #ccc', borderRadius: 4, padding: 4, zIndex: 10, position: 'absolute', left: 0 }}>
-                    <button style={{ display: 'block', width: '100%' }} onClick={e => { e.stopPropagation(); onAdd("object"); setOpen(false); }}>Object</button>
-                    <button style={{ display: 'block', width: '100%' }} onClick={e => { e.stopPropagation(); onAdd("spotlight"); setOpen(false); }}>Spotlight</button>
-                    <button style={{ display: 'block', width: '100%' }} onClick={e => { e.stopPropagation(); onAdd("orthographicCamera"); setOpen(false); }}>OrthoCam</button>
-                    <button style={{ display: 'block', width: '100%', color: '#888' }} onClick={e => { e.stopPropagation(); setOpen(false); }}>Cancel</button>
-                </div>
-            )}
-        </span>
-    );
+enum EditorModes {
+    Edit = "edit",
+    Play = "play",
+    Pause = "pause",
 }
 
-function SceneGraphTree({
-    node,
-    selectedId,
-    onSelect,
-    onAdd,
-    onDragStart,
-    onDrop,
-}: {
-    node: SceneGraphNode;
-    selectedId: string | undefined;
-    onSelect: (node: SceneGraphNode) => void;
-    onAdd: (parent: SceneGraphNode, type?: "object" | "spotlight" | "orthographicCamera") => void;
-    onDragStart: (node: SceneGraphNode) => void;
-    onDrop: (targetNode: SceneGraphNode) => void;
-}) {
-    return (
-        <div
-            style={{
-                marginLeft: 16,
-                border: selectedId === node.id ? "1px solid #4f8cff" : undefined,
-                background: selectedId === node.id ? "#e6f0ff" : undefined,
-                padding: 2,
-                cursor: "pointer",
-            }}
-            draggable
-            onDragStart={e => {
-                e.stopPropagation();
-                onDragStart(node);
-            }}
-            onDrop={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDrop(node);
-            }}
-            onDragOver={e => e.preventDefault()}
-            onClick={e => {
-                e.stopPropagation();
-                onSelect(node);
-            }}
-        >
-            {node.name} <span style={{ fontSize: 10, color: '#888' }}>({node.type})</span>
-            <AddMenu onAdd={type => onAdd(node, type)} />
-            {node.children.map(child => (
-                <SceneGraphTree
-                    key={child.id}
-                    node={child}
-                    selectedId={selectedId}
-                    onSelect={onSelect}
-                    onAdd={onAdd}
-                    onDragStart={onDragStart}
-                    onDrop={onDrop}
-                />
-            ))}
-        </div>
-    );
-}
-
-function EntityDetailsPanel({ node, onUpdate }: { node: SceneGraphNode; onUpdate: (updates: Partial<SceneGraphNode>) => void }) {
-    const typeDef = ObjectTypes[node.type as keyof typeof ObjectTypes];
-    const [addMenuOpen, setAddMenuOpen] = React.useState(false);
-    const hasRigidBody = node.components?.some(c => c.type === "RigidBody");
-    const { setTransformTarget, selected } = useEditorContext();
-    // --- COMPONENTS UI ---
-    const handleComponentChange = (idx: number, data: any) => {
-        const newComponents = (node.components || []).map((c, i) => i === idx ? { ...c, data } : c);
-        onUpdate({ components: newComponents });
-    };
-    const handleComponentDelete = (idx: number) => {
-        const isRigidBody = (node.components || [])[idx]?.type === "RigidBody";
-        const newComponents = (node.components || []).filter((_, i) => i !== idx);
-        onUpdate({ components: newComponents });
-        if (isRigidBody && selected && selected.id === node.id) {
-            setTransformTarget(null);
+export default function EditorApp() {
+    const [models, setModels] = useState<any[]>([]);
+    const [sceneGraph, setSceneGraph] = useState<SceneNode[]>([
+        {
+            id: Math.random().toString(36).substr(2, 9),
+            name: "Root",
+            children: [],
+            components: [],
         }
+    ]);
+    const [playMode, setPlayMode] = useState<EditorModes>(EditorModes.Edit);
+    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+    // Map of nodeId to ref
+    const nodeRefs = useRef<{ [id: string]: React.RefObject<Object3D<Object3DEventMap> | null> }>({});
+    const getNodeRef = (id: string): React.RefObject<Object3D<Object3DEventMap> | null> => {
+        if (!nodeRefs.current[id]) nodeRefs.current[id] = React.createRef<Object3D<Object3DEventMap>>();
+        return nodeRefs.current[id];
     };
-    const handleAddComponent = (type: string) => {
-        if (type === "RigidBody" && !(node.components || []).some(c => c.type === "RigidBody")) {
-            onUpdate({ components: [...(node.components || []), { type: "RigidBody", data: { ...RigidBodyComponentDefault } }] });
-            if (selected && selected.id === node.id) {
-                setTransformTarget(null);
+    // Find the selected ref
+    const selectedRef = selectedNodeId ? getNodeRef(selectedNodeId) : undefined;
+
+    // Helper to update node transform by id recursively
+    function updateNodeTransform(nodes: SceneNode[], id: string, transform: any): SceneNode[] {
+        return nodes.map(n => {
+            if (n.id === id) {
+                return { ...n, transform: { ...n.transform, ...transform } };
             }
-        }
-        setAddMenuOpen(false);
-    };
-    if (typeDef && typeDef.DetailsView) {
-        const DetailsView = typeDef.DetailsView;
-        return (
-            <>
-                <DetailsView node={node} onUpdate={onUpdate} />
-                <div style={{ marginTop: 16 }}>
-                    <div style={{ marginBottom: 8 }}>
-                        {(node.components || []).map((comp, idx) => {
-                            if (comp.type === "RigidBody") {
-                                return (
-                                    <RigidBodyComponentRow
-                                        key={"rb"}
-                                        data={comp.data || RigidBodyComponentDefault}
-                                        onChange={data => handleComponentChange(idx, data)}
-                                        onDelete={() => handleComponentDelete(idx)}
-                                    />
-                                );
-                            }
-                            return null;
-                        })}
-                    </div>
-                    <button onClick={() => setAddMenuOpen(v => !v)} style={{ width: '100%' }}>Add Component</button>
-                    {addMenuOpen && (
-                        <div style={{ background: '#222', color: '#fff', borderRadius: 4, marginTop: 4, zIndex: 10, position: 'relative' }}>
-                            <button style={{ display: 'block', width: '100%' }} disabled={hasRigidBody} onClick={() => handleAddComponent("RigidBody")}>RigidBody</button>
-                            <button style={{ display: 'block', width: '100%', color: '#888' }} onClick={() => setAddMenuOpen(false)}>Cancel</button>
-                        </div>
-                    )}
-                </div>
-            </>
-        );
+            return { ...n, children: updateNodeTransform(n.children, id, transform) };
+        });
     }
-    // fallback generic editor
-    return (
-        <div>
-            <div>
-                Name: <input value={node.name} onChange={e => onUpdate({ name: e.target.value })} style={{ fontFamily: 'monospace', width: 100 }} />
-            </div>
-            <div>
-                Type: <span style={{ fontFamily: 'monospace' }}>{node.type}</span>
-            </div>
-            <div>
-                ID: <span style={{ fontFamily: 'monospace', fontSize: 10 }}>{node.id}</span>
-            </div>
-            <div style={{ marginTop: 16 }}>
-                <div style={{ marginBottom: 8 }}>
-                    {(node.components || []).map((comp, idx) => {
-                        if (comp.type === "RigidBody") {
-                            return (
-                                <RigidBodyComponentRow
-                                    key={"rb"}
-                                    data={comp.data || RigidBodyComponentDefault}
-                                    onChange={data => handleComponentChange(idx, data)}
-                                    onDelete={() => handleComponentDelete(idx)}
-                                />
-                            );
-                        }
-                        return null;
-                    })}
-                </div>
-                <button onClick={() => setAddMenuOpen(v => !v)} style={{ width: '100%' }}>Add Component</button>
-                {addMenuOpen && (
-                    <div style={{ background: '#222', color: '#fff', borderRadius: 4, marginTop: 4, zIndex: 10, position: 'relative' }}>
-                        <button style={{ display: 'block', width: '100%' }} disabled={(node.components || []).some(c => c.type === "RigidBody")} onClick={() => handleAddComponent("RigidBody")}>RigidBody</button>
-                        <button style={{ display: 'block', width: '100%', color: '#888' }} onClick={() => setAddMenuOpen(false)}>Cancel</button>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-}
 
-function SceneDetailsPanel({ sceneSettings, setSceneSettings, sceneText, setSceneText, onSceneTextBlur }: {
-    sceneSettings: { physics: boolean };
-    setSceneSettings: React.Dispatch<React.SetStateAction<{ physics: boolean }>>;
-    sceneText: string;
-    setSceneText: React.Dispatch<React.SetStateAction<string>>;
-    onSceneTextBlur: () => void;
-}) {
-    const { resetScene } = useEditorContext();
     return (
         <>
-            <h2>Scene</h2>
-            <div style={{ marginBottom: 8 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <input
-                        type="checkbox"
-                        checked={sceneSettings.physics}
-                        onChange={e => setSceneSettings(s => ({ ...s, physics: e.target.checked }))}
-                    />
-                    Enable Physics
-                </label>
-            </div>
-            <textarea
-                style={{ width: '100%', minHeight: 200, fontFamily: 'monospace', fontSize: 12 }}
-                value={sceneText}
-                onChange={e => setSceneText(e.target.value)}
-                onBlur={onSceneTextBlur}
-            />
-            <div style={{ marginTop: 8, textAlign: 'right' }}>
-                <button onClick={resetScene} style={{ background: '#222', color: '#fff', borderRadius: 4, padding: '4px 12px', border: 'none' }}>
-                    Reset Scene
-                </button>
-            </div>
-        </>
-    );
-}
-
-// --- SceneGraphPanel ---
-function SceneGraphPanel({
-    root,
-    selectedId,
-    onSelect,
-    onAdd,
-    onDragStart,
-    onDrop,
-}: {
-    root: any;
-    selectedId: string | undefined;
-    onSelect: (node: any) => void;
-    onAdd: (parent: any, type?: "object" | "spotlight" | "orthographicCamera") => void;
-    onDragStart: (node: any) => void;
-    onDrop: (targetNode: any) => void;
-}) {
-    return (
-        <div className="absolute top-32 left-2 width-[300px] bg-slate-800/20 rounded p-1">
-            <h2>Scene Graph</h2>
-            <SceneGraphTree
-                node={root}
-                selectedId={selectedId}
-                onSelect={onSelect}
-                onAdd={onAdd}
-                onDragStart={onDragStart}
-                onDrop={onDrop}
-            />
-        </div>
-    );
-}
-
-// --- PlaybackController ---
-function PlaybackController() {
-    const { isPlaying, isPaused } = useEditorContext();
-    useFrame(() => {
-        if (isPlaying && !isPaused) {
-            // TODO: Insert simulation step logic here
-            // For now, just log for demonstration
-            // console.log('Sim step');
-        }
-    });
-    return null;
-}
-
-// --- PlaybackControls ---
-function PlaybackControls({ isPlaying, onPlay, onPause, onStop }: {
-    isPlaying: boolean;
-    onPlay: () => void;
-    onPause: () => void;
-    onStop: () => void;
-}) {
-    return (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 gap-2 flex">
-            {!isPlaying && (
-                <button onClick={onPlay}>▶️</button>
-            )}
-            {isPlaying && (
-                <>
-                    <button onClick={onPause}>⏸️</button>
-                    <button onClick={onStop}>⏹️</button>
-                </>
-            )}
-        </div>
-    );
-}
-
-// --- EditorCanvas ---
-function EditorCanvas({
-    sceneSettings,
-}: {
-    sceneSettings: { physics: boolean };
-}) {
-    const { root, selected, setSelected, setRoot, transformTarget, setTransformTarget, isPlaying } = useEditorContext();
-    const transformControlsRef = useRef<any>(null);
-
-    return (
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
-            <Canvas>
-                <PlaybackController />
-                <ambientLight intensity={0.5} />
-                <pointLight position={[10, 10, 10]} />
-                <Physics paused={!sceneSettings.physics || !isPlaying}>
-                    <group>
-                        {selected && transformTarget && transformTarget.parent && !isPlaying && (
+            <DragDropLoader onModelLoaded={model => setModels(prev => [...prev, model])} />
+            <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
+                <GameCanvas>
+                    <Physics paused={true}>
+                        {models.map((model, idx) => (
+                            <primitive object={model} key={idx} position={[0, 0, 0]} />
+                        ))}
+                        <Object3DNode node={sceneGraph[0]} onSelect={setSelectedNodeId} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode} />
+                    </Physics>
+                    {playMode == EditorModes.Edit && <>
+                        <OrbitControls makeDefault />
+                        <gridHelper args={[10, 10, 10]} />
+                        {/* Top-level TransformControls overlay */}
+                        {selectedNodeId && selectedRef && selectedRef.current && (
                             <TransformControls
-                                ref={transformControlsRef}
-                                object={transformTarget}
+                                object={selectedRef.current}
                                 mode="translate"
                                 onObjectChange={() => {
-                                    if (selected && transformTarget) {
-                                        const parent = transformTarget.parent;
-                                        const worldPos = transformTarget.getWorldPosition(new THREE.Vector3());
-                                        const worldQuat = transformTarget.getWorldQuaternion(new THREE.Quaternion());
-                                        const worldScale = transformTarget.getWorldScale(new THREE.Vector3());
-                                        const localPos = worldPos.clone();
-                                        const localQuat = worldQuat.clone();
-                                        const localScale = worldScale.clone();
-                                        if (parent) {
-                                            parent.worldToLocal(localPos);
-                                            const parentWorldQuat = parent.getWorldQuaternion(new THREE.Quaternion());
-                                            localQuat.premultiply(parentWorldQuat.invert());
-                                            const parentWorldScale = parent.getWorldScale(new THREE.Vector3());
-                                            localScale.divide(parentWorldScale);
-                                        }
-                                        const localEuler = new THREE.Euler().setFromQuaternion(localQuat, 'XYZ');
-                                        // Only update the property matching the current mode
-                                        const mode = transformControlsRef.current?.mode || "translate";
-                                        const updates: any = {};
-                                        if (mode === "translate") {
-                                            updates.position = [localPos.x, localPos.y, localPos.z];
-                                        }
-                                        if (mode === "rotate") {
-                                            updates.rotation = [localEuler.x, localEuler.y, localEuler.z];
-                                        }
-                                        if (mode === "scale") {
-                                            updates.scale = [localScale.x, localScale.y, localScale.z];
-                                        }
-                                        if (selected) {
-                                            setSelected({ ...selected, props: { ...selected.props, ...updates } });
-                                            setRoot(prev => updateNodeById(prev, selected.id, { props: updates }));
-                                        }
-                                    }
+                                    const obj = selectedRef.current;
+                                    if (!obj) return;
+                                    setSceneGraph(prev => updateNodeTransform(prev, selectedNodeId, {
+                                        position: [obj.position.x, obj.position.y, obj.position.z],
+                                        // rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+                                        // scale: obj.scale.x // assuming uniform scale
+                                    }));
                                 }}
                             />
                         )}
-                        <RootNode node={root} onSelect={setSelected} selectedId={selected?.id} setTransformTarget={setTransformTarget} />
-                    </group>
-                    <gridHelper args={[10, 10, "#888", "#444"]} />
-                </Physics>
-                <OrbitControls makeDefault />
-            </Canvas>
-        </div>
-    );
-}
-
-// --- Main Editor Page ---
-export default function Home() {
-    return (
-        <EditorProvider>
-            <EditorContent />
-        </EditorProvider>
-    );
-}
-
-function EditorContent() {
-    const {
-        root,
-        setRoot,
-        selected,
-        setSelected,
-        handleAdd,
-        handleDragStart,
-        handleDrop,
-        handleUpdateSelected,
-        sceneSettings,
-        setSceneSettings,
-        showSceneDetails,
-        setShowSceneDetails,
-        sceneText,
-        setSceneText,
-        handleSceneTextBlur,
-        isPlaying,
-        setIsPlaying,
-        isPaused,
-        setIsPaused,
-        resetScene,
-    } = useEditorContext();
-    const { saveSceneForReset } = useEditorContext();
-    // Add a key to force remount of EditorCanvas
-    const [canvasKey, setCanvasKey] = React.useState(0);
-
-    const handlePlay = () => {
-        saveSceneForReset();
-        setIsPlaying(true);
-        setIsPaused(false);
-    };
-    const handlePause = () => setIsPaused(v => !v);
-    const handleStop = () => {
-        setIsPlaying(false); // Ensure isPlaying is false immediately
-        setIsPaused(false); // Also reset pause state
-        setCanvasKey(k => k + 1); // Remount EditorCanvas/Canvas
-    };
-
-    return (
-        <>
-            <EditorCanvas key={canvasKey} sceneSettings={sceneSettings} />
-            <SceneGraphPanel
-                root={root}
-                selectedId={selected?.id}
-                onSelect={setSelected}
-                onAdd={handleAdd}
-                onDragStart={handleDragStart}
-                onDrop={handleDrop}
-            />
-
-            <PlaybackControls
-                isPlaying={isPlaying}
-                onPlay={handlePlay}
-                onPause={handlePause}
-                onStop={handleStop}
-            />
-
-            <div className="absolute top-4 right-2 width-[300px] bg-slate-800/20 rounded p-1">
-                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                    <button
-                        style={{ fontWeight: !showSceneDetails ? 'bold' : undefined }}
-                        onClick={() => setShowSceneDetails(false)}
-                    >
-                        Entity Details
-                    </button>
-                    <button
-                        style={{ fontWeight: showSceneDetails ? 'bold' : undefined }}
-                        onClick={() => setShowSceneDetails(true)}
-                    >
-                        Scene Details
-                    </button>
-                </div>
-                {!showSceneDetails && selected && (
-                    <>
-                        <h2>Entity Details</h2>
-                        <EntityDetailsPanel node={selected} onUpdate={handleUpdateSelected} />
-                    </>
-                )}
-                {showSceneDetails && (
-                    <SceneDetailsPanel
-                        sceneSettings={sceneSettings}
-                        setSceneSettings={setSceneSettings}
-                        sceneText={sceneText}
-                        setSceneText={setSceneText}
-                        onSceneTextBlur={handleSceneTextBlur}
-                    />
-                )}
+                    </>}
+                    <ambientLight intensity={1} />
+                </GameCanvas>
             </div>
+            {playMode == EditorModes.Edit && <SceneEditor sceneGraph={sceneGraph} setSceneGraph={setSceneGraph} selectedNodeId={selectedNodeId} setSelectedNodeId={setSelectedNodeId} />}
         </>
     );
+}
+
+// Remove TransformControls from here, just use group with ref
+const TransformOrRigidBodyWrapper = ({
+    node,
+    onSelect,
+    selectedNodeId,
+    children,
+    setSceneGraph,
+    getNodeRef,
+    playMode // <-- add playMode as prop
+}: {
+    node: SceneNode,
+    onSelect: (id: string) => void,
+    selectedNodeId: string | null,
+    children?: React.ReactNode,
+    setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>,
+    getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>,
+    playMode: EditorModes // <-- add playMode as prop
+}) => {
+    const ref = useRef<RapierRigidBody>(null);
+    const groupRef = getNodeRef(node.id);
+    const position = node.transform?.position?.map(v => v ?? 0) as [number, number, number] | undefined;
+    const rotation = node.transform?.rotation?.map(v => v ?? 0) as [number, number, number] | undefined;
+    const scale = node.transform?.scale ?? 1;
+    // const isSelected = selectedNodeId === node.id;
+
+    const mesh = (
+        <mesh
+            onClick={e => {
+                e.stopPropagation();
+                onSelect(node.id);
+            }}
+            position={[0, 0, 0]}
+            rotation={rotation ? [rotation[0], rotation[1], rotation[2]] : undefined}
+            scale={scale}
+        >
+            <ComponentMapper node={node} />
+            {children}
+        </mesh>
+    );
+
+    if (playMode === EditorModes.Edit) {
+        // In edit mode, only use a group for transform
+        return (
+            <group ref={groupRef} position={position || [0, 0, 0]} rotation={rotation} scale={scale}>
+                {mesh}
+            </group>
+        );
+    }
+    // In play mode, use RigidBody
+    return (
+        <RigidBody
+            ref={ref}
+            colliders="hull"
+            position={position || [0, 0, 0]}
+            rotation={rotation ? [rotation[0], rotation[1], rotation[2]] : undefined}
+            scale={scale}
+        >
+            <group ref={groupRef}>
+                {mesh}
+            </group>
+        </RigidBody>
+    );
+};
+
+// Update Object3DNode to pass playMode
+const Object3DNode = ({ node, onSelect, selectedNodeId, setSceneGraph, getNodeRef, playMode }: { node: SceneNode, onSelect: (id: string) => void, selectedNodeId: string | null, setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>, getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>, playMode: EditorModes }) => {
+    return (
+        <TransformOrRigidBodyWrapper node={node} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode}>
+            {node.children.map((child, index) => (
+                <Object3DNode key={index} node={child} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode} />
+            ))}
+        </TransformOrRigidBodyWrapper>
+    );
+}
+
+const ComponentMapper = ({ node }: { node: SceneNode }) => {
+    const geometry = node.components?.find(c => c.type === 'boxGeometry');
+    const material = node.components?.find(c => c.type === 'meshStandardMaterial');
+
+    return <>
+        {geometry ?
+            <boxGeometry args={geometry.args || [0.1, 0.1, 0.1]} /> :
+            <boxGeometry args={[0.1, 0.1, 0.1]} />
+        }
+        {material && <meshStandardMaterial {...material.props} />}
+    </>
 }
