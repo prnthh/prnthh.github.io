@@ -14,7 +14,6 @@ import {
 import * as THREE from 'three'
 import { FBXLoader } from 'three/examples/jsm/Addons.js'
 
-// Add this function before creating the actions
 function filterNeckAnimations(animation: THREE.AnimationClip): THREE.AnimationClip {
     const filteredAnimation = animation.clone()
     filteredAnimation.tracks = animation.tracks.filter((track) => {
@@ -30,13 +29,9 @@ export default function useAnimationState(
     animationOverrides?: { [key: string]: string },
     onActions?: (actions: { [key: string]: AnimationAction }) => void
 ) {
-    // Allow thisAnimation to be a string or an array of strings
     const [thisAnimation, setThisAnimation] = useState<string | string[] | undefined>('idle')
     const [mixer, setMixer] = useState<AnimationMixer | null>(null)
-    // Track the currently playing action
     const prevActionRef = useRef<AnimationAction | null>(null)
-
-    // load animations and set up mixer
 
     const ANIMATIONS = useMemo(() => {
         const prependBasePath = (path: string) =>
@@ -90,39 +85,37 @@ export default function useAnimationState(
         }
     }, [clone])
 
+    const lastKeyRef = useRef<string | undefined>(undefined);
+
     useEffect(() => {
-        if (!thisAnimation) {
-            return
-        }
+        if (!thisAnimation) return;
+
         let animationKey: string | undefined;
         if (typeof thisAnimation === 'string') {
             animationKey = thisAnimation;
         } else if (Array.isArray(thisAnimation) && thisAnimation.length > 0) {
-            animationKey = thisAnimation[0]; // Use the first animation in the array, or handle as needed
+            animationKey = thisAnimation[0];
         }
 
         if (mixer && actions && animationKey && actions[animationKey]) {
-            const action = actions[animationKey] || actions.idle;
-            let loops = 1;
+            if (lastKeyRef.current !== animationKey) {
+                const action = actions[animationKey] || actions.idle;
+                let loops = 1;
 
-            // biome-ignore lint/correctness/noConstantCondition: <always loop multiplayer animations>
-            if (true) {
-                loops = 100;
-            } else if (animationKey === 'eating') loops = 4;
-            action.clampWhenFinished = true;
-            // Fade out previous action if different
-            if (prevActionRef.current && prevActionRef.current !== action) {
-                prevActionRef.current.fadeOut(0.2);
-            }
-            action.reset().setLoop(LoopRepeat, loops).fadeIn(0.2).play();
-            prevActionRef.current = action;
-            return () => {
-                if (prevActionRef.current) {
+                if (true) {
+                    loops = 100;
+                } else if (animationKey === 'eating') loops = 4;
+                action.clampWhenFinished = true;
+
+                if (prevActionRef.current && prevActionRef.current !== action) {
                     prevActionRef.current.fadeOut(0.2);
                 }
-            };
+                action.reset().setLoop(LoopRepeat, loops).fadeIn(0.2).play();
+                prevActionRef.current = action;
+                lastKeyRef.current = animationKey;
+            }
         }
-    }, [mixer, thisAnimation, actions])
+    }, [mixer, thisAnimation])
 
     return {
         thisAnimation,

@@ -1,13 +1,15 @@
 import React, { useState } from "react";
-import { SceneNode } from "./SceneEditor";
+import { removeNodeById, SceneNode } from "./SceneEditor";
 import { MaterialComponent } from "./components/MaterialComponent";
 import { GeometryComponent } from "./components/GeometryComponent";
 import { TransformComponent } from "./components/TransformComponent";
+import { ModelComponent } from "./components/ModelComponent";
 
 interface EditorAppProps {
     selectedId: string | null;
     sceneGraph: SceneNode[];
     setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
+    setSelectedNodeId?: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 // --- Component Registry ---
@@ -48,6 +50,21 @@ type ComponentEditorProps = {
     setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
 };
 function ComponentEditor({ comp, idx, node, setSceneGraph }: ComponentEditorProps) {
+    // Remove component handler
+    const handleRemoveComponent = () => {
+        setSceneGraph(prev => {
+            function update(nodes: SceneNode[]): SceneNode[] {
+                return nodes.map(n => {
+                    if (n.id === node.id) {
+                        const newComponents = n.components.filter((_: any, i: number) => i !== idx);
+                        return { ...n, components: newComponents };
+                    }
+                    return { ...n, children: update(n.children) };
+                });
+            }
+            return update(prev);
+        });
+    };
     // Use GeometryComponent for boxGeometry
     if (comp.type === 'boxGeometry') {
         return <GeometryComponent node={node} setSceneGraph={setSceneGraph} />;
@@ -56,23 +73,27 @@ function ComponentEditor({ comp, idx, node, setSceneGraph }: ComponentEditorProp
     if (comp.type === 'meshStandardMaterial') {
         return <MaterialComponent node={node} setSceneGraph={setSceneGraph} />;
     }
-
+    // Use ModelComponent for model
     if (comp.type === 'model') {
-        return null; // todo show url editor here
+        return <ModelComponent node={node} />;
     }
 
     const compType = getComponentType(comp.type);
     if (!compType) return null;
     return (
-        <li style={{ marginBottom: 8 }}>
-            <span style={{ fontWeight: 500 }}>{compType.label || comp.type}</span>
-            {comp.args && <span> args: {JSON.stringify(comp.args)}</span>}
-            {/* No editable props for non-material/non-geometry components here */}
+        <li style={{ marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>
+                <span style={{ fontWeight: 500 }}>{compType.label || comp.type}</span>
+                {comp.args && <span> args: {JSON.stringify(comp.args)}</span>}
+            </span>
+            <button onClick={handleRemoveComponent} style={{ marginLeft: 8, color: 'red', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }} title="Remove Component">✕</button>
         </li>
     );
 }
 
-export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph }: EditorAppProps) {
+export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setSelectedNodeId }: EditorAppProps) {
+    const [addMenuOpen, setAddMenuOpen] = useState(false);
+
     // Helper to find node by id
     function findNode(nodes: SceneNode[], id: string | null): SceneNode | null {
         if (!id) return null;
@@ -86,8 +107,17 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph }: Ed
     const node = findNode(sceneGraph, selectedId);
     if (!node) return <div className="absolute top-4 right-4 rounded">No node selected</div>;
 
+    // Handler to delete node
+    const handleDeleteNode = () => {
+        if (!node.id) return;
+        setSceneGraph(prev => {
+            const [newGraph] = removeNodeById(prev, node.id);
+            return newGraph;
+        });
+        if (setSelectedNodeId) setSelectedNodeId(null);
+    };
+
     // Handler to add a component
-    const [addMenuOpen, setAddMenuOpen] = useState(false);
     const handleAddComponent = (type: string) => {
         const compType = getComponentType(type);
         if (!compType) return;
@@ -95,7 +125,7 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph }: Ed
             function update(nodes: SceneNode[]): SceneNode[] {
                 return nodes.map((n: SceneNode) => {
                     if (n.id === node?.id) {
-                        let newComponents = n.components ? [...n.components] : [];
+                        const newComponents = n.components ? [...n.components] : [];
                         newComponents.push(JSON.parse(JSON.stringify(compType?.default)));
                         return { ...n, components: newComponents };
                     }
@@ -107,7 +137,10 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph }: Ed
         setAddMenuOpen(false);
     };
     return <div className="absolute top-4 right-4 rounded bg-white p-4 shadow">
-        <div><b>{node.name}</b></div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <b>{node.name}</b>
+            <button onClick={handleDeleteNode} style={{ marginLeft: 8, color: 'red', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }} title="Delete Node">✕</button>
+        </div>
         <TransformComponent node={node} setSceneGraph={setSceneGraph} />
         {/* Show components */}
         <div style={{ marginTop: 16, marginBottom: 8 }}>

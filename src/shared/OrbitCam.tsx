@@ -8,8 +8,10 @@ export const OrbitCam = ({
     maxRadius = 20,
     minPolar = 0.1,
     maxPolar = Math.PI - 0.1,
+    startPolar = Math.PI / 2,
     minAzimuth = -Infinity,
     maxAzimuth = Infinity,
+    startAzimuth = Math.PI / 2,
     cameraSpeed = 0.03, // Slower default speed
     debug = false,
     smoothing = 1 // New prop for smoothing
@@ -18,14 +20,16 @@ export const OrbitCam = ({
     maxRadius?: number,
     minPolar?: number,
     maxPolar?: number,
+    startPolar?: number,
     minAzimuth?: number,
     maxAzimuth?: number,
+    startAzimuth?: number,
     cameraSpeed?: number,
     debug?: boolean,
     smoothing?: number // Add smoothing prop
 }) => {
-    const azimuth = useRef(Math.PI / 2); // horizontal angle
-    const polar = useRef(Math.PI / 2);   // vertical angle
+    const azimuth = useRef(startAzimuth);
+    const polar = useRef(startPolar);
     const dragging = useRef(false);
     const last = useRef<{ x: number, y: number }>({ x: 0, y: 0 });
     const cameraTarget = useRef<Group>(null);

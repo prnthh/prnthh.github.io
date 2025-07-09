@@ -15,7 +15,7 @@ export function TransformComponent({ node, setSceneGraph }: {
             function update(nodes: SceneNode[]): SceneNode[] {
                 return nodes.map(n => {
                     if (n.id === node.id) {
-                        let newTransform = { ...t };
+                        const newTransform = { ...t };
                         if (field === 'scale') {
                             newTransform.scale = value;
                         } else {

@@ -7,12 +7,12 @@ import MapModel from "../../floor/ground/ground/model";
 import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
-import Ground from "../../floor/ground/ground/flat";
 import { forwardRef } from "react";
-import { WebGPUCanvas } from "@/shared/WebGPUCanvas";
 import Ped from "../../controllers/click/ped/ped";
 import { CharacterController } from "../../controllers/shouldercam/CharacterController";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
+import { Environment } from "@react-three/drei";
+import { GameCanvas } from "@/shared/GameCanvas";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -20,9 +20,9 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls >
-                    <WebGPUCanvas shadows>
+                    <GameCanvas shadows>
                         {/* <Perf /> */}
-                        <ShadowLight debug camOffset={new Vector3(2, 10, 2)} />
+                        <ShadowLight intensity={4} debug camOffset={new Vector3(2, 10, 2)} />
 
                         <Physics>
                             <CharacterController lookTarget={ballRef} />
@@ -33,12 +33,12 @@ export default function Home() {
 
                             <GoalFollowingPed ballRef={ballRef} />
 
-                            <MapModel />
-                            {/* <Ground /> */}
+                            <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" />
+                            <Environment files="/terraindemo/sunflowers_puresky_1k.hdr" environmentIntensity={0.2} background={true} ground />
                             <ambientLight intensity={0.5} />
-                            <pointLight position={[10, 10, 10]} />
+                            {/* <pointLight position={[10, 10, 10]} /> */}
                         </Physics>
-                    </WebGPUCanvas>
+                    </GameCanvas>
                 </Controls>
             </div>
         </div >
@@ -84,7 +84,7 @@ const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | nul
     }, [ballRef]);
 
     return <Ped modelUrl="rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
-        <DialogCollider />
+        <DialogCollider>Ole!</DialogCollider>
     </Ped>
 }
 

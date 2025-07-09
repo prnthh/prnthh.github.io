@@ -22,11 +22,12 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
     lookTarget?: RefObject<THREE.Object3D | null>
     retargetOptions?: { boneMap?: Record<string, string>, preserveHipPosition?: boolean }
     onActions?: (actions: { [key: string]: THREE.AnimationAction }) => void
+    children?: React.ReactNode;
 }>(
     ({ name, model, basePath = "/models/human/", animation = "idle", onClick,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
-        debug = false, lookTarget, retargetOptions, onActions, ...props
+        debug = false, lookTarget, retargetOptions, onActions, children, ...props
     }, ref) => {
         const modelRef = useRef<THREE.Object3D | undefined>(undefined);
         const { scene, animations } = useGLTF(basePath + model);
@@ -52,7 +53,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
 
         useEffect(() => {
             if (animation && mixer) {
-                setThisAnimation(animation); // <-- pass string or array
+                setThisAnimation(animation);
             }
         }, [animation, mixer, setThisAnimation]);
 
@@ -78,6 +79,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
                             animation == 'lpunch' ? "LeftHand" :
                                 undefined}
                     />}
+                    {children}
                 </group>
             </group>
         );

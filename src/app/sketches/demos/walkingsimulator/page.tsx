@@ -15,6 +15,7 @@ import Vehicle from "../../car/simple/car/base";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
 import { EffectComposer, Scanline, SSAO } from "@react-three/postprocessing";
 import { ThreeElement, useThree } from "@react-three/fiber";
+import SimpleModel from "@/shared/SimpleModel";
 
 
 export default function Home() {
@@ -82,7 +83,7 @@ export default function Home() {
 
                             <MapEntities mapEntities={mapEntitiesState} />
 
-                            <Model scale={1} position={[4, 0, 0]} model="/models/environment/lamppost2.glb" />
+                            <SimpleModel scale={1} position={[4, 0, 0]} model="/models/environment/lamppost2.glb" />
                         </Physics>
 
                         <fogExp2 attach="fog" args={["#000000", 0.03]} />
@@ -93,11 +94,6 @@ export default function Home() {
             </div>
         </div >
     );
-}
-
-const Model = ({ model, ...props }: { model: string } & ThreeElement<any>) => {
-    const { scene } = useGLTF(model);
-    return <primitive object={scene} {...props} />;
 }
 
 const Actors = () => {

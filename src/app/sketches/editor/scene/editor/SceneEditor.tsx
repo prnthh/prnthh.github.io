@@ -19,7 +19,7 @@ function generateId() {
 }
 
 // --- Tree helpers ---
-function removeNodeById(nodes: SceneNode[], id: string): [SceneNode[], SceneNode | null] {
+export function removeNodeById(nodes: SceneNode[], id: string): [SceneNode[], SceneNode | null] {
     let removed: SceneNode | null = null;
     const recur = (arr: SceneNode[]): SceneNode[] =>
         arr.reduce<SceneNode[]>((acc, node) => {

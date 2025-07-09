@@ -15,7 +15,6 @@ enum EditorModes {
 }
 
 export default function EditorApp() {
-    const [models, setModels] = useState<any[]>([]);
     const [sceneGraph, setSceneGraph] = useState<SceneNode[]>([
         {
             id: Math.random().toString(36).substr(2, 9),
@@ -46,15 +45,31 @@ export default function EditorApp() {
         });
     }
 
+    // Helper to add a new node to the root's children
+    function addModelNodeToSceneGraph(model: any) {
+        setSceneGraph(prev => prev.map(root => ({
+            ...root,
+            children: [
+                ...root.children,
+                {
+                    id: Math.random().toString(36).substr(2, 9),
+                    name: model.name || "Model",
+                    children: [],
+                    components: [
+                        { type: 'model', object: model }
+                    ],
+                    transform: { position: [0, 0, 0], rotation: [0, 0, 0], scale: 1 }
+                }
+            ]
+        })));
+    }
+
     return (
         <>
-            <DragDropLoader onModelLoaded={model => setModels(prev => [...prev, model])} />
+            <DragDropLoader onModelLoaded={model => addModelNodeToSceneGraph(model)} />
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Physics paused={true}>
-                        {models.map((model, idx) => (
-                            <primitive object={model} key={idx} position={[0, 0, 0]} />
-                        ))}
                         <Object3DNode node={sceneGraph[0]} onSelect={setSelectedNodeId} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode} />
                     </Physics>
                     {playMode == EditorModes.Edit && <>
@@ -85,8 +100,32 @@ export default function EditorApp() {
     );
 }
 
-// Remove TransformControls from here, just use group with ref
-const TransformOrRigidBodyWrapper = ({
+const Object3DNode = ({ node, onSelect, selectedNodeId, setSceneGraph, getNodeRef, playMode }: { node: SceneNode, onSelect: (id: string) => void, selectedNodeId: string | null, setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>, getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>, playMode: EditorModes }) => {
+    return (
+        <RigidBodyWrapper node={node} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode}>
+            {node.children.map((child, index) => (
+                <Object3DNode key={index} node={child} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode} />
+            ))}
+        </RigidBodyWrapper>
+    );
+}
+
+const ComponentMapper = ({ node }: { node: SceneNode }) => {
+    const geometry = node.components?.find(c => c.type === 'boxGeometry');
+    const material = node.components?.find(c => c.type === 'meshStandardMaterial');
+    const model = node.components?.find(c => c.type === 'model');
+
+    return <>
+        {geometry ?
+            <boxGeometry args={geometry.args || [0.1, 0.1, 0.1]} /> :
+            <boxGeometry args={[0.1, 0.1, 0.1]} />
+        }
+        {material && <meshStandardMaterial {...material.props} />}
+        {model && <primitive object={model.object} />}
+    </>
+}
+
+const RigidBodyWrapper = ({
     node,
     onSelect,
     selectedNodeId,
@@ -126,14 +165,13 @@ const TransformOrRigidBodyWrapper = ({
     );
 
     if (playMode === EditorModes.Edit) {
-        // In edit mode, only use a group for transform
         return (
             <group ref={groupRef} position={position || [0, 0, 0]} rotation={rotation} scale={scale}>
                 {mesh}
             </group>
         );
     }
-    // In play mode, use RigidBody
+
     return (
         <RigidBody
             ref={ref}
@@ -148,27 +186,3 @@ const TransformOrRigidBodyWrapper = ({
         </RigidBody>
     );
 };
-
-// Update Object3DNode to pass playMode
-const Object3DNode = ({ node, onSelect, selectedNodeId, setSceneGraph, getNodeRef, playMode }: { node: SceneNode, onSelect: (id: string) => void, selectedNodeId: string | null, setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>, getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>, playMode: EditorModes }) => {
-    return (
-        <TransformOrRigidBodyWrapper node={node} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode}>
-            {node.children.map((child, index) => (
-                <Object3DNode key={index} node={child} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode} />
-            ))}
-        </TransformOrRigidBodyWrapper>
-    );
-}
-
-const ComponentMapper = ({ node }: { node: SceneNode }) => {
-    const geometry = node.components?.find(c => c.type === 'boxGeometry');
-    const material = node.components?.find(c => c.type === 'meshStandardMaterial');
-
-    return <>
-        {geometry ?
-            <boxGeometry args={geometry.args || [0.1, 0.1, 0.1]} /> :
-            <boxGeometry args={[0.1, 0.1, 0.1]} />
-        }
-        {material && <meshStandardMaterial {...material.props} />}
-    </>
-}

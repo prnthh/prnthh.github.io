@@ -32,7 +32,7 @@ export default function NumberInput({ value, onChange, placeholder, style }: Num
         if (!draggingRef.current) return;
         if (startValueRef.current === null || isNaN(startValueRef.current)) return;
         const dx = e.clientX - startXRef.current;
-        let newValue = startValueRef.current + dx * step;
+        const newValue = startValueRef.current + dx * step;
         // Optionally round or clamp here
         setInput(String(newValue));
         onChange(newValue);
