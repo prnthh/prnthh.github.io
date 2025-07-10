@@ -1,5 +1,6 @@
 import React from "react";
-import { SceneNode } from "../SceneEditor";
+import { SceneNode } from "../SceneViewer";
+import { updateSceneGraphNodeAndComponent } from "./TransformComponent";
 
 // --- Prop Editor for material properties ---
 type PropEditorProps = {
@@ -42,29 +43,27 @@ export function MaterialComponent({ node, setSceneGraph }: {
                             type={propType}
                             value={comp.props?.[key] ?? ''}
                             onChange={(newValue: any) => {
-                                setSceneGraph((prev: SceneNode[]) => {
-                                    function update(nodes: SceneNode[]): SceneNode[] {
-                                        return nodes.map((n: SceneNode) => {
-                                            if (n.id === node.id) {
-                                                const newComponents = n.components.map((c: any, cidx: number) => {
-                                                    if (cidx === idx) {
-                                                        return {
-                                                            ...c,
-                                                            props: {
-                                                                ...c.props,
-                                                                [key]: newValue
-                                                            }
-                                                        };
+                                setSceneGraph(prev =>
+                                    updateSceneGraphNodeAndComponent(
+                                        prev,
+                                        node.id,
+                                        idx,
+                                        (n, c) => ({
+                                            ...n,
+                                            components: n.components.map((compItem: any, cidx: number) =>
+                                                cidx === idx
+                                                    ? {
+                                                        ...compItem,
+                                                        props: {
+                                                            ...compItem.props,
+                                                            [key]: newValue
+                                                        }
                                                     }
-                                                    return c;
-                                                });
-                                                return { ...n, components: newComponents };
-                                            }
-                                            return { ...n, children: update(n.children) };
-                                        });
-                                    }
-                                    return update(prev);
-                                });
+                                                    : compItem
+                                            )
+                                        })
+                                    )
+                                );
                             }}
                         />
                     </div>

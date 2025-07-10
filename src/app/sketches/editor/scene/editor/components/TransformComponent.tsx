@@ -1,6 +1,24 @@
 import React from "react";
 import NumberInput from "../ui/NumberInput";
-import { SceneNode } from "../SceneEditor";
+import { SceneNode } from "../SceneViewer";
+
+// --- Utility to update a node and a component by index ---
+export function updateSceneGraphNodeAndComponent(
+    nodes: SceneNode[],
+    nodeId: string,
+    compIdx: number | null,
+    updater: (node: SceneNode, comp?: any) => SceneNode
+): SceneNode[] {
+    return nodes.map((n: SceneNode) => {
+        if (n.id === nodeId) {
+            if (compIdx !== null && n.components && n.components[compIdx]) {
+                return updater(n, n.components[compIdx]);
+            }
+            return updater(n);
+        }
+        return { ...n, children: updateSceneGraphNodeAndComponent(n.children, nodeId, compIdx, updater) };
+    });
+}
 
 // --- TransformComponent for editing position, rotation, scale ---
 export function TransformComponent({ node, setSceneGraph }: {
@@ -11,23 +29,17 @@ export function TransformComponent({ node, setSceneGraph }: {
 
     // Handles updating the transform directly in the scene graph
     const handleTransformChange = (field: 'position' | 'rotation' | 'scale', value: any) => {
-        setSceneGraph(prev => {
-            function update(nodes: SceneNode[]): SceneNode[] {
-                return nodes.map(n => {
-                    if (n.id === node.id) {
-                        const newTransform = { ...t };
-                        if (field === 'scale') {
-                            newTransform.scale = value;
-                        } else {
-                            newTransform[field] = value;
-                        }
-                        return { ...n, transform: newTransform };
-                    }
-                    return { ...n, children: update(n.children) };
-                });
-            }
-            return update(prev);
-        });
+        setSceneGraph(prev =>
+            updateSceneGraphNodeAndComponent(prev, node.id, null, n => {
+                const newTransform = { ...t };
+                if (field === 'scale') {
+                    newTransform.scale = value;
+                } else {
+                    newTransform[field] = value;
+                }
+                return { ...n, transform: newTransform };
+            })
+        );
     };
 
     return <>

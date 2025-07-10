@@ -1,15 +1,17 @@
 import React, { useState } from "react";
-import { removeNodeById, SceneNode } from "./SceneEditor";
+import { removeNodeById } from "./SceneEditor";
 import { MaterialComponent } from "./components/MaterialComponent";
 import { GeometryComponent } from "./components/GeometryComponent";
 import { TransformComponent } from "./components/TransformComponent";
 import { ModelComponent } from "./components/ModelComponent";
+import { SceneNode } from "./SceneViewer";
 
 interface EditorAppProps {
     selectedId: string | null;
     sceneGraph: SceneNode[];
     setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
     setSelectedNodeId?: React.Dispatch<React.SetStateAction<string | null>>;
+    models: { [filename: string]: any };
 }
 
 // --- Component Registry ---
@@ -48,8 +50,9 @@ type ComponentEditorProps = {
     idx: number;
     node: SceneNode;
     setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
+    models: { [filename: string]: any };
 };
-function ComponentEditor({ comp, idx, node, setSceneGraph }: ComponentEditorProps) {
+function ComponentEditor({ comp, idx, node, setSceneGraph, models }: ComponentEditorProps) {
     // Remove component handler
     const handleRemoveComponent = () => {
         setSceneGraph(prev => {
@@ -75,7 +78,7 @@ function ComponentEditor({ comp, idx, node, setSceneGraph }: ComponentEditorProp
     }
     // Use ModelComponent for model
     if (comp.type === 'model') {
-        return <ModelComponent node={node} />;
+        return <ModelComponent node={node} models={models} setSceneGraph={setSceneGraph} />;
     }
 
     const compType = getComponentType(comp.type);
@@ -91,7 +94,7 @@ function ComponentEditor({ comp, idx, node, setSceneGraph }: ComponentEditorProp
     );
 }
 
-export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setSelectedNodeId }: EditorAppProps) {
+export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setSelectedNodeId, models }: EditorAppProps) {
     const [addMenuOpen, setAddMenuOpen] = useState(false);
 
     // Helper to find node by id
@@ -148,7 +151,7 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setS
             {node.components && node.components.length > 0 ? (
                 <ul style={{ paddingLeft: 16 }}>
                     {node.components.map((comp, idx) => (
-                        <ComponentEditor key={idx} comp={comp} idx={idx} node={node} setSceneGraph={setSceneGraph} />
+                        <ComponentEditor key={idx} comp={comp} idx={idx} node={node} setSceneGraph={setSceneGraph} models={models} />
                     ))}
                 </ul>
             ) : (

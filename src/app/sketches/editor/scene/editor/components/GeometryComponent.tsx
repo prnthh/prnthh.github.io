@@ -1,6 +1,7 @@
 import React from "react";
-import { SceneNode } from "../SceneEditor";
 import NumberInput from "../ui/NumberInput";
+import { SceneNode } from "../SceneViewer";
+import { updateSceneGraphNodeAndComponent } from "./TransformComponent";
 
 // --- GeometryComponent for boxGeometry ---
 export function GeometryComponent({ node, setSceneGraph }: {
@@ -24,25 +25,28 @@ export function GeometryComponent({ node, setSceneGraph }: {
                             placeholder={['w', 'h', 'd'][i]}
                             style={{ width: 40, marginRight: 4 }}
                             onChange={v => {
-                                setSceneGraph((prev: SceneNode[]) => {
-                                    function update(nodes: SceneNode[]): SceneNode[] {
-                                        return nodes.map((n: SceneNode) => {
-                                            if (n.id === node.id) {
-                                                const newComponents = n.components.map((c: any, cidx: number) => {
-                                                    if (cidx === idx) {
-                                                        const newArgs = [...(c.args || [1, 1, 1])];
-                                                        newArgs[i] = v ?? 1;
-                                                        return { ...c, args: newArgs };
+                                setSceneGraph(prev =>
+                                    updateSceneGraphNodeAndComponent(
+                                        prev,
+                                        node.id,
+                                        idx,
+                                        (n, c) => ({
+                                            ...n,
+                                            components: n.components.map((compItem: any, cidx: number) =>
+                                                cidx === idx
+                                                    ? {
+                                                        ...compItem,
+                                                        args: [
+                                                            ...(compItem.args || [1, 1, 1]).map((val: any, j: number) =>
+                                                                j === i ? v ?? 1 : val
+                                                            )
+                                                        ]
                                                     }
-                                                    return c;
-                                                });
-                                                return { ...n, components: newComponents };
-                                            }
-                                            return { ...n, children: update(n.children) };
-                                        });
-                                    }
-                                    return update(prev);
-                                });
+                                                    : compItem
+                                            )
+                                        })
+                                    )
+                                );
                             }}
                         />
                     </div>
