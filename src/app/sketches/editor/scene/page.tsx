@@ -5,10 +5,11 @@ import { GameCanvas } from "@/shared/GameCanvas";
 import { DragDropLoader } from "../dragdrop/DragDropLoader";
 import React, { useEffect, useRef, useState } from "react";
 import SceneEditor from "./editor/SceneEditor";
-import { OrbitControls, TransformControls } from "@react-three/drei";
+import { OrbitControls, Stats, TransformControls } from "@react-three/drei";
 import { Object3D, Object3DEventMap } from "three";
 import Object3DNode, { EditorModes, SceneNode } from "./editor/SceneViewer";
-import InstanceProvider from "./editor/InstanceProvider";
+import { GameInstance, GameInstanceProvider } from "./editor/InstanceProvider";
+import { Perf } from 'r3f-perf'
 
 export default function EditorApp() {
     const [sceneGraph, setSceneGraph] = useState<SceneNode[]>([
@@ -99,7 +100,29 @@ export default function EditorApp() {
             <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 <GameCanvas>
-                    <InstanceProvider />
+                    <Perf />
+                    <GameInstanceProvider>
+                        <GameInstance
+                            modelUrl="/models/environment/tree2.glb"
+                            position={[2, 0, 0]}
+                            rotation={[0, 0, 0]}
+                        />
+                        <GameInstance
+                            modelUrl="/models/environment/shoe.glb"
+                            position={[4, 0, 0]}
+                            rotation={[0, 0, 0]}
+                        />
+                        <GameInstance
+                            modelUrl="/models/environment/shoe.glb"
+                            position={[3, 0, 0]}
+                            rotation={[0, 0, 0]}
+                        />
+                        <GameInstance
+                            modelUrl="/models/environment/shoe.glb"
+                            position={[3, 0, 0]}
+                            rotation={[0, 0, 0]}
+                        />
+                    </GameInstanceProvider>
 
                     <Physics paused={true}>
                         <Object3DNode

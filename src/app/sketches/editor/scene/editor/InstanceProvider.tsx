@@ -1,47 +1,136 @@
-import { Bvh } from "@react-three/drei";
-import { InstanceData, InstancedMeshProvider, InstanceView } from "./InstanceMesher";
+import React, { createContext, useContext, useMemo, useState } from "react";
+import { Bvh, Merged, useGLTF } from '@react-three/drei';
+import * as THREE from 'three';
 
 
-export function InstanceViewer({ data }: { data: InstanceData[] }) {
-    // Collect unique mesh options from data
-    const meshOptions = Array.from(
+// --- Types ---
+export type InstanceData = {
+    position: [number, number, number];
+    rotation: [number, number, number];
+    meshPath: string;
+};
+
+// --- Context ---
+const GameInstanceContext = createContext<{
+    addInstance: (instance: InstanceData) => void;
+    removeInstance: (instance: InstanceData) => void;
+    instances: InstanceData[];
+} | null>(null);
+
+// --- Provider ---
+export function GameInstanceProvider({ children }: { children: React.ReactNode }) {
+    const [instances, setInstances] = useState<InstanceData[]>([]);
+
+    const addInstance = (instance: InstanceData) => {
+        setInstances(prev => [...prev, instance]);
+    };
+
+    const removeInstance = (instance: InstanceData) => {
+        setInstances(prev => prev.filter(i => i !== instance));
+    };
+
+    // Unique mesh options from instances
+    const meshOptions = useMemo(() => Array.from(
         new Map(
-            data.map(d => [d.meshPath, { name: d.meshPath, path: d.meshPath }])
+            instances.map(d => [d.meshPath, { name: d.meshPath, path: d.meshPath }])
         ).values()
-    );
+    ), [instances]);
 
-    console.log(meshOptions)
+    // Load all unique meshes
+    const gltfs = useGLTF(meshOptions.map(opt => opt.path));
+
+    function getMeshesFromScene(root: THREE.Object3D, modelKey: string) {
+        const meshes: Record<string, THREE.Mesh> = {};
+        let meshIndex = 0;
+        function collectMeshes(obj: THREE.Object3D) {
+            if ((obj as unknown as THREE.Mesh).isMesh) {
+                const key = `${modelKey}_${meshIndex}`;
+                meshes[key] = obj as unknown as THREE.Mesh;
+                meshIndex++;
+            }
+            if (obj.children && obj.children.length > 0) {
+                obj.children.forEach(child => collectMeshes(child as unknown as THREE.Object3D));
+            }
+        }
+        collectMeshes(root);
+        return meshes;
+    }
+
+    // Merge meshes from all loaded models
+    const meshes = useMemo(() => (
+        Object.assign({}, ...gltfs.map((gltf, i) => getMeshesFromScene(gltf.scene as unknown as THREE.Object3D, meshOptions[i]?.name ?? "")))
+    ), [gltfs, meshOptions]);
+
     return (
-
-        <InstancedMeshProvider meshOptions={meshOptions}>
-            <Bvh firstHitOnly>
-                <InstanceView data={data} />
-            </Bvh>
-        </InstancedMeshProvider>
-    )
+        <GameInstanceContext.Provider value={{ addInstance, removeInstance, instances }}>
+            <Merged meshes={meshes} castShadow receiveShadow>
+                {(instancesMap) => (
+                    <>
+                        <InstanceView data={instances} instancesMap={instancesMap} />
+                        {children}
+                    </>
+                )}
+            </Merged>
+        </GameInstanceContext.Provider>
+    );
 }
 
+// --- InstanceView ---
+function InstanceView({ data, instancesMap }: { data: InstanceData[], instancesMap: Record<string, any> }) {
+    const meshNames = Object.keys(instancesMap);
 
-export default function InstanceProvider() {
     return (
         <>
-            <InstanceViewer data={[
-                {
-                    position: [2, 0, 0],
-                    rotation: [0, 0, 0],
-                    meshPath: '/models/environment/tree.glb',
-                },
-                {
-                    position: [6, 0, 0],
-                    rotation: [0, 0, 0],
-                    meshPath: '/models/environment/tree.glb',
-                },
-                {
-                    position: [4, 0, 0],
-                    rotation: [0, 0, 0],
-                    meshPath: '/models/environment/shoe.glb',
-                }
-            ]} />
+            {data.map((props, i) => {
+                const meshPath = props.meshPath;
+                const meshNamesToUse = meshNames.filter((n) =>
+                    typeof n === 'string' && meshPath && n.includes(meshPath)
+                );
+                return (
+                    <group key={meshPath + '-' + i} position={props.position} rotation={props.rotation}>
+                        {meshNamesToUse.map((name) => {
+                            const Instance = instancesMap[name];
+                            return (
+                                <Instance
+                                    key={name}
+                                    scale={[1, 1, 1]}
+                                />
+                            );
+                        })}
+                    </group>
+                );
+            })}
         </>
-    )
+    );
+}
+
+// --- GameInstance ---
+export function GameInstance({
+    modelUrl,
+    position,
+    rotation
+}: {
+    modelUrl: string;
+    position: [number, number, number];
+    rotation: [number, number, number];
+}) {
+    const ctx = useContext(GameInstanceContext);
+
+    React.useEffect(() => {
+        if (!ctx) return;
+
+        const instance: InstanceData = {
+            meshPath: modelUrl,
+            position,
+            rotation
+        };
+        ctx.addInstance(instance);
+
+        return () => {
+            ctx.removeInstance(instance);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return null;
 }
