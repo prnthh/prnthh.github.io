@@ -4,7 +4,8 @@ import { MaterialComponent } from "./components/MaterialComponent";
 import { GeometryComponent } from "./components/GeometryComponent";
 import { TransformComponent } from "./components/TransformComponent";
 import { ModelComponent } from "./components/ModelComponent";
-import { SceneNode } from "./SceneViewer";
+import { PhysicsComponent } from "./components/PhysicsComponent";
+import { SceneNode } from "../viewer/SceneViewer";
 
 interface EditorAppProps {
     selectedId: string | null;
@@ -30,6 +31,11 @@ const COMPONENT_TYPES = [
         type: 'model',
         label: 'GLB Model',
         default: { type: 'model', src: '', scale: 1 },
+    },
+    {
+        type: 'physics',
+        label: 'Physics',
+        default: { type: 'physics', props: { type: 'fixed' } },
     }
     // Add more component types here
 ];
@@ -79,6 +85,10 @@ function ComponentEditor({ comp, idx, node, setSceneGraph, models }: ComponentEd
     // Use ModelComponent for model
     if (comp.type === 'model') {
         return <ModelComponent node={node} models={models} setSceneGraph={setSceneGraph} />;
+    }
+    // Use PhysicsComponent for physics
+    if (comp.type === 'physics') {
+        return <PhysicsComponent node={node} setSceneGraph={setSceneGraph} />;
     }
 
     const compType = getComponentType(comp.type);

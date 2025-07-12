@@ -3,23 +3,36 @@
 import { Physics } from "@react-three/rapier";
 import { GameCanvas } from "@/shared/GameCanvas";
 import { DragDropLoader } from "../dragdrop/DragDropLoader";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext, createContext } from "react";
 import SceneEditor from "./editor/SceneEditor";
-import { Environment, OrbitControls, Stats, TransformControls } from "@react-three/drei";
+import { Environment } from "@react-three/drei";
 import { Object3D, Object3DEventMap } from "three";
-import Object3DNode, { EditorModes, SceneNode } from "./editor/SceneViewer";
-import { GameInstance, GameInstanceProvider } from "./editor/InstanceProvider";
+import { EditorModes, SceneNode, Viewer } from "./viewer/SceneViewer";
 import { Perf } from 'r3f-perf'
+import { CharacterController } from "../../controllers/shouldercam/CharacterController";
+import Controls from "@/shared/ControlsProvider";
 
-export default function EditorApp() {
-
-    return <>
-        <Editor mode={EditorModes.Edit} />
-    </>
-
+interface EditorContextType {
+    sceneGraph: SceneNode[];
+    setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
+    models: { [filename: string]: any };
+    setModels: React.Dispatch<React.SetStateAction<{ [filename: string]: any }>>;
+    playMode: EditorModes;
+    setPlayMode: React.Dispatch<React.SetStateAction<EditorModes>>;
+    selectedNodeId: string | null;
+    setSelectedNodeId: React.Dispatch<React.SetStateAction<string | null>>;
+    getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>;
 }
 
-export function Editor({ mode = EditorModes.Edit, sceneGraph: initialSceneGraph }: { mode?: EditorModes, sceneGraph?: SceneNode[] }) {
+const EditorContext = createContext<EditorContextType | undefined>(undefined);
+
+export function useEditorContext() {
+    const ctx = useContext(EditorContext);
+    if (!ctx) throw new Error("useEditorContext must be used within EditorContext.Provider");
+    return ctx;
+}
+
+export function GameEngine({ mode = EditorModes.Edit, sceneGraph: initialSceneGraph, children }: { mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode }) {
     const [sceneGraph, setSceneGraph] = useState<SceneNode[]>(
         initialSceneGraph ??
         [{
@@ -48,18 +61,6 @@ export function Editor({ mode = EditorModes.Edit, sceneGraph: initialSceneGraph 
         if (!nodeRefs.current[id]) nodeRefs.current[id] = React.createRef<Object3D<Object3DEventMap>>();
         return nodeRefs.current[id];
     };
-    // Find the selected ref
-    const selectedRef = selectedNodeId ? getNodeRef(selectedNodeId) : undefined;
-
-    // Helper to update node transform by id recursively
-    function updateNodeTransform(nodes: SceneNode[], id: string, transform: any): SceneNode[] {
-        return nodes.map(n => {
-            if (n.id === id) {
-                return { ...n, transform: { ...n.transform, ...transform } };
-            }
-            return { ...n, children: updateNodeTransform(n.children, id, transform) };
-        });
-    }
 
     function addModelNodeToSceneGraph(model: any, filename: string) {
         // Always store the model in models state by filename
@@ -92,81 +93,14 @@ export function Editor({ mode = EditorModes.Edit, sceneGraph: initialSceneGraph 
         });
     }
 
-    function injectModels(nodes: SceneNode[], models: { [filename: string]: any }): SceneNode[] {
-        return nodes.map(node => {
-            const newComponents = node.components?.map((comp: any) => {
-                if (comp.type === 'model' && typeof comp.filename === 'string') {
-                    return { ...comp, object: models[comp.filename] };
-                }
-                return comp;
-            }) ?? [];
-            return {
-                ...node,
-                components: newComponents,
-                children: injectModels(node.children, models)
-            };
-        });
-    }
-
-    // Helper to check if a node exists in the scene graph
-    function nodeExists(nodes: SceneNode[], id: string | null): boolean {
-        if (!id) return false;
-        for (const node of nodes) {
-            if (node.id === id) return true;
-            if (nodeExists(node.children, id)) return true;
-        }
-        return false;
-    }
-
-    // Clear selectedNodeId if the node is deleted
-    useEffect(() => {
-        if (selectedNodeId && !nodeExists(sceneGraph, selectedNodeId)) {
-            setSelectedNodeId(null);
-        }
-    }, [sceneGraph, selectedNodeId]);
-
     return (
-        <>
-            <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />
+        <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef }}>
+            {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 <GameCanvas>
-                    <Perf position="bottom-right" />
-
-
-                    <Physics paused={true}>
-                        <GameInstanceProvider models={models}>
-                            <Object3DNode
-                                node={injectModels(sceneGraph, models)[0]} // inject models inline for rendering
-                                onSelect={setSelectedNodeId}
-                                selectedNodeId={selectedNodeId}
-                                setSceneGraph={setSceneGraph}
-                                getNodeRef={getNodeRef}
-                                playMode={playMode}
-                            />
-                        </GameInstanceProvider>
+                    <Physics paused={mode !== EditorModes.Play}>
+                        {children}
                     </Physics>
-                    {playMode == EditorModes.Edit && <>
-                        <OrbitControls makeDefault />
-                        <gridHelper args={[10, 10, 10]} />
-                        {/* Top-level TransformControls overlay */}
-                        {(selectedNodeId && selectedRef && selectedRef.current && nodeExists(sceneGraph, selectedNodeId)) ? (
-                            <TransformControls
-                                object={selectedRef.current}
-                                mode="translate"
-                                onObjectChange={() => {
-                                    const obj = selectedRef.current;
-                                    if (!obj) return;
-                                    setSceneGraph(prev => updateNodeTransform(prev, selectedNodeId, {
-                                        position: [obj.position.x, obj.position.y, obj.position.z],
-                                        // rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
-                                        // scale: obj.scale.x // assuming uniform scale
-                                    }));
-                                }}
-                            />
-                        ) : null}
-                    </>}
-                    <ambientLight intensity={0.5} />
-                    <Environment files="/textures/skybox3.jpg" background={true} />
                 </GameCanvas>
             </div>
             {playMode == EditorModes.Edit && <SceneEditor
@@ -177,6 +111,32 @@ export function Editor({ mode = EditorModes.Edit, sceneGraph: initialSceneGraph 
                 models={models}
                 setModels={setModels}
             />}
-        </>
+        </EditorContext.Provider>
     );
+}
+
+export default function EditorApp() {
+    const [editorMode, setEditorMode] = useState<EditorModes>(EditorModes.Edit);
+    return <>
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
+            <button onClick={() => setEditorMode(prev => prev === EditorModes.Edit ? EditorModes.Play : EditorModes.Edit)}>
+                {editorMode === EditorModes.Edit ? "Switch to Play Mode" : "Switch to Edit Mode"}
+            </button>
+        </div>
+        <Controls>
+
+            <GameEngine mode={editorMode} sceneGraph={undefined}>
+                {editorMode === EditorModes.Play ? <>
+                    <CharacterController />
+                </> : null}
+
+                <Viewer />
+
+                <ambientLight intensity={0.5} />
+                <Environment files="/textures/skybox3.jpg" background={true} />
+                <Perf position="bottom-right" />
+            </GameEngine>
+        </Controls>
+
+    </>
 }

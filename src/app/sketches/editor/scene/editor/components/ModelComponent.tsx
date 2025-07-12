@@ -1,5 +1,5 @@
 import React from "react";
-import { SceneNode } from "../SceneViewer";
+import { SceneNode } from "../../viewer/SceneViewer";
 import { updateSceneGraphNodeAndComponent } from "./TransformComponent";
 
 // --- ModelComponent for model component ---
@@ -46,7 +46,7 @@ export function ModelComponent({ node, models, setSceneGraph }: {
                     ...n,
                     components: n.components.map((compItem: any, cidx: number) =>
                         cidx === idx
-                            ? { ...compItem, noInstance: e.target.checked }
+                            ? { ...compItem, instanced: e.target.checked }
                             : compItem
                     )
                 })
@@ -59,7 +59,7 @@ export function ModelComponent({ node, models, setSceneGraph }: {
         ? comp.filename
         : "";
 
-    const noInstance = comp.noInstance !== undefined ? comp.noInstance : false;
+    const instanced = comp.instanced !== undefined ? comp.instanced : false;
 
     return (
         <li style={{ marginBottom: 8 }}>
@@ -88,10 +88,10 @@ export function ModelComponent({ node, models, setSceneGraph }: {
                     <label>
                         <input
                             type="checkbox"
-                            checked={noInstance}
+                            checked={instanced}
                             onChange={handleInstanceChange}
                         />
-                        <span style={{ marginLeft: 4 }}>No Instance</span>
+                        <span style={{ marginLeft: 4 }}>Instanced</span>
                     </label>
                 </div>
             </div>

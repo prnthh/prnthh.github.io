@@ -1,6 +1,6 @@
 import React from "react";
 import NumberInput from "../ui/NumberInput";
-import { SceneNode } from "../SceneViewer";
+import { SceneNode } from "../../viewer/SceneViewer";
 
 // --- Utility to update a node and a component by index ---
 export function updateSceneGraphNodeAndComponent(

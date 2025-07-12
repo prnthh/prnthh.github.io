@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import NodeEditor from "./NodeEditor";
-import { SceneNode } from "./SceneViewer";
+import { SceneNode } from "../viewer/SceneViewer";
 import { FilePicker } from "../../dragdrop/DragDropLoader";
 
 function generateId() {
@@ -59,6 +59,8 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
     const [rawMode, setRawMode] = useState(false);
     const [rawText, setRawText] = useState<string>("");
     const dragNode = useRef<SceneNode | null>(null);
+    // Context menu state
+    const [contextMenu, setContextMenu] = useState<{ nodeId: string, x: number, y: number } | null>(null);
 
     // --- Add node ---
     const handleAdd = (parentId?: string) => {
@@ -173,6 +175,46 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
         }
     };
 
+    // --- Delete node ---
+    const handleDeleteNode = (nodeId: string) => {
+        setSceneGraph(prev => {
+            const [newGraph] = removeNodeById(prev, nodeId);
+            return newGraph;
+        });
+        setContextMenu(null);
+        if (selectedNodeId === nodeId) setSelectedNodeId(null);
+    };
+
+    // --- Duplicate node ---
+    function deepCloneNode(node: SceneNode): SceneNode {
+        return {
+            ...node,
+            id: generateId(),
+            components: node.components ? JSON.parse(JSON.stringify(node.components)) : [],
+            children: node.children?.map(deepCloneNode) || [],
+        };
+    }
+    const handleDuplicateNode = (nodeId: string) => {
+        setSceneGraph(prev => {
+            // Find parent and index of nodeId
+            function recur(nodes: SceneNode[]): SceneNode[] {
+                return nodes.flatMap(node => {
+                    if (node.id === nodeId) {
+                        // Duplicate as sibling after original
+                        const clone = deepCloneNode(node);
+                        return [node, clone];
+                    }
+                    return [{
+                        ...node,
+                        children: recur(node.children)
+                    }];
+                });
+            }
+            return recur(prev);
+        });
+        setContextMenu(null);
+    };
+
     // --- Render tree ---
     const renderNode = (node: SceneNode) => (
         <div
@@ -192,12 +234,18 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                 e.stopPropagation();
                 setSelectedNodeId(node.id);
             }}
+            onContextMenu={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                setContextMenu({ nodeId: node.id, x: e.clientX, y: e.clientY });
+            }}
             style={{
                 marginLeft: 16,
                 border: selectedNodeId === node.id ? "1px solid #4f8cff" : undefined,
                 background: selectedNodeId === node.id ? "#e6f0ff" : undefined,
                 padding: 2,
                 cursor: "pointer",
+                position: "relative"
             }}
         >
             {node.name}
@@ -205,28 +253,61 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
             {node.children?.map(child => renderNode(child))}
         </div>
     );
+
+    // --- Context menu UI ---
+    const contextMenuUI = contextMenu ? (
+        <div
+            style={{
+                position: "fixed",
+                top: contextMenu.y,
+                left: contextMenu.x,
+                background: "white",
+                border: "1px solid #ccc",
+                borderRadius: 4,
+                zIndex: 1000,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                minWidth: 100
+            }}
+            onClick={e => e.stopPropagation()}
+        >
+            <div
+                style={{ padding: 8, cursor: "pointer" }}
+                onClick={() => handleDuplicateNode(contextMenu.nodeId)}
+            >
+                Duplicate
+            </div>
+            <div
+                style={{ padding: 8, cursor: "pointer", color: "red" }}
+                onClick={() => handleDeleteNode(contextMenu.nodeId)}
+            >
+                Delete
+            </div>
+        </div>
+    ) : null;
+
+    // --- Dismiss context menu on click elsewhere ---
+    React.useEffect(() => {
+        if (!contextMenu) return;
+        const handle = () => setContextMenu(null);
+        window.addEventListener("click", handle);
+        return () => window.removeEventListener("click", handle);
+    }, [contextMenu]);
+
     return (
         <>
             <div className="absolute top-24 left-4 bg-white rounded p-1">
-                <h2 style={{ cursor: 'pointer', userSelect: 'none' }} onClick={handleRawToggle}>
-                    Scene Hierarchy / Raw
-                </h2>
-                <div style={{ marginTop: 16 }}>
+                <div className="flex gap-2 items-center">
+                    <h2>
+                        Scene Hierarchy
+                    </h2>
+                    <button onClick={handleRawToggle}>⛭</button>
+                </div>
+                <div>
                     {rawMode ? (
-                        <div style={{ display: "flex", gap: 8 }}>
-                            <div>
-                                <div style={{ fontWeight: "bold" }}>SceneGraph</div>
-                                <textarea
-                                    value={rawText}
-                                    onChange={handleRawChange}
-                                    onBlur={handleRawBlur}
-                                    onKeyDown={handleRawKeyDown}
-                                    style={{ width: 400, height: 300, fontFamily: 'monospace', fontSize: 14 }}
-                                />
-                            </div>
+                        <div className="flex flex-col gap-2">
                             <div>
                                 <div style={{ fontWeight: "bold" }}>Models</div>
-                                <div style={{ width: 400, height: 300, overflowY: "auto", background: "#f8f8f8", fontFamily: 'monospace', fontSize: 14, padding: 4 }}>
+                                <div className="flex flex-col">
                                     {Object.keys(models).length === 0
                                         ? <div style={{ color: "#888" }}>No models loaded.</div>
                                         : Object.entries(models).map(([filename, model]) => (
@@ -257,12 +338,23 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                                     )}
                                 </div>
                             </div>
+                            <div>
+                                <div style={{ fontWeight: "bold" }}>SceneGraph</div>
+                                <textarea
+                                    value={rawText}
+                                    onChange={handleRawChange}
+                                    onBlur={handleRawBlur}
+                                    onKeyDown={handleRawKeyDown}
+                                    style={{ width: 400, height: 300, fontFamily: 'monospace', fontSize: 14 }}
+                                />
+                            </div>
                         </div>
                     ) : (
                         sceneGraph.map(node => renderNode(node))
                     )}
                 </div>
             </div>
+            {contextMenuUI}
             <NodeEditor
                 selectedId={selectedNodeId}
                 sceneGraph={sceneGraph}

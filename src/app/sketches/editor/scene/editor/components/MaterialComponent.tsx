@@ -1,5 +1,5 @@
 import React from "react";
-import { SceneNode } from "../SceneViewer";
+import { SceneNode } from "../../viewer/SceneViewer";
 import { updateSceneGraphNodeAndComponent } from "./TransformComponent";
 
 // --- Prop Editor for material properties ---
