@@ -101,38 +101,20 @@ export default function EditorApp() {
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Perf />
-                    <GameInstanceProvider>
-                        <GameInstance
-                            modelUrl="/models/environment/tree.glb"
-                            position={[2, 0, 0]}
-                            rotation={[0, 0, 0]}
-                        />
-                        <GameInstance
-                            modelUrl="/models/environment/shoe.glb"
-                            position={[4, 0, 0]}
-                            rotation={[0, 0, 0]}
-                        />
-                        <GameInstance
-                            modelUrl="/models/environment/shoe.glb"
-                            position={[3, 0, 0]}
-                            rotation={[0, 0, 0]}
-                        />
-                        <GameInstance
-                            modelUrl="/models/environment/shoe.glb"
-                            position={[3, 0, 0]}
-                            rotation={[0, 0, 0]}
-                        />
-                    </GameInstanceProvider>
+
 
                     <Physics paused={true}>
-                        <Object3DNode
-                            node={injectModels(sceneGraph, models)[0]} // inject models inline for rendering
-                            onSelect={setSelectedNodeId}
-                            selectedNodeId={selectedNodeId}
-                            setSceneGraph={setSceneGraph}
-                            getNodeRef={getNodeRef}
-                            playMode={playMode}
-                        />
+                        <GameInstanceProvider>
+                            <Object3DNode
+                                node={injectModels(sceneGraph, models)[0]} // inject models inline for rendering
+                                onSelect={setSelectedNodeId}
+                                selectedNodeId={selectedNodeId}
+                                setSceneGraph={setSceneGraph}
+                                getNodeRef={getNodeRef}
+                                playMode={playMode}
+                            />
+                        </GameInstanceProvider>
+
                     </Physics>
                     {playMode == EditorModes.Edit && <>
                         <OrbitControls makeDefault />

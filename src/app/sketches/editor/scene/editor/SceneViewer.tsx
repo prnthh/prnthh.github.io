@@ -1,6 +1,7 @@
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { useRef } from "react";
 import { Object3D, Object3DEventMap } from "three";
+import { GameInstance } from "./InstanceProvider";
 
 export enum EditorModes {
     Edit = "edit",
@@ -43,7 +44,14 @@ const ComponentMapper = ({ node }: { node: SceneNode }) => {
             <boxGeometry args={[0.1, 0.1, 0.1]} />
         }
         {material && <meshStandardMaterial {...material.props} />}
-        {model && (model.object ? <primitive object={model.object} /> : <ExclamationMark />)}
+        {model && (model.object ? <>
+            <primitive object={model.object} />
+            <GameInstance
+                modelUrl="/models/environment/tree.glb"
+                position={node.transform?.position || [0, 0, 0]}
+                rotation={node.transform?.rotation || [0, 0, 0]}
+            />
+        </> : <ExclamationMark />)}
     </>
 }
 
