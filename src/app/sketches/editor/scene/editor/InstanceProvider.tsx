@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { Bvh, Merged, useGLTF } from '@react-three/drei';
+import { Bvh, Merged } from '@react-three/drei';
 import * as THREE from 'three';
 
 
@@ -19,7 +19,13 @@ const GameInstanceContext = createContext<{
 } | null>(null);
 
 // --- Provider ---
-export function GameInstanceProvider({ children }: { children: React.ReactNode }) {
+export function GameInstanceProvider({
+    children,
+    models
+}: {
+    children: React.ReactNode,
+    models: { [filename: string]: any }
+}) {
     const [instances, setInstances] = useState<InstanceData[]>([]);
 
     const addInstance = (instance: InstanceData) => {
@@ -46,9 +52,7 @@ export function GameInstanceProvider({ children }: { children: React.ReactNode }
         ).values()
     ), [instances]);
 
-    // Load all unique meshes
-    const gltfs = useGLTF(meshOptions.map(opt => opt.path));
-
+    // Use model objects from models prop instead of loading via useGLTF
     function getMeshesFromScene(root: THREE.Object3D, modelKey: string) {
         const meshes: Record<string, THREE.Mesh> = {};
         let meshIndex = 0;
@@ -66,10 +70,19 @@ export function GameInstanceProvider({ children }: { children: React.ReactNode }
         return meshes;
     }
 
-    // Merge meshes from all loaded models
+    // Merge meshes from all loaded models (from models prop)
     const meshes = useMemo(() => (
-        Object.assign({}, ...gltfs.map((gltf, i) => getMeshesFromScene(gltf.scene as unknown as THREE.Object3D, meshOptions[i]?.name ?? "")))
-    ), [gltfs, meshOptions]);
+        Object.assign(
+            {},
+            ...meshOptions.map(opt => {
+                const model = models[opt.name];
+                if (!model) { console.log("not found", opt.name); return {} };
+                // Try .scene, fallback to model itself
+                const root = model.scene ?? model;
+                return getMeshesFromScene(root as unknown as THREE.Object3D, opt.name);
+            })
+        )
+    ), [meshOptions, models]);
 
     return (
         <GameInstanceContext.Provider value={{ addInstance, removeInstance, instances }}>

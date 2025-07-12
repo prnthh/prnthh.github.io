@@ -104,7 +104,7 @@ export default function EditorApp() {
 
 
                     <Physics paused={true}>
-                        <GameInstanceProvider>
+                        <GameInstanceProvider models={models}>
                             <Object3DNode
                                 node={injectModels(sceneGraph, models)[0]} // inject models inline for rendering
                                 onSelect={setSelectedNodeId}
@@ -114,7 +114,6 @@ export default function EditorApp() {
                                 playMode={playMode}
                             />
                         </GameInstanceProvider>
-
                     </Physics>
                     {playMode == EditorModes.Edit && <>
                         <OrbitControls makeDefault />

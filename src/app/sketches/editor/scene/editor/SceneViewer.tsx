@@ -45,9 +45,10 @@ const ComponentMapper = ({ node }: { node: SceneNode }) => {
         }
         {material && <meshStandardMaterial {...material.props} />}
         {model && (model.object ? <>
-            <primitive object={model.object} />
+            {/* <primitive object={model.object} /> */}
+            <object3D />
             <GameInstance
-                modelUrl="/models/environment/tree.glb"
+                modelUrl={node.components.find(c => c.type === 'model')?.filename || ''}
                 position={node.transform?.position || [0, 0, 0]}
                 rotation={node.transform?.rotation || [0, 0, 0]}
             />
