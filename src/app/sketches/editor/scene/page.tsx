@@ -103,7 +103,7 @@ export default function EditorApp() {
                     <Perf />
                     <GameInstanceProvider>
                         <GameInstance
-                            modelUrl="/models/environment/tree2.glb"
+                            modelUrl="/models/environment/tree.glb"
                             position={[2, 0, 0]}
                             rotation={[0, 0, 0]}
                         />

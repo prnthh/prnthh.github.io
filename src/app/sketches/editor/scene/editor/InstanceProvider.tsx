@@ -5,6 +5,7 @@ import * as THREE from 'three';
 
 // --- Types ---
 export type InstanceData = {
+    id: string;
     position: [number, number, number];
     rotation: [number, number, number];
     meshPath: string;
@@ -22,11 +23,20 @@ export function GameInstanceProvider({ children }: { children: React.ReactNode }
     const [instances, setInstances] = useState<InstanceData[]>([]);
 
     const addInstance = (instance: InstanceData) => {
-        setInstances(prev => [...prev, instance]);
+        setInstances(prev => {
+            // Replace if id exists, else add
+            const idx = prev.findIndex(i => i.id === instance.id);
+            if (idx !== -1) {
+                const copy = [...prev];
+                copy[idx] = instance;
+                return copy;
+            }
+            return [...prev, instance];
+        });
     };
 
     const removeInstance = (instance: InstanceData) => {
-        setInstances(prev => prev.filter(i => i !== instance));
+        setInstances(prev => prev.filter(i => i.id !== instance.id));
     };
 
     // Unique mesh options from instances
@@ -116,21 +126,25 @@ export function GameInstance({
 }) {
     const ctx = useContext(GameInstanceContext);
 
+    // Stable id for this instance
+    const idRef = React.useRef<string>(Math.random().toString(36).substr(2, 9));
+
     React.useEffect(() => {
         if (!ctx) return;
 
         const instance: InstanceData = {
+            id: idRef.current,
             meshPath: modelUrl,
             position,
             rotation
         };
+
         ctx.addInstance(instance);
 
         return () => {
             ctx.removeInstance(instance);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [modelUrl, position, rotation]);
 
     return null;
 }
