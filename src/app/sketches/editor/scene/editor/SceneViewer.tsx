@@ -2,6 +2,7 @@ import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { useEffect, useRef, useState } from "react";
 import { Object3D, Object3DEventMap } from "three";
 import { GameInstance } from "./InstanceProvider";
+import * as THREE from "three";
 
 export enum EditorModes {
     Edit = "edit",
@@ -13,7 +14,7 @@ export enum EditorModes {
 export default function Object3DNode({ node, onSelect, selectedNodeId, setSceneGraph, getNodeRef, playMode }: { node: SceneNode, onSelect: (id: string) => void, selectedNodeId: string | null, setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>, getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>, playMode: EditorModes }) {
     return (
         <RigidBodyWrapper node={node} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode}>
-            {node.children.map((child, index) => (
+            {node.children?.map((child, index) => (
                 <Object3DNode key={index} node={child} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} getNodeRef={getNodeRef} playMode={playMode} />
             ))}
         </RigidBodyWrapper>
@@ -26,9 +27,9 @@ export type SceneNode = {
     children: SceneNode[];
     components: any[]; // New field for components
     transform?: {
-        position: [number, number, number] | null;
-        rotation: [number, number, number] | null;
-        scale: number | null;
+        position?: [number, number, number] | null;
+        rotation?: [number, number, number] | null;
+        scale?: number | null;
     } | null;
 };
 
@@ -39,10 +40,7 @@ const ComponentMapper = ({ node }: { node: SceneNode }) => {
     const model = node.components?.find(c => c.type === 'model');
 
     return <>
-        {geometry ?
-            <boxGeometry args={geometry.args || [0.1, 0.1, 0.1]} /> :
-            <boxGeometry args={[0.1, 0.1, 0.1]} />
-        }
+        {<boxGeometry args={geometry?.args || [0, 0, 0]} />}
         {material && <meshStandardMaterial {...material.props} />}
         {model && (model.object ? <>
             {model.noInstance ? <ClonedModel object={model.object} /> : <>
@@ -61,6 +59,12 @@ const ClonedModel = ({ object }: { object: Object3D }) => {
     const [clone, setClone] = useState<Object3D>();
     useEffect(() => {
         const cloned = object.clone();
+        cloned.traverse(child => {
+            if (child instanceof THREE.Mesh) {
+                // child.castShadow = true;
+                // child.receiveShadow = true;
+            }
+        });
         setClone(cloned);
     }, [object]);
 
@@ -109,6 +113,8 @@ const RigidBodyWrapper = ({
                 e.stopPropagation();
                 onSelect(node.id);
             }}
+            castShadow
+            receiveShadow
             position={[0, 0, 0]}
             rotation={rotation ? [rotation[0], rotation[1], rotation[2]] : undefined}
             scale={scale}
@@ -118,7 +124,7 @@ const RigidBodyWrapper = ({
         </mesh>
     );
 
-    if (playMode === EditorModes.Edit) {
+    if (playMode === EditorModes.Edit || !node.components.some(c => c.type === 'rigidBody')) {
         return (
             <group ref={groupRef} position={position || [0, 0, 0]} rotation={rotation} scale={scale}>
                 {mesh}

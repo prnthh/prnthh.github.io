@@ -117,7 +117,6 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setS
             const [newGraph] = removeNodeById(prev, node.id);
             return newGraph;
         });
-        if (setSelectedNodeId) setSelectedNodeId(null);
     };
 
     // Handler to add a component

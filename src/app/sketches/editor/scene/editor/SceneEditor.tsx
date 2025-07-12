@@ -202,7 +202,7 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
         >
             {node.name}
             <button style={{ marginLeft: 8 }} onClick={e => { e.stopPropagation(); handleAdd(node.id); }}>+</button>
-            {node.children.map(child => renderNode(child))}
+            {node.children?.map(child => renderNode(child))}
         </div>
     );
     return (

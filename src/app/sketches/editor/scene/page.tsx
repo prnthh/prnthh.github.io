@@ -5,25 +5,38 @@ import { GameCanvas } from "@/shared/GameCanvas";
 import { DragDropLoader } from "../dragdrop/DragDropLoader";
 import React, { useEffect, useRef, useState } from "react";
 import SceneEditor from "./editor/SceneEditor";
-import { OrbitControls, Stats, TransformControls } from "@react-three/drei";
+import { Environment, OrbitControls, Stats, TransformControls } from "@react-three/drei";
 import { Object3D, Object3DEventMap } from "three";
 import Object3DNode, { EditorModes, SceneNode } from "./editor/SceneViewer";
 import { GameInstance, GameInstanceProvider } from "./editor/InstanceProvider";
 import { Perf } from 'r3f-perf'
 
 export default function EditorApp() {
-    const [sceneGraph, setSceneGraph] = useState<SceneNode[]>([
-        {
+
+    return <>
+        <Editor mode={EditorModes.Edit} />
+    </>
+
+}
+
+export function Editor({ mode = EditorModes.Edit, sceneGraph: initialSceneGraph }: { mode?: EditorModes, sceneGraph?: SceneNode[] }) {
+    const [sceneGraph, setSceneGraph] = useState<SceneNode[]>(
+        initialSceneGraph ??
+        [{
             id: Math.random().toString(36).substr(2, 9),
             name: "Root",
             children: [],
             components: [],
-        }
-    ]);
+        }]
+    );
     // Store models as a map: filename -> model
     const [models, setModels] = useState<{ [filename: string]: any }>({});
-    const [playMode, setPlayMode] = useState<EditorModes>(EditorModes.Edit);
+    const [playMode, setPlayMode] = useState<EditorModes>(mode);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+
+    useEffect(() => {
+        setPlayMode(mode);
+    }, [mode]);
 
     useEffect(() => {
         console.log("Scene graph updated:", sceneGraph);
@@ -95,6 +108,23 @@ export default function EditorApp() {
         });
     }
 
+    // Helper to check if a node exists in the scene graph
+    function nodeExists(nodes: SceneNode[], id: string | null): boolean {
+        if (!id) return false;
+        for (const node of nodes) {
+            if (node.id === id) return true;
+            if (nodeExists(node.children, id)) return true;
+        }
+        return false;
+    }
+
+    // Clear selectedNodeId if the node is deleted
+    useEffect(() => {
+        if (selectedNodeId && !nodeExists(sceneGraph, selectedNodeId)) {
+            setSelectedNodeId(null);
+        }
+    }, [sceneGraph, selectedNodeId]);
+
     return (
         <>
             <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />
@@ -119,7 +149,7 @@ export default function EditorApp() {
                         <OrbitControls makeDefault />
                         <gridHelper args={[10, 10, 10]} />
                         {/* Top-level TransformControls overlay */}
-                        {selectedNodeId && selectedRef && selectedRef.current && (
+                        {(selectedNodeId && selectedRef && selectedRef.current && nodeExists(sceneGraph, selectedNodeId)) ? (
                             <TransformControls
                                 object={selectedRef.current}
                                 mode="translate"
@@ -133,9 +163,10 @@ export default function EditorApp() {
                                     }));
                                 }}
                             />
-                        )}
+                        ) : null}
                     </>}
-                    <ambientLight intensity={1} />
+                    <ambientLight intensity={0.5} />
+                    <Environment files="/textures/skybox3.jpg" background={true} />
                 </GameCanvas>
             </div>
             {playMode == EditorModes.Edit && <SceneEditor
