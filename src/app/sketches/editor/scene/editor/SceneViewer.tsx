@@ -1,5 +1,5 @@
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Object3D, Object3DEventMap } from "three";
 import { GameInstance } from "./InstanceProvider";
 
@@ -45,8 +45,7 @@ const ComponentMapper = ({ node }: { node: SceneNode }) => {
         }
         {material && <meshStandardMaterial {...material.props} />}
         {model && (model.object ? <>
-            {model.noInstance ? <primitive object={model.object} /> : <>
-                <object3D />
+            {model.noInstance ? <ClonedModel object={model.object} /> : <>
                 <GameInstance
                     modelUrl={node.components.find(c => c.type === 'model')?.filename || ''}
                     position={node.transform?.position || [0, 0, 0]}
@@ -56,6 +55,16 @@ const ComponentMapper = ({ node }: { node: SceneNode }) => {
 
         </> : <ExclamationMark />)}
     </>
+}
+
+const ClonedModel = ({ object }: { object: Object3D }) => {
+    const [clone, setClone] = useState<Object3D>();
+    useEffect(() => {
+        const cloned = object.clone();
+        setClone(cloned);
+    }, [object]);
+
+    return clone ? <primitive object={clone} /> : undefined;
 }
 
 const ExclamationMark = () => {
