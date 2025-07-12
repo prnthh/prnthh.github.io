@@ -8,6 +8,7 @@ import SceneEditor from "./editor/SceneEditor";
 import { OrbitControls, TransformControls } from "@react-three/drei";
 import { Object3D, Object3DEventMap } from "three";
 import Object3DNode, { EditorModes, SceneNode } from "./editor/SceneViewer";
+import InstanceProvider from "./editor/InstanceProvider";
 
 export default function EditorApp() {
     const [sceneGraph, setSceneGraph] = useState<SceneNode[]>([
@@ -98,6 +99,8 @@ export default function EditorApp() {
             <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 <GameCanvas>
+                    <InstanceProvider />
+
                     <Physics paused={true}>
                         <Object3DNode
                             node={injectModels(sceneGraph, models)[0]} // inject models inline for rendering
