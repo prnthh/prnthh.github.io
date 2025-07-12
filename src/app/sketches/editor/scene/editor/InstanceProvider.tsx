@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { Bvh, Merged } from '@react-three/drei';
+import { Merged } from '@react-three/drei';
 import * as THREE from 'three';
 
 
@@ -16,6 +16,8 @@ const GameInstanceContext = createContext<{
     addInstance: (instance: InstanceData) => void;
     removeInstance: (instance: InstanceData) => void;
     instances: InstanceData[];
+    meshes: Record<string, any>;
+    instancesMap?: Record<string, any>;
 } | null>(null);
 
 // --- Provider ---
@@ -85,45 +87,13 @@ export function GameInstanceProvider({
     ), [meshOptions, models]);
 
     return (
-        <GameInstanceContext.Provider value={{ addInstance, removeInstance, instances }}>
-            <Merged meshes={meshes} castShadow receiveShadow>
-                {(instancesMap) => (
-                    <>
-                        <InstanceView data={instances} instancesMap={instancesMap} />
-                        {children}
-                    </>
-                )}
-            </Merged>
-        </GameInstanceContext.Provider>
-    );
-}
-
-// --- InstanceView ---
-function InstanceView({ data, instancesMap }: { data: InstanceData[], instancesMap: Record<string, any> }) {
-    const meshNames = Object.keys(instancesMap);
-
-    return (
-        <>
-            {data.map((props, i) => {
-                const meshPath = props.meshPath;
-                const meshNamesToUse = meshNames.filter((n) =>
-                    typeof n === 'string' && meshPath && n.includes(meshPath)
-                );
-                return (
-                    <group key={meshPath + '-' + i} position={props.position} rotation={props.rotation}>
-                        {meshNamesToUse.map((name) => {
-                            const Instance = instancesMap[name];
-                            return (
-                                <Instance
-                                    key={name}
-                                    scale={[1, 1, 1]}
-                                />
-                            );
-                        })}
-                    </group>
-                );
-            })}
-        </>
+        <Merged meshes={meshes} castShadow receiveShadow>
+            {(instancesMap) => (
+                <GameInstanceContext.Provider value={{ addInstance, removeInstance, instances, meshes, instancesMap }}>
+                    {children}
+                </GameInstanceContext.Provider>
+            )}
+        </Merged>
     );
 }
 
@@ -131,17 +101,20 @@ function InstanceView({ data, instancesMap }: { data: InstanceData[], instancesM
 export function GameInstance({
     modelUrl,
     position,
-    rotation
+    rotation,
+    children
 }: {
     modelUrl: string;
     position: [number, number, number];
     rotation: [number, number, number];
+    children?: React.ReactNode;
 }) {
     const ctx = useContext(GameInstanceContext);
 
     // Stable id for this instance
     const idRef = React.useRef<string>(Math.random().toString(36).substr(2, 9));
 
+    // Add/remove instance to context for meshOptions/meshes calculation
     React.useEffect(() => {
         if (!ctx) return;
 
@@ -159,5 +132,27 @@ export function GameInstance({
         };
     }, [modelUrl, position, rotation]);
 
-    return null;
+    // Render mesh instance(s) for this GameInstance
+    // Use instancesMap from context
+    if (!ctx || !ctx.instancesMap) return null;
+    const meshNames = Object.keys(ctx.instancesMap);
+    const meshNamesToUse = meshNames.filter((n) =>
+        typeof n === 'string' && modelUrl && n.includes(modelUrl)
+    );
+    // Do NOT pass position/rotation to <Instance />; <Merged> handles transforms internally.
+    return (
+        <>
+            {meshNamesToUse.map((name) => {
+                const Instance = ctx.instancesMap![name];
+                return (
+                    <Instance
+                        key={name}
+                        scale={[1, 1, 1]}
+                    >
+                        {children}
+                    </Instance>
+                );
+            })}
+        </>
+    );
 }

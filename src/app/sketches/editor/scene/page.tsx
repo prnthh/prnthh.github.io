@@ -100,7 +100,7 @@ export default function EditorApp() {
             <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 <GameCanvas>
-                    <Perf />
+                    <Perf position="bottom-right" />
 
 
                     <Physics paused={true}>
