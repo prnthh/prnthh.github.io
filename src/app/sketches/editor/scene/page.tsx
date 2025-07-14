@@ -11,6 +11,8 @@ import { EditorModes, SceneNode, Viewer } from "./viewer/SceneViewer";
 import { Perf } from 'r3f-perf'
 import { CharacterController } from "../../controllers/shouldercam/CharacterController";
 import Controls from "@/shared/ControlsProvider";
+import presets from "./presets";
+import { GLTFLoader, FBXLoader } from "three/examples/jsm/Addons.js";
 
 interface EditorContextType {
     sceneGraph: SceneNode[];
@@ -32,7 +34,7 @@ export function useEditorContext() {
     return ctx;
 }
 
-export function GameEngine({ mode = EditorModes.Edit, sceneGraph: initialSceneGraph, children }: { mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode }) {
+export function GameEngine({ mode = EditorModes.Play, sceneGraph: initialSceneGraph, children }: { mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode }) {
     const [sceneGraph, setSceneGraph] = useState<SceneNode[]>(
         initialSceneGraph ??
         [{
@@ -93,15 +95,68 @@ export function GameEngine({ mode = EditorModes.Edit, sceneGraph: initialSceneGr
         });
     }
 
+    useEffect(() => {
+        // On mount, scan sceneGraph for model filenames
+        const referencedFiles = new Set<string>();
+        function collectModelFiles(nodes: SceneNode[]) {
+            nodes.forEach(node => {
+                if (node.components) {
+                    node.components.forEach(comp => {
+                        if (comp.type === 'model' && comp.filename) {
+                            referencedFiles.add(comp.filename);
+                        }
+                    });
+                }
+                if (node.children && node.children.length > 0) {
+                    collectModelFiles(node.children);
+                }
+            });
+        }
+        collectModelFiles(sceneGraph);
+        // Mark missing models
+        setModels(prevModels => {
+            const newModels = { ...prevModels };
+            referencedFiles.forEach(filename => {
+                if (!(filename in newModels)) {
+                    newModels[filename] = { missing: true };
+                }
+            });
+            return newModels;
+        });
+        // Try to load each missing model from /resources/
+        referencedFiles.forEach(filename => {
+            if (models[filename] && !models[filename].missing) return; // Already loaded
+            if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
+                const loader = new GLTFLoader();
+                loader.load(`/${filename}`,
+                    gltf => {
+                        setModels(prev => ({ ...prev, [filename]: gltf.scene }));
+                    },
+                    undefined,
+                    err => {
+                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+                    }
+                );
+            } else if (filename.endsWith('.fbx')) {
+                const loader = new FBXLoader();
+                loader.load(`/${filename}`,
+                    model => {
+                        setModels(prev => ({ ...prev, [filename]: model }));
+                    },
+                    undefined,
+                    err => {
+                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+                    }
+                );
+            }
+        });
+    }, []); // Only run on mount
+
     return (
         <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef }}>
             {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
-                <GameCanvas>
-                    <Physics paused={mode !== EditorModes.Play}>
-                        {children}
-                    </Physics>
-                </GameCanvas>
+                {children}
             </div>
             {playMode == EditorModes.Edit && <SceneEditor
                 sceneGraph={sceneGraph} // pass raw sceneGraph
@@ -120,21 +175,25 @@ export default function EditorApp() {
     return <>
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
             <button onClick={() => setEditorMode(prev => prev === EditorModes.Edit ? EditorModes.Play : EditorModes.Edit)}>
-                {editorMode === EditorModes.Edit ? "Switch to Play Mode" : "Switch to Edit Mode"}
+                {editorMode === EditorModes.Edit ? "▶️" : "⏹️"}
             </button>
         </div>
         <Controls>
 
-            <GameEngine mode={editorMode} sceneGraph={undefined}>
-                {editorMode === EditorModes.Play ? <>
-                    <CharacterController />
-                </> : null}
+            <GameEngine mode={editorMode} sceneGraph={presets.drive as unknown as SceneNode[]}>
+                <GameCanvas>
+                    <Physics paused={editorMode !== EditorModes.Play}>
+                        {editorMode === EditorModes.Play ? <>
+                            <CharacterController />
+                        </> : null}
 
-                <Viewer />
+                        <Viewer />
 
-                <ambientLight intensity={0.5} />
-                <Environment files="/textures/skybox3.jpg" background={true} />
-                <Perf position="bottom-right" />
+                        <ambientLight intensity={0.5} />
+                        <Environment files="/textures/skybox3.jpg" background={true} />
+                        <Perf position="bottom-right" />
+                    </Physics>
+                </GameCanvas>
             </GameEngine>
         </Controls>
 

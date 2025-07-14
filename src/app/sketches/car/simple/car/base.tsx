@@ -53,7 +53,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
 }>(({
     name = 'bobcar', driving = true, debug = false, chassisModel, wheelModel,
     spawn = {
-        position: [-7, 2, -130] as THREE.Vector3Tuple,
+        position: [0, 0, 0] as THREE.Vector3Tuple,
         rotation: [0, 0, 0] as THREE.Vector3Tuple,
     },
     children

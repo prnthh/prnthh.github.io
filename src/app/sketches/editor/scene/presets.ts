@@ -1,155 +1,79 @@
 const presets = {
-    "flat": [
+  "flat": [
+    {
+      "id": "zwdcat6g3",
+      "name": "Root",
+      "children": [
         {
-            "id": "lxwo6ise0",
-            "name": "Root",
-            "children": [
-                {
-                    "id": "ctpqzyj9c",
-                    "name": "ground",
-                    "children": [],
-                    "components": [
-                        {
-                            "type": "boxGeometry",
-                            "args": [
-                                10,
-                                0.1,
-                                10
-                            ]
-                        },
-                        {
-                            "type": "meshStandardMaterial",
-                            "props": {
-                                "color": "#04ff00"
-                            }
-                        }
-                    ],
-                    "transform": {
-                        "position": [
-                            0,
-                            -0.05064781530774232,
-                            0
-                        ]
-                    }
-                }
-            ],
-            "components": []
-        }
-    ],
-    jump: [
-        {
-          "id": "wx1mig2q2",
-          "name": "Root",
-          "children": [
+          "id": "kdq9whzkx",
+          "name": "floor",
+          "children": [],
+          "components": [
             {
-              "id": "q2objc0mj",
-              "name": "Node-q2objc0mj",
-              "children": [],
-              "components": [
-                {
-                  "type": "boxGeometry",
-                  "args": [
-                    10,
-                    0.01,
-                    10
-                  ]
-                },
-                {
-                  "type": "meshStandardMaterial",
-                  "props": {
-                    "color": "#595959"
-                  }
-                },
-                {
-                  "type": "physics",
-                  "props": {
-                    "type": "fixed"
-                  }
-                }
+              "type": "boxGeometry",
+              "args": [
+                10,
+                0.01,
+                10
               ]
             },
             {
-              "id": "ktm3pf2kd",
-              "name": "Node-q2objc0mj",
-              "children": [],
-              "components": [
-                {
-                  "type": "boxGeometry",
-                  "args": [
-                    1.5999999999999996,
-                    0.01,
-                    10
-                  ]
-                },
-                {
-                  "type": "meshStandardMaterial",
-                  "props": {
-                    "color": "#595959"
-                  }
-                },
-                {
-                  "type": "physics",
-                  "props": {
-                    "type": "fixed"
-                  }
-                }
-              ],
-              "transform": {
-                "position": [
-                  0,
-                  0,
-                  -9.584507802742628
-                ],
-                "rotation": [
-                  null,
-                  0,
-                  null
-                ]
+              "type": "meshStandardMaterial",
+              "props": {
+                "color": "#ffd129"
               }
             },
             {
-              "id": "cpsz7cnol",
-              "name": "Node-q2objc0mj",
-              "children": [],
-              "components": [
-                {
-                  "type": "boxGeometry",
-                  "args": [
-                    1.5999999999999996,
-                    0.01,
-                    10
-                  ]
-                },
-                {
-                  "type": "meshStandardMaterial",
-                  "props": {
-                    "color": "#595959"
-                  }
-                },
-                {
-                  "type": "physics",
-                  "props": {
-                    "type": "fixed"
-                  }
-                }
-              ],
-              "transform": {
-                "position": [
-                  4.660070344655564,
-                  0,
-                  -13.690566897315659
-                ],
-                "rotation": [
-                  null,
-                  -1.6,
-                  null
-                ]
+              "type": "physics",
+              "props": {
+                "type": "fixed"
               }
             }
-          ],
-          "components": []
+          ]
         }
-      ]
+      ],
+      "components": []
+    }
+  ],
+  drive: [
+  {
+    "id": "zwdcat6g3",
+    "name": "Root",
+    "children": [
+      {
+        "id": "7qhl5spkj",
+        "name": "burnin_rubber_4_city.glb",
+        "children": [],
+        "components": [
+          {
+            "type": "model",
+            "filename": "burnin_rubber_4_city.glb"
+          },
+          {
+            "type": "physics",
+            "props": {
+              "type": "fixed"
+            }
+          }
+        ],
+        "transform": {
+          "position": [
+            -898.323828568215,
+            -34.07424686128641,
+            1359.7209057722787
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": 0.7999999999999999
+        }
+      }
+    ],
+    "components": []
+  }
+]
 }
 
 export default presets;

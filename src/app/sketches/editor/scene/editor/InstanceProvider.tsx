@@ -55,14 +55,14 @@ export function GameInstanceProvider({
     const meshes = useMemo(() => {
         const result: Record<string, THREE.Mesh> = {};
         Object.entries(models).forEach(([modelKey, model]) => {
-            const root = model.scene ?? model;
+            const root = model?.scene ?? model;
             const meshGeometries: THREE.BufferGeometry[] = [];
             const materials: THREE.Material[] = [];
             let baseAttributes: string[] | null = null;
             const materialMap = new Map<THREE.Material, number>();
             const geometryGroups: { start: number, count: number, materialIndex: number }[] = [];
             let indexOffset = 0;
-            root.traverse?.((obj: any) => {
+            root?.traverse?.((obj: any) => {
                 if (obj.isMesh) {
                     const geom = obj.geometry.clone();
                     obj.updateWorldMatrix?.(true, false);

@@ -6,8 +6,9 @@ type NumberInputProps = {
     onChange: (v: number | null) => void;
     placeholder?: string;
     style?: React.CSSProperties;
+    className?: string;
 };
-export default function NumberInput({ value, onChange, placeholder, style }: NumberInputProps) {
+export default function NumberInput({ value, onChange, placeholder, style, className }: NumberInputProps) {
     const safeValue = value === null || value === undefined ? 0 : value;
     const [input, setInput] = React.useState(String(safeValue));
     React.useEffect(() => {
@@ -73,6 +74,7 @@ export default function NumberInput({ value, onChange, placeholder, style }: Num
             onChange={handleInput}
             placeholder={placeholder}
             style={style}
+            className={`bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors ${className || ''}`}
             onMouseDown={handleMouseDown}
         />
     );

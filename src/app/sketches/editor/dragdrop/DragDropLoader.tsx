@@ -83,14 +83,14 @@ export function FilePicker({ onModelLoaded }: FilePickerProps) {
                 accept=".glb,.gltf,.fbx"
                 multiple
                 onChange={onChange}
-                style={{ display: "none" }}
+                className="hidden"
             />
             <button
-                className="border rounded px-1"
+                className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/40 hover:border-blue-400/60 text-blue-200 hover:text-blue-100 text-xs font-medium transition-all"
                 type="button"
                 onClick={() => document.getElementById(inputId)?.click()}
             >
-                Select File
+                Select Files
             </button>
         </>
     );

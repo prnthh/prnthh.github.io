@@ -10,13 +10,28 @@ type PropEditorProps = {
 };
 function PropEditor({ type, value, onChange }: PropEditorProps) {
     if (type === 'color') {
-        return <input type="color" value={value} onChange={e => onChange(e.target.value)} style={{ width: 40, height: 24, verticalAlign: 'middle' }} />;
+        return <input
+            type="color"
+            value={value}
+            onChange={e => onChange(e.target.value)}
+            className="w-8 h-6 border border-white/20 bg-transparent cursor-pointer"
+        />;
     }
     if (type === 'number') {
-        return <input type="number" value={value} onChange={e => onChange(Number(e.target.value))} style={{ width: 60 }} />;
+        return <input
+            type="number"
+            value={value}
+            onChange={e => onChange(Number(e.target.value))}
+            className="w-16 bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors"
+        />;
     }
     // fallback to text
-    return <input type="text" value={value} onChange={e => onChange(e.target.value)} style={{ width: 80 }} />;
+    return <input
+        type="text"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-20 bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors"
+    />;
 }
 
 // --- MaterialComponent for meshStandardMaterial ---
@@ -33,12 +48,12 @@ export function MaterialComponent({ node, setSceneGraph }: {
         // Add more material props here if needed
     ];
     return (
-        <li style={{ marginBottom: 8 }}>
-            <span style={{ fontWeight: 500 }}>Mesh Standard Material</span>
-            <div style={{ marginTop: 4, marginLeft: 8 }}>
+        <li className="mb-1 py-1 px-2 bg-white/5 border border-white/10">
+            <span className="text-white/90 text-xs font-medium block mb-1">Mesh Standard Material</span>
+            <div className="space-y-1">
                 {propsDef.map(({ key, label, type: propType }) => (
-                    <div key={key} style={{ marginBottom: 2 }}>
-                        <label style={{ marginRight: 4 }}>{label || key}:</label>
+                    <div key={key} className="flex items-center gap-2">
+                        <label className="text-white/60 text-xs min-w-[40px]">{label || key}:</label>
                         <PropEditor
                             type={propType}
                             value={comp.props?.[key] ?? ''}

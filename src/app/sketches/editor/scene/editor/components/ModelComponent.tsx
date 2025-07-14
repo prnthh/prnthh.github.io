@@ -62,36 +62,37 @@ export function ModelComponent({ node, models, setSceneGraph }: {
     const instanced = comp.instanced !== undefined ? comp.instanced : false;
 
     return (
-        <li style={{ marginBottom: 8 }}>
-            <span style={{ fontWeight: 500 }}>Model</span>
-            <div style={{ marginTop: 4, marginLeft: 8 }}>
-                <div>
-                    <label style={{ marginRight: 4 }}>Type:</label>
-                    <span>{comp.type || 'Unknown'}</span>
+        <li className="mb-1 py-1 px-2 bg-white/5 border border-white/10">
+            <span className="text-white/90 text-xs font-medium block mb-1">Model</span>
+            <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <label className="text-white/60 text-xs min-w-[35px]">Type:</label>
+                    <span className="text-white/80 text-xs font-mono">{comp.type || 'Unknown'}</span>
                 </div>
-                <div style={{ marginTop: 8 }}>
-                    <label style={{ marginRight: 4 }}>Select Model:</label>
+                <div className="flex items-center gap-2">
+                    <label className="text-white/60 text-xs min-w-[35px]">Model:</label>
                     <select
                         value={selectedFilename}
                         onChange={handleModelChange}
-                        style={{ minWidth: 120 }}
+                        className="flex-1 bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors"
                     >
                         <option value="" disabled>Select model...</option>
                         {availableModelFilenames.map(filename => (
-                            <option key={filename} value={filename}>
+                            <option key={filename} value={filename} className="bg-gray-800 text-white">
                                 {filename}
                             </option>
                         ))}
                     </select>
                 </div>
-                <div style={{ marginTop: 8 }}>
-                    <label>
+                <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-white/70 text-xs cursor-pointer">
                         <input
                             type="checkbox"
                             checked={instanced}
                             onChange={handleInstanceChange}
+                            className="w-3 h-3 border border-white/30 bg-white/10 text-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
-                        <span style={{ marginLeft: 4 }}>Instanced</span>
+                        <span>Instanced</span>
                     </label>
                 </div>
             </div>
