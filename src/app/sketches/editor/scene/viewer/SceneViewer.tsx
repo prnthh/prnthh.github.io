@@ -1,131 +1,10 @@
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Object3D, Object3DEventMap } from "three";
 import { GameInstance, GameInstanceProvider } from "../editor/InstanceProvider";
 import * as THREE from "three";
-import { Html, OrbitControls, TransformControls } from "@react-three/drei";
+import { OrbitControls, TransformControls } from "@react-three/drei";
 import { useEditorContext } from "../editor/EditorContext";
-
-export function Viewer() {
-    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, playMode } = useEditorContext();
-    const [transformMode, setTransformMode] = useState<'translate' | 'rotate' | 'scale'>('translate');
-    const transformDummyRef = useRef<THREE.Mesh>(null);
-    const [isTransforming, setIsTransforming] = useState(false);
-
-    function injectModels(nodes: SceneNode[], models: { [filename: string]: any }): SceneNode[] {
-        return nodes.map(node => {
-            const newComponents = node.components?.map((comp: any) => {
-                if (comp.type === 'model' && typeof comp.filename === 'string') {
-                    return { ...comp, object: models[comp.filename] };
-                }
-                return comp;
-            }) ?? [];
-            return {
-                ...node,
-                components: newComponents,
-                children: injectModels(node.children, models)
-            };
-        });
-    }
-
-    // Find selected node (simple helper)
-    function findNode(nodes: SceneNode[], id: string): SceneNode | null {
-        for (const node of nodes) {
-            if (node.id === id) return node;
-            const found = findNode(node.children, id);
-            if (found) return found;
-        }
-        return null;
-    }
-
-    // Update transform (simple helper)
-    function updateTransform(nodes: SceneNode[], id: string, transform: any): SceneNode[] {
-        return nodes.map(n => ({
-            ...n,
-            transform: n.id === id ? { ...n.transform, ...transform } : n.transform,
-            children: updateTransform(n.children, id, transform)
-        }));
-    }
-
-    const selectedNode = selectedNodeId ? findNode(sceneGraph, selectedNodeId) : null;
-
-    // Simple sync: when selected node changes, update dummy position
-    useEffect(() => {
-        if (!selectedNode || !transformDummyRef.current) return;
-
-        const dummy = transformDummyRef.current;
-        const t = selectedNode.transform;
-
-        dummy.position.set(...(t?.position || [0, 0, 0]));
-        dummy.rotation.set(...(t?.rotation || [0, 0, 0]));
-        dummy.scale.setScalar(t?.scale || 1);
-    }, [selectedNode]);
-
-    // Simple keyboard shortcuts
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (!selectedNodeId || playMode !== EditorModes.Edit) return;
-            if (e.key === 'g') setTransformMode('translate');
-            if (e.key === 'r') setTransformMode('rotate');
-            if (e.key === 's') setTransformMode('scale');
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedNodeId, playMode]);
-
-    return <>
-        <GameInstanceProvider models={models}>
-            <RecursiveNode
-                node={injectModels(sceneGraph, models)[0]}
-                onSelect={(id) => {
-                    if (!isTransforming) {
-                        setSelectedNodeId(id);
-                    }
-                }}
-                selectedNodeId={selectedNodeId}
-                setSceneGraph={setSceneGraph}
-                playMode={playMode}
-            />
-        </GameInstanceProvider>
-        {playMode == EditorModes.Edit && <>
-            <OrbitControls makeDefault />
-            <gridHelper args={[10, 10, 10]} />
-
-            {/* Dummy object for transform controls */}
-            {selectedNodeId && (
-                <mesh ref={transformDummyRef} visible={false}>
-                    <boxGeometry args={[0.1, 0.1, 0.1]} />
-                </mesh>
-            )}
-
-            {/* Transform controls */}
-            {selectedNodeId && transformDummyRef.current && (
-                <TransformControls
-                    object={transformDummyRef.current}
-                    mode={transformMode}
-                    onMouseDown={() => setIsTransforming(true)}
-                    onMouseUp={() => setIsTransforming(false)}
-                    onObjectChange={() => {
-                        if (!transformDummyRef.current || !selectedNodeId) return;
-
-                        const dummy = transformDummyRef.current;
-                        const updateData: any = {};
-
-                        if (transformMode === 'translate') {
-                            updateData.position = [dummy.position.x, dummy.position.y, dummy.position.z];
-                        } else if (transformMode === 'rotate') {
-                            updateData.rotation = [dummy.rotation.x, dummy.rotation.y, dummy.rotation.z];
-                        } else if (transformMode === 'scale') {
-                            updateData.scale = dummy.scale.x;
-                        }
-
-                        setSceneGraph((prev: SceneNode[]) => updateTransform(prev, selectedNodeId, updateData));
-                    }}
-                />
-            )}
-        </>}
-    </>
-}
 
 export enum EditorModes {
     Edit = "edit",
@@ -133,12 +12,11 @@ export enum EditorModes {
     Pause = "pause",
 }
 
-// --- Types ---
 export type SceneNode = {
     id: string;
     name: string;
     children: SceneNode[];
-    components: any[]; // New field for components
+    components: any[];
     transform?: {
         position?: [number, number, number] | null;
         rotation?: [number, number, number] | null;
@@ -146,149 +24,228 @@ export type SceneNode = {
     } | null;
 };
 
-// recursive root for the scene graph
-export default function RecursiveNode({ node, onSelect, selectedNodeId, setSceneGraph, playMode }: { node: SceneNode, onSelect: (id: string) => void, selectedNodeId: string | null, setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>, playMode: EditorModes }) {
-    return <PhysicsWrapper
-        node={node}
-        playMode={playMode}
-    >
-        <mesh
-            onClick={e => {
-                e.stopPropagation();
-                onSelect(node.id);
-            }}
-            castShadow
-            receiveShadow
-        >
-            <ComponentMapper node={node} playMode={playMode} />
-            {node.children?.map((child, index) => (
-                <RecursiveNode key={index} node={child} onSelect={onSelect} selectedNodeId={selectedNodeId} setSceneGraph={setSceneGraph} playMode={playMode} />
-            ))}
-        </mesh>
-    </PhysicsWrapper>
+function injectModels(nodes: SceneNode[], models: { [filename: string]: any }): SceneNode[] {
+    return nodes.map(node => ({
+        ...node,
+        components: node.components?.map((comp: any) =>
+            comp.type === 'model' && typeof comp.filename === 'string'
+                ? { ...comp, object: models[comp.filename] }
+                : comp
+        ) ?? [],
+        children: injectModels(node.children, models)
+    }));
 }
 
-export function PhysicsWrapper({ node, playMode, children }: { node: SceneNode, playMode: EditorModes, children: React.ReactNode }) {
+function updateNodeTransform(nodes: SceneNode[], id: string, transform: any): SceneNode[] {
+    return nodes.map(n => n.id === id
+        ? { ...n, transform: { ...n.transform, ...transform } }
+        : { ...n, children: updateNodeTransform(n.children, id, transform) }
+    );
+}
+
+function nodeExists(nodes: SceneNode[], id: string | null): boolean {
+    if (!id) return false;
+    return nodes.some(node => node.id === id || nodeExists(node.children, id));
+}
+
+function isPhysicsObject(node: SceneNode, playMode: EditorModes): boolean {
+    return playMode === EditorModes.Play &&
+        node.components?.some(c => c.type === 'physics') &&
+        node.name !== 'Root' &&
+        !node.components?.find(c => c.type === 'model')?.instanced;
+}
+
+function cloneObject(object: Object3D): Object3D | null {
+    const clone = object?.clone?.();
+    if (clone) {
+        clone.traverse(child => {
+            if (child instanceof THREE.Mesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+    }
+    return clone;
+}
+
+export function Viewer() {
+    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, getNodeRef, playMode } = useEditorContext();
+
+    useEffect(() => {
+        if (selectedNodeId && !nodeExists(sceneGraph, selectedNodeId)) {
+            setSelectedNodeId(null);
+        }
+    }, [sceneGraph, selectedNodeId, setSelectedNodeId]);
+
+    const selectedRef = selectedNodeId ? getNodeRef(selectedNodeId) : undefined;
+    const isEditMode = playMode === EditorModes.Edit;
+
+    return (
+        <>
+            <GameInstanceProvider models={models}>
+                <RecursiveNode
+                    node={injectModels(sceneGraph, models)[0]}
+                    onSelect={setSelectedNodeId}
+                    selectedNodeId={selectedNodeId}
+                    setSceneGraph={setSceneGraph}
+                    getNodeRef={getNodeRef}
+                    playMode={playMode}
+                />
+            </GameInstanceProvider>
+
+            {isEditMode && (
+                <>
+                    <OrbitControls makeDefault />
+                    <gridHelper args={[10, 10]} />
+                    {selectedNodeId && selectedRef?.current && nodeExists(sceneGraph, selectedNodeId) && (
+                        <TransformControls
+                            object={selectedRef.current}
+                            mode="translate"
+                            onObjectChange={() => {
+                                const obj = selectedRef.current;
+                                if (obj) {
+                                    setSceneGraph(prev => updateNodeTransform(prev, selectedNodeId, {
+                                        position: [obj.position.x, obj.position.y, obj.position.z],
+                                    }));
+                                }
+                            }}
+                        />
+                    )}
+                </>
+            )}
+        </>
+    );
+}
+
+export default function RecursiveNode({ node, onSelect, selectedNodeId, setSceneGraph, getNodeRef, playMode }: {
+    node: SceneNode;
+    onSelect: (id: string) => void;
+    selectedNodeId: string | null;
+    setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
+    getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>;
+    playMode: EditorModes;
+}) {
     const ref = useRef<RapierRigidBody>(null);
+    const groupRef = getNodeRef(node.id);
     const position = node.transform?.position?.map(v => v ?? 0) as [number, number, number] | undefined;
     const rotation = node.transform?.rotation?.map(v => v ?? 0) as [number, number, number] | undefined;
     const scale = node.transform?.scale ?? 1;
-    const model = node.components?.find(c => c.type === 'model');
 
+    const renderChildren = () => node.children?.map((child, index) => (
+        <RecursiveNode
+            key={child.id || index}
+            node={child}
+            onSelect={onSelect}
+            selectedNodeId={selectedNodeId}
+            setSceneGraph={setSceneGraph}
+            getNodeRef={getNodeRef}
+            playMode={playMode}
+        />
+    ));
 
-    if (
-        playMode === EditorModes.Play &&
-        node.components.some(c => c.type === 'physics') &&
-        node.name !== 'Root' &&
-        !(model?.instanced) // instanced models handle physics during instance creation
-    ) {
+    // Physics rendering in play mode
+    if (isPhysicsObject(node, playMode)) {
+        const model = node.components?.find(c => c.type === 'model');
+        const physicsType = node.components?.find(c => c.type === 'physics')?.props?.type || 'dynamic';
 
-        if (model)
-            return <RigidClonedModel
-                object={model.object}
-                node={node}
-                position={position}
-                rotation={rotation}
-                scale={scale}
-            >{children}</RigidClonedModel>;
+        if (model?.object) {
+            return <RigidModel object={model.object} node={node} position={position} rotation={rotation} scale={scale} />;
+        }
 
         return (
-            <RigidBody
-                ref={ref}
-                colliders="hull"
-                position={position || [0, 0, 0]}
-                rotation={rotation}
-                scale={scale}
-                type={node.components.find(c => c.type === 'physics')?.props?.type || 'dynamic'}
-            >
-                <group>
-                    {children}
-                </group>
+            <RigidBody ref={ref} colliders="hull" position={position || [0, 0, 0]} rotation={rotation} scale={scale} type={physicsType}>
+                <mesh castShadow receiveShadow>
+                    <ComponentMapper node={node} />
+                </mesh>
+                {renderChildren()}
             </RigidBody>
         );
     }
 
+    // Regular rendering
     return (
-        <group position={position || [0, 0, 0]} rotation={rotation} scale={scale}>
-            {children}
+        <group ref={groupRef} position={position || [0, 0, 0]} rotation={rotation} scale={scale}>
+            <mesh onClick={e => { e.stopPropagation(); onSelect(node.id); }} castShadow receiveShadow>
+                <ComponentMapper node={node} />
+                {renderChildren()}
+            </mesh>
         </group>
     );
 }
 
-const ComponentMapper = ({ node, playMode }: { node: SceneNode, playMode?: EditorModes }) => {
+const ComponentMapper = ({ node }: { node: SceneNode }) => {
     const geometry = node.components?.find(c => c.type === 'boxGeometry');
     const material = node.components?.find(c => c.type === 'meshStandardMaterial');
     const model = node.components?.find(c => c.type === 'model');
 
-    // Don't render non-instanced models in play mode if they have physics
-    // because PhysicsWrapper will handle rendering them with physics
-    const hasPhysics = node.components?.some(c => c.type === 'physics');
-    const shouldSkipModelRender = playMode === EditorModes.Play &&
-        hasPhysics &&
-        model &&
-        !model.instanced &&
-        node.name !== 'Root';
+    return (
+        <>
+            {geometry && <boxGeometry args={geometry.args || [1, 1, 1]} />}
+            {material && <meshStandardMaterial {...material.props} />}
+            {model && (model.object ? (
+                model.instanced ? (
+                    <GameInstance
+                        modelUrl={model.filename || ''}
+                        position={node.transform?.position || [0, 0, 0]}
+                        rotation={node.transform?.rotation || [0, 0, 0]}
+                        physics={node.components.find(c => c.type === 'physics')}
+                    />
+                ) : (
+                    <ClonedModel object={model.object} />
+                )
+            ) : (
+                <ExclamationMark />
+            ))}
+        </>
+    );
+};
 
-    return <>
-        {<boxGeometry args={geometry?.args || [0, 0, 0]} />}
-        {material && <meshStandardMaterial {...material.props} />}
-        {model && !shouldSkipModelRender && (model.object ? <>
-            {model.instanced ? <GameInstance
-                modelUrl={node.components.find(c => c.type === 'model')?.filename || ''}
-                position={node.transform?.position || [0, 0, 0]}
-                rotation={node.transform?.rotation || [0, 0, 0]}
-                physics={node.components.find(c => c.type === 'physics')}
-            /> : <ClonedModel object={model.object} />
-            }
-        </> : <ExclamationMark />)}
-    </>
-}
+const RigidModel = ({ object, node, position, rotation, scale }: {
+    object: Object3D;
+    node: SceneNode;
+    position?: [number, number, number];
+    rotation?: [number, number, number];
+    scale?: number;
+}) => {
+    const [clone, setClone] = useState<Object3D | null>(null);
 
-const RigidClonedModel = ({ object, node, position, rotation, scale, children }: { object: Object3D, node: SceneNode, position?: [number, number, number], rotation?: [number, number, number], scale?: number, children?: React.ReactNode }) => {
-    const [clone, setClone] = useState<Object3D>();
     useEffect(() => {
-        const cloned = object?.clone?.();
-        if (!cloned) return;
-        cloned.traverse(child => {
-            if (child instanceof THREE.Mesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
-        setClone(cloned);
+        setClone(cloneObject(object));
     }, [object]);
 
-    return clone && <RigidBody
-        // ref={ref}
-        position={position || [0, 0, 0]}
-        rotation={rotation}
-        type={node.components.find(c => c.type === 'physics')?.props?.type || 'dynamic'}
-        colliders="trimesh"
-    >
-        <primitive scale={scale} object={clone} />
-        {children}
-    </RigidBody>;
-}
+    if (!clone) return null;
+
+    return (
+        <RigidBody
+            position={position || [0, 0, 0]}
+            rotation={rotation}
+            type={node.components?.find(c => c.type === 'physics')?.props?.type || 'dynamic'}
+            colliders="trimesh"
+        >
+            <primitive scale={scale} object={clone} />
+            {node.children?.map((child, index) => (
+                <RecursiveNode
+                    key={child.id || index}
+                    node={child}
+                    onSelect={() => { }}
+                    selectedNodeId={null}
+                    setSceneGraph={() => { }}
+                    getNodeRef={() => ({ current: null })}
+                    playMode={EditorModes.Play}
+                />
+            ))}
+        </RigidBody>
+    );
+};
 
 const ClonedModel = ({ object }: { object: Object3D }) => {
-    const [clone, setClone] = useState<Object3D>();
-    useEffect(() => {
-        const cloned = object?.clone?.();
-        if (!cloned) return;
-        cloned.traverse(child => {
-            if (child instanceof THREE.Mesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
-        setClone(cloned);
-    }, [object]);
+    const [clone, setClone] = useState<Object3D | null>(null);
+    useEffect(() => { setClone(cloneObject(object)); }, [object]);
+    return clone ? <primitive object={clone} /> : null;
+};
 
-    return clone && <primitive object={clone} />;
-}
-
-const ExclamationMark = () => {
-    return <>
+const ExclamationMark = () => (
+    <>
         <mesh position={[0, 0.4, 0]} scale={[0.1, 0.4, 0.1]}>
             <boxGeometry />
             <meshStandardMaterial color="red" />
@@ -298,4 +255,4 @@ const ExclamationMark = () => {
             <meshStandardMaterial color="red" />
         </mesh>
     </>
-}
+);

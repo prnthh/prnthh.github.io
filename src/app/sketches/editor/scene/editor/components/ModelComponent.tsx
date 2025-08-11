@@ -62,40 +62,39 @@ export function ModelComponent({ node, models, setSceneGraph }: {
     const instanced = comp.instanced !== undefined ? comp.instanced : false;
 
     return (
-        <li className="mb-1 py-1 px-2 bg-white/5 border border-white/10">
-            <span className="text-white/90 text-xs font-medium block mb-1">Model</span>
-            <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                    <label className="text-white/60 text-xs min-w-[35px]">Type:</label>
-                    <span className="text-white/80 text-xs font-mono">{comp.type || 'Unknown'}</span>
+        <div className="mb-2">
+            <span className="font-medium">Model</span>
+            <div className="mt-1 ml-2">
+                <div>
+                    <label className="mr-1">Type:</label>
+                    <span>{comp.type || 'Unknown'}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <label className="text-white/60 text-xs min-w-[35px]">Model:</label>
+                <div className="mt-2">
+                    <label className="mr-1">Select Model:</label>
                     <select
                         value={selectedFilename}
                         onChange={handleModelChange}
-                        className="flex-1 bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors"
+                        style={{ minWidth: 120 }}
                     >
                         <option value="" disabled>Select model...</option>
                         {availableModelFilenames.map(filename => (
-                            <option key={filename} value={filename} className="bg-gray-800 text-white">
+                            <option key={filename} value={filename}>
                                 {filename}
                             </option>
                         ))}
                     </select>
                 </div>
-                <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 text-white/70 text-xs cursor-pointer">
+                <div className="mt-2">
+                    <label>
                         <input
                             type="checkbox"
                             checked={instanced}
                             onChange={handleInstanceChange}
-                            className="w-3 h-3 border border-white/30 bg-white/10 text-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
-                        <span>Instanced</span>
+                        <span className="ml-1">Instanced</span>
                     </label>
                 </div>
             </div>
-        </li>
+        </div>
     );
 }

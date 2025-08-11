@@ -6,7 +6,6 @@ import { Object3D, Object3DEventMap } from "three";
 import { EditorModes, SceneNode, Viewer } from "../viewer/SceneViewer";
 import { GLTFLoader, FBXLoader } from "three/examples/jsm/Addons.js";
 
-
 interface EditorContextType {
     sceneGraph: SceneNode[];
     setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;

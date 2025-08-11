@@ -14,16 +14,16 @@ export function GeometryComponent({ node, setSceneGraph }: {
     const comp = node.components[idx];
     const args = comp.args || [1, 1, 1];
     return (
-        <li className="mb-1 py-1 px-2 bg-white/5 border border-white/10">
-            <span className="text-white/90 text-xs font-medium block mb-1">Box Geometry</span>
-            <div className="space-y-1">
+        <div className="mb-2">
+            <span className="font-medium">Box Geometry</span>
+            <div className="mt-1 ml-2">
                 {[0, 1, 2].map(i => (
-                    <div key={i} className="flex items-center gap-2">
-                        <label className="text-white/60 text-xs min-w-[45px]">{['Width', 'Height', 'Depth'][i]}:</label>
+                    <div key={i} className="mb-0.5">
+                        <label className="mr-1">{['Width', 'Height', 'Depth'][i]}:</label>
                         <NumberInput
                             value={args[i] ?? null}
                             placeholder={['w', 'h', 'd'][i]}
-                            className="w-12"
+                            style={{ width: 40, marginRight: 4 }}
                             onChange={v => {
                                 setSceneGraph(prev =>
                                     updateSceneGraphNodeAndComponent(
@@ -52,6 +52,6 @@ export function GeometryComponent({ node, setSceneGraph }: {
                     </div>
                 ))}
             </div>
-        </li>
+        </div>
     );
 }

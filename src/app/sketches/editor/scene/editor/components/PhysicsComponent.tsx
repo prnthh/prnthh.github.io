@@ -13,10 +13,10 @@ export function PhysicsComponent({ node, setSceneGraph }: {
     const comp = node.components[idx];
     const type = comp.props?.type || 'fixed';
     return (
-        <li className="mb-1 py-1 px-2 bg-white/5 border border-white/10">
-            <span className="text-white/90 text-xs font-medium block mb-1">Physics</span>
-            <div className="flex items-center gap-2">
-                <label className="text-white/60 text-xs min-w-[35px]">Type:</label>
+        <div className="mb-2">
+            <span className="font-medium">Physics</span>
+            <div className="mt-1 ml-2">
+                <label className="mr-1">Type:</label>
                 <select
                     value={type}
                     onChange={e => {
@@ -43,12 +43,11 @@ export function PhysicsComponent({ node, setSceneGraph }: {
                             )
                         );
                     }}
-                    className="flex-1 bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors"
                 >
-                    <option value="fixed" className="bg-gray-800 text-white">Fixed</option>
-                    <option value="dynamic" className="bg-gray-800 text-white">Dynamic</option>
+                    <option value="fixed">Fixed</option>
+                    <option value="dynamic">Dynamic</option>
                 </select>
             </div>
-        </li>
+        </div>
     );
 }

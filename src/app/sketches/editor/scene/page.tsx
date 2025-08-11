@@ -2,16 +2,12 @@
 
 import { Physics } from "@react-three/rapier";
 import { GameCanvas } from "@/shared/GameCanvas";
-import { DragDropLoader } from "../dragdrop/DragDropLoader";
-import React, { useEffect, useRef, useState, useContext, createContext } from "react";
+import React, { useState, } from "react";
 import { Environment } from "@react-three/drei";
-import { EditorModes, SceneNode, Viewer } from "./viewer/SceneViewer";
+import { EditorModes, Viewer } from "./viewer/SceneViewer";
 import { Perf } from 'r3f-perf'
-import { CharacterController } from "../../controllers/shouldercam/CharacterController";
-import Controls from "@/shared/ControlsProvider";
 import presets from "./presets";
 import { GameEngine } from "./editor/EditorContext";
-
 
 export default function EditorApp() {
     const [editorMode, setEditorMode] = useState<EditorModes>(EditorModes.Edit);
@@ -21,23 +17,20 @@ export default function EditorApp() {
                 {editorMode === EditorModes.Edit ? "▶️" : "⏹️"}
             </button>
         </div>
-        <Controls>
 
-            <GameEngine mode={editorMode} sceneGraph={presets.drive as unknown as SceneNode[]}>
-                <GameCanvas>
-                    <Physics paused={editorMode !== EditorModes.Play}>
-                        {editorMode === EditorModes.Play ? <>
-                            <CharacterController />
-                        </> : null}
+        <GameEngine mode={editorMode} sceneGraph={presets.drive as any[]}>
+            <GameCanvas>
+                <Physics paused={editorMode !== EditorModes.Play}>
+                    {editorMode === EditorModes.Play ? <>
+                    </> : null}
 
-                        <Viewer />
+                    <Viewer />
 
-                        <ambientLight intensity={0.5} />
-                        <Environment files="/textures/skybox3.jpg" background={true} />
-                        <Perf position="bottom-right" />
-                    </Physics>
-                </GameCanvas>
-            </GameEngine>
-        </Controls>
+                    <ambientLight intensity={0.5} />
+                    <Environment preset="sunset" background={false} />
+                    <Perf position="bottom-right" />
+                </Physics>
+            </GameCanvas>
+        </GameEngine>
     </>
 }

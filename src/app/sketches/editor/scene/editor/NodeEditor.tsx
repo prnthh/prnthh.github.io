@@ -94,19 +94,13 @@ function ComponentEditor({ comp, idx, node, setSceneGraph, models }: ComponentEd
     const compType = getComponentType(comp.type);
     if (!compType) return null;
     return (
-        <li className="mb-1 flex items-center justify-between py-1 px-2 bg-white/5 border border-white/10">
-            <span className="text-white/80 text-xs">
-                <span className="font-medium text-white/90">{compType.label || comp.type}</span>
-                {comp.args && <span className="text-white/60 font-mono ml-2">args: {JSON.stringify(comp.args)}</span>}
+        <div className="mb-2 flex items-center justify-between">
+            <span>
+                <span className="font-medium">{compType.label || comp.type}</span>
+                {comp.args && <span> args: {JSON.stringify(comp.args)}</span>}
             </span>
-            <button
-                onClick={handleRemoveComponent}
-                className="w-5 h-5 flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-xs"
-                title="Remove Component"
-            >
-                ✕
-            </button>
-        </li>
+            <button onClick={handleRemoveComponent} className="ml-2 text-red-500 font-bold bg-transparent border-none cursor-pointer" title="Remove Component">✕</button>
+        </div>
     );
 }
 
@@ -126,7 +120,7 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setS
         return null;
     }
     const node = findNode(sceneGraph, selectedId);
-    if (!node) return <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md border border-white/10 p-2 text-white/60 text-xs">No node selected</div>;
+    if (!node) return <div className="absolute top-4 right-4 rounded">No node selected</div>;
 
     // Handler to delete node
     const handleDeleteNode = () => {
@@ -192,8 +186,8 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setS
         }
     };
 
-    return <div className="absolute top-4 right-4 bg-black/20 backdrop-blur-md border border-white/10 p-3 shadow-2xl min-w-[320px]">
-        <div className="flex items-center justify-between mb-3">
+    return <div className="absolute top-4 right-4 bg-stone-200/50 p-2 shadow border-stone-700 border">
+        <div className="flex items-center justify-between">
             {editingName ? (
                 <input
                     autoFocus
@@ -201,63 +195,38 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setS
                     onChange={handleNameChange}
                     onBlur={handleNameBlur}
                     onKeyDown={handleNameKeyDown}
-                    className="flex-1 mr-2 bg-transparent border-b border-white/30 focus:border-white/60 text-white/90 text-sm font-medium outline-none transition-colors"
+                    className="font-bold text-base flex-1 mr-2"
                 />
             ) : (
-                <h3
-                    onDoubleClick={handleNameDoubleClick}
-                    className="cursor-pointer text-white/90 text-sm font-medium hover:text-white transition-colors select-none"
-                    title="Double click to rename"
-                >
-                    {node.name}
-                </h3>
+                <b onDoubleClick={handleNameDoubleClick} className="cursor-pointer" title="Double click to rename">{node.name}</b>
             )}
-            <button
-                onClick={handleDeleteNode}
-                className="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all text-sm"
-                title="Delete Node"
-            >
-                ✕
-            </button>
+            <button onClick={handleDeleteNode} className="ml-2 text-red-500 font-bold bg-transparent border-none cursor-pointer" title="Delete Node">✕</button>
         </div>
         <TransformComponent node={node} setSceneGraph={setSceneGraph} />
         {/* Show components */}
-        <div className="mt-3 mb-2">
-            <div className="text-white/70 text-xs font-medium mb-2 tracking-wider uppercase">Components</div>
+        <div className="mt-4">
+            <b>Components</b>
             {node.components && node.components.length > 0 ? (
-                <ul className="space-y-1">
+                <>
                     {node.components.map((comp, idx) => (
-                        <ComponentEditor key={idx} comp={comp} idx={idx} node={node} setSceneGraph={setSceneGraph} models={models} />
+                        <>
+                            <div className="w-full h-px bg-stone-700 mt-2" />
+                            <ComponentEditor key={idx} comp={comp} idx={idx} node={node} setSceneGraph={setSceneGraph} models={models} />
+                        </>
                     ))}
-                </ul>
+                </>
             ) : (
-                <div className="text-white/40 text-xs">No components</div>
+                <div className="text-gray-500 text-xs">No components</div>
             )}
         </div>
-        <div className="mt-3">
-            <button
-                onClick={() => setAddMenuOpen(v => !v)}
-                className="w-full py-1 px-2 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 text-white/80 hover:text-white/90 text-xs font-medium transition-all"
-            >
-                Add Component
-            </button>
+        <div className="mt-4">
+            <button onClick={() => setAddMenuOpen(v => !v)} className="w-full">Add Component</button>
             {addMenuOpen && (
-                <div className="bg-black/90 backdrop-blur-md border border-white/20 mt-1 z-10 relative overflow-hidden shadow-xl">
+                <div className="bg-gray-800 text-white rounded mt-1 z-10 relative">
                     {COMPONENT_TYPES.map(c => (
-                        <button
-                            key={c.type}
-                            className="block w-full py-1 px-2 text-left text-white/80 hover:text-white hover:bg-white/10 text-xs transition-all border-b border-white/5 last:border-b-0"
-                            onClick={() => handleAddComponent(c.type)}
-                        >
-                            {c.label}
-                        </button>
+                        <button key={c.type} className="block w-full" onClick={() => handleAddComponent(c.type)}>{c.label}</button>
                     ))}
-                    <button
-                        className="block w-full py-1 px-2 text-left text-white/40 hover:text-white/60 hover:bg-white/5 text-xs transition-all"
-                        onClick={() => setAddMenuOpen(false)}
-                    >
-                        Cancel
-                    </button>
+                    <button className="block w-full text-gray-400" onClick={() => setAddMenuOpen(false)}>Cancel</button>
                 </div>
             )}
         </div>

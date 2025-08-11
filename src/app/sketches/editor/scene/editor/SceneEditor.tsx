@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import NodeEditor from "./NodeEditor";
 import { SceneNode } from "../viewer/SceneViewer";
 import { FilePicker } from "../../dragdrop/DragDropLoader";
+import presets from "../presets";
 
 function generateId() {
     return Math.random().toString(36).substr(2, 9);
@@ -57,7 +58,6 @@ interface SceneEditorProps {
 
 export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId, setSelectedNodeId, models, setModels }: SceneEditorProps) {
     const [rawMode, setRawMode] = useState(false);
-    const [rawText, setRawText] = useState<string>("");
     const dragNode = useRef<SceneNode | null>(null);
     // Context menu state
     const [contextMenu, setContextMenu] = useState<{ nodeId: string, x: number, y: number } | null>(null);
@@ -102,57 +102,114 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
 
     // --- Raw mode handlers ---
     const handleRawToggle = () => {
-        if (!rawMode) {
-            setRawText(JSON.stringify(sceneGraph, null, 2));
-        }
         setRawMode(r => !r);
     };
-    const handleRawChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setRawText(e.target.value);
-    };
-    const handleRawBlur = () => {
-        try {
-            const parsed = JSON.parse(rawText);
-            if (Array.isArray(parsed)) {
-                setSceneGraph(parsed);
 
-                // --- Ensure models contains all referenced filenames ---
-                if (setModels) {
-                    function collectModelFilenames(nodes: SceneNode[]): Set<string> {
-                        const filenames = new Set<string>();
-                        const recur = (nlist: SceneNode[]) => {
-                            nlist.forEach(node => {
-                                node.components?.forEach((comp: any) => {
-                                    if (comp.type === 'model' && typeof comp.filename === 'string') {
-                                        filenames.add(comp.filename);
-                                    }
+    // --- Save JSON handler ---
+    const handleSaveJSON = () => {
+        const jsonString = JSON.stringify(sceneGraph, null, 2);
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonString);
+        const anchor = document.createElement('a');
+        anchor.href = dataStr;
+        anchor.download = "scene-graph.json";
+        anchor.click();
+    };
+
+    // --- Load JSON handler ---
+    const handleLoadJSON = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const jsonString = event.target?.result as string;
+                        const parsed = JSON.parse(jsonString);
+                        if (Array.isArray(parsed)) {
+                            setSceneGraph(parsed);
+
+                            // --- Ensure models contains all referenced filenames ---
+                            if (setModels) {
+                                function collectModelFilenames(nodes: SceneNode[]): Set<string> {
+                                    const filenames = new Set<string>();
+                                    const recur = (nlist: SceneNode[]) => {
+                                        nlist.forEach(node => {
+                                            node.components?.forEach((comp: any) => {
+                                                if (comp.type === 'model' && typeof comp.filename === 'string') {
+                                                    filenames.add(comp.filename);
+                                                }
+                                            });
+                                            recur(node.children);
+                                        });
+                                    };
+                                    recur(parsed);
+                                    return filenames;
+                                }
+
+                                const referencedFilenames = collectModelFilenames(parsed);
+                                setModels(prevModels => {
+                                    let changed = false;
+                                    const newModels = { ...prevModels };
+                                    referencedFilenames.forEach(filename => {
+                                        if (!(filename in newModels)) {
+                                            newModels[filename] = null;
+                                            changed = true;
+                                        }
+                                    });
+                                    return changed ? newModels : prevModels;
                                 });
-                                recur(node.children);
-                            });
-                        };
-                        recur(parsed);
-                        return filenames;
-                    }
-
-                    const referencedFilenames = collectModelFilenames(parsed);
-                    setModels(prevModels => {
-                        let changed = false;
-                        const newModels = { ...prevModels };
-                        referencedFilenames.forEach(filename => {
-                            if (!(filename in newModels)) {
-                                newModels[filename] = null;
-                                changed = true;
                             }
-                        });
-                        return changed ? newModels : prevModels;
-                    });
-                }
+                        }
+                    } catch (error) {
+                        alert('Error parsing JSON file');
+                    }
+                };
+                reader.readAsText(file);
             }
-        } catch { }
+        };
+        input.click();
     };
-    const handleRawKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-            handleRawBlur();
+
+    // --- Load preset handler ---
+    const handleLoadPreset = (presetName: string) => {
+        if (presetName && presets[presetName as keyof typeof presets]) {
+            const presetData = presets[presetName as keyof typeof presets] as SceneNode[];
+            setSceneGraph(presetData);
+
+            // --- Ensure models contains all referenced filenames ---
+            if (setModels) {
+                function collectModelFilenames(nodes: SceneNode[]): Set<string> {
+                    const filenames = new Set<string>();
+                    const recur = (nlist: SceneNode[]) => {
+                        nlist.forEach(node => {
+                            node.components?.forEach((comp: any) => {
+                                if (comp.type === 'model' && typeof comp.filename === 'string') {
+                                    filenames.add(comp.filename);
+                                }
+                            });
+                            recur(node.children);
+                        });
+                    };
+                    recur(presetData);
+                    return filenames;
+                }
+
+                const referencedFilenames = collectModelFilenames(presetData);
+                setModels(prevModels => {
+                    let changed = false;
+                    const newModels = { ...prevModels };
+                    referencedFilenames.forEach(filename => {
+                        if (!(filename in newModels)) {
+                            newModels[filename] = null;
+                            changed = true;
+                        }
+                    });
+                    return changed ? newModels : prevModels;
+                });
+            }
         }
     };
 
@@ -239,19 +296,17 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                 e.stopPropagation();
                 setContextMenu({ nodeId: node.id, x: e.clientX, y: e.clientY });
             }}
-            className={`ml-4 py-0.5 px-1 transition-all cursor-pointer text-xs font-mono relative ${selectedNodeId === node.id
-                ? "bg-blue-500/20 border border-blue-400/40 text-white/95"
-                : "text-white/70 hover:bg-white/5 hover:text-white/90"
-                }`}
+            style={{
+                marginLeft: 16,
+                border: selectedNodeId === node.id ? "1px solid #4f8cff" : undefined,
+                background: selectedNodeId === node.id ? "#e6f0ff" : undefined,
+                padding: 2,
+                cursor: "pointer",
+                position: "relative"
+            }}
         >
-            <span className="select-none">{node.name}</span>
-            <button
-                className="ml-2 w-4 h-4 flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition-all text-xs"
-                onClick={e => { e.stopPropagation(); handleAdd(node.id); }}
-                title="Add child node"
-            >
-                +
-            </button>
+            {node.name}
+            <button style={{ marginLeft: 8 }} onClick={e => { e.stopPropagation(); handleAdd(node.id); }}>+</button>
             {node.children?.map(child => renderNode(child))}
         </div>
     );
@@ -259,21 +314,27 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
     // --- Context menu UI ---
     const contextMenuUI = contextMenu ? (
         <div
-            className="fixed bg-black/80 backdrop-blur-md border border-white/20 z-[1000] shadow-2xl min-w-[120px] overflow-hidden"
             style={{
+                position: "fixed",
                 top: contextMenu.y,
                 left: contextMenu.x,
+                background: "white",
+                border: "1px solid #ccc",
+                borderRadius: 4,
+                zIndex: 1000,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                minWidth: 100
             }}
             onClick={e => e.stopPropagation()}
         >
             <div
-                className="px-2 py-1 text-white/80 hover:text-white hover:bg-white/10 cursor-pointer text-xs transition-all border-b border-white/5"
+                style={{ padding: 8, cursor: "pointer" }}
                 onClick={() => handleDuplicateNode(contextMenu.nodeId)}
             >
                 Duplicate
             </div>
             <div
-                className="px-2 py-1 text-red-300 hover:text-red-200 hover:bg-red-500/10 cursor-pointer text-xs transition-all"
+                style={{ padding: 8, cursor: "pointer", color: "red" }}
                 onClick={() => handleDeleteNode(contextMenu.nodeId)}
             >
                 Delete
@@ -291,39 +352,34 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
 
     return (
         <>
-            <div className="absolute top-24 left-4 bg-black/20 backdrop-blur-md border border-white/10 p-2 min-w-[280px]">
-                <div className="flex gap-2 items-center mb-2">
-                    <h2 className="text-white/90 text-xs font-medium tracking-wide uppercase">
+            <div className="absolute top-24 left-4 border-stone-700 border bg-stone-200/50 p-1">
+                <div className="flex gap-2 items-center">
+                    <h2>
                         Scene Hierarchy
                     </h2>
-                    <button
-                        onClick={handleRawToggle}
-                        className="text-white/60 hover:text-white/90 text-xs w-5 h-5 flex items-center justify-center transition-colors"
-                    >
-                        ⛭
-                    </button>
+                    <button onClick={handleRawToggle}>⛭</button>
                 </div>
                 <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
                     {rawMode ? (
-                        <div className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-2">
                             <div>
-                                <div className="text-white/70 text-xs font-medium mb-2 tracking-wider">MODELS</div>
-                                <div className="flex flex-col gap-1">
+                                <div style={{ fontWeight: "bold" }}>Models</div>
+                                <div className="flex flex-col">
                                     {Object.keys(models).length === 0
-                                        ? <div className="text-white/40 text-xs">No models loaded.</div>
+                                        ? <div style={{ color: "#888" }}>No models loaded.</div>
                                         : Object.entries(models).map(([filename, model]) => (
-                                            <div key={filename} className="flex items-center justify-between py-0.5 px-1 bg-white/5 border border-white/5">
-                                                <span className="text-white/80 text-xs font-mono truncate">
+                                            <div key={filename} className="flex items-center mb-1">
+                                                <span>
                                                     {filename}
                                                 </span>
                                                 {model === null ? (
-                                                    <span className="text-red-400 text-xs font-medium">Missing</span>
+                                                    <span className="text-red-600 ml-2">Missing</span>
                                                 ) : (
                                                     <button
-                                                        className="text-xs px-1 py-0.5 bg-white/10 hover:bg-white/20 text-white/70 hover:text-white/90 border border-white/10 transition-all"
+                                                        className="ml-2 text-xs px-2 py-0.5 border rounded bg-white hover:bg-blue-50"
                                                         onClick={() => handleDownloadModel(model, filename)}
                                                     >
-                                                        ↓
+                                                        Download
                                                     </button>
                                                 )}
                                             </div>
@@ -331,8 +387,8 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                                     }
                                     {/* Show only one button for all missing files */}
                                     {Object.values(models).some(m => m === null) && (
-                                        <div className="mt-3 flex flex-col items-center gap-2">
-                                            <div className="text-red-300 text-xs font-medium">Import missing files:</div>
+                                        <div className="mt-2 flex flex-col items-center">
+                                            <div className="text-red-700 font-bold">Import missing files:</div>
                                             {/* Show only one button for all missing files */}
                                             <FilePicker onModelLoaded={handleModelLoaded} />
                                         </div>
@@ -340,15 +396,35 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                                 </div>
                             </div>
                             <div>
-                                <div className="text-white/70 text-xs font-medium mb-2 tracking-wider">SCENE GRAPH</div>
-                                <textarea
-                                    value={rawText}
-                                    onChange={handleRawChange}
-                                    onBlur={handleRawBlur}
-                                    onKeyDown={handleRawKeyDown}
-                                    className="w-full h-80 bg-black/30 border border-white/10 text-white/90 text-xs font-mono p-2 resize-none focus:outline-none focus:border-white/30 transition-colors"
-                                    placeholder="Scene graph JSON..."
-                                />
+                                <div style={{ fontWeight: "bold" }}>SceneGraph</div>
+                                <div className="flex gap-2 mt-2 mb-2">
+                                    <select
+                                        className="px-2 py-1 border rounded bg-white"
+                                        onChange={(e) => handleLoadPreset(e.target.value)}
+                                        defaultValue=""
+                                    >
+                                        <option value="">Load Preset...</option>
+                                        {Object.keys(presets).map(presetName => (
+                                            <option key={presetName} value={presetName}>
+                                                {presetName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="flex gap-2 mt-2">
+                                    <button
+                                        className="px-3 py-1 border rounded bg-white hover:bg-green-50 text-green-700"
+                                        onClick={handleSaveJSON}
+                                    >
+                                        Save JSON
+                                    </button>
+                                    <button
+                                        className="px-3 py-1 border rounded bg-white hover:bg-blue-50 text-blue-700"
+                                        onClick={handleLoadJSON}
+                                    >
+                                        Load JSON
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ) : (

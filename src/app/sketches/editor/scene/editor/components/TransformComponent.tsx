@@ -43,48 +43,44 @@ export function TransformComponent({ node, setSceneGraph }: {
     };
 
     return <>
-        <div className="mt-3">
-            <label className="text-white/60 text-xs font-medium block mb-1">Position</label>
-            <div className="flex gap-1">
-                {[0, 1, 2].map(i => (
-                    <NumberInput
-                        key={i}
-                        value={t.position ? t.position[i] ?? null : null}
-                        placeholder={["x", "y", "z"][i]}
-                        className="w-12"
-                        onChange={v => {
-                            const arr = t.position ? [...t.position] : [null, null, null];
-                            arr[i] = v;
-                            handleTransformChange('position', arr as [number, number, number]);
-                        }}
-                    />
-                ))}
-            </div>
+        <div className="mt-2">
+            <label>Position: </label>
+            {[0, 1, 2].map(i => (
+                <NumberInput
+                    key={i}
+                    value={t.position ? t.position[i] ?? null : null}
+                    placeholder={["x", "y", "z"][i]}
+                    style={{ width: 40, marginRight: 4 }}
+                    onChange={v => {
+                        const arr = t.position ? [...t.position] : [null, null, null];
+                        arr[i] = v;
+                        handleTransformChange('position', arr as [number, number, number]);
+                    }}
+                />
+            ))}
         </div>
-        <div className="mt-3">
-            <label className="text-white/60 text-xs font-medium block mb-1">Rotation</label>
-            <div className="flex gap-1">
-                {[0, 1, 2].map(i => (
-                    <NumberInput
-                        key={i}
-                        value={t.rotation ? t.rotation[i] ?? null : null}
-                        placeholder={["x", "y", "z"][i]}
-                        className="w-12"
-                        onChange={v => {
-                            const arr = t.rotation ? [...t.rotation] : [null, null, null];
-                            arr[i] = v;
-                            handleTransformChange('rotation', arr as [number, number, number]);
-                        }}
-                    />
-                ))}
-            </div>
+        <div className="mt-2">
+            <label>Rotation: </label>
+            {[0, 1, 2].map(i => (
+                <NumberInput
+                    key={i}
+                    value={t.rotation ? t.rotation[i] ?? null : null}
+                    placeholder={["x", "y", "z"][i]}
+                    style={{ width: 40, marginRight: 4 }}
+                    onChange={v => {
+                        const arr = t.rotation ? [...t.rotation] : [null, null, null];
+                        arr[i] = v;
+                        handleTransformChange('rotation', arr as [number, number, number]);
+                    }}
+                />
+            ))}
         </div>
-        <div className="mt-3">
-            <label className="text-white/60 text-xs font-medium block mb-1">Scale</label>
+        <div className="mt-2">
+            <label>Scale: </label>
             <NumberInput
                 value={t.scale ?? 1}
                 placeholder="s"
-                className="w-12"
+                style={{ width: 40 }}
                 onChange={v => {
                     handleTransformChange('scale', v);
                 }}

@@ -10,28 +10,13 @@ type PropEditorProps = {
 };
 function PropEditor({ type, value, onChange }: PropEditorProps) {
     if (type === 'color') {
-        return <input
-            type="color"
-            value={value}
-            onChange={e => onChange(e.target.value)}
-            className="w-8 h-6 border border-white/20 bg-transparent cursor-pointer"
-        />;
+        return <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-10 h-6 align-middle" />;
     }
     if (type === 'number') {
-        return <input
-            type="number"
-            value={value}
-            onChange={e => onChange(Number(e.target.value))}
-            className="w-16 bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors"
-        />;
+        return <input type="number" value={value} onChange={e => onChange(Number(e.target.value))} className="w-15" />;
     }
     // fallback to text
-    return <input
-        type="text"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-20 bg-white/10 border border-white/20 text-white/90 text-xs px-2 py-1 focus:outline-none focus:border-white/40 transition-colors"
-    />;
+    return <input type="text" value={value} onChange={e => onChange(e.target.value)} className="w-20" />;
 }
 
 // --- MaterialComponent for meshStandardMaterial ---
@@ -48,12 +33,12 @@ export function MaterialComponent({ node, setSceneGraph }: {
         // Add more material props here if needed
     ];
     return (
-        <li className="mb-1 py-1 px-2 bg-white/5 border border-white/10">
-            <span className="text-white/90 text-xs font-medium block mb-1">Mesh Standard Material</span>
-            <div className="space-y-1">
+        <div className="mb-2">
+            <span className="font-medium">Mesh Standard Material</span>
+            <div className="mt-1 ml-2">
                 {propsDef.map(({ key, label, type: propType }) => (
-                    <div key={key} className="flex items-center gap-2">
-                        <label className="text-white/60 text-xs min-w-[40px]">{label || key}:</label>
+                    <div key={key} className="mb-0.5">
+                        <label className="mr-1">{label || key}:</label>
                         <PropEditor
                             type={propType}
                             value={comp.props?.[key] ?? ''}
@@ -84,6 +69,6 @@ export function MaterialComponent({ node, setSceneGraph }: {
                     </div>
                 ))}
             </div>
-        </li>
+        </div>
     );
 }
