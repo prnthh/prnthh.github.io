@@ -4,171 +4,14 @@ import { Physics } from "@react-three/rapier";
 import { GameCanvas } from "@/shared/GameCanvas";
 import { DragDropLoader } from "../dragdrop/DragDropLoader";
 import React, { useEffect, useRef, useState, useContext, createContext } from "react";
-import SceneEditor from "./editor/SceneEditor";
 import { Environment } from "@react-three/drei";
-import { Object3D, Object3DEventMap } from "three";
 import { EditorModes, SceneNode, Viewer } from "./viewer/SceneViewer";
 import { Perf } from 'r3f-perf'
 import { CharacterController } from "../../controllers/shouldercam/CharacterController";
 import Controls from "@/shared/ControlsProvider";
 import presets from "./presets";
-import { GLTFLoader, FBXLoader } from "three/examples/jsm/Addons.js";
+import { GameEngine } from "./editor/EditorContext";
 
-interface EditorContextType {
-    sceneGraph: SceneNode[];
-    setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
-    models: { [filename: string]: any };
-    setModels: React.Dispatch<React.SetStateAction<{ [filename: string]: any }>>;
-    playMode: EditorModes;
-    setPlayMode: React.Dispatch<React.SetStateAction<EditorModes>>;
-    selectedNodeId: string | null;
-    setSelectedNodeId: React.Dispatch<React.SetStateAction<string | null>>;
-    getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>;
-}
-
-const EditorContext = createContext<EditorContextType | undefined>(undefined);
-
-export function useEditorContext() {
-    const ctx = useContext(EditorContext);
-    if (!ctx) throw new Error("useEditorContext must be used within EditorContext.Provider");
-    return ctx;
-}
-
-export function GameEngine({ mode = EditorModes.Play, sceneGraph: initialSceneGraph, children }: { mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode }) {
-    const [sceneGraph, setSceneGraph] = useState<SceneNode[]>(
-        initialSceneGraph ??
-        [{
-            id: Math.random().toString(36).substr(2, 9),
-            name: "Root",
-            children: [],
-            components: [],
-        }]
-    );
-    // Store models as a map: filename -> model
-    const [models, setModels] = useState<{ [filename: string]: any }>({});
-    const [playMode, setPlayMode] = useState<EditorModes>(mode);
-    const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-
-    useEffect(() => {
-        setPlayMode(mode);
-    }, [mode]);
-
-    useEffect(() => {
-        console.log("Scene graph updated:", sceneGraph);
-    }, [sceneGraph]);
-
-    // Map of nodeId to ref
-    const nodeRefs = useRef<{ [id: string]: React.RefObject<Object3D<Object3DEventMap> | null> }>({});
-    const getNodeRef = (id: string): React.RefObject<Object3D<Object3DEventMap> | null> => {
-        if (!nodeRefs.current[id]) nodeRefs.current[id] = React.createRef<Object3D<Object3DEventMap>>();
-        return nodeRefs.current[id];
-    };
-
-    function addModelNodeToSceneGraph(model: any, filename: string) {
-        // Always store the model in models state by filename
-        setModels(prevModels => ({
-            ...prevModels,
-            [filename]: model
-        }));
-        // Only store the filename in the scene graph node
-        setSceneGraph(prev => {
-            const root = prev[0];
-            const newNode: SceneNode = {
-                id: Math.random().toString(36).substr(2, 9),
-                name: filename,
-                children: [],
-                components: [
-                    { type: 'model', filename } // Only filename, no model object
-                ],
-                transform: {
-                    position: [0, 0, 0] as [number, number, number],
-                    rotation: [0, 0, 0] as [number, number, number],
-                    scale: 1
-                }
-            };
-            return [
-                {
-                    ...root,
-                    children: [...root.children, newNode]
-                }
-            ] as SceneNode[];
-        });
-    }
-
-    useEffect(() => {
-        // On mount, scan sceneGraph for model filenames
-        const referencedFiles = new Set<string>();
-        function collectModelFiles(nodes: SceneNode[]) {
-            nodes.forEach(node => {
-                if (node.components) {
-                    node.components.forEach(comp => {
-                        if (comp.type === 'model' && comp.filename) {
-                            referencedFiles.add(comp.filename);
-                        }
-                    });
-                }
-                if (node.children && node.children.length > 0) {
-                    collectModelFiles(node.children);
-                }
-            });
-        }
-        collectModelFiles(sceneGraph);
-        // Mark missing models
-        setModels(prevModels => {
-            const newModels = { ...prevModels };
-            referencedFiles.forEach(filename => {
-                if (!(filename in newModels)) {
-                    newModels[filename] = { missing: true };
-                }
-            });
-            return newModels;
-        });
-        // Try to load each missing model from /resources/
-        referencedFiles.forEach(filename => {
-            if (models[filename] && !models[filename].missing) return; // Already loaded
-            if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
-                const loader = new GLTFLoader();
-                loader.load(`/${filename}`,
-                    gltf => {
-                        setModels(prev => ({ ...prev, [filename]: gltf.scene }));
-                    },
-                    undefined,
-                    err => {
-                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
-                    }
-                );
-            } else if (filename.endsWith('.fbx')) {
-                const loader = new FBXLoader();
-                loader.load(`/${filename}`,
-                    model => {
-                        setModels(prev => ({ ...prev, [filename]: model }));
-                    },
-                    undefined,
-                    err => {
-                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
-                    }
-                );
-            }
-        });
-    }, []); // Only run on mount
-
-    return (
-        <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef }}>
-            {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
-            <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
-                {children}
-            </div>
-            {playMode == EditorModes.Edit && <SceneEditor
-                sceneGraph={sceneGraph} // pass raw sceneGraph
-                setSceneGraph={setSceneGraph}
-                selectedNodeId={selectedNodeId}
-                setSelectedNodeId={setSelectedNodeId}
-                models={models}
-                setModels={setModels}
-            />}
-        </EditorContext.Provider>
-    );
-}
 
 export default function EditorApp() {
     const [editorMode, setEditorMode] = useState<EditorModes>(EditorModes.Edit);
@@ -196,6 +39,5 @@ export default function EditorApp() {
                 </GameCanvas>
             </GameEngine>
         </Controls>
-
     </>
 }

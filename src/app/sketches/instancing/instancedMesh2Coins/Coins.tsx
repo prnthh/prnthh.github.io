@@ -1,7 +1,9 @@
+"use client";
+
 import { InstancedRigidBodies } from "@react-three/rapier";
 import { MathUtils } from "three";
 import { useGLTF } from "@react-three/drei";
-import { useEffect, useRef } from "react";
+import { use, useEffect, useRef } from "react";
 import { InstancedMesh2 } from "@three.ez/instanced-mesh";
 import { extend } from "@react-three/fiber";
 import * as THREE from "three";

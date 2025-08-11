@@ -7,10 +7,10 @@ import { ShadowLight } from "@/app/sketches/lighting/shadowmap/ShadowLight";
 import { Suspense, useRef } from "react";
 import { GameCanvas } from "@/shared/GameCanvas";
 import Vehicle, { ObjectRef } from "../../car/simple/car/base";
-import { GameEngine } from "../../editor/scene/page";
 import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
 import PedSpawner from "./PedSpawner";
 import drive from "./map";
+import { GameEngine } from "../../editor/scene/editor/EditorContext";
 
 export default function Home() {
     const carRBRef = useRef<ObjectRef | null>(null);

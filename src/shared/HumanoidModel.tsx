@@ -1,12 +1,12 @@
 import { useGLTF, useAnimations, Box } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useLoader } from "@react-three/fiber";
 import { forwardRef, RefObject, useEffect, useRef, useState, useImperativeHandle } from "react";
 import * as THREE from "three";
 import { SkeletonUtils } from "three-stdlib";
+import { GLTFLoader } from 'three/examples/jsm/Addons.js';
 import useAnimationState from "./useAnimationStateBasic";
 import useLookAtTarget from "./useLookAtTarget";
 import BoneCollider from "./BoneCollider";
-import useModelAttachment from "./useModelAttachment";
 
 const AnimatedModel = forwardRef<THREE.Object3D, {
     name?: string,
@@ -50,20 +50,60 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
         }, [scene]);
 
         useLookAtTarget(clonedScene, lookTarget, 'mixamorigNeck')
-        // Attach models if attachments are provided
-        if (attachments) {
-            Object.values(attachments).forEach(attachment => {
-                useModelAttachment(
-                    clonedScene,
-                    attachment.attachpoint,
-                    "attachment",
-                    attachment.model,
-                    attachment.offset,
-                    attachment.scale,
-                    attachment.rotation
-                );
+
+        // Handle attachments using useEffect instead of hook calls in loops
+        useEffect(() => {
+            if (!attachments || !clonedScene) return;
+
+            const cleanupFunctions: (() => void)[] = [];
+
+            // Process attachments without using hooks in loops
+            Object.entries(attachments).forEach(([key, attachment]) => {
+                const bone = clonedScene.getObjectByName(attachment.attachpoint);
+                if (bone && attachment.model) {
+                    const loader = new GLTFLoader();
+
+                    loader.load(
+                        attachment.model,
+                        (gltf) => {
+                            // Remove any existing attachment with the same key
+                            const existingAttachment = bone.children.find(
+                                child => child.name === `attachment-${attachment.attachpoint}-${key}`
+                            );
+                            if (existingAttachment) {
+                                bone.remove(existingAttachment);
+                            }
+
+                            const attachedModel = SkeletonUtils.clone(gltf.scene);
+                            attachedModel.name = `attachment-${attachment.attachpoint}-${key}`;
+                            attachedModel.position.copy(attachment.offset);
+                            attachedModel.scale.copy(attachment.scale);
+                            attachedModel.rotation.set(attachment.rotation.x, attachment.rotation.y, attachment.rotation.z);
+                            bone.add(attachedModel);
+                        },
+                        undefined,
+                        (error) => {
+                            console.error('Error loading attachment model:', attachment.model, error);
+                        }
+                    );
+
+                    // Store cleanup function
+                    cleanupFunctions.push(() => {
+                        const attachmentToRemove = bone.children.find(
+                            child => child.name === `attachment-${attachment.attachpoint}-${key}`
+                        );
+                        if (attachmentToRemove) {
+                            bone.remove(attachmentToRemove);
+                        }
+                    });
+                }
             });
-        }
+
+            // Cleanup function
+            return () => {
+                cleanupFunctions.forEach(cleanup => cleanup());
+            };
+        }, [attachments, clonedScene]);
         const { mixer, setThisAnimation, actions } = useAnimationState(clonedScene, basePath, animationOverrides, onActions);
 
         useEffect(() => {

@@ -1,10 +1,10 @@
-import { CuboidCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
+import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Object3D, Object3DEventMap } from "three";
 import { GameInstance, GameInstanceProvider } from "../editor/InstanceProvider";
 import * as THREE from "three";
-import { useEditorContext } from "../page";
 import { Html, OrbitControls, TransformControls } from "@react-three/drei";
+import { useEditorContext } from "../editor/EditorContext";
 
 export function Viewer() {
     const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, playMode } = useEditorContext();
@@ -119,7 +119,7 @@ export function Viewer() {
                             updateData.scale = dummy.scale.x;
                         }
 
-                        setSceneGraph(prev => updateTransform(prev, selectedNodeId, updateData));
+                        setSceneGraph((prev: SceneNode[]) => updateTransform(prev, selectedNodeId, updateData));
                     }}
                 />
             )}
