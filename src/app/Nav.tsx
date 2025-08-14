@@ -6,13 +6,13 @@ import { usePathname } from "next/navigation";
 
 const allExperiments = [
     'barebones',
-    'demos/drive', 'demos/punchball', 'demos/walkingsimulator',
+    'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
     'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/webgpu', 'floor/terrain2',
     'lighting/simple', 'lighting/shadowmap', 'lighting/cascading', 'lighting/probe', 'lighting/reflection',
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/road', 'car/driver',
-    'editor/events', 'editor/store', 'editor/scene', 'editor/dragdrop',
+    'editor/scene', 'editor/dragdrop',
     'ik/ragdoll', 'ik/kick', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
     'interior',

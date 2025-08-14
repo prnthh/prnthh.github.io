@@ -43,19 +43,27 @@ export default function BoneCollider({
         setBone(found);
     }, [rootModel, boneName]);
 
+    // Reset rbRef when bone changes to avoid unsafe aliasing
+    useEffect(() => {
+        rbRef.current = null;
+    }, [bone]);
+
     // Update the sphere's position to match the bone's world position
     useFrame(() => {
-        if (bone && rootModel) {
-            const boneWorldPos = new THREE.Vector3();
-            bone.getWorldPosition(boneWorldPos);
-            // Use world position directly for the collider
-            const newPos: [number, number, number] = [
-                boneWorldPos.x,
-                boneWorldPos.y,
-                boneWorldPos.z
-            ];
-            if (rbRef.current) {
+        if (bone && rootModel && rbRef.current) {
+            try {
+                const boneWorldPos = new THREE.Vector3();
+                bone.getWorldPosition(boneWorldPos);
+                // Use world position directly for the collider
+                const newPos: [number, number, number] = [
+                    boneWorldPos.x,
+                    boneWorldPos.y,
+                    boneWorldPos.z
+                ];
                 rbRef.current.setTranslation?.({ x: newPos[0], y: newPos[1], z: newPos[2] }, true);
+            } catch (e) {
+                // Prevent unreachable error from crashing app
+                // Optionally log or handle cleanup here
             }
         }
     });

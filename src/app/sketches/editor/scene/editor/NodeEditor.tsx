@@ -209,10 +209,10 @@ export default function NodeEditor({ selectedId, sceneGraph, setSceneGraph, setS
             {node.components && node.components.length > 0 ? (
                 <>
                     {node.components.map((comp, idx) => (
-                        <>
-                            <div key={'hr-' + idx} className="w-full h-px bg-stone-700 mt-2" />
-                            <ComponentEditor key={idx} comp={comp} idx={idx} node={node} setSceneGraph={setSceneGraph} models={models} />
-                        </>
+                        <div key={idx}>
+                            <div className="w-full h-px bg-stone-700 mt-2" />
+                            <ComponentEditor comp={comp} idx={idx} node={node} setSceneGraph={setSceneGraph} models={models} />
+                        </div>
                     ))}
                 </>
             ) : (

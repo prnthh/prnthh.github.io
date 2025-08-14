@@ -26,7 +26,7 @@ export function useEditorContext() {
     return ctx;
 }
 
-export function GameEngine({ mode = EditorModes.Play, sceneGraph: initialSceneGraph, children }: { mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode }) {
+export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGraph: initialSceneGraph, children }: { resourcePath?: string, mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode }) {
     const [sceneGraph, setSceneGraph] = useState<SceneNode[]>(
         initialSceneGraph ??
         [{
@@ -120,7 +120,7 @@ export function GameEngine({ mode = EditorModes.Play, sceneGraph: initialSceneGr
             if (models[filename] && !models[filename].missing) return; // Already loaded
             if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
                 const loader = new GLTFLoader();
-                loader.load(`/${filename}`,
+                loader.load(`${resourcePath}/${filename}`,
                     gltf => {
                         setModels(prev => ({ ...prev, [filename]: gltf.scene }));
                     },
@@ -131,7 +131,7 @@ export function GameEngine({ mode = EditorModes.Play, sceneGraph: initialSceneGr
                 );
             } else if (filename.endsWith('.fbx')) {
                 const loader = new FBXLoader();
-                loader.load(`/${filename}`,
+                loader.load(`${resourcePath}/${filename}`,
                     model => {
                         setModels(prev => ({ ...prev, [filename]: model }));
                     },

@@ -20,7 +20,7 @@ import { usePointerLockControls } from "./usePointerLockControls";
 export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person' }: {
     lookTarget?: RefObject<THREE.Object3D | null>
     name?: string,
-    mode?: "third-person" | "first-person" | "simple"
+    mode?: "third-person" | "first-person" | "simple" | "side-scroll"
 }) => {
     const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 0.8;
 
@@ -84,6 +84,13 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
         if (keyInputs.backward) moveZ -= 1;
         if (keyInputs.left) moveX += 1;
         if (keyInputs.right) moveX -= 1;
+
+        // Invert directions for side-scroll mode
+        if (mode === "side-scroll") {
+            moveX = -moveX;
+            moveZ = -moveZ;
+        }
+
         const speed = keyInputs.run ? RUN_SPEED : WALK_SPEED;
         if (moveX || moveZ) {
             const dir = new Vector3(moveX, 0, moveZ).normalize().applyAxisAngle(new Vector3(0, 1, 0), rotationTarget.current);
@@ -121,9 +128,15 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
             if (mode === "simple" && (moveX && !moveZ)) {
                 nextAnimation = "idle"; // No strafe anim in simple mode
             } else if (moveX && !moveZ) {
-                nextAnimation = "walkLeft";
-                if (walkLeftActionRef.current)
-                    walkLeftActionRef.current.timeScale = moveX;
+                if (mode === "side-scroll") {
+                    nextAnimation = "walkLeft";
+                    if (walkLeftActionRef.current)
+                        walkLeftActionRef.current.timeScale = -moveX; // Reverse for right movement
+                } else {
+                    nextAnimation = "walkLeft";
+                    if (walkLeftActionRef.current)
+                        walkLeftActionRef.current.timeScale = moveX;
+                }
             } else {
                 nextAnimation = (speed === RUN_SPEED ? "run" : "walk");
                 if (walkActionRef.current)
@@ -143,11 +156,17 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
             // --- Mode-specific logic ---
             if (mode === "simple") {
                 handleSimpleMode(keyInputs);
+            } else if (mode === "side-scroll") {
+                // Camera lock: set rotationTarget and verticalRotation to zero if available
+                if (container.current) container.current.rotation.y = 0;
+                if (rotationTarget?.current !== undefined) rotationTarget.current = 0;
+                if (verticalRotation?.current !== undefined) verticalRotation.current = 0;
+                // Character movement is not restricted, use third person movement
+                handleThirdPersonMode(keyInputs);
             } else {
                 handleThirdPersonMode(keyInputs);
             }
         }
-
 
         // Jump/grounded logic (shared)
         if (jumping.current && checkGrounded()) {
@@ -195,10 +214,27 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
         <>
             <RigidBody colliders={false} lockRotations ref={rb} position={[0, 4, 0]} name={name} >
                 <group ref={container}>
-                    <FollowCam height={1 / height}
+                    <FollowCam
+                        height={1 / height}
                         verticalRotation={verticalRotation}
-                        cameraOffset={mode === "first-person" ? new Vector3(0, 0, 0) : (shoulderCamMode ? new Vector3(-0.5, 0.8, -0.3) : new Vector3(0, 0.2, -0.8))}
-                        targetOffset={mode === "first-person" ? new Vector3(0, 0, 0) : (shoulderCamMode ? new Vector3(0, 0.5, 1.5) : new Vector3(0, 0.5, 1.5))}
+                        cameraOffset={
+                            mode === "first-person"
+                                ? new Vector3(0, 0, 0)
+                                : mode === "side-scroll"
+                                    ? new Vector3(0, 0.5, 2) // Camera in front, lower
+                                    : (shoulderCamMode
+                                        ? new Vector3(-0.5, 0.8, -0.3)
+                                        : new Vector3(0, 0.2, -0.8))
+                        }
+                        targetOffset={
+                            mode === "first-person"
+                                ? new Vector3(0, 0, 0)
+                                : mode === "side-scroll"
+                                    ? new Vector3(0, 0.5, 0) // Target at character center
+                                    : (shoulderCamMode
+                                        ? new Vector3(0, 0.5, 1.5)
+                                        : new Vector3(0, 0.5, 1.5))
+                        }
                     />
                     <group ref={character}>
                         <AnimatedModel

@@ -27,23 +27,24 @@ export const FollowCam = ({
     const cameraLookAt = useRef<Vector3>(new Vector3());
 
     useFrame(({ camera }) => {
-        if (cameraPosition.current) {
-            // Right shoulder position
+        // Set camera position group
+        if (cameraPosition.current && cameraTarget.current) {
             cameraPosition.current.position.x = cameraOffset.x;
-            cameraPosition.current.position.y = height + cameraOffset.y + Math.sin(verticalRotation?.current ?? 0);
-            cameraPosition.current.position.z = cameraOffset.z - Math.cos(verticalRotation?.current ?? 0);
+            cameraPosition.current.position.y = height + cameraOffset.y;
+            cameraPosition.current.position.z = cameraOffset.z;
 
-            cameraPosition.current.getWorldPosition(cameraWorldPosition.current);
-            camera.position.lerp(cameraWorldPosition.current, cameraSpeed);
-        }
-        if (cameraTarget.current) {
             cameraTarget.current.position.x = targetOffset.x;
-            cameraTarget.current.position.y = targetOffset.y - Math.sin(verticalRotation?.current ?? 0);
-            cameraTarget.current.position.z = targetOffset.z + Math.cos(verticalRotation?.current ?? 0);
+            cameraTarget.current.position.y = targetOffset.y;
+            cameraTarget.current.position.z = targetOffset.z;
 
+            // Get world positions
+            cameraPosition.current.getWorldPosition(cameraWorldPosition.current);
             cameraTarget.current.getWorldPosition(cameraLookAtWorldPosition.current);
-            cameraLookAt.current.lerp(cameraLookAtWorldPosition.current, cameraSpeed);
-            camera.lookAt(cameraLookAt.current);
+
+            // Move camera to position
+            camera.position.lerp(cameraWorldPosition.current, cameraSpeed);
+            // Always look at the target's world position
+            camera.lookAt(cameraLookAtWorldPosition.current);
         }
     });
 
