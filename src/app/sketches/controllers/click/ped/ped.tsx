@@ -15,10 +15,11 @@ export type PedPropsType = {
     height?: number,
     modelOffset?: [number, number, number],
     roundHeight?: number,
+    unstable?: boolean,
     children?: React.ReactNode,
 };
 
-const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, height = 0.95, modelOffset, roundHeight = 0.25, children }: PedPropsType) => {
+const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, height = 0.95, modelOffset, roundHeight = 0.25, unstable, children }: PedPropsType) => {
     const [initialPosition, setInitialPosition] = useState<[number, number, number] | undefined>(position);
 
     const rigidBodyRef = useRef<RapierRigidBody>(null);
@@ -48,7 +49,7 @@ const Ped = memo(({ name = 'alice', debug, modelUrl, position, lookTarget, heigh
                 onCollisionEnter={(e) => {
                     const otherBody = e.other.rigidBodyObject?.name || "";
                     if (otherBody !== "" && !fallenOver) {
-                        setFallenOver(true);
+                        unstable && setFallenOver(true);
                     }
                 }}
 

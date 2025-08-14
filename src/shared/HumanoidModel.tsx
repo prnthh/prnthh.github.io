@@ -136,7 +136,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
                 {debug && <Box args={[0.3, scale, 0.3]} position={[0, 1 / 2 * scale, 0]}>
                     <meshBasicMaterial wireframe color="red" />
                 </Box>}
-                <mesh position={[0, height / 2, 0]} material={new THREE.MeshBasicMaterial({ color: "transparent", opacity: 0, transparent: true })}>
+                <mesh position={[0, height / 2, 0]} material={new THREE.MeshBasicMaterial({ opacity: 0, transparent: true })}>
                     <boxGeometry args={[0.6, 2, 0.6]} />
                 </mesh>
                 <group position={modelOffset}>

@@ -17,10 +17,11 @@ import { FollowCam } from "../../../../shared/FollowCam";
 import { usePointerLockControls } from "./usePointerLockControls";
 
 
-export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person' }: {
+export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person', forwardRef }: {
     lookTarget?: RefObject<THREE.Object3D | null>
     name?: string,
-    mode?: "third-person" | "first-person" | "simple" | "side-scroll"
+    mode?: "third-person" | "first-person" | "simple" | "side-scroll",
+    forwardRef?: (refs: { rbref: MutableRefObject<RapierRigidBody | null>, meshref: MutableRefObject<Group | null> }) => void
 }) => {
     const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 0.8;
 
@@ -31,6 +32,13 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
     const rb = useRef<RapierRigidBody | null>(null);
     const container = useRef<Group>(null);
     const character = useRef<Group>(null);
+
+    // Forward refs on mount/update
+    useEffect(() => {
+        if (typeof forwardRef === 'function') {
+            forwardRef({ rbref: rb, meshref: container });
+        }
+    }, [forwardRef]);
 
     const [, get] = useKeyboardControls();
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");

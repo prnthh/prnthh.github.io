@@ -27,6 +27,7 @@
     "recast-navigation": "^0.39.0",
     "three": "^0.176.0",
     "three-custom-shader-material": "^6.3.7",
+    "trystero": "^0.21.6",
     "tunnel-rat": "^0.1.2",
     "wiggle": "^0.0.17",
     "xml2js": "^0.6.2"
