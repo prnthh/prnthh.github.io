@@ -16,6 +16,8 @@ import { Group, Mesh } from "three";
 import { useContext } from 'react'
 import { MPContext } from './MP'
 import tunnel from "tunnel-rat";
+import ModelAttachment from "@/shared/ModelAttachment";
+import * as THREE from "three";
 const MPProvider = dynamic(() => import('./MP'), { ssr: false })
 
 const ui = tunnel()
@@ -64,7 +66,15 @@ const Game = () => {
                 rbref.current = rb.current;
                 meshref.current = mesh.current;
             }}
-        />
+        >
+            <ModelAttachment
+                model="/models/environment/Katana.glb"
+                attachpoint="mixamorigRightHand"
+                offset={new THREE.Vector3(0, 0, 0)}
+                scale={new THREE.Vector3(100, 100, 100)}
+                rotation={new THREE.Vector3(0, 0, 0)}
+            />
+        </CharacterController>
         <MPProvider roomId="my-room-id" ui={ui}>
 
             <MPStuff />

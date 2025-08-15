@@ -54,18 +54,24 @@ export function ShadowLight({
                 castShadow
                 ref={directionalLight}
                 intensity={intensity}
-                shadow-normalBias={0.05}
-                shadow-mapSize={[1024, 1024]}
                 color={color}
+                shadow-mapSize={[4096, 4096]}
+                shadow-bias={-0.001}
+                shadow-camera-near={0.1}
+                shadow-camera-far={100}
+                shadow-camera-left={-50}
+                shadow-camera-right={50}
+                shadow-camera-top={50}
+                shadow-camera-bottom={-50}
             >
                 <orthographicCamera
                     attach="shadow-camera"
                     near={0.1}
                     far={100}
-                    top={20}
-                    bottom={-20}
-                    left={-20}
-                    right={20}
+                    top={50}
+                    bottom={-50}
+                    left={-50}
+                    right={50}
                 >
                     {debug && <Helper type={CameraHelper} />}
                     {debug && <mesh position={[0, 0, 0]} scale={[40, 40, 40]} rotation={[-Math.PI / 2, 0, 0]}>

@@ -17,10 +17,11 @@ import { FollowCam } from "../../../../shared/FollowCam";
 import { usePointerLockControls } from "./usePointerLockControls";
 
 
-export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person', forwardRef }: {
+export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person', children, forwardRef }: {
     lookTarget?: RefObject<THREE.Object3D | null>
     name?: string,
     mode?: "third-person" | "first-person" | "simple" | "side-scroll",
+    children?: React.ReactNode,
     forwardRef?: (refs: { rbref: MutableRefObject<RapierRigidBody | null>, meshref: MutableRefObject<Group | null> }) => void
 }) => {
     const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 0.8;
@@ -265,7 +266,9 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
                                 walkLeftActionRef.current = actions["walkLeft"] || null;
                                 runActionRef.current = actions["run"] || null;
                             }}
-                        />
+                        >
+                            {children}
+                        </AnimatedModel>
                     </group>
                 </group>
                 <CapsuleCollider args={[(height - (roundHeight * 1.9)) / 2, roundHeight]} position={[0, (height / 2), 0]} />

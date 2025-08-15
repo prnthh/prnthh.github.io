@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { MathUtils } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
 
-export function usePointerLockControls() {
+export function usePointerLockControls({enabled = true}: { enabled?: boolean } = {}) {
     const rotationTarget = useRef<number>(0);
     const verticalRotation = useRef<number>(0);
     const [shoulderCamMode, setShoulderCamMode] = useState(false);
@@ -13,7 +13,7 @@ export function usePointerLockControls() {
 
     useEffect(() => {
         const canvas = document.querySelector("canvas");
-        if (!canvas) return;
+        if (!canvas || !enabled) return;
 
         const onMouseDown = (e: MouseEvent | TouchEvent) => {
             if (e instanceof MouseEvent && e.target instanceof HTMLElement) {
@@ -110,7 +110,7 @@ export function usePointerLockControls() {
             canvas.removeEventListener("touchmove", onTouchMove);
             canvas.removeEventListener("touchend", onTouchEnd);
         };
-    }, []);
+    }, [enabled]);
 
     return { rotationTarget, verticalRotation, shoulderCamMode, setShoulderCamMode };
 }
