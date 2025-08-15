@@ -86,7 +86,11 @@ const MPStuff = () => {
         {/* Peer peds */}
         {
             Object.entries(peerPositions).map(([peerId, position]) => (
-                <Ped key={peerId} modelUrl={'rigga.glb'} position={position} height={1.5} />
+                <Ped key={peerId}
+                    basePath={"/models/human/onimilio/"}
+                    modelUrl={"rigged.glb"}
+                    position={position} height={1.5}
+                />
             ))
         }
     </>

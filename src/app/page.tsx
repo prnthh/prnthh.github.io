@@ -35,10 +35,10 @@ function SwingingModelOnBar() {
         <AnimatedModel
           basePath={"/models/human/onimilio/"}
           model={"rigged.glb"}
-          rotation={[-Math.PI / 2, 0, 0]}
+          rotation={[0, 0, 0]}
           height={2}
           scale={2}
-          position={[0, 0, 0]}
+          position={[0, 0.15, 0]}
           animationOverrides={{ idle: "anim/hang.fbx" }}
           onClick={() => {
             console.log("Model clicked, applying impulse");
@@ -68,7 +68,7 @@ export default function Home() {
             </Physics>
 
             <ambientLight intensity={0.8} />
-            <Text color="black" textAlign="center" scale={0.04} position={[0, 1.5, 0.27]}>
+            <Text color="black" textAlign="center" scale={0.04} position={[0, 1.46, 0.4]}>
               hi im prnth, nothing to see here
             </Text>
             <pointLight position={[0, -1, 2]} intensity={50} color={'orange'} />

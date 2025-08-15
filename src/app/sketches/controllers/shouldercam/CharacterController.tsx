@@ -247,7 +247,8 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
                     <group ref={character}>
                         <AnimatedModel
                             name={name}
-                            model="rigga.glb"
+                            basePath={"/models/human/onimilio/"}
+                            model={"rigged.glb"}
                             animationOverrides={{
                                 walk: 'anim/walk.fbx',
                                 run: 'anim/run.fbx',
