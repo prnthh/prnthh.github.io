@@ -50,7 +50,7 @@ const Ped = memo(({ name = 'alice', debug, basePath, modelUrl, position, lookTar
                 onCollisionEnter={(e) => {
                     const otherBody = e.other.rigidBodyObject?.name || "";
                     if (otherBody !== "" && !fallenOver) {
-                        unstable && setFallenOver(true);
+                        if (unstable) setFallenOver(true);
                     }
                 }}
 
