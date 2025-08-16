@@ -51,7 +51,7 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
     const runActionRef = useRef<THREE.AnimationAction | null>(null);
 
     // Always call the hook to comply with React rules
-    const pointerLockControls = usePointerLockControls();
+    const pointerLockControls = usePointerLockControls({ enabled: mode == "third-person" });
     const rotationTarget = mode !== "simple" ? pointerLockControls.rotationTarget : undefined;
     const verticalRotation = mode !== "simple" ? pointerLockControls.verticalRotation : undefined;
     const shoulderCamMode = mode !== "simple" ? pointerLockControls.shoulderCamMode : undefined;

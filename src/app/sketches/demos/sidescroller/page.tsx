@@ -18,6 +18,7 @@ import { MPContext } from './MP'
 import tunnel from "tunnel-rat";
 import ModelAttachment from "@/shared/ModelAttachment";
 import * as THREE from "three";
+import NetworkThing from "./NetworkThing";
 const MPProvider = dynamic(() => import('./MP'), { ssr: false })
 
 const ui = tunnel()
@@ -75,6 +76,16 @@ const Game = () => {
                 rotation={new THREE.Vector3(0, 0, 0)}
             />
         </CharacterController>
+
+        <NetworkThing
+            scale={new THREE.Vector3(0.1, 0.1, 0.1)} position={new THREE.Vector3(-2, 0, -1)}
+            id="slotmachine"
+            onActivate={() => {
+                const audio = new Audio('/sound/click.mp3');
+                audio.play();
+            }}
+        />
+
         <MPProvider roomId="my-room-id" ui={ui}>
 
             <MPStuff />
@@ -85,7 +96,8 @@ const Game = () => {
         <Viewer />
 
         <ambientLight intensity={0.5} />
-        <Environment files="/textures/skybox3.jpg" background={true} />
+        <color attach="background" args={["#000000"]} />
+        <Environment files="/textures/skybox3.jpg" background={false} />
     </>
 }
 
