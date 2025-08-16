@@ -16,12 +16,8 @@ export default function NetworkThing({ modelUrl = "/models/environment/slotmachi
     useEffect(() => {
         const remoteHandler = (e: Event) => {
             const customEvent = e as CustomEvent;
-            console.log('Received mp-event:', customEvent);
             if ((customEvent as CustomEvent).detail && (customEvent as CustomEvent).detail.id === id) {
-                console.log('Received mp-event for id:', id);
-                if (onActivate) {
-                    onActivate();
-                }
+                if (onActivate) onActivate();
             }
         };
 
@@ -32,7 +28,7 @@ export default function NetworkThing({ modelUrl = "/models/environment/slotmachi
     }, [id, onActivate]);
 
     return clone ? <group {...props} onPointerDown={(e) => {
-        onActivate && onActivate();
+        if (onActivate) onActivate();
         window.dispatchEvent(new CustomEvent('mp-trigger', { detail: { id: id, action: 'play' } }));
         e.stopPropagation();
     }}>
