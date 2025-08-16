@@ -3,11 +3,14 @@ import { joinRoom } from 'trystero'
 import { useEffect, useState, useRef, createContext } from 'react'
 import PeerList from './PeerList'
 
-type PeerState = { position: [number, number, number], appearance: { [key: string]: any } }
+export type PeerState = {
+  position: [number, number, number],
+  appearance: { [key: string]: any },
+  latestMessage?: { message: string, timestamp: number }
+}
 export const MPContext = createContext<{ peerStates: Record<string, PeerState> }>({ peerStates: {} })
-const trysteroConfig = { appId: 'pockit.world' }
 
-export default function MP({ roomId, ui, children }: { roomId: string, ui: any, children: React.ReactNode }) {
+export default function MP({ appId = 'pockit.world', roomId, ui, children }: { appId?: string, roomId: string, ui: any, children: React.ReactNode }) {
   // Ref for chat message list
   const chatListRef = useRef<HTMLDivElement>(null)
   // Suppress 'User-Initiated Abort' RTC errors in the console
@@ -22,7 +25,7 @@ export default function MP({ roomId, ui, children }: { roomId: string, ui: any, 
     }
     origConsoleError.apply(console, args)
   }
-  const room = joinRoom(trysteroConfig, roomId)
+  const room = joinRoom({ appId, password: undefined }, roomId)
   const [sendPlayerState, getPeerStates] = room.makeAction('peerState')
   const [myState, setMyState] = useState<{ position: [number, number, number], appearance: { [key: string]: any } }>({ position: [0, 0, 0], appearance: {} })
   const [peerStates, setPeerStates] = useState<Record<string, PeerState>>({})
@@ -47,6 +50,18 @@ export default function MP({ roomId, ui, children }: { roomId: string, ui: any, 
           }
         }
         setChatMessages(msgs => [...msgs, { peer, message }])
+        // Update peerStates with latest message and timestamp
+        setPeerStates(states => {
+          if (!peer) return states;
+          const now = Date.now();
+          return {
+            ...states,
+            [peer]: {
+              ...states[peer],
+              latestMessage: { message, timestamp: now }
+            }
+          }
+        })
       }
     })
   }, [])
@@ -79,7 +94,16 @@ export default function MP({ roomId, ui, children }: { roomId: string, ui: any, 
         state.position.every((n: any) => typeof n === 'number') &&
         typeof state.appearance === 'object'
       ) {
-        setPeerStates(states => ({ ...states, [peer]: state as PeerState }))
+        setPeerStates(states => {
+          const prev = states[peer] || {};
+          return {
+            ...states,
+            [peer]: {
+              ...prev,
+              ...state,
+            }
+          }
+        })
       }
     }
     room.onPeerJoin(handlePeerJoin)
