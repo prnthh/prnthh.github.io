@@ -37,6 +37,14 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
             components: [],
         }]
     );
+
+    // Update sceneGraph if initialSceneGraph changes
+    useEffect(() => {
+        if (initialSceneGraph) {
+            setSceneGraph(initialSceneGraph);
+            scanAndLoadMissingModels(initialSceneGraph);
+        }
+    }, [initialSceneGraph]);
     // Store models as a map: filename -> model
     const [models, setModels] = useState<{ [filename: string]: any }>({});
     const [playMode, setPlayMode] = useState<EditorModes>(mode);

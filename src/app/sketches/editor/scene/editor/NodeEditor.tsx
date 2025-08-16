@@ -5,6 +5,7 @@ import { GeometryComponent } from "./components/GeometryComponent";
 import { TransformComponent } from "./components/TransformComponent";
 import { ModelComponent } from "./components/ModelComponent";
 import { PhysicsComponent } from "./components/PhysicsComponent";
+import { PointerEventComponent } from "./components/PointerEventComponent";
 import { SceneNode } from "../viewer/SceneViewer";
 
 interface EditorAppProps {
@@ -36,8 +37,12 @@ const COMPONENT_TYPES = [
         type: 'physics',
         label: 'Physics',
         default: { type: 'physics', props: { type: 'fixed' } },
+    },
+    {
+        type: 'pointerEvent',
+        label: 'Pointer Event',
+        default: { type: 'pointerEvent' },
     }
-    // Add more component types here
 ];
 
 type ComponentTypeDef = {
@@ -89,6 +94,10 @@ function ComponentEditor({ comp, idx, node, setSceneGraph, models }: ComponentEd
     // Use PhysicsComponent for physics
     if (comp.type === 'physics') {
         return <PhysicsComponent node={node} setSceneGraph={setSceneGraph} />;
+    }
+    // Use PointerEventComponent for pointerEvent
+    if (comp.type === 'pointerEvent') {
+        return <PointerEventComponent node={node} setSceneGraph={setSceneGraph} />;
     }
 
     const compType = getComponentType(comp.type);

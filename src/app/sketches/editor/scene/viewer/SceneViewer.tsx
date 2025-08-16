@@ -162,10 +162,30 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
         );
     }
 
+    // Pointer event support
+    const pointerEventComp = node.components?.find(c => c.type === 'pointerEvent');
+    const hasPointerEvent = !!pointerEventComp;
+    const handlePointerDown = (e: any) => {
+        if (hasPointerEvent) {
+            const mode = pointerEventComp.args?.[0] || 'event';
+            if (mode === 'link') {
+                const url = pointerEventComp.args?.[1];
+                if (url) {
+                    window.open(url, '_blank');
+                }
+            } else {
+                window.dispatchEvent(new CustomEvent('scene-pointer-event', { detail: { name: node.name } }));
+            }
+            console.log(`Pointer event on node: ${node.name}`);
+        }
+        e.stopPropagation();
+        onSelect(node.id);
+    };
+
     // Regular rendering
     return (
         <group ref={groupRef} position={position || [0, 0, 0]} rotation={rotation} scale={scale}>
-            <mesh onClick={e => { e.stopPropagation(); onSelect(node.id); }} castShadow receiveShadow>
+            <mesh onPointerDown={handlePointerDown} castShadow receiveShadow>
                 <ComponentMapper node={node} />
                 {renderChildren()}
             </mesh>

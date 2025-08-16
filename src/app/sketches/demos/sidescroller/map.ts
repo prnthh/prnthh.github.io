@@ -51,7 +51,7 @@ const drive = [
         ],
         "transform": {
           "position": [
-            1.60065192405337,
+            1.6745714118741764,
             0,
             -0.2
           ],
@@ -61,6 +61,30 @@ const drive = [
             0
           ],
           "scale": 0.7
+        }
+      },
+      {
+        "id": "2lzo5whib",
+        "name": "easel.glb",
+        "children": [],
+        "components": [
+          {
+            "type": "model",
+            "filename": "easel.glb"
+          }
+        ],
+        "transform": {
+          "position": [
+            -2.1140197045613154,
+            0.6086985079151319,
+            0.1969743797129483
+          ],
+          "rotation": [
+            0,
+            0.4,
+            0
+          ],
+          "scale": 0.19999999999999993
         }
       }
     ],

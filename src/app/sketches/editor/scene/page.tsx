@@ -4,8 +4,7 @@ import { Physics } from "@react-three/rapier";
 import { GameCanvas } from "@/shared/GameCanvas";
 import React, { useState, } from "react";
 import { Environment } from "@react-three/drei";
-import { EditorModes, Viewer } from "./viewer/SceneViewer";
-import { Perf } from 'r3f-perf'
+import { EditorModes, SceneNode, Viewer } from "./viewer/SceneViewer";
 import presets from "./presets";
 import { GameEngine } from "./editor/EditorContext";
 
@@ -28,7 +27,6 @@ export default function EditorApp() {
 
                     <ambientLight intensity={0.5} />
                     <Environment preset="sunset" background={false} />
-                    <Perf position="bottom-right" />
                 </Physics>
             </GameCanvas>
         </GameEngine>
