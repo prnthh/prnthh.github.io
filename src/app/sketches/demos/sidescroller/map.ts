@@ -23,7 +23,7 @@ const drive = [
           "position": [
             0,
             0,
-            -0.1
+            -0.10930199250129524
           ],
           "rotation": [
             0,
@@ -31,6 +31,36 @@ const drive = [
             0
           ],
           "scale": 1
+        }
+      },
+      {
+        "id": "ixokf9gqp",
+        "name": "Desk.glb",
+        "children": [],
+        "components": [
+          {
+            "type": "model",
+            "filename": "Desk.glb"
+          },
+          {
+            "type": "physics",
+            "props": {
+              "type": "fixed"
+            }
+          }
+        ],
+        "transform": {
+          "position": [
+            1.60065192405337,
+            0,
+            -0.2
+          ],
+          "rotation": [
+            0,
+            3.14,
+            0
+          ],
+          "scale": 0.7
         }
       }
     ],

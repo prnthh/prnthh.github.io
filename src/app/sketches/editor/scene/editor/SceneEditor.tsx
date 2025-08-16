@@ -3,6 +3,7 @@ import NodeEditor from "./NodeEditor";
 import { SceneNode } from "../viewer/SceneViewer";
 import { FilePicker } from "../../dragdrop/DragDropLoader";
 import presets from "../presets";
+import { useEditorContext } from "./EditorContext";
 
 function generateId() {
     return Math.random().toString(36).substr(2, 9);
@@ -57,6 +58,7 @@ interface SceneEditorProps {
 }
 
 export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId, setSelectedNodeId, models, setModels }: SceneEditorProps) {
+    const { scanAndLoadMissingModels } = useEditorContext();
     const [rawMode, setRawMode] = useState(false);
     const dragNode = useRef<SceneNode | null>(null);
     // Context menu state
@@ -130,37 +132,9 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                         const parsed = JSON.parse(jsonString);
                         if (Array.isArray(parsed)) {
                             setSceneGraph(parsed);
-
-                            // --- Ensure models contains all referenced filenames ---
-                            if (setModels) {
-                                function collectModelFilenames(nodes: SceneNode[]): Set<string> {
-                                    const filenames = new Set<string>();
-                                    const recur = (nlist: SceneNode[]) => {
-                                        nlist.forEach(node => {
-                                            node.components?.forEach((comp: any) => {
-                                                if (comp.type === 'model' && typeof comp.filename === 'string') {
-                                                    filenames.add(comp.filename);
-                                                }
-                                            });
-                                            recur(node.children);
-                                        });
-                                    };
-                                    recur(parsed);
-                                    return filenames;
-                                }
-
-                                const referencedFilenames = collectModelFilenames(parsed);
-                                setModels(prevModels => {
-                                    let changed = false;
-                                    const newModels = { ...prevModels };
-                                    referencedFilenames.forEach(filename => {
-                                        if (!(filename in newModels)) {
-                                            newModels[filename] = null;
-                                            changed = true;
-                                        }
-                                    });
-                                    return changed ? newModels : prevModels;
-                                });
+                            // Scan and load missing models for loaded JSON
+                            if (scanAndLoadMissingModels) {
+                                scanAndLoadMissingModels(parsed);
                             }
                         }
                     } catch (error) {
@@ -178,37 +152,9 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
         if (presetName && presets[presetName as keyof typeof presets]) {
             const presetData = presets[presetName as keyof typeof presets] as SceneNode[];
             setSceneGraph(presetData);
-
-            // --- Ensure models contains all referenced filenames ---
-            if (setModels) {
-                function collectModelFilenames(nodes: SceneNode[]): Set<string> {
-                    const filenames = new Set<string>();
-                    const recur = (nlist: SceneNode[]) => {
-                        nlist.forEach(node => {
-                            node.components?.forEach((comp: any) => {
-                                if (comp.type === 'model' && typeof comp.filename === 'string') {
-                                    filenames.add(comp.filename);
-                                }
-                            });
-                            recur(node.children);
-                        });
-                    };
-                    recur(presetData);
-                    return filenames;
-                }
-
-                const referencedFilenames = collectModelFilenames(presetData);
-                setModels(prevModels => {
-                    let changed = false;
-                    const newModels = { ...prevModels };
-                    referencedFilenames.forEach(filename => {
-                        if (!(filename in newModels)) {
-                            newModels[filename] = null;
-                            changed = true;
-                        }
-                    });
-                    return changed ? newModels : prevModels;
-                });
+            // After setting sceneGraph, scan and load missing models
+            if (scanAndLoadMissingModels) {
+                scanAndLoadMissingModels(presetData)
             }
         }
     };

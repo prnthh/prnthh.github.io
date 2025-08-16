@@ -19,26 +19,29 @@ import tunnel from "tunnel-rat";
 import ModelAttachment from "@/shared/ModelAttachment";
 import * as THREE from "three";
 import NetworkThing from "./NetworkThing";
+import { AudioProvider, useAudio } from "./AudioProvider";
 const MPProvider = dynamic(() => import('./MP'), { ssr: false })
 
 const ui = tunnel()
 
 export default function Home() {
     return (
-        <div className="items-center justify-items-center min-h-screen">
-            <div className="w-full" style={{ height: "100vh" }}>
-                <Controls>
-                    <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
-                        <GameCanvas>
-                            <Physics paused={false}>
-                                <Game />
-                            </Physics>
-                        </GameCanvas>
-                    </GameEngine>
-                </Controls>
+        <AudioProvider>
+            <div className="items-center justify-items-center min-h-screen">
+                <div className="w-full" style={{ height: "100vh" }}>
+                    <Controls>
+                        <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
+                            <GameCanvas>
+                                <Physics paused={false}>
+                                    <Game />
+                                </Physics>
+                            </GameCanvas>
+                        </GameEngine>
+                    </Controls>
+                </div>
+                <ui.Out />
             </div>
-            <ui.Out />
-        </div>
+        </AudioProvider>
     );
 }
 
@@ -48,6 +51,7 @@ export default function Home() {
 const Game = () => {
     const rbref = useRef<RapierRigidBody | null>(null);
     const meshref = useRef<Group | null>(null);
+    const { unlockAudio, playSound, isUnlocked } = useAudio();
 
     // Broadcast character position every second
     useEffect(() => {
@@ -68,21 +72,25 @@ const Game = () => {
                 meshref.current = mesh.current;
             }}
         >
-            <ModelAttachment
+            {<ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
                 offset={new THREE.Vector3(0, 0, 0)}
                 scale={new THREE.Vector3(100, 100, 100)}
                 rotation={new THREE.Vector3(0, 0, 0)}
-            />
+            />}
         </CharacterController>
 
         <NetworkThing
-            scale={new THREE.Vector3(0.1, 0.1, 0.1)} position={new THREE.Vector3(-2, 0, -1)}
-            id="slotmachine"
+            scale={new THREE.Vector3(0.03, 0.03, 0.03)}
+            position={new THREE.Vector3(1.2, 0.64, -0.2)}
+            modelUrl="/models/environment/Bell.glb"
+            id="bell"
+            soundUrl="/sound/click.mp3" // New: Pass the sound URL here
             onActivate={() => {
-                const audio = new Audio('/sound/click.mp3');
-                audio.play();
+                console.log('Bell activated');
+                playSound("/sound/click.mp3"); // Play remotely if soundUrl provided
+
             }}
         />
 
@@ -102,17 +110,25 @@ const Game = () => {
 }
 
 const MPStuff = () => {
-    const { peerPositions } = useContext(MPContext)
+    const { peerStates } = useContext(MPContext)
 
     return <>
         {/* Peer peds */}
         {
-            Object.entries(peerPositions).map(([peerId, position]) => (
+            Object.entries(peerStates).map(([peerId, state]) => (
                 <Ped key={peerId}
                     basePath={"/models/human/onimilio/"}
                     modelUrl={"rigged.glb"}
-                    position={position} height={1.5}
-                />
+                    position={state.position} height={1.5}
+                >
+                    {state.appearance.hand && <ModelAttachment
+                        model="/models/environment/Katana.glb"
+                        attachpoint="mixamorigRightHand"
+                        offset={new THREE.Vector3(0, 0, 0)}
+                        scale={new THREE.Vector3(100, 100, 100)}
+                        rotation={new THREE.Vector3(0, 0, 0)}
+                    />}
+                </Ped>
             ))
         }
     </>

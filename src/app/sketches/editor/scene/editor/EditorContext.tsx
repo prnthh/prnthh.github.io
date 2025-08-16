@@ -16,6 +16,7 @@ interface EditorContextType {
     selectedNodeId: string | null;
     setSelectedNodeId: React.Dispatch<React.SetStateAction<string | null>>;
     getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>;
+    scanAndLoadMissingModels: (customSceneGraph?: SceneNode[]) => void;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -87,8 +88,10 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
         });
     }
 
-    useEffect(() => {
-        // On mount, scan sceneGraph for model filenames
+    // --- Scan and load missing models ---
+    const scanAndLoadMissingModels = (customSceneGraph?: SceneNode[]) => {
+        console.log("Scanning for missing models...");
+        const graph = customSceneGraph || sceneGraph;
         const referencedFiles = new Set<string>();
         function collectModelFiles(nodes: SceneNode[]) {
             nodes.forEach(node => {
@@ -104,7 +107,7 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
                 }
             });
         }
-        collectModelFiles(sceneGraph);
+        collectModelFiles(graph);
         // Mark missing models
         setModels(prevModels => {
             const newModels = { ...prevModels };
@@ -142,10 +145,14 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
                 );
             }
         });
-    }, []); // Only run on mount
+    };
+    // Run once on mount
+    React.useEffect(() => {
+        scanAndLoadMissingModels();
+    }, []);
 
     return (
-        <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef }}>
+        <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels }}>
             {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
             <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 {children}
