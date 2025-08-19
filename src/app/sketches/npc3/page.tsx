@@ -12,7 +12,8 @@ import { GameCanvas } from '@/shared/GameCanvas';
 extend({ InstancedMesh2 });
 
 const MODEL_URL = "/models/human/rigga/rigga2.glb";
-const ANIM_URL = "/models/human/anim/run.fbx";
+const ANIM_URL = "/models/human/anim/walk.fbx";
+const ANIM_URL2 = "/models/human/anim/run.fbx";
 const INSTANCE_COUNT = 100;
 
 function SimpleInstances() {
