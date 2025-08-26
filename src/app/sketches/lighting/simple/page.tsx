@@ -26,7 +26,7 @@ export default function Home() {
                         </RigidBody>
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} />
-                        <OrbitControls />
+                        <OrbitControls enableDamping={false} />
                     </Physics>
                 </Canvas>
             </div>

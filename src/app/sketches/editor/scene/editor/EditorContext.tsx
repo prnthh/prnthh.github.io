@@ -87,12 +87,18 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
                     scale: 1
                 }
             };
-            return [
+
+            const newGraph = [
                 {
                     ...root,
                     children: [...root.children, newNode]
                 }
             ] as SceneNode[];
+
+            setSelectedNodeId(null);
+            requestAnimationFrame(() => setSelectedNodeId(newNode.id));
+
+            return newGraph;
         });
     }
 

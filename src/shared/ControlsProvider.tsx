@@ -61,6 +61,7 @@ const driveControlKeys = [
 
 const controlSchemes = {
     simple: walkControlKeys,
+    advanced: walkControlKeys,
     drive: driveControlKeys,
     none: [],
 }
@@ -106,7 +107,9 @@ function Controls({ children }: { children: React.ReactNode }) {
                 padding: '10px',
                 borderRadius: '5px',
                 color: 'white'
-            }}>{controlScheme} controls
+            }}
+                onClick={() => setControlScheme(controlScheme === 'simple' ? 'advanced' : 'simple')}
+            >{controlScheme} controls
             </div>
             <KeyboardControls map={map}>
                 {children}

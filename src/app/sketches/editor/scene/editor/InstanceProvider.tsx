@@ -56,42 +56,41 @@ export function GameInstanceProvider({
         const result: Record<string, THREE.Mesh> = {};
         Object.entries(models).forEach(([modelKey, model]) => {
             const root = model?.scene ?? model;
-            const meshGeometries: THREE.BufferGeometry[] = [];
-            const materials: THREE.Material[] = [];
-            let baseAttributes: string[] | null = null;
-            const materialMap = new Map<THREE.Material, number>();
-            const geometryGroups: { start: number, count: number, materialIndex: number }[] = [];
-            let indexOffset = 0;
+
+            // Collect geometries grouped first by material, then by attribute-signature.
+            // This ensures we don't drop geometries that have different attribute sets (e.g., missing uvs or colors).
+            const byMaterial = new Map<THREE.Material, Map<string, THREE.BufferGeometry[]>>();
+
             root?.traverse?.((obj: any) => {
-                if (obj.isMesh) {
-                    const geom = obj.geometry.clone();
-                    obj.updateWorldMatrix?.(true, false);
-                    geom.applyMatrix4(obj.matrixWorld);
-                    const attrNames = Object.keys(geom.attributes);
-                    if (!baseAttributes) baseAttributes = attrNames;
-                    if (
-                        baseAttributes.length === attrNames.length &&
-                        baseAttributes.every((name, i) => name === attrNames[i])
-                    ) {
-                        let matIdx = materialMap.get(obj.material);
-                        if (matIdx === undefined) {
-                            matIdx = materials.length;
-                            materials.push(obj.material);
-                            materialMap.set(obj.material, matIdx);
-                        }
-                        const count = geom.index ? geom.index.count : geom.getAttribute('position').count;
-                        geometryGroups.push({ start: indexOffset, count, materialIndex: matIdx });
-                        indexOffset += count;
-                        meshGeometries.push(geom);
-                    }
-                }
+                if (!obj.isMesh) return;
+                const geom = obj.geometry.clone();
+                obj.updateWorldMatrix?.(true, false);
+                geom.applyMatrix4(obj.matrixWorld);
+
+                // Minimal requirement: must have position attribute
+                if (!geom.getAttribute('position')) return;
+
+                const attrNames = Object.keys(geom.attributes).sort();
+                const attrKey = attrNames.join('|');
+
+                const material = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+                if (!byMaterial.has(material)) byMaterial.set(material, new Map());
+                const attrMap = byMaterial.get(material)!;
+                if (!attrMap.has(attrKey)) attrMap.set(attrKey, []);
+                attrMap.get(attrKey)!.push(geom);
             });
-            if (meshGeometries.length && materials.length) {
-                const mergedGeometry = mergeGeometries(meshGeometries, true);
-                mergedGeometry.clearGroups();
-                geometryGroups.forEach(g => mergedGeometry.addGroup(g.start, g.count, g.materialIndex));
-                result[modelKey] = new THREE.Mesh(mergedGeometry, materials);
-            }
+
+            // For each material and attribute group, merge geometries and create a mesh.
+            let matCounter = 0;
+            byMaterial.forEach((attrMap, material) => {
+                attrMap.forEach((geomList, attrKey) => {
+                    if (!geomList.length) return;
+                    const merged = mergeGeometries(geomList, true);
+                    const meshKey = `${modelKey}__mat${matCounter}__${attrKey}`;
+                    result[meshKey] = new THREE.Mesh(merged, material);
+                    matCounter += 1;
+                });
+            });
         });
         return result;
     }, [models]);
@@ -116,9 +115,14 @@ export function GameInstanceProvider({
                     {/* Render instanced rigid bodies for groups with physics */}
                     {Object.entries(grouped).map(([key, group]) => {
                         if (group.physicsType === 'none') return null;
-                        const mesh = meshes[group.instances[0].meshPath];
-                        if (!mesh) return null;
-                        return <InstancedRigidGroup key={key} group={group} mesh={mesh} />;
+                        // A model may produce multiple meshes (one per material). Render an instanced rigid group for each.
+                        const basePath = group.instances[0].meshPath;
+                        const meshKeys = Object.keys(meshes).filter(k => k.startsWith(basePath));
+                        if (!meshKeys.length) return null;
+                        const materialMeshes = meshKeys.map(mk => meshes[mk]);
+                        return (
+                            <InstancedRigidGroup key={key} group={group} meshes={materialMeshes} />
+                        );
                     })}
                     {/* Render children (non-physics instances handled by GameInstance) */}
                     {children}
@@ -129,40 +133,69 @@ export function GameInstanceProvider({
 }
 
 // --- InstancedRigidGroup: Handles instanced rigidbodies for a group ---
-function InstancedRigidGroup({ group, mesh }: { group: { physicsType: string, instances: InstanceData[] }, mesh: THREE.Mesh }) {
-    const instancedMeshRef = React.useRef<THREE.InstancedMesh>(null);
+function InstancedRigidGroup({ group, meshes }: { group: { physicsType: string, instances: InstanceData[] }, meshes: THREE.Mesh[] }) {
+    const physicsRef = React.useRef<THREE.InstancedMesh | null>(null);
+    const visualRefs = React.useRef<Array<THREE.InstancedMesh | null>>([]);
     React.useEffect(() => {
-        if (!instancedMeshRef.current) return;
         const dummy = new THREE.Object3D();
-        group.instances.forEach((inst, i) => {
+        for (let i = 0; i < group.instances.length; i++) {
+            const inst = group.instances[i];
             dummy.position.set(...inst.position);
             dummy.rotation.set(...inst.rotation);
             dummy.scale.set(1, 1, 1);
             dummy.updateMatrix();
-            instancedMeshRef.current!.setMatrixAt(i, dummy.matrix);
-        });
-        instancedMeshRef.current.instanceMatrix.needsUpdate = true;
-        instancedMeshRef.current.frustumCulled = false;
+            // update physics mesh
+            if (physicsRef.current) physicsRef.current.setMatrixAt(i, dummy.matrix);
+            // update visuals
+            for (const ref of visualRefs.current) {
+                if (ref) ref.setMatrixAt(i, dummy.matrix);
+            }
+        }
+        if (physicsRef.current) physicsRef.current.instanceMatrix.needsUpdate = true;
+        for (const ref of visualRefs.current) {
+            if (ref) ref.instanceMatrix.needsUpdate = true;
+            if (ref) ref.frustumCulled = false;
+        }
+        if (physicsRef.current) physicsRef.current.frustumCulled = false;
     }, [group.instances]);
+
+    // Build instances array for physics (one per logical instance)
+    const physicsInstances = group.instances.map(inst => ({
+        key: inst.id,
+        position: inst.position,
+        rotation: inst.rotation,
+        scale: [1, 1, 1] as [number, number, number],
+    }));
+
+    // Use the first mesh as the physics-carrying mesh, but render all material meshes for visuals.
+    const primary = meshes[0];
     return (
-        <InstancedRigidBodies
-            instances={group.instances.map(inst => ({
-                key: inst.id,
-                position: inst.position,
-                rotation: inst.rotation,
-                scale: [1, 1, 1],
-            }))}
-            colliders="hull"
-            type={group.physicsType as 'dynamic' | 'fixed'}
-        >
-            <instancedMesh
-                ref={instancedMeshRef}
-                args={[mesh.geometry, mesh.material, group.instances.length]}
-                castShadow
-                receiveShadow
-                frustumCulled={false}
-            />
-        </InstancedRigidBodies>
+        <>
+            <InstancedRigidBodies
+                instances={physicsInstances}
+                colliders="hull"
+                type={group.physicsType as 'dynamic' | 'fixed'}
+            >
+                <instancedMesh
+                    ref={physicsRef}
+                    args={[primary.geometry, primary.material, group.instances.length]}
+                    castShadow
+                    receiveShadow
+                    frustumCulled={false}
+                />
+            </InstancedRigidBodies>
+            {/* additional visual instanced meshes (skip index 0, already rendered as physics child) */}
+            {meshes.slice(1).map((m, idx) => (
+                <instancedMesh
+                    key={`visual_${idx}`}
+                    ref={el => (visualRefs.current[idx] = el)}
+                    args={[m.geometry, m.material, group.instances.length]}
+                    castShadow
+                    receiveShadow
+                    frustumCulled={false}
+                />
+            ))}
+        </>
     );
 }
 

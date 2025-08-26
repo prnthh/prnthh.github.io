@@ -16,7 +16,7 @@ const allExperiments = [
     'ik/ragdoll', 'ik/kick', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
     'interior',
-    'particles', 'tsl/webgpu', 'tsl/tiny',
+    'particles', 'tsl/webgpu', 'tsl/tiny', 'tsl/neo',
     'npc', 'npc3', 'npc4',
     'xr',
     'milady/chess', 'milady/surfer',

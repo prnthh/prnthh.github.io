@@ -5,7 +5,7 @@ import { InstancedMesh2 } from '@three.ez/instanced-mesh';
 import * as THREE from 'three';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { extend, useFrame, useLoader } from '@react-three/fiber';
-import { InstancedRigidBodies, Physics, RigidBody } from '@react-three/rapier';
+import { CapsuleCollider, InstancedRigidBodies, Physics, RigidBody } from '@react-three/rapier';
 import { FBXLoader } from 'three/examples/jsm/Addons.js';
 import { GameCanvas } from '@/shared/GameCanvas';
 
@@ -134,7 +134,12 @@ const InstancesOfType = ({ url, instances, animation }: InstancesOfTypeProps) =>
         <InstancedRigidBodies
             ref={ref}
             instances={instances}
-            colliders="hull"
+            lockRotations={true}
+            enabledRotations={[true, false, true]}
+            colliders={false}
+            colliderNodes={[
+                <CapsuleCollider args={[0.5, 0.5]} />,
+            ]}
             userData={{ ground: true }}
         >
             <instancedMesh2
@@ -169,7 +174,7 @@ export default function Home() {
                             <ModelInstance url='/coin.glb' position={[4, 5, 1]} rotation={[Math.random(), Math.random(), Math.random()]} />
                         </InstanceProvider>
                         <RigidBody type="fixed">
-                            <mesh position={[0, -2, 0]} scale={[10, 0.1, 10]} receiveShadow>
+                            <mesh position={[0, -2, 0]} scale={[100, 0.1, 100]} receiveShadow>
                                 <boxGeometry />
                                 <meshStandardMaterial color="gray" />
                             </mesh>

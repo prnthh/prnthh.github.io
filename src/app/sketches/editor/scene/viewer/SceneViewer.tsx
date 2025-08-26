@@ -97,12 +97,12 @@ export function Viewer() {
                 <>
                     <OrbitControls makeDefault />
                     <gridHelper args={[10, 10]} />
-                    {selectedNodeId && selectedRef?.current && nodeExists(sceneGraph, selectedNodeId) && (
+                    {selectedNodeId && selectedRef?.current && selectedRef.current instanceof Object3D && nodeExists(sceneGraph, selectedNodeId) && (
                         <TransformControls
                             object={selectedRef.current}
                             mode="translate"
                             onObjectChange={() => {
-                                const obj = selectedRef.current;
+                                const obj = selectedRef.current as Object3D | null;
                                 if (obj) {
                                     setSceneGraph(prev => updateNodeTransform(prev, selectedNodeId, {
                                         position: [obj.position.x, obj.position.y, obj.position.z],
@@ -177,9 +177,13 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
                 window.dispatchEvent(new CustomEvent('scene-pointer-event', { detail: { name: node.name } }));
             }
             console.log(`Pointer event on node: ${node.name}`);
+            e.stopPropagation();
         }
-        e.stopPropagation();
-        onSelect(node.id);
+
+        if (playMode === EditorModes.Edit && node.id) {
+            e.stopPropagation();
+            onSelect(node.id);
+        }
     };
 
     // Regular rendering
