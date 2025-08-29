@@ -11,6 +11,7 @@ import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneV
 import drive from "../../demos/sidescroller/map";
 import { DirectionalLightHelper } from "three";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
+import { CoolCustomThing } from "../tiny/page";
 
 export default function Home() {
     return (
@@ -23,9 +24,11 @@ export default function Home() {
 
                                 <ambientLight intensity={0} />
                                 <OrbitControls enableDamping={false} />
-                                <Environment preset="park" background />
+                                <Environment preset="park" background={false} />
                                 <Game />
                                 <Lighting />
+                                <CoolCustomThing />
+                                <FogEnvironment />
                             </Physics>
                         </GameCanvas>
                     </GameEngine>
@@ -33,6 +36,12 @@ export default function Home() {
             </div>
         </div>
     );
+}
+const FogEnvironment = () => {
+    return <>
+        <fog attach="fog" args={['#87ceeb', 10, 50]} />
+        <color attach={"background"} args={['#87ceeb']} />
+    </>
 }
 
 const Lighting = ({ debug }: { debug?: boolean }) => {

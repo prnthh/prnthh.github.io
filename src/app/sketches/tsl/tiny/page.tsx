@@ -19,7 +19,7 @@ import {
     WebGPURenderer,
 } from 'three/webgpu';
 
-function Scene() {
+export function CoolCustomThing() {
     const uniforms = useMemo(
         () => ({
             frequencyX: uniform(10),
@@ -59,7 +59,6 @@ function Scene() {
 
     return (
         <>
-            <OrbitControls />
             <mesh material={customMaterial} rotation-x={-Math.PI * 0.5}>
                 <planeGeometry args={[1, 1, 512, 512]} />
             </mesh>
@@ -78,7 +77,7 @@ const App = () => {
             }}
         >
             <color attach="background" args={['#f0f0f0']} />
-            <Scene />
+            <CoolCustomThing />
         </Canvas>
     );
 };

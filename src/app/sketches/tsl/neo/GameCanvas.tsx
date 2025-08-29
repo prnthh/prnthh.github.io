@@ -22,10 +22,10 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
                 const renderer = new THREE.WebGPURenderer({
                     // ...props as any,
                     canvas: canvas as HTMLCanvasElement,
-                    // powerPreference: "high-performance",
                     antialias: true,
-                    // alpha: false, // makes background opaque
                     stencil: false,
+                    // powerPreference: "high-performance",
+                    // alpha: false, // makes background opaque
                     // @ts-expect-error futuristic
                     shadowMap: true,
                 });
@@ -34,7 +34,11 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
                 });
                 return renderer
             }}
-            camera={{ position: [2, 2.5, 3], fov: 50, near: 0.25, far: 30 }}
+            camera={{
+                // position: [2, 2.5, 3],
+                fov: 50, near: 0.25,
+                far: 50
+            }}
         >
             {children}
         </Canvas>
