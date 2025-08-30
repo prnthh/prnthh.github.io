@@ -90,7 +90,7 @@ const InstancesOfType = ({ url, instances, animation }: InstancesOfTypeProps) =>
     const mixer = useRef<THREE.AnimationMixer | null>(null);
     const action = useRef<THREE.AnimationAction | null>(null);
     const totalTime = useRef(0);
-    const animations = animation ? useLoader(FBXLoader, animation) : null;
+    const animations = useLoader(FBXLoader, animation ?? "");
 
     type InstancedEntityWithOffset = InstanceType<typeof InstancedMesh2>["instances"][number] & { offset?: number };
 
@@ -138,7 +138,7 @@ const InstancesOfType = ({ url, instances, animation }: InstancesOfTypeProps) =>
             enabledRotations={[true, false, true]}
             colliders={false}
             colliderNodes={[
-                <CapsuleCollider args={[0.5, 0.5]} />,
+                <CapsuleCollider key="capsuleCollider" args={[0.5, 0.5]} />,
             ]}
             userData={{ ground: true }}
         >

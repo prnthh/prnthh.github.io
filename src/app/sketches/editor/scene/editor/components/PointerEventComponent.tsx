@@ -36,7 +36,7 @@ export function PointerEventComponent({ node, setSceneGraph }: {
 
     const handleUrlChange = (newUrl: string) => {
         setSceneGraph(prev =>
-            require('./TransformComponent').updateSceneGraphNodeAndComponent(
+            updateSceneGraphNodeAndComponent(
                 prev,
                 node.id,
                 idx,

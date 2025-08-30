@@ -10,11 +10,11 @@ import { Camera, useFrame } from "@react-three/fiber";
 import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState, MutableRefObject, useMemo, useCallback, RefObject } from "react";
 import { MathUtils, Vector3, Group, PerspectiveCamera, Euler, Quaternion } from "three";
-import { degToRad } from "three/src/math/MathUtils.js";
 import AnimatedModel from "@/shared/HumanoidModel";
 import * as THREE from "three";
 import { usePointerLockControls } from "./usePointerLockControls";
 import { FollowCam } from "@/shared/FollowCam";
+import TSLLine from "./TSLLine";
 
 
 export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person', children, forwardRef }: {
@@ -272,6 +272,7 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
                         }
                     />
                     <group ref={character}>
+                        <TSLLine container={character} />
                         <AnimatedModel
                             name={name}
                             basePath={"/models/human/onimilio/"}

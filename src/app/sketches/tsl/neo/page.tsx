@@ -11,7 +11,7 @@ import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneV
 import drive from "../../demos/sidescroller/map";
 import { DirectionalLightHelper } from "three";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
-import { CoolCustomThing } from "../tiny/page";
+import { CustomTSLThing } from "../tiny/CustomTSLThing";
 
 export default function Home() {
     return (
@@ -27,7 +27,7 @@ export default function Home() {
                                 <Environment preset="park" background={false} />
                                 <Game />
                                 <Lighting />
-                                <CoolCustomThing />
+                                <CustomTSLThing />
                                 <FogEnvironment />
                             </Physics>
                         </GameCanvas>
