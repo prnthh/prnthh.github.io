@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { usePointerLockControls } from "./usePointerLockControls";
 import { FollowCam } from "@/shared/FollowCam";
 import TSLLine from "./TSLLine";
+import { useAudio } from "../../editor/scene/viewer/AudioProvider";
 
 
 export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person', children, forwardRef }: {
@@ -40,9 +41,14 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
     const jumping = useRef(false);
     const [, get] = useKeyboardControls();
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");
+    const { unlockAudio, playSound, isUnlocked } = useAudio();
 
     // --- Camera & controls ---
-    const pointerLockControls = usePointerLockControls({ enabled: mode == "third-person" });
+    const pointerLockControls = usePointerLockControls({
+        enabled: mode == "third-person", onClick: () => {
+            playSound("/sound/click.mp3");
+        }
+    });
     const rotationTarget = mode !== "simple" ? pointerLockControls.rotationTarget : undefined;
     const verticalRotation = mode !== "simple" ? pointerLockControls.verticalRotation : undefined;
     const shoulderCamMode = mode !== "simple" ? pointerLockControls.shoulderCamMode : undefined;

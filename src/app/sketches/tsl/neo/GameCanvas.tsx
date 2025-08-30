@@ -35,7 +35,7 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
                 return renderer
             }}
             camera={{
-                // position: [2, 2.5, 3],
+                position: [0, 2, 5],
                 fov: 50, near: 0.25,
                 far: 50
             }}

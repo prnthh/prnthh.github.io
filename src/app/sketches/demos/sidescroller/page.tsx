@@ -19,7 +19,7 @@ import tunnel from "tunnel-rat";
 import ModelAttachment from "@/shared/ModelAttachment";
 import * as THREE from "three";
 import NetworkThing from "./NetworkThing";
-import { AudioProvider, useAudio } from "./AudioProvider";
+import { AudioProvider, useAudio } from "../../editor/scene/viewer/AudioProvider";
 import type { PeerState } from "./MP";
 const MPProvider = dynamic(() => import('./MP'), { ssr: false })
 

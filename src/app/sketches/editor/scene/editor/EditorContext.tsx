@@ -5,6 +5,7 @@ import SceneEditor from "../editor/SceneEditor";
 import { Object3D, Object3DEventMap } from "three";
 import { EditorModes, SceneNode, Viewer } from "../viewer/SceneViewer";
 import { GLTFLoader, FBXLoader } from "three/examples/jsm/Addons.js";
+import { AudioProvider } from "../viewer/AudioProvider";
 
 interface EditorContextType {
     sceneGraph: SceneNode[];
@@ -166,19 +167,21 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     }, []);
 
     return (
-        <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels }}>
-            {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
-            <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
-                {children}
-            </div>
-            {playMode == EditorModes.Edit && <SceneEditor
-                sceneGraph={sceneGraph} // pass raw sceneGraph
-                setSceneGraph={setSceneGraph}
-                selectedNodeId={selectedNodeId}
-                setSelectedNodeId={setSelectedNodeId}
-                models={models}
-                setModels={setModels}
-            />}
-        </EditorContext.Provider>
+        <AudioProvider>
+            <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels }}>
+                {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
+                <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
+                    {children}
+                </div>
+                {playMode == EditorModes.Edit && <SceneEditor
+                    sceneGraph={sceneGraph} // pass raw sceneGraph
+                    setSceneGraph={setSceneGraph}
+                    selectedNodeId={selectedNodeId}
+                    setSelectedNodeId={setSelectedNodeId}
+                    models={models}
+                    setModels={setModels}
+                />}
+            </EditorContext.Provider>
+        </AudioProvider>
     );
 }
