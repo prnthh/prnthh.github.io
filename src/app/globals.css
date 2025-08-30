@@ -27,6 +27,8 @@ body {
   overflow: hidden;
   height: 100%;
   overscroll-behavior-y: contain;
+
+  padding: env(safe-area-inset);
 }
 
 canvas {
