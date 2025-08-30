@@ -1,21 +1,20 @@
 /**
  * Copyright (c) prnth.com. All rights reserved.
  *
- * This source code is licensed under the GPL-3.0 license found in the LICENSE
- * file in the root directory of this source tree.
+ * This source code is licensed under the GPL-3.0 license
  */
 
 import { Box, useKeyboardControls } from "@react-three/drei";
-import { Camera, useFrame } from "@react-three/fiber";
+import { useFrame } from "@react-three/fiber";
 import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
-import { useEffect, useRef, useState, MutableRefObject, useMemo, useCallback, RefObject } from "react";
-import { MathUtils, Vector3, Group, PerspectiveCamera, Euler, Quaternion } from "three";
+import { useEffect, useRef, useState, useMemo, useCallback, RefObject } from "react";
+import { MathUtils, Vector3, Group } from "three";
 import AnimatedModel from "@/shared/HumanoidModel";
 import * as THREE from "three";
 import { usePointerLockControls } from "./usePointerLockControls";
 import { FollowCam } from "@/shared/FollowCam";
 import TSLLine from "./TSLLine";
-import { useAudio } from "../../editor/scene/viewer/AudioProvider";
+import { useWeapon } from "./useWeapon";
 
 
 export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person', children, forwardRef }: {
@@ -23,12 +22,12 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
     name?: string,
     mode?: "simple" | "side-scroll" | "third-person",
     children?: React.ReactNode,
-    forwardRef?: (refs: { rbref: MutableRefObject<RapierRigidBody | null>, meshref: MutableRefObject<Group | null> }) => void
+    forwardRef?: (refs: { rbref: RefObject<RapierRigidBody | null>, meshref: RefObject<Group | null> }) => void
 }) => {
     // --- Constants & refs ---
     const lastFacingRef = useRef<number>(0);
     const savedFacingRef = useRef<number | null>(null);
-    const WALK_SPEED = 2, RUN_SPEED = 4, JUMP_FORCE = 0.8;
+    const WALK_SPEED = 1.1, RUN_SPEED = 2, JUMP_FORCE = 1;
     const height = 1.2, roundHeight = 0.25;
     const { rapier, world } = useRapier();
     const rb = useRef<RapierRigidBody | null>(null);
@@ -38,21 +37,40 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
     const walkActionRef = useRef<THREE.AnimationAction | null>(null);
     const walkLeftActionRef = useRef<THREE.AnimationAction | null>(null);
     const runActionRef = useRef<THREE.AnimationAction | null>(null);
+    // --- Jump state ---
     const jumping = useRef(false);
+    const jumpReleased = useRef(true);
+
+    // Clean jump logic
+    const handleJump = useCallback((jumpPressed: boolean, grounded: boolean) => {
+        if (!jumpPressed) jumpReleased.current = true;
+        if (jumping.current && grounded) jumping.current = false;
+        if (jumpPressed && jumpReleased.current && !jumping.current && grounded) {
+            rb.current?.wakeUp?.();
+            rb.current?.applyImpulse({ x: 0, y: JUMP_FORCE, z: 0 }, true);
+            jumping.current = true;
+            jumpReleased.current = false;
+        }
+    }, [rb, JUMP_FORCE]);
     const [, get] = useKeyboardControls();
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");
-    const { unlockAudio, playSound, isUnlocked } = useAudio();
+
+    const shoulderCamModeRef = useRef(false);
+    const { weaponHandler } = useWeapon({ shoulderCamModeRef });
 
     // --- Camera & controls ---
     const pointerLockControls = usePointerLockControls({
-        enabled: mode == "third-person", onClick: () => {
-            playSound("/sound/click.mp3");
-        }
+        enabled: mode == "third-person", onClick: weaponHandler
     });
     const rotationTarget = mode !== "simple" ? pointerLockControls.rotationTarget : undefined;
     const verticalRotation = mode !== "simple" ? pointerLockControls.verticalRotation : undefined;
     const shoulderCamMode = mode !== "simple" ? pointerLockControls.shoulderCamMode : undefined;
     const setShoulderCamMode = mode !== "simple" ? pointerLockControls.setShoulderCamMode : undefined;
+
+    // Keep ref updated with latest value
+    useEffect(() => {
+        shoulderCamModeRef.current = !!shoulderCamMode;
+    }, [shoulderCamMode]);
 
     // Initialize third-person rotation when switching modes
     useEffect(() => {
@@ -216,12 +234,7 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
         }
 
         // Jump/grounded logic
-        if (jumping.current && checkGrounded()) jumping.current = false;
-        if (keyInputs.jump && !jumping.current && checkGrounded()) {
-            rb.current.wakeUp?.();
-            rb.current.applyImpulse({ x: 0, y: JUMP_FORCE, z: 0 }, true);
-            jumping.current = true;
-        }
+        handleJump(keyInputs.jump, checkGrounded());
     });
 
     const checkGrounded = useMemo(() => {
@@ -278,7 +291,7 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
                         }
                     />
                     <group ref={character}>
-                        <TSLLine container={character} />
+                        {shoulderCamMode && <TSLLine container={character} />}
                         <AnimatedModel
                             name={name}
                             basePath={"/models/human/onimilio/"}

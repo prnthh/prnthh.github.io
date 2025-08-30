@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) prnth.com. All rights reserved.
+ *
+ * This source code is licensed under the GPL-3.0 license
+ */
+
 import { useRef, useEffect, useState } from "react";
 import { MathUtils } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";

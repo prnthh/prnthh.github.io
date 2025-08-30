@@ -1110,10 +1110,10 @@ const PhysicsRefCapture = ({ ref }: PhysicsRefCaptureProps) => {
     return null;
 };
 
-const CrawlerApp = () => {
+const CrawlerApp = ({ controlled }: { controlled?: boolean }) => {
     const rapierRef = useRef<RapierContext>(null!);
 
-    const controls = useControlScheme();
+    // const controls = useControlScheme();
 
     const {
         debug,
@@ -1201,11 +1201,11 @@ const CrawlerApp = () => {
         stepCycleSpeed,
     ]);
 
-    const cameraTarget = useRef<Vector3>(new Vector3());
+    // const cameraTarget = useRef<Vector3>(new Vector3());
 
-    useEffect(() => {
-        cameraTarget.current.set(0, 4, 0);
-    }, []);
+    // useEffect(() => {
+    //     cameraTarget.current.set(0, 4, 0);
+    // }, []);
 
     const [, getKeyboardControls] = useKeyboardControls()
 
@@ -1218,7 +1218,7 @@ const CrawlerApp = () => {
         const controlTargetCrawler = controlTargetCrawlerQuery.first;
         const controls = getKeyboardControls();
 
-        if (controlTargetCrawler) {
+        if (controlTargetCrawler && controlled) {
             const input = controlTargetCrawler.crawler.input;
             const cmd = controlTargetCrawler.crawler.cmd;
 
@@ -1237,8 +1237,8 @@ const CrawlerApp = () => {
             if (controls.right) {
                 input.direction.x = 1;
             }
-            // input.crouch = controls.current.crouch;
-            // input.sprint = controls.current.sprint;
+            // input.crouch = controls.crouch;
+            input.sprint = controls.sprint;
 
             if (controls.jump) {
                 cmd.push('jump');
@@ -1276,20 +1276,20 @@ const CrawlerApp = () => {
         }
 
         /* camera rig */
-        if (!debug && controlTargetCrawler) {
-            cameraTarget.current.lerp(
-                controlTargetCrawler.crawler.state.position,
-                dt * 5,
-            );
-            camera.position
-                .copy(cameraTarget.current)
-                .add(_cameraOffset.set(0, 5, 15));
+        // if (!debug && controlTargetCrawler) {
+        //     cameraTarget.current.lerp(
+        //         controlTargetCrawler.crawler.state.position,
+        //         dt * 5,
+        //     );
+        //     camera.position
+        //         .copy(cameraTarget.current)
+        //         .add(_cameraOffset.set(0, 5, 15));
 
-            camera.quaternion.setFromUnitVectors(
-                _axis.set(0, 0, -1),
-                _direction.copy(cameraTarget.current).sub(camera.position).normalize(),
-            );
-        }
+        //     camera.quaternion.setFromUnitVectors(
+        //         _axis.set(0, 0, -1),
+        //         _direction.copy(cameraTarget.current).sub(camera.position).normalize(),
+        //     );
+        // }
     });
 
     return (

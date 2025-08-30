@@ -1,6 +1,6 @@
 "use client";
 
-import { Physics } from "@react-three/rapier";
+import { Physics, RigidBody } from "@react-three/rapier";
 import { Environment, Helper, OrbitControls } from "@react-three/drei";
 import GameCanvas from "./GameCanvas";
 import { CharacterController } from "../../controllers/shouldercam/CharacterController";
@@ -12,8 +12,14 @@ import drive from "../../demos/sidescroller/map";
 import { DirectionalLightHelper } from "three";
 import DialogCollider from "../../controllers/click/ped/DialogCollider";
 import { CustomTSLThing } from "../tiny/CustomTSLThing";
+import CrawlerApp from "./CrawlerPed";
+import ModelAttachment from "@/shared/ModelAttachment";
+import { Vector3 } from "three";
+import { useState } from "react";
 
 export default function Home() {
+    const [weapon, setWeapon] = useState<string | null>(null);
+
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
@@ -24,7 +30,7 @@ export default function Home() {
 
                                 <ambientLight intensity={0} />
                                 <Environment preset="park" background={false} />
-                                <Game />
+                                <Game weapon={weapon} setWeapon={setWeapon} />
                                 <Lighting />
                                 <CustomTSLThing />
                                 <FogEnvironment />
@@ -32,6 +38,13 @@ export default function Home() {
                         </GameCanvas>
                     </GameEngine>
                 </Controls>
+            </div>
+            <div className="absolute bottom-4 right-4">
+                <button className="ml-2 p-2 rounded" onClick={() => setWeapon(weapon ? null : 'katana')}>Toggle Weapon</button>
+
+            </div>
+            <div className="absolute top-1/2 left-1/2">
+                +
             </div>
         </div>
     );
@@ -62,14 +75,49 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
     </directionalLight>
 }
 
-const Game = () => {
+const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null) => void }) => {
     const { scheme } = useControlScheme();
     return <>
-        <CharacterController mode={scheme == 'simple' ? 'side-scroll' : 'third-person'} />
-        <Ped modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} modelUrl="/rigga/rigga2.glb">
+        <CrawlerApp />
+
+        <CharacterController mode={scheme == 'simple' ? 'side-scroll' : 'third-person'}>
+            {props.weapon && <ModelAttachment
+                model="/models/environment/Katana.glb"
+                attachpoint="mixamorigRightHand"
+                offset={new Vector3(0, 0, 0)}
+                scale={new Vector3(100, 100, 100)}
+                rotation={new Vector3(0, 0.8, -1.2)}
+            />}
+        </CharacterController>
+        <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} modelUrl="/rigga/rigga2.glb">
             <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
+            <ModelAttachment
+                model="/models/environment/Katana.glb"
+                attachpoint="mixamorigRightHand"
+                offset={new Vector3(2, 0, 0)}
+                scale={new Vector3(100, 100, 100)}
+                rotation={new Vector3(0.7, 0, -1)}
+            />
         </Ped>
         <Viewer />
 
+        <RigidBody position={[0, 1, -3]} density={10}>
+            <mesh castShadow>
+                <boxGeometry args={[0.3, 0.3, 0.3]} />
+                <meshStandardMaterial color="orange" />
+            </mesh>
+        </RigidBody>
+        <RigidBody position={[0, 2, -3]} density={10}>
+            <mesh castShadow>
+                <boxGeometry args={[0.3, 0.3, 0.3]} />
+                <meshStandardMaterial color="orange" />
+            </mesh>
+        </RigidBody>
+        <RigidBody position={[0, 3, -3]} density={10}>
+            <mesh castShadow>
+                <boxGeometry args={[0.3, 0.3, 0.3]} />
+                <meshStandardMaterial color="orange" />
+            </mesh>
+        </RigidBody>
     </>
 }

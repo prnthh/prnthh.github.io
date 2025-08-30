@@ -1,7 +1,8 @@
 import { Box } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { Ref, useRef } from "react";
-import { Vector3, Group } from "three";
+import { Vector3, Group, MathUtils, Quaternion } from "three";
+import * as THREE from "three";
 
 
 export const FollowCam = ({
@@ -27,15 +28,23 @@ export const FollowCam = ({
     const cameraLookAt = useRef<Vector3>(new Vector3());
 
     useFrame(({ camera }) => {
-        // Set camera position group
         if (cameraPosition.current && cameraTarget.current) {
             cameraPosition.current.position.x = cameraOffset.x;
             cameraPosition.current.position.y = height + cameraOffset.y;
             cameraPosition.current.position.z = cameraOffset.z;
 
-            cameraTarget.current.position.x = targetOffset.x;
-            cameraTarget.current.position.y = targetOffset.y;
-            cameraTarget.current.position.z = targetOffset.z;
+            let pitch = verticalRotation?.current ?? 0;
+            pitch = MathUtils.clamp(pitch, -Math.PI / 2, Math.PI / 2);
+
+            // Calculate rotated target offset
+            const rotatedTarget = targetOffset.clone();
+            const q = new THREE.Quaternion();
+            q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+            rotatedTarget.applyQuaternion(q);
+
+            cameraTarget.current.position.x = rotatedTarget.x;
+            cameraTarget.current.position.y = rotatedTarget.y;
+            cameraTarget.current.position.z = rotatedTarget.z;
 
             // Get world positions
             cameraPosition.current.getWorldPosition(cameraWorldPosition.current);
