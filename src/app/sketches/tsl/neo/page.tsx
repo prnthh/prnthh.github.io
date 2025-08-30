@@ -23,7 +23,6 @@ export default function Home() {
                             <Physics>
 
                                 <ambientLight intensity={0} />
-                                <OrbitControls enableDamping={false} />
                                 <Environment preset="park" background={false} />
                                 <Game />
                                 <Lighting />
