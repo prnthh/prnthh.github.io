@@ -56,11 +56,11 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");
 
     const shoulderCamModeRef = useRef(false);
-    const { weaponHandler } = useWeapon({ shoulderCamModeRef });
+    const { weaponHandler } = useWeapon();
 
     // --- Camera & controls ---
     const pointerLockControls = usePointerLockControls({
-        enabled: mode == "third-person", onClick: weaponHandler
+        enabled: mode == "third-person", onClick: () => shoulderCamModeRef.current && weaponHandler()
     });
     const rotationTarget = mode !== "simple" ? pointerLockControls.rotationTarget : undefined;
     const verticalRotation = mode !== "simple" ? pointerLockControls.verticalRotation : undefined;

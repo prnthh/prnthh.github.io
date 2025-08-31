@@ -1,7 +1,7 @@
 "use client";
 
 import { Physics, RigidBody } from "@react-three/rapier";
-import { Environment, Helper, OrbitControls } from "@react-three/drei";
+import { Environment, Helper, Html, OrbitControls, Text } from "@react-three/drei";
 import GameCanvas from "./GameCanvas";
 import { CharacterController } from "../../controllers/shouldercam/CharacterController";
 import Controls, { useControlScheme } from "@/shared/ControlsProvider";
@@ -16,6 +16,8 @@ import CrawlerApp from "./CrawlerPed";
 import ModelAttachment from "@/shared/ModelAttachment";
 import { Vector3 } from "three";
 import { useState } from "react";
+import HitBox from "./HitBox";
+import Balloon from "./Balloon";
 
 export default function Home() {
     const [weapon, setWeapon] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export default function Home() {
                 <Controls>
                     <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
                         <GameCanvas>
-                            <Physics>
+                            <Physics debug>
 
                                 <ambientLight intensity={0} />
                                 <Environment preset="park" background={false} />
@@ -43,7 +45,7 @@ export default function Home() {
                 <button className="ml-2 p-2 rounded" onClick={() => setWeapon(weapon ? null : 'katana')}>Toggle Weapon</button>
 
             </div>
-            <div className="absolute top-1/2 left-1/2">
+            <div className="absolute top-1/2 left-1/2 -translate-1/2">
                 +
             </div>
         </div>
@@ -101,23 +103,9 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
         </Ped>
         <Viewer />
 
-        <RigidBody position={[0, 1, -3]} density={10}>
-            <mesh castShadow>
-                <boxGeometry args={[0.3, 0.3, 0.3]} />
-                <meshStandardMaterial color="orange" />
-            </mesh>
-        </RigidBody>
-        <RigidBody position={[0, 2, -3]} density={10}>
-            <mesh castShadow>
-                <boxGeometry args={[0.3, 0.3, 0.3]} />
-                <meshStandardMaterial color="orange" />
-            </mesh>
-        </RigidBody>
-        <RigidBody position={[0, 3, -3]} density={10}>
-            <mesh castShadow>
-                <boxGeometry args={[0.3, 0.3, 0.3]} />
-                <meshStandardMaterial color="orange" />
-            </mesh>
-        </RigidBody>
+        <HitBox debug key={2} position={[1, 1, 4]} />
+        <HitBox debug key={3} position={[2, 1, 4]} />
+        <HitBox debug key={4} position={[3, 1, 4]} />
+        <Balloon />
     </>
 }

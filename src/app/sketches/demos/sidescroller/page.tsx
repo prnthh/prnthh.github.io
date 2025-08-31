@@ -52,7 +52,7 @@ export default function Home() {
 const Game = () => {
     const rbref = useRef<RapierRigidBody | null>(null);
     const meshref = useRef<Group | null>(null);
-    const { unlockAudio, playSound, isUnlocked } = useAudio();
+    const { playSound } = useAudio();
 
     // Broadcast character position every second
     useEffect(() => {
