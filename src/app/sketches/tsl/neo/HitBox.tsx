@@ -8,7 +8,9 @@ const HitBox = ({ debug, children, position, ref }: { debug?: boolean; children?
     return (
         <RigidBody position={position} ref={ref} type={hitCount > 0 ? "dynamic" : "fixed"} onIntersectionEnter={(e) => {
             // @ts-expect-error custom property on bullet rigidbody
-            e.other.rigidBody?.userData?.type === "bullet" && setHitCount((count) => count + 1)
+            if (e.other.rigidBody?.userData?.type === "bullet") {
+                setHitCount((count) => count + 1);
+            }
         }}>
             {children ?? <mesh castShadow>
                 <boxGeometry args={[0.3, 0.3, 0.3]} />
