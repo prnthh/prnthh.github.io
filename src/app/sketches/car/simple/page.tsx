@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import Vehicle from "./car/base";
-import Controls from "@/shared/ControlsProvider";
+import Controls from "@/shared/controls/ControlsProvider";
 
 export default function Home() {
     return (

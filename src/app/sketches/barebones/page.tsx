@@ -2,7 +2,7 @@
 
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
-import { GameCanvas } from "@/shared/GameCanvas";
+import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
     return (

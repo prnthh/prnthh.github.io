@@ -7,6 +7,7 @@ import Smoke from "./ParticleEmitter";
 import { Vector3 } from "three";
 import { useRef, useState, ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
+import Fire from "@/shared/shaders/FireMaterial";
 
 function Circular({
     radius = 5,
@@ -41,6 +42,8 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <Canvas>
                     <Physics>
+                        <Fire scale={[2, 2, 1]} position={[0, 0, 0]} />
+
                         <Smoke
                             debug
                             count={10}

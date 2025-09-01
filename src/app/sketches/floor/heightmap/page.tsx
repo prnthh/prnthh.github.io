@@ -5,7 +5,7 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { Box, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { useState } from "react";
 import { Terrain } from "./terrain";
-import { ShadowLight } from "@/app/sketches/lighting/shadowmap/ShadowLight";
+import { ShadowLight } from "@/shared/lighting/ShadowLight";
 
 export default function Home() {
     const [target, setTarget] = useState<[number, number, number] | undefined>()

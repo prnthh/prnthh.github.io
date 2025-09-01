@@ -2,25 +2,25 @@
 
 import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
-import Controls from "@/shared/ControlsProvider";
 import MapModel from "../../floor/ground/ground/model";
-import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
 import { forwardRef } from "react";
-import Ped from "../../controllers/click/ped/ped";
-import { CharacterController } from "../../controllers/shouldercam/CharacterController";
-import DialogCollider from "../../controllers/click/ped/DialogCollider";
 import { Environment } from "@react-three/drei";
-import { GameCanvas } from "@/shared/GameCanvas";
+import GameCanvas from "@/shared/GameCanvas";
+import Controls from "@/shared/controls/ControlsProvider";
+import Ped from "@/shared/ped/ped";
+import DialogCollider from "@/shared/ped/DialogCollider";
+import { CharacterController } from "@/shared/shouldercam/CharacterController";
+import { ShadowLight } from "@/shared/lighting/ShadowLight";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Controls >
-                    <GameCanvas shadows>
+                <Controls>
+                    <GameCanvas>
                         {/* <Perf /> */}
                         <ShadowLight intensity={4} debug camOffset={new Vector3(2, 10, 2)} />
 

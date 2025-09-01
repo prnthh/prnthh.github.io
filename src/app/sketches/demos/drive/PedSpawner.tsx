@@ -1,8 +1,8 @@
 import { RapierRigidBody } from "@react-three/rapier";
 import { Suspense, useEffect, useState } from "react";
-import Ped from "../../controllers/click/ped/ped";
 import { ObjectRef } from "../../car/simple/car/base";
 import * as THREE from "three";
+import Ped from "@/shared/ped/ped";
 
 type PedSpawnerProps = {
     carRBRef: React.RefObject<ObjectRef | null>;

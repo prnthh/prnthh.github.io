@@ -2,47 +2,44 @@
 
 import { Physics, RapierRigidBody } from "@react-three/rapier";
 import { Environment, Html } from "@react-three/drei";
-import Controls from "@/shared/ControlsProvider";
-import { ShadowLight } from "@/app/sketches/lighting/shadowmap/ShadowLight";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { GameCanvas } from "@/shared/GameCanvas";
 import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
 import drive from "./map";
 import { GameEngine } from "../../editor/scene/editor/EditorContext";
-import { CharacterController } from "../../controllers/shouldercam/CharacterController";
 import dynamic from 'next/dynamic'
-import Ped from "../../controllers/click/ped/ped";
 import { Group, Mesh } from "three";
 import { useContext } from 'react'
 import { MPContext } from './MP'
 import tunnel from "tunnel-rat";
-import ModelAttachment from "@/shared/ModelAttachment";
 import * as THREE from "three";
 import NetworkThing from "./NetworkThing";
-import { AudioProvider, useAudio } from "../../editor/scene/viewer/AudioProvider";
 import type { PeerState } from "./MP";
+import Controls from "@/shared/controls/ControlsProvider";
+import GameCanvas from "@/shared/GameCanvas";
+import ModelAttachment from "@/shared/ped/ModelAttachment";
+import Ped from "@/shared/ped/ped";
+import { CharacterController } from "@/shared/shouldercam/CharacterController";
+import { ShadowLight } from "@/shared/lighting/ShadowLight";
 const MPProvider = dynamic(() => import('./MP'), { ssr: false })
 
 const ui = tunnel()
 
 export default function Home() {
     return (
-        <AudioProvider>
-            <div className="items-center justify-items-center min-h-screen">
-                <div className="w-full" style={{ height: "100vh" }}>
-                    <Controls>
-                        <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
-                            <GameCanvas>
-                                <Physics paused={false}>
-                                    <Game />
-                                </Physics>
-                            </GameCanvas>
-                        </GameEngine>
-                    </Controls>
-                </div>
-                <ui.Out />
+        <div className="items-center justify-items-center min-h-screen">
+            <div className="w-full" style={{ height: "100vh" }}>
+                <Controls>
+                    <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
+                        <GameCanvas>
+                            <Physics paused={false}>
+                                <Game />
+                            </Physics>
+                        </GameCanvas>
+                    </GameEngine>
+                </Controls>
             </div>
-        </AudioProvider>
+            <ui.Out />
+        </div>
     );
 }
 
@@ -52,7 +49,6 @@ export default function Home() {
 const Game = () => {
     const rbref = useRef<RapierRigidBody | null>(null);
     const meshref = useRef<Group | null>(null);
-    const { playSound } = useAudio();
 
     // Broadcast character position every second
     useEffect(() => {
@@ -90,7 +86,7 @@ const Game = () => {
             soundUrl="/sound/click.mp3" // New: Pass the sound URL here
             onActivate={() => {
                 console.log('Bell activated');
-                playSound("/sound/click.mp3"); // Play remotely if soundUrl provided
+                // playSound("/sound/click.mp3"); // Play remotely if soundUrl provided
 
             }}
         />
@@ -106,7 +102,7 @@ const Game = () => {
 
         <ambientLight intensity={0.5} />
         <color attach="background" args={["#000000"]} />
-        <Environment files="/textures/skybox3.jpg" background={false} />
+        <Environment preset="park" background={false} />
     </>
 }
 
@@ -125,7 +121,7 @@ function PeerPed({ peerId, state }: { peerId: string, state: PeerState }) {
             modelUrl={"rigged.glb"}
             position={state.position} height={1.5}
         >
-            {state.appearance.hand && <ModelAttachment
+            {state?.appearance?.hand && <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
                 offset={new THREE.Vector3(0, 0, 0)}

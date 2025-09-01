@@ -2,22 +2,22 @@
 
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Environment, Helper, Html, OrbitControls, Text } from "@react-three/drei";
-import GameCanvas from "./GameCanvas";
-import { CharacterController } from "../../controllers/shouldercam/CharacterController";
-import Controls, { useControlScheme } from "@/shared/ControlsProvider";
-import Ped from "../../controllers/click/ped/ped";
 import { GameEngine } from "../../editor/scene/editor/EditorContext";
 import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
 import drive from "../../demos/sidescroller/map";
 import { DirectionalLightHelper } from "three";
-import DialogCollider from "../../controllers/click/ped/DialogCollider";
 import { CustomTSLThing } from "../tiny/CustomTSLThing";
-import CrawlerApp from "./CrawlerPed";
-import ModelAttachment from "@/shared/ModelAttachment";
+import CrawlerApp from "@/shared/ik/CrawlerPed";
 import { Vector3 } from "three";
 import { useState } from "react";
-import HitBox from "./HitBox";
-import Balloon from "./Balloon";
+import HitBox from "@/shared/physics/HitBox";
+import Balloon from "@/shared/physics/Balloon";
+import GameCanvas from "@/shared/GameCanvas";
+import Controls, { useControlScheme } from "@/shared/controls/ControlsProvider";
+import ModelAttachment from "@/shared/ped/ModelAttachment";
+import DialogCollider from "@/shared/ped/DialogCollider";
+import Ped from "@/shared/ped/ped";
+import { CharacterController } from "@/shared/shouldercam/CharacterController";
 
 export default function Home() {
     const [weapon, setWeapon] = useState<string | null>(null);

@@ -2,15 +2,15 @@
 
 import { Physics } from "@react-three/rapier";
 import { Environment } from "@react-three/drei";
-import Controls from "@/shared/ControlsProvider";
-import { ShadowLight } from "@/app/sketches/lighting/shadowmap/ShadowLight";
 import { Suspense, useRef } from "react";
-import { GameCanvas } from "@/shared/GameCanvas";
 import Vehicle, { ObjectRef } from "../../car/simple/car/base";
 import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
 import PedSpawner from "./PedSpawner";
 import drive from "./map";
 import { GameEngine } from "../../editor/scene/editor/EditorContext";
+import Controls from "@/shared/controls/ControlsProvider";
+import GameCanvas from "@/shared/GameCanvas";
+import { ShadowLight } from "@/shared/lighting/ShadowLight";
 
 export default function Home() {
     const carRBRef = useRef<ObjectRef | null>(null);
@@ -41,7 +41,7 @@ export default function Home() {
                                 <Viewer />
 
                                 <ambientLight intensity={0.5} />
-                                <Environment files="/textures/skybox3.jpg" background={true} />
+                                <Environment preset="park" background={true} />
                             </Physics>
                         </GameCanvas>
                     </GameEngine>

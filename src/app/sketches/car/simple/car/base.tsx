@@ -6,9 +6,9 @@ import { RefObject, useEffect, useImperativeHandle, useRef, useState } from 'rea
 import * as THREE from 'three'
 import { WheelInfo, useVehicleController } from './vehicleController'
 import { FollowCam } from '@/shared/FollowCam'
-import { useControlScheme } from '@/shared/ControlsProvider'
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js'
 import React from 'react'
+import { useControlScheme } from '@/shared/controls/ControlsProvider'
 
 const wheelInfo: Omit<WheelInfo, 'position'> = {
     axleCs: new THREE.Vector3(1, 0, 0),

@@ -1,37 +1,61 @@
-import { Canvas, type CanvasProps } from '@react-three/fiber';
-import { Suspense, useState } from 'react';
-import tunnel from 'tunnel-rat';
+import { Canvas, extend } from "@react-three/fiber";
+import * as THREE from "three/webgpu";
+import { Suspense, useState } from "react";
+import { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.Nodes.js";
 
-// suspense is broken in react 19, see https://github.com/pmndrs/react-three-fiber/issues/3222
+// generic version
+// extend(THREE as any)
 
-const ui = tunnel()
+extend({
+    MeshBasicNodeMaterial: THREE.MeshBasicNodeMaterial,
+    MeshStandardNodeMaterial: THREE.MeshStandardNodeMaterial,
+});
 
-export const GameCanvas = ({
-    children,
-    ...props
-}: React.PropsWithChildren<CanvasProps>) => {
+
+export default function GameCanvas({ children, ...props }: { children: React.ReactNode, props?: WebGPURendererParameters }) {
+    const [frameloop, setFrameloop] = useState<"never" | "always">("never");
     const [loading, setLoading] = useState(true);
 
-    return (
-        <>
-            <ui.Out />
-            {loading && <Loading />}
-            <Canvas
-                shadows
-                {...props}
-            >
-                <Suspense>
-                    {children}
-                    <DelayedLoadingScreen onLoad={() => setLoading(false)} />
-                </Suspense>
-            </Canvas>
-        </>
-    );
-};
+    return <>
+        {loading && <Loading />}
+
+        <Canvas
+            shadows={{ type: THREE.PCFSoftShadowMap }}
+            frameloop={frameloop}
+            gl={async ({ canvas }) => {
+                const renderer = new THREE.WebGPURenderer({
+                    canvas: canvas as HTMLCanvasElement,
+                    antialias: true,
+                    stencil: false,
+                    // powerPreference: "high-performance",
+                    // alpha: false, // makes background opaque
+                    // @ts-expect-error futuristic
+                    shadowMap: true,
+                    ...props,
+                });
+                await renderer.init().then(() => {
+                    setFrameloop("always");
+                });
+                return renderer
+            }}
+            camera={{
+                position: [0, 2, 5],
+                fov: 50, near: 0.25,
+                far: 50
+            }}
+        >
+            <Suspense>
+                {children}
+                <DelayedLoadingScreen onLoad={() => setLoading(false)} />
+            </Suspense>
+        </Canvas>
+    </>;
+}
+
 
 const Loading = () => {
     return (
-        <div className="absolute flex items-center justify-center w-screen h-screen z-50 bg-black text-white">
+        <div className="absolute flex items-center justify-center w-screen h-screen z-5 backdrop-blur-md text-white font-black">
             Loading...
         </div>
     );
@@ -40,7 +64,6 @@ const Loading = () => {
 const DelayedLoadingScreen = ({ onLoad }: { onLoad: () => void }) => {
     setTimeout(() => {
         onLoad();
-    }, 2000);
-    // todo - wait till framerate stabilizes
+    }, 100);
     return null;
 };

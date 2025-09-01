@@ -8,8 +8,8 @@ const allExperiments = [
     'barebones',
     'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
     'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/webgpu', 'floor/terrain2',
-    'lighting/simple', 'lighting/shadowmap', 'lighting/cascading', 'lighting/probe', 'lighting/reflection',
-    'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider',
+    'lighting/simple', 'lighting/probe',
+    'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/road', 'car/driver',
     'editor/scene', 'editor/dragdrop',
@@ -17,7 +17,6 @@ const allExperiments = [
     'retargeting/basic', 'retargeting/variety',
     'interior',
     'particles', 'tsl/webgpu', 'tsl/tiny', 'tsl/neo',
-    'npc', 'npc3', 'npc4',
     'xr',
     'milady/chess', 'milady/surfer',
     '../wfc/index.html', '../chainreaction.html'

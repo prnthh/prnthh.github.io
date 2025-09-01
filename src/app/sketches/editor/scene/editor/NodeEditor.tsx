@@ -7,6 +7,7 @@ import { ModelComponent } from "./components/ModelComponent";
 import { PhysicsComponent } from "./components/PhysicsComponent";
 import { PointerEventComponent } from "./components/PointerEventComponent";
 import { SceneNode } from "../viewer/SceneViewer";
+import { WaterMaterialComponent } from "./components/WaterMaterialComponent";
 
 interface EditorAppProps {
     selectedId: string | null;
@@ -27,6 +28,11 @@ const COMPONENT_TYPES = [
         type: 'meshStandardMaterial',
         label: 'Mesh Standard Material',
         default: { type: 'meshStandardMaterial', props: { color: 'blue' } },
+    },
+    {
+        type: 'waterM<aterial',
+        label: 'Water Material',
+        default: { type: 'waterMaterial', props: { color: 'aqua', distortionScale: 3, size: 1 } },
     },
     {
         type: 'model',
@@ -86,6 +92,9 @@ function ComponentEditor({ comp, idx, node, setSceneGraph, models }: ComponentEd
     // Use MaterialComponent for meshStandardMaterial
     if (comp.type === 'meshStandardMaterial') {
         return <MaterialComponent node={node} setSceneGraph={setSceneGraph} />;
+    }
+    if (comp.type === 'waterMaterial') {
+        return <WaterMaterialComponent node={node} setSceneGraph={setSceneGraph} />;
     }
     // Use ModelComponent for model
     if (comp.type === 'model') {

@@ -42,7 +42,7 @@ import {
     bone,
     fabrikFixedIterations,
 } from '@/shared/ik/fabrik';
-import { useControlScheme } from '@/shared/ControlsProvider';
+import { useControlScheme } from '@/shared/controls/ControlsProvider';
 
 type EntityType = {
     crawler: CrawlerState;

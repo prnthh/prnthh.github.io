@@ -4,9 +4,9 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Environment, OrbitControls, Sky } from "@react-three/drei";
 import Vehicle from "./car/base";
-import Controls from "@/shared/ControlsProvider";
 import Lightsource from "@/app/sketches/lighting/simple/lightsource";
 import Ground from "@/app/sketches/floor/ground/ground/flat";
+import Controls from "@/shared/controls/ControlsProvider";
 
 export default function Home() {
     return (

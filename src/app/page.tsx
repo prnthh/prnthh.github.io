@@ -1,12 +1,12 @@
 "use client";
 
-import { Effects, Html, OrbitControls, Text } from "@react-three/drei";
-import { GameCanvas } from "@/shared/GameCanvas";
-import AnimatedModel from "@/shared/HumanoidModel";
+import { Effects, Html, OrbitControls, PerspectiveCamera, Text } from "@react-three/drei";
 import { EffectComposer, Scanline } from "@react-three/postprocessing";
-import Fire from "./sketches/shaders/fire/FireMaterial";
+import Fire from "../shared/shaders/FireMaterial";
 import { CuboidCollider, Physics, RapierRigidBody, RigidBody, useRevoluteJoint } from "@react-three/rapier";
 import { useRef } from "react";
+import AnimatedModel from "@/shared/ped/HumanoidModel";
+import GameCanvas from "@/shared/GameCanvas";
 
 
 function SwingingModelOnBar() {
@@ -60,23 +60,21 @@ export default function Home() {
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <div className="absolute top-0 left-0 w-screen h-screen">
-          <GameCanvas camera={{ fov: 75, near: 0.1, far: 1000, position: [0, 1, 2], rotation: [-0.2, 0, 0] }} shadows>
+          <GameCanvas >
             <color attach="background" args={['darkred']} />
             <Physics>
-
               <SwingingModelOnBar />
             </Physics>
 
-            <ambientLight intensity={0.8} />
-            <Text color="black" textAlign="center" scale={0.04} position={[0, 1.46, 0.4]}>
-              hi im prnth, nothing to see here
-            </Text>
+            <PerspectiveCamera makeDefault position={[0, 0.8, 2.7]} />
             <pointLight position={[0, -1, 2]} intensity={50} color={'orange'} />
-            {/* <ShadowLight offset={[-2, -6, -2]} /> */}
-            <EffectComposer>
-              <Scanline density={2} opacity={0.1} />
-            </EffectComposer>
-            {/* <OrbitControls /> */}
+            <ambientLight intensity={0.8} />
+
+            <Html transform position={[0, 1.5, 0.28]} scale={0.1}>
+              <div className="w-[260px] text-center text-black font-black">
+                hi im prnth, nothing to see here
+              </div>
+            </Html>
           </GameCanvas>
         </div>
       </main>

@@ -9,13 +9,13 @@ import { useEffect, useRef, useMemo } from 'react'
 import { reflector } from 'three/tsl'
 import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
 import { pass, screenUV, uv, color, texture, normalWorld } from 'three/tsl'
-import { ShinyFloor } from './ShinyFloor'
+import { ShinyFloor } from '../../../../shared/shaders/ShinyFloor'
 import {
     MeshBasicNodeMaterial,
     WebGPURenderer,
 } from 'three/webgpu';
 import Sun from './Sun'
-import FogBG from './FogBG'
+import FogBG from '../../../../shared/shaders/FogBG'
 
 extend(THREE as any)
 

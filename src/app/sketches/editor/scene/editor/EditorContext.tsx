@@ -1,11 +1,9 @@
-
 import { DragDropLoader } from "../../dragdrop/DragDropLoader";
-import React, { useEffect, useRef, useState, useContext, createContext } from "react";
+import React, { useEffect, useRef, useState, useContext, createContext, useMemo } from "react";
 import SceneEditor from "../editor/SceneEditor";
-import { Object3D, Object3DEventMap } from "three";
+import { Object3D, Object3DEventMap, Scene } from "three";
 import { EditorModes, SceneNode, Viewer } from "../viewer/SceneViewer";
 import { GLTFLoader, FBXLoader } from "three/examples/jsm/Addons.js";
-import { AudioProvider } from "../viewer/AudioProvider";
 
 interface EditorContextType {
     sceneGraph: SceneNode[];
@@ -18,6 +16,7 @@ interface EditorContextType {
     setSelectedNodeId: React.Dispatch<React.SetStateAction<string | null>>;
     getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>;
     scanAndLoadMissingModels: (customSceneGraph?: SceneNode[]) => void;
+    sceneRef: React.RefObject<Scene | null>;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -55,16 +54,15 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
         setPlayMode(mode);
     }, [mode]);
 
-    useEffect(() => {
-        console.log("Scene graph updated:", sceneGraph);
-    }, [sceneGraph]);
-
     // Map of nodeId to ref
     const nodeRefs = useRef<{ [id: string]: React.RefObject<Object3D<Object3DEventMap> | null> }>({});
     const getNodeRef = (id: string): React.RefObject<Object3D<Object3DEventMap> | null> => {
         if (!nodeRefs.current[id]) nodeRefs.current[id] = React.createRef<Object3D<Object3DEventMap>>();
         return nodeRefs.current[id];
     };
+
+    // Scene ref for exporting
+    const sceneRef = useRef<Scene | null>(null);
 
     function addModelNodeToSceneGraph(model: any, filename: string) {
         // Always store the model in models state by filename
@@ -88,18 +86,12 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
                     scale: 1
                 }
             };
-
-            const newGraph = [
+            return [
                 {
                     ...root,
                     children: [...root.children, newNode]
                 }
             ] as SceneNode[];
-
-            setSelectedNodeId(null);
-            requestAnimationFrame(() => setSelectedNodeId(newNode.id));
-
-            return newGraph;
         });
     }
 
@@ -123,6 +115,7 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
             });
         }
         collectModelFiles(graph);
+
         // Mark missing models
         setModels(prevModels => {
             const newModels = { ...prevModels };
@@ -133,33 +126,44 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
             });
             return newModels;
         });
-        // Try to load each missing model from /resources/
-        referencedFiles.forEach(filename => {
-            if (models[filename] && !models[filename].missing) return; // Already loaded
-            if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
-                const loader = new GLTFLoader();
-                loader.load(`${resourcePath}/${filename}`,
-                    gltf => {
-                        setModels(prev => ({ ...prev, [filename]: gltf.scene }));
-                    },
-                    undefined,
-                    err => {
-                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+
+        // Defer model loading to prevent canvas initialization race conditions
+        setTimeout(() => {
+            referencedFiles.forEach(filename => {
+                // Check current models state to avoid race conditions
+                setModels(currentModels => {
+                    if (currentModels[filename] && !currentModels[filename].missing) {
+                        return currentModels; // Already loaded
                     }
-                );
-            } else if (filename.endsWith('.fbx')) {
-                const loader = new FBXLoader();
-                loader.load(`${resourcePath}/${filename}`,
-                    model => {
-                        setModels(prev => ({ ...prev, [filename]: model }));
-                    },
-                    undefined,
-                    err => {
-                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+
+                    if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
+                        const loader = new GLTFLoader();
+                        loader.load(`${resourcePath}/${filename}`,
+                            gltf => {
+                                setModels(prev => ({ ...prev, [filename]: gltf.scene }));
+                            },
+                            undefined,
+                            err => {
+                                setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+                            }
+                        );
+                    } else if (filename.endsWith('.fbx')) {
+                        const loader = new FBXLoader();
+                        loader.load(`${resourcePath}/${filename}`,
+                            model => {
+                                setModels(prev => ({ ...prev, [filename]: model }));
+                            },
+                            undefined,
+                            err => {
+                                setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+                            }
+                        );
                     }
-                );
-            }
-        });
+
+                    return currentModels;
+                });
+            });
+        }, 100); // Small delay to let canvas initialize
     };
     // Run once on mount
     React.useEffect(() => {
@@ -167,21 +171,19 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     }, []);
 
     return (
-        <AudioProvider>
-            <EditorContext.Provider value={{ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels }}>
-                {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
-                <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
-                    {children}
-                </div>
-                {playMode == EditorModes.Edit && <SceneEditor
-                    sceneGraph={sceneGraph} // pass raw sceneGraph
-                    setSceneGraph={setSceneGraph}
-                    selectedNodeId={selectedNodeId}
-                    setSelectedNodeId={setSelectedNodeId}
-                    models={models}
-                    setModels={setModels}
-                />}
-            </EditorContext.Provider>
-        </AudioProvider>
+        <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId,])}>
+            {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
+            <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
+                {children}
+            </div>
+            {playMode == EditorModes.Edit && <SceneEditor
+                sceneGraph={sceneGraph} // pass raw sceneGraph
+                setSceneGraph={setSceneGraph}
+                selectedNodeId={selectedNodeId}
+                setSelectedNodeId={setSelectedNodeId}
+                models={models}
+                setModels={setModels}
+            />}
+        </EditorContext.Provider>
     );
 }

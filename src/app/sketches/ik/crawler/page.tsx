@@ -1,22 +1,19 @@
 "use client";
 
-import Controls from "@/shared/ControlsProvider";
-import { WebGPUCanvas } from "@/shared/WebGPUCanvas";
 import { DirectionalLightHelper, PCFSoftShadowMap } from "three";
 import { Helper, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import Environment from "../../floor/ground/ground/environment";
 import CrawlerApp from "./crawler";
+import Controls from "@/shared/controls/ControlsProvider";
+import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls>
-                    <WebGPUCanvas
-                        gl={{ antialias: true }}
-                        shadows={{ type: PCFSoftShadowMap }}
-                    >
+                    <GameCanvas>
                         <Physics gravity={[0, -20, 0]} timeStep="vary" paused>
 
                             <CrawlerApp />
@@ -47,7 +44,7 @@ export default function Home() {
                         >
                             {<Helper type={DirectionalLightHelper} />}
                         </directionalLight>
-                    </WebGPUCanvas>
+                    </GameCanvas>
                 </Controls>
             </div>
         </div>

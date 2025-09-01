@@ -1,12 +1,72 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import NodeEditor from "./NodeEditor";
 import { SceneNode } from "../viewer/SceneViewer";
 import { FilePicker } from "../../dragdrop/DragDropLoader";
 import presets from "../presets";
 import { useEditorContext } from "./EditorContext";
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
 function generateId() {
     return Math.random().toString(36).substr(2, 9);
+}
+
+// --- History management for undo/redo ---
+interface HistoryState {
+    sceneGraph: SceneNode[];
+    selectedNodeId: string | null;
+}
+
+class HistoryManager {
+    private history: HistoryState[] = [];
+    private currentIndex = -1;
+    private maxHistorySize = 50;
+
+    saveState(sceneGraph: SceneNode[], selectedNodeId: string | null) {
+        // Remove any history after current index (when user made new changes after undo)
+        this.history = this.history.slice(0, this.currentIndex + 1);
+
+        // Add new state
+        this.history.push({
+            sceneGraph: JSON.parse(JSON.stringify(sceneGraph)), // deep clone
+            selectedNodeId
+        });
+
+        // Limit history size
+        if (this.history.length > this.maxHistorySize) {
+            this.history.shift();
+        } else {
+            this.currentIndex++;
+        }
+    }
+
+    canUndo(): boolean {
+        return this.currentIndex > 0;
+    }
+
+    canRedo(): boolean {
+        return this.currentIndex < this.history.length - 1;
+    }
+
+    undo(): HistoryState | null {
+        if (this.canUndo()) {
+            this.currentIndex--;
+            return this.history[this.currentIndex];
+        }
+        return null;
+    }
+
+    redo(): HistoryState | null {
+        if (this.canRedo()) {
+            this.currentIndex++;
+            return this.history[this.currentIndex];
+        }
+        return null;
+    }
+
+    clear() {
+        this.history = [];
+        this.currentIndex = -1;
+    }
 }
 
 // --- Tree helpers ---
@@ -34,6 +94,30 @@ function addNodeToParent(nodes: SceneNode[], parentId: string, child: SceneNode)
     );
 }
 
+function moveNodeInArray(nodes: SceneNode[], nodeId: string, newIndex: number): SceneNode[] {
+    const nodeIndex = nodes.findIndex(n => n.id === nodeId);
+    if (nodeIndex === -1) return nodes;
+
+    const newNodes = [...nodes];
+    const [movedNode] = newNodes.splice(nodeIndex, 1);
+    newNodes.splice(newIndex, 0, movedNode);
+    return newNodes;
+}
+
+function reorderNodeInParent(nodes: SceneNode[], nodeId: string, newIndex: number, parentId?: string): SceneNode[] {
+    if (!parentId) {
+        // Moving at root level
+        return moveNodeInArray(nodes, nodeId, newIndex);
+    }
+
+    return nodes.map(node => {
+        if (node.id === parentId) {
+            return { ...node, children: moveNodeInArray(node.children, nodeId, newIndex) };
+        }
+        return { ...node, children: reorderNodeInParent(node.children, nodeId, newIndex, parentId) };
+    });
+}
+
 function isDescendant(nodes: SceneNode[], nodeId: string, targetId: string): boolean {
     for (const node of nodes) {
         if (node.id === nodeId) {
@@ -58,14 +142,123 @@ interface SceneEditorProps {
 }
 
 export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId, setSelectedNodeId, models, setModels }: SceneEditorProps) {
-    const { scanAndLoadMissingModels } = useEditorContext();
+    const { scanAndLoadMissingModels, sceneRef } = useEditorContext();
     const [rawMode, setRawMode] = useState(false);
     const dragNode = useRef<SceneNode | null>(null);
+    const dragOverInfo = useRef<{ nodeId: string; position: 'before' | 'after' | 'into' } | null>(null);
     // Context menu state
     const [contextMenu, setContextMenu] = useState<{ nodeId: string, x: number, y: number } | null>(null);
+    // Collapsed nodes state
+    const [collapsedNodes, setCollapsedNodes] = useState<Set<string>>(new Set());
+    // History manager
+    const historyManager = useRef(new HistoryManager());
+    const [, forceUpdate] = useState({});
+
+    // Download GLB function
+    const handleDownloadGLB = useCallback(() => {
+        if (!sceneRef.current) {
+            alert('Scene not available');
+            return;
+        }
+        const exporter = new GLTFExporter();
+        exporter.parse(
+            sceneRef.current,
+            function (result) {
+                if (result instanceof ArrayBuffer) {
+                    saveArrayBuffer(result, 'scene.glb');
+                } else {
+                    console.log('Unexpected result type:', result);
+                }
+            },
+            function (error) {
+                console.error('Error exporting GLTF:', error);
+            },
+            { binary: true }
+        );
+    }, [sceneRef]);
+
+    const saveArrayBuffer = (buffer: ArrayBuffer, filename: string) => {
+        save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
+    };
+
+    const save = (blob: Blob, filename: string) => {
+        const link = document.createElement('a');
+        link.style.display = 'none';
+        document.body.appendChild(link); // Firefox workaround
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // Save current state to history
+    const saveToHistory = useCallback(() => {
+        historyManager.current.saveState(sceneGraph, selectedNodeId);
+        forceUpdate({}); // Force re-render to update button states
+    }, [sceneGraph, selectedNodeId]);
+
+    // Initialize history with current state
+    React.useEffect(() => {
+        if (historyManager.current.canUndo() === false && historyManager.current.canRedo() === false) {
+            historyManager.current.saveState(sceneGraph, selectedNodeId);
+        }
+    }, []);
+
+    // Track changes from NodeEditor and save to history
+    const prevSceneGraph = useRef<SceneNode[]>(sceneGraph);
+    React.useEffect(() => {
+        // Only save if sceneGraph actually changed (not just re-renders)
+        if (JSON.stringify(prevSceneGraph.current) !== JSON.stringify(sceneGraph)) {
+            // Small delay to batch rapid changes from NodeEditor
+            const timer = setTimeout(() => {
+                historyManager.current.saveState(sceneGraph, selectedNodeId);
+                forceUpdate({});
+            }, 500);
+
+            prevSceneGraph.current = sceneGraph;
+            return () => clearTimeout(timer);
+        }
+    }, [sceneGraph, selectedNodeId]);
+
+    // Undo functionality
+    const handleUndo = useCallback(() => {
+        const prevState = historyManager.current.undo();
+        if (prevState) {
+            setSceneGraph(prevState.sceneGraph);
+            setSelectedNodeId(prevState.selectedNodeId);
+            forceUpdate({}); // Force re-render to update button states
+        }
+    }, [setSceneGraph, setSelectedNodeId]);
+
+    // Redo functionality  
+    const handleRedo = useCallback(() => {
+        const nextState = historyManager.current.redo();
+        if (nextState) {
+            setSceneGraph(nextState.sceneGraph);
+            setSelectedNodeId(nextState.selectedNodeId);
+            forceUpdate({}); // Force re-render to update button states
+        }
+    }, [setSceneGraph, setSelectedNodeId]);
+
+    // Keyboard shortcuts for undo/redo
+    React.useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                handleUndo();
+            } else if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                handleRedo();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [handleUndo, handleRedo]);
 
     // --- Add node ---
     const handleAdd = (parentId?: string) => {
+        saveToHistory(); // Save state before making changes
         const id = generateId();
         const newNode: SceneNode = {
             id,
@@ -85,21 +278,84 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
         });
     };
 
-    // --- Drag and drop logic ---
+    // --- Enhanced drag and drop logic with reordering ---
     const handleDragStart = (node: SceneNode) => {
         dragNode.current = node;
     };
-    const handleDrop = (targetNode: SceneNode) => {
+
+    const handleDragOver = (e: React.DragEvent, targetNode: SceneNode) => {
+        e.preventDefault();
         if (!dragNode.current || dragNode.current.id === targetNode.id) return;
+
+        const rect = (e.target as HTMLElement).getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        const height = rect.height;
+
+        // Determine drop position based on mouse position
+        if (y < height * 0.25) {
+            dragOverInfo.current = { nodeId: targetNode.id, position: 'before' };
+        } else if (y > height * 0.75) {
+            dragOverInfo.current = { nodeId: targetNode.id, position: 'after' };
+        } else {
+            dragOverInfo.current = { nodeId: targetNode.id, position: 'into' };
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent, targetNode: SceneNode) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!dragNode.current || !dragOverInfo.current || dragNode.current.id === targetNode.id) {
+            dragOverInfo.current = null;
+            return;
+        }
+
         // Prevent dropping onto a descendant
-        if (isDescendant(sceneGraph, dragNode.current.id, targetNode.id)) return;
+        if (isDescendant(sceneGraph, dragNode.current.id, targetNode.id)) {
+            dragOverInfo.current = null;
+            return;
+        }
+
+        saveToHistory(); // Save state before making changes
+
+        const { position } = dragOverInfo.current;
+
         // Remove from old parent
         const [without, removed] = removeNodeById(sceneGraph, dragNode.current.id);
-        if (!removed) return;
-        // Add to new parent
-        const newTree = addNodeToParent(without, targetNode.id, removed);
+        if (!removed) {
+            dragOverInfo.current = null;
+            return;
+        }
+
+        let newTree: SceneNode[];
+
+        if (position === 'into') {
+            // Add as child to target node
+            newTree = addNodeToParent(without, targetNode.id, removed);
+        } else {
+            // Find target's parent and siblings to insert before/after
+            const insertIntoSiblings = (nodes: SceneNode[], parentId?: string): SceneNode[] => {
+                const targetIndex = nodes.findIndex(n => n.id === targetNode.id);
+                if (targetIndex !== -1) {
+                    const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+                    const newNodes = [...nodes];
+                    newNodes.splice(insertIndex, 0, removed);
+                    return newNodes;
+                }
+
+                // Search in children
+                return nodes.map(node => ({
+                    ...node,
+                    children: insertIntoSiblings(node.children, node.id)
+                }));
+            };
+
+            newTree = insertIntoSiblings(without);
+        }
+
         setSceneGraph(newTree);
         dragNode.current = null;
+        dragOverInfo.current = null;
     };
 
     // --- Raw mode handlers ---
@@ -131,6 +387,7 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                         const jsonString = event.target?.result as string;
                         const parsed = JSON.parse(jsonString);
                         if (Array.isArray(parsed)) {
+                            saveToHistory(); // Save state before loading
                             setSceneGraph(parsed);
                             // Scan and load missing models for loaded JSON
                             if (scanAndLoadMissingModels) {
@@ -150,6 +407,7 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
     // --- Load preset handler ---
     const handleLoadPreset = (presetName: string) => {
         if (presetName && presets[presetName as keyof typeof presets]) {
+            saveToHistory(); // Save state before loading
             const presetData = presets[presetName as keyof typeof presets] as SceneNode[];
             setSceneGraph(presetData);
             // After setting sceneGraph, scan and load missing models
@@ -180,6 +438,7 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
 
     // --- Delete node ---
     const handleDeleteNode = (nodeId: string) => {
+        saveToHistory(); // Save state before making changes
         setSceneGraph(prev => {
             const [newGraph] = removeNodeById(prev, nodeId);
             return newGraph;
@@ -198,6 +457,7 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
         };
     }
     const handleDuplicateNode = (nodeId: string) => {
+        saveToHistory(); // Save state before making changes
         setSceneGraph(prev => {
             // Find parent and index of nodeId
             function recur(nodes: SceneNode[]): SceneNode[] {
@@ -218,69 +478,133 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
         setContextMenu(null);
     };
 
+    // --- Toggle collapse state ---
+    const toggleCollapse = (nodeId: string) => {
+        setCollapsedNodes(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(nodeId)) {
+                newSet.delete(nodeId);
+            } else {
+                newSet.add(nodeId);
+            }
+            return newSet;
+        });
+    };
+
     // --- Render tree ---
-    const renderNode = (node: SceneNode) => (
-        <div
-            key={node.id}
-            draggable
-            onDragStart={e => {
-                e.stopPropagation();
-                handleDragStart(node);
-            }}
-            onDrop={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleDrop(node);
-            }}
-            onDragOver={e => e.preventDefault()}
-            onClick={e => {
-                e.stopPropagation();
-                setSelectedNodeId(node.id);
-            }}
-            onContextMenu={e => {
-                e.preventDefault();
-                e.stopPropagation();
-                setContextMenu({ nodeId: node.id, x: e.clientX, y: e.clientY });
-            }}
-            style={{
-                marginLeft: 16,
-                border: selectedNodeId === node.id ? "1px solid #4f8cff" : undefined,
-                background: selectedNodeId === node.id ? "#e6f0ff" : undefined,
-                padding: 2,
-                cursor: "pointer",
-                position: "relative"
-            }}
-        >
-            {node.name}
-            <button style={{ marginLeft: 8 }} onClick={e => { e.stopPropagation(); handleAdd(node.id); }}>+</button>
-            {node.children?.map(child => renderNode(child))}
-        </div>
-    );
+    const renderNode = (node: SceneNode) => {
+        const hasChildren = node.children && node.children.length > 0;
+        const isCollapsed = collapsedNodes.has(node.id);
+        const isDragOver = dragOverInfo.current?.nodeId === node.id;
+        const dragPosition = dragOverInfo.current?.position;
+
+        // Check if any child is being dragged over with 'into' position (becoming a child)
+        const isReceivingChild = isDragOver && dragPosition === 'into';
+
+        // Build classes dynamically based on state
+        const nodeClasses = [
+            "ml-4 p-0.5 cursor-pointer relative flex items-center gap-1",
+            // Selection state
+            selectedNodeId === node.id ? "border border-blue-500 bg-blue-50" : "",
+            // Drag feedback for reordering
+            isDragOver && dragPosition === 'before' ? "border-t-2 border-t-blue-500" : "",
+            isDragOver && dragPosition === 'after' ? "border-b-2 border-b-blue-500" : "",
+            // Highlight when receiving a child
+            isReceivingChild ? "bg-blue-100 border border-blue-400 border-dashed" : "",
+        ].filter(Boolean).join(" ");
+
+        // Classes for the children container when receiving a new child
+        const childrenContainerClasses = [
+            "ml-4",
+            // Highlight the children area when receiving a new child
+            isReceivingChild ? "bg-blue-50 border-l-2 border-l-blue-300 pl-2" : "",
+        ].filter(Boolean).join(" ");
+
+        return (
+            <div key={node.id}>
+                <div
+                    draggable
+                    onDragStart={e => {
+                        e.stopPropagation();
+                        handleDragStart(node);
+                    }}
+                    onDrop={e => {
+                        handleDrop(e, node);
+                    }}
+                    onDragOver={e => {
+                        handleDragOver(e, node);
+                    }}
+                    onClick={e => {
+                        e.stopPropagation();
+                        setSelectedNodeId(node.id);
+                    }}
+                    onContextMenu={e => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setContextMenu({ nodeId: node.id, x: e.clientX, y: e.clientY });
+                    }}
+                    className={nodeClasses}
+                >
+                    {hasChildren && (
+                        <button
+                            onClick={e => {
+                                e.stopPropagation();
+                                toggleCollapse(node.id);
+                            }}
+                            className="bg-transparent border-none cursor-pointer p-0 text-xs w-4 h-4 flex items-center justify-center"
+                        >
+                            {isCollapsed ? "▶" : "▼"}
+                        </button>
+                    )}
+                    {!hasChildren && <span className="w-4"></span>}
+                    <span>{node.name}</span>
+                    {isReceivingChild && (
+                        <span className="text-blue-600 text-xs ml-2 font-semibold">
+                            ← Drop here to add as child
+                        </span>
+                    )}
+                </div>
+                {hasChildren && !isCollapsed && (
+                    <div className={childrenContainerClasses}>
+                        {node.children.map(child => renderNode(child))}
+                        {isReceivingChild && (
+                            <div className="text-blue-500 text-xs italic ml-4 py-1">
+                                New child will appear here
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     // --- Context menu UI ---
     const contextMenuUI = contextMenu ? (
         <div
+            className="fixed bg-white border border-gray-300 rounded z-50 shadow-lg min-w-24"
             style={{
-                position: "fixed",
                 top: contextMenu.y,
                 left: contextMenu.x,
-                background: "white",
-                border: "1px solid #ccc",
-                borderRadius: 4,
-                zIndex: 1000,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                minWidth: 100
             }}
             onClick={e => e.stopPropagation()}
         >
             <div
-                style={{ padding: 8, cursor: "pointer" }}
+                className="p-2 cursor-pointer hover:bg-gray-50"
+                onClick={() => {
+                    handleAdd(contextMenu.nodeId);
+                    setContextMenu(null);
+                }}
+            >
+                Add Child
+            </div>
+            <div
+                className="p-2 cursor-pointer hover:bg-gray-50"
                 onClick={() => handleDuplicateNode(contextMenu.nodeId)}
             >
                 Duplicate
             </div>
             <div
-                style={{ padding: 8, cursor: "pointer", color: "red" }}
+                className="p-2 cursor-pointer text-red-600 hover:bg-gray-50"
                 onClick={() => handleDeleteNode(contextMenu.nodeId)}
             >
                 Delete
@@ -304,15 +628,33 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                         Scene Hierarchy
                     </h2>
                     <button onClick={handleRawToggle}>⛭</button>
+                    <div className="flex gap-1 ml-2">
+                        <button
+                            onClick={handleUndo}
+                            disabled={!historyManager.current.canUndo()}
+                            className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Undo (Cmd/Ctrl+Z)"
+                        >
+                            ↶
+                        </button>
+                        <button
+                            onClick={handleRedo}
+                            disabled={!historyManager.current.canRedo()}
+                            className="px-2 py-1 text-xs border rounded bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Redo (Cmd/Ctrl+Y or Cmd/Ctrl+Shift+Z)"
+                        >
+                            ↷
+                        </button>
+                    </div>
                 </div>
                 <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
                     {rawMode ? (
                         <div className="flex flex-col gap-2">
                             <div>
-                                <div style={{ fontWeight: "bold" }}>Models</div>
+                                <div className="font-bold">Models</div>
                                 <div className="flex flex-col">
                                     {Object.keys(models).length === 0
-                                        ? <div style={{ color: "#888" }}>No models loaded.</div>
+                                        ? <div className="text-gray-500">No models loaded.</div>
                                         : Object.entries(models).map(([filename, model]) => (
                                             <div key={filename} className="flex items-center mb-1">
                                                 <span>
@@ -342,7 +684,7 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                                 </div>
                             </div>
                             <div>
-                                <div style={{ fontWeight: "bold" }}>SceneGraph</div>
+                                <div className="font-bold">SceneGraph</div>
                                 <div className="flex gap-2 mt-2 mb-2">
                                     <select
                                         className="px-2 py-1 border rounded bg-white"
@@ -369,6 +711,12 @@ export default function SceneEditor({ sceneGraph, setSceneGraph, selectedNodeId,
                                         onClick={handleLoadJSON}
                                     >
                                         Load JSON
+                                    </button>
+                                    <button
+                                        className="px-3 py-1 border rounded bg-white hover:bg-purple-50 text-purple-700"
+                                        onClick={handleDownloadGLB}
+                                    >
+                                        Download GLB
                                     </button>
                                 </div>
                             </div>

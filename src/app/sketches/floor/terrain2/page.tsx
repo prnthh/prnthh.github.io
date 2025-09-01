@@ -2,13 +2,13 @@
 
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Environment, OrbitControls, useDetectGPU } from "@react-three/drei";
-import { GameCanvas } from "@/shared/GameCanvas";
 import MartiniGeometry from "./MartiniGeometry";
 import useProgressiveTextures from "./useProgressiveTextures";
 import { Suspense, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import { Vector3, Vector4 } from "three";
 import TerrainComponent from "./TerrainComponent";
+import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
     return (

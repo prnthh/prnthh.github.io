@@ -1,18 +1,18 @@
 "use client";
-import InteractiveSphere from "./InteractiveSphere";
-import { WebGPUCanvas } from "../../../../shared/WebGPUCanvas";
+import GameCanvas from "@/shared/GameCanvas";
+import InteractiveSphere from "../../../../shared/shaders/InteractiveSphere";
 
 export default function BasicInteractiveSpherePage() {
     return (
         <main>
             <div className="w-full" style={{ height: "100vh" }}>
 
-                <WebGPUCanvas>
+                <GameCanvas>
                     <ambientLight intensity={1} />
                     <pointLight intensity={3} position={[0, 2, 2]} />
                     <InteractiveSphere />
                     {/* <BloomPass /> */}
-                </WebGPUCanvas>
+                </GameCanvas>
             </div>
         </main>
     );

@@ -3,8 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { Object3D, Object3DEventMap } from "three";
 import { GameInstance, GameInstanceProvider } from "../editor/InstanceProvider";
 import * as THREE from "three";
-import { OrbitControls, TransformControls } from "@react-three/drei";
+import { MapControls, TransformControls } from "@react-three/drei";
 import { useEditorContext } from "../editor/EditorContext";
+import WaterMaterial from "@/shared/shaders/Water";
+import { useThree } from "@react-three/fiber";
 
 export enum EditorModes {
     Edit = "edit",
@@ -69,7 +71,14 @@ function cloneObject(object: Object3D): Object3D | null {
 }
 
 export function Viewer() {
-    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, getNodeRef, playMode } = useEditorContext();
+    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, getNodeRef, playMode, sceneRef } = useEditorContext();
+    const { scene } = useThree();
+
+    useEffect(() => {
+        if (sceneRef.current !== scene) {
+            sceneRef.current = scene;
+        }
+    }, [scene, sceneRef]);
 
     useEffect(() => {
         if (selectedNodeId && !nodeExists(sceneGraph, selectedNodeId)) {
@@ -95,14 +104,14 @@ export function Viewer() {
 
             {isEditMode && (
                 <>
-                    <OrbitControls makeDefault />
+                    <MapControls makeDefault />
                     <gridHelper args={[10, 10]} />
-                    {selectedNodeId && selectedRef?.current && selectedRef.current instanceof Object3D && nodeExists(sceneGraph, selectedNodeId) && (
+                    {selectedNodeId && selectedRef?.current && nodeExists(sceneGraph, selectedNodeId) && (
                         <TransformControls
                             object={selectedRef.current}
                             mode="translate"
                             onObjectChange={() => {
-                                const obj = selectedRef.current as Object3D | null;
+                                const obj = selectedRef.current;
                                 if (obj) {
                                     setSceneGraph(prev => updateNodeTransform(prev, selectedNodeId, {
                                         position: [obj.position.x, obj.position.y, obj.position.z],
@@ -130,6 +139,7 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
     const position = node.transform?.position?.map(v => v ?? 0) as [number, number, number] | undefined;
     const rotation = node.transform?.rotation?.map(v => v ?? 0) as [number, number, number] | undefined;
     const scale = node.transform?.scale ?? 1;
+    const movedRef = useRef(false);
 
     const renderChildren = () => node.children?.map((child, index) => (
         <RecursiveNode
@@ -163,10 +173,18 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
     }
 
     // Pointer event support
-    const pointerEventComp = node.components?.find(c => c.type === 'pointerEvent');
-    const hasPointerEvent = !!pointerEventComp;
-    const handlePointerDown = (e: any) => {
-        if (hasPointerEvent) {
+    const handlePointerUp = (e: any) => {
+        const pointerEventComp = node.components?.find(c => c.type === 'pointerEvent');
+
+        if (movedRef.current) return;
+
+        if (playMode === EditorModes.Edit && node.id) {
+            e.stopPropagation();
+            onSelect(node.id);
+            return;
+        }
+
+        if (!!pointerEventComp) {
             const mode = pointerEventComp.args?.[0] || 'event';
             if (mode === 'link') {
                 const url = pointerEventComp.args?.[1];
@@ -179,17 +197,17 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
             console.log(`Pointer event on node: ${node.name}`);
             e.stopPropagation();
         }
-
-        if (playMode === EditorModes.Edit && node.id) {
-            e.stopPropagation();
-            onSelect(node.id);
-        }
+        movedRef.current = false;
     };
 
     // Regular rendering
     return (
         <group ref={groupRef} position={position || [0, 0, 0]} rotation={rotation} scale={scale}>
-            <mesh onPointerDown={handlePointerDown} castShadow receiveShadow>
+            <mesh
+                onPointerDown={e => { movedRef.current = false; }}
+                onPointerMove={e => { playMode === EditorModes.Edit && (movedRef.current = true); }}
+                onPointerUp={handlePointerUp}
+                castShadow receiveShadow>
                 <ComponentMapper node={node} />
                 {renderChildren()}
             </mesh>
@@ -200,12 +218,14 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
 const ComponentMapper = ({ node }: { node: SceneNode }) => {
     const geometry = node.components?.find(c => c.type === 'boxGeometry');
     const material = node.components?.find(c => c.type === 'meshStandardMaterial');
+    const waterMaterial = node.components?.find(c => c.type === 'waterMaterial');
     const model = node.components?.find(c => c.type === 'model');
 
     return (
         <>
             {geometry && <boxGeometry args={geometry.args || [1, 1, 1]} />}
             {material && <meshStandardMaterial {...material.props} />}
+            {waterMaterial && <WaterMaterial />}
             {model && (model.object ? (
                 model.instanced ? (
                     <GameInstance

@@ -1,21 +1,20 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import Controls from "@/shared/ControlsProvider";
-import { ShadowLight } from "../../lighting/shadowmap/ShadowLight";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
-import { CharacterController } from "../../controllers/shouldercam/CharacterController";
-import { GameCanvas } from "@/shared/GameCanvas";
-import { Environment, Preload, useGLTF } from "@react-three/drei";
+import { Environment, Preload } from "@react-three/drei";
 import Ground from "../../floor/ground/ground/flat";
 import { MapEntities, MapEntity } from "./MapEntity";
-import Ped from "../../controllers/click/ped/ped";
 import Vehicle from "../../car/simple/car/base";
-import DialogCollider from "../../controllers/click/ped/DialogCollider";
-import { EffectComposer, Scanline, SSAO } from "@react-three/postprocessing";
-import { ThreeElement, useThree } from "@react-three/fiber";
+import { useThree } from "@react-three/fiber";
+import Controls from "@/shared/controls/ControlsProvider";
+import GameCanvas from "@/shared/GameCanvas";
 import SimpleModel from "@/shared/SimpleModel";
+import Ped from "@/shared/ped/ped";
+import DialogCollider from "@/shared/ped/DialogCollider";
+import { CharacterController } from "@/shared/shouldercam/CharacterController";
+import { ShadowLight } from "@/shared/lighting/ShadowLight";
 
 
 export default function Home() {

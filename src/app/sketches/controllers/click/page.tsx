@@ -3,9 +3,9 @@
 import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Box, OrbitControls } from "@react-three/drei";
-import Ped from "./ped/ped";
 import { useState } from "react";
 import { Terrain } from "@/app/sketches/floor/terrainCollider/terrain";
+import Ped from "@/shared/ped/ped";
 
 export default function Home() {
     const [target, setTarget] = useState<[number, number, number]>([0, 5, 0])

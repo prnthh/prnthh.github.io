@@ -3,14 +3,14 @@
 import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
-import Controls from "@/shared/ControlsProvider";
 import { CharacterController } from "./CharacterController";
+import Controls from "@/shared/controls/ControlsProvider";
 
 export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Controls >
+                <Controls>
                     <Canvas>
                         <Physics>
 
