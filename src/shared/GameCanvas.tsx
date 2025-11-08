@@ -25,10 +25,6 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
             gl={async ({ canvas }) => {
                 const renderer = new THREE.WebGPURenderer({
                     canvas: canvas as HTMLCanvasElement,
-                    antialias: true,
-                    stencil: false,
-                    // powerPreference: "high-performance",
-                    // alpha: false, // makes background opaque
                     // @ts-expect-error futuristic
                     shadowMap: true,
                     ...props,
@@ -37,11 +33,6 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
                     setFrameloop("always");
                 });
                 return renderer
-            }}
-            camera={{
-                position: [0, 2, 5],
-                fov: 50, near: 0.25,
-                far: 50
             }}
         >
             <Suspense>

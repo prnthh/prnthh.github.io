@@ -1,0 +1,55 @@
+import { ThreeEvent } from "@react-three/fiber";
+import { RigidBody } from "@react-three/rapier";
+import { useRef } from "react";
+
+const DRAG_THRESHOLD = 5;
+
+const DebugTerrain = ({
+    size = 100,
+    position = [0, -0.5, 0],
+    onClick,
+}: {
+    size?: number;
+    position?: [number, number, number];
+    onClick?: (e: ThreeEvent<MouseEvent>) => void;
+}) => {
+    const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
+
+    const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
+        pointerDownPos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handleClick = (e: ThreeEvent<MouseEvent>) => {
+        if (!pointerDownPos.current) return;
+
+        const dx = e.clientX - pointerDownPos.current.x;
+        const dy = e.clientY - pointerDownPos.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < DRAG_THRESHOLD) {
+            onClick?.(e);
+        }
+    };
+
+    return (
+        <>
+            <RigidBody type="fixed" position={position}>
+                <mesh
+                    receiveShadow
+                    rotation={[-Math.PI / 2, 0, 0]}
+                    onPointerDown={handlePointerDown}
+                    onClick={handleClick}
+                >
+                    <planeGeometry args={[size, size]} />
+                    <meshStandardMaterial color="gray" />
+                </mesh>
+            </RigidBody>
+            <gridHelper
+                args={[size, size]}
+                position={[position[0], position[1] + 0.01, position[2]]}
+            />
+        </>
+    );
+};
+
+export default DebugTerrain;

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const allExperiments = [
     'barebones',
-    'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
+    'demos/basic', 'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
     'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/webgpu', 'floor/terrain2',
     'lighting/simple', 'lighting/probe',
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
@@ -79,13 +79,16 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
     // Filter nodes by search
     const entries = Object.entries(node).filter(([key, value]) => {
         if (!search) return true;
-        if (value === null) {
+        // Leaf nodes: either null or string
+        if (value === null || typeof value === 'string') {
             return key.toLowerCase().includes(search.toLowerCase());
         } else {
             // Show folders if any child matches
             const hasMatch = (n: any): boolean => {
                 return Object.entries(n).some(([k, v]) => {
-                    if (v === null) return k.toLowerCase().includes(search.toLowerCase());
+                    if (v === null || typeof v === 'string') {
+                        return k.toLowerCase().includes(search.toLowerCase());
+                    }
                     return hasMatch(v);
                 });
             };
@@ -147,39 +150,42 @@ export default function Nav() {
 
     return (
         <div>
-            {/* Minimal floating menu button */}
-            <button
-                onClick={() => setOpen(o => !o)}
-                className="fixed top-3 left-3 z-50 bg-white/80 hover:bg-white/95 border border-slate-300 shadow-md rounded-full p-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-                aria-label={open ? 'Close menu' : 'Open menu'}
-            >
-                {/* Hamburger icon */}
-                <span className="block w-5 h-5">
-                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-                        <line x1="3" y1="6" x2="17" y2="6" strokeLinecap="round" />
-                        <line x1="3" y1="10" x2="17" y2="10" strokeLinecap="round" />
-                        <line x1="3" y1="14" x2="17" y2="14" strokeLinecap="round" />
-                    </svg>
-                </span>
-            </button>
             {/* Minimal floating menu panel, now to the right of the icon */}
-            {open && (
-                <div className="fixed top-3 left-14 z-40 bg-white/95 rounded-xl flex flex-col p-3 max-h-[80vh] min-w-[220px] shadow-2xl border border-slate-200 animate-fade-in">
-                    <input
-                        className="mb-2 px-2 py-1 rounded border border-slate-200 bg-slate-50 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+            <div className={`${open ? 'w-[220px] h-[calc(100vh-70px)]' : 'w-8 h-8 rounded-full'}  transition-all fixed top-3 left-3 z-40`}>
+                <div className="fixed top-[12px] left-[12px] bg-white/95 rounded-xl flex overflow-hidden border">
+                    <button
+                        className=" p-2"
+                        onClick={() => setOpen(o => !o)}
+                        aria-label={open ? 'Close menu' : 'Open menu'}
+                    >
+                        {/* Hamburger icon */}
+                        <span className="block w-5 h-5">
+                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
+                                <line x1="3" y1="6" x2="17" y2="6" strokeLinecap="round" />
+                                <line x1="3" y1="10" x2="17" y2="10" strokeLinecap="round" />
+                                <line x1="3" y1="14" x2="17" y2="14" strokeLinecap="round" />
+                            </svg>
+                        </span>
+                    </button>
+                    {open && <input
+                        className=" px-2 py-1 rounded border border-slate-200 bg-slate-50 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
                         type="text"
                         placeholder="Search..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         autoFocus
-                    />
-                    {/* Render Demos and Other as top-level categories */}
-                    <div className="mb-2 font-bold text-lg">Demos</div>
-                    <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />
-                    <div className="mb-2 mt-4 font-bold text-lg">Other</div>
-                    <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
+                    />}
                 </div>
-            )}
+                {open && <>
+                    <div className="mt-10 flex flex-col h-full overflow-y-scroll bg-white/95 border rounded-xl noscrollbar px-2">
+                        {/* Render Demos and Other as top-level categories */}
+                        <div className="mb-2 font-bold text-lg">Demos</div>
+                        <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />
+                        <div className="mb-2 mt-4 font-bold text-lg">Other</div>
+                        <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
+                    </div>
+                </>}
+            </div>
         </div>
     );
 }
