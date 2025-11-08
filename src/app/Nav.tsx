@@ -110,9 +110,8 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                             href={`/${fullPath}`}
                             prefetch={true}
                             key={fullPath}
-                            className={`block tracking-[-.01em] ${geistMono.variable} rounded px-2 py-1 transition-colors cursor-pointer select-none
-                                ${isActive ? "bg-blue-600 text-white font-bold" : "hover:bg-slate-400 bg-slate-200 text-black"}`}
-                            style={{ textDecoration: 'none' }}
+                            className={`border mb-1 rounded block tracking-[-.01em] ${geistMono.variable} px-2 py-1 transition-colors cursor-pointer select-none
+                                ${isActive ? "bg-foreground/60 text-white font-bold" : "bg-white/20 text-foreground hover:opacity-80"}`}
                         >
                             {displayName}
                         </Link>
@@ -121,10 +120,9 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                     // Category node
                     const isOpen = open[key] || false;
                     return (
-                        <div key={prefix + key}>
+                        <div key={prefix + key} className="mb-1">
                             <div
-                                className={`flex items-center rounded px-2 py-1 font-bold select-none cursor-pointer transition-colors
-                                    ${isOpen ? "bg-slate-300" : "hover:bg-slate-400 bg-slate-200"}`}
+                                className={`flex items-center rounded px-2 py-1 select-none cursor-pointer transition-colors bg-white/20 text-foreground ${isOpen ? "opacity-80" : "hover:opacity-70"}`}
                                 onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))}
                                 tabIndex={0}
                                 role="button"
@@ -144,6 +142,7 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
 
 export default function Nav() {
     const [open, setOpen] = useState(false);
+    const [clicked, setClicked] = useState(false);
     const [search, setSearch] = useState("");
     // Use the new trees
     const pathname = usePathname();
@@ -151,36 +150,40 @@ export default function Nav() {
     return (
         <div>
             {/* Minimal floating menu panel, now to the right of the icon */}
-            <div className={`${open ? 'w-[220px] h-[calc(100vh-80px)]' : 'w-8 h-8 rounded-full'} text-black transition-all fixed top-3 left-3 z-40`}>
-                <div className="fixed top-[12px] left-[12px] bg-white/95 rounded-xl flex overflow-hidden border">
+            <div className={`fixed top-3 left-3 z-40 ${clicked || open ? 'w-[220px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : open ? 'h-[100px]' : 'h-8'} transition-all`}
+                onMouseEnter={() => setOpen(true)}
+                onMouseLeave={() => { setClicked(false); setOpen(false); }}
+            >
+                <div className={`${open ? 'w-[200px]' : 'w-[42px]'} fixed top-[12px] left-[12px] bg-background text-foreground border-foreground hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
+                    onClick={() => setClicked(() => true)}
+                    onMouseLeave={e => { !clicked && setOpen(false); }}
+                >
                     <button
-                        className="hover:bg-slate-200 transition-all"
-                        onClick={() => setOpen(o => !o)}
                         aria-label={open ? 'Close menu' : 'Open menu'}
+                        onClick={(e) => { setClicked(o => !o); e.stopPropagation(); }}
                     >
-                        {/* Hamburger icon */}
                         <span className="block w-10 h-10">
                             <Shebang />
                         </span>
                     </button>
-                    {open && <input
-                        className="bg-transparent focus:outline-none px-2 py-1 rounded border border-slate-200 bg-slate-50 text-black"
+                    <input
+                        className="bg-transparent text-foreground focus:outline-none px-2 py-1 border-none placeholder-gray-400"
                         type="text"
-                        placeholder="Search..."
+                        placeholder="search demos..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        autoFocus
-                    />}
+                    />
                 </div>
-                {open && <>
-                    <div className="mt-12 flex flex-col h-full overflow-y-scroll bg-white/95 border rounded-xl noscrollbar px-2">
+                <div className={`${clicked ? 'overflow-y-scroll bg-background text-foreground border border-foreground h-full opacity-100' : open ? 'h-[40px] border opacity-50' : 'opacity-0'} px-2 rounded-xl noscrollbar flex flex-col mt-12 transition-all`}>
+                    <div className="my-1 font-bold text-lg text-foreground">Demos</div>
+                    {clicked && <>
                         {/* Render Demos and Other as top-level categories */}
-                        <div className="mb-2 font-bold text-lg">Demos</div>
                         <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />
-                        <div className="mb-2 mt-4 font-bold text-lg">Other</div>
+                        <div className="my-1 mt-2 font-bold text-lg text-foreground">Other</div>
                         <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
-                    </div>
-                </>}
+                    </>}
+                </div>
+
             </div>
         </div>
     );

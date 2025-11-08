@@ -11,13 +11,7 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Canvas>
-                    <Physics debug>
-                        <RigidBody>
-                            <mesh>
-                                <boxGeometry args={[1, 1, 1]} />
-                                <meshStandardMaterial color="orange" />
-                            </mesh>
-                        </RigidBody>
+                    <Physics>
                         <TerrainComponent />
                         <ambientLight intensity={0.5} />
                         <pointLight position={[0, 100, 0]} intensity={20000} />
