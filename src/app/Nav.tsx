@@ -3,11 +3,13 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
+import Shebang from "@/shared/ui/shebang";
 
 const allExperiments = [
     'barebones',
     'demos/basic', 'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
-    'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/webgpu', 'floor/terrain2',
+    'tools/character', 'tools/worldeditor',
+    'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/splat', 'floor/terrain2',
     'lighting/simple', 'lighting/probe',
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
@@ -16,9 +18,7 @@ const allExperiments = [
     'ik/ragdoll', 'ik/kick', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
     'interior',
-    'particles', 'tsl/webgpu', 'tsl/tiny', 'tsl/neo',
-    'xr',
-    'milady/chess', 'milady/surfer',
+    'particles', 'tsl/webgpu', 'tsl/neo',
     '../wfc/index.html', '../chainreaction.html'
 ].map(e => `sketches/${e}`); // Prefix all with 'sketches/'
 
@@ -151,24 +151,20 @@ export default function Nav() {
     return (
         <div>
             {/* Minimal floating menu panel, now to the right of the icon */}
-            <div className={`${open ? 'w-[220px] h-[calc(100vh-70px)]' : 'w-8 h-8 rounded-full'}  transition-all fixed top-3 left-3 z-40`}>
+            <div className={`${open ? 'w-[220px] h-[calc(100vh-80px)]' : 'w-8 h-8 rounded-full'} text-black transition-all fixed top-3 left-3 z-40`}>
                 <div className="fixed top-[12px] left-[12px] bg-white/95 rounded-xl flex overflow-hidden border">
                     <button
-                        className=" p-2"
+                        className="hover:bg-slate-200 transition-all"
                         onClick={() => setOpen(o => !o)}
                         aria-label={open ? 'Close menu' : 'Open menu'}
                     >
                         {/* Hamburger icon */}
-                        <span className="block w-5 h-5">
-                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full">
-                                <line x1="3" y1="6" x2="17" y2="6" strokeLinecap="round" />
-                                <line x1="3" y1="10" x2="17" y2="10" strokeLinecap="round" />
-                                <line x1="3" y1="14" x2="17" y2="14" strokeLinecap="round" />
-                            </svg>
+                        <span className="block w-10 h-10">
+                            <Shebang />
                         </span>
                     </button>
                     {open && <input
-                        className=" px-2 py-1 rounded border border-slate-200 bg-slate-50 text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        className="bg-transparent focus:outline-none px-2 py-1 rounded border border-slate-200 bg-slate-50 text-black"
                         type="text"
                         placeholder="Search..."
                         value={search}
@@ -177,7 +173,7 @@ export default function Nav() {
                     />}
                 </div>
                 {open && <>
-                    <div className="mt-10 flex flex-col h-full overflow-y-scroll bg-white/95 border rounded-xl noscrollbar px-2">
+                    <div className="mt-12 flex flex-col h-full overflow-y-scroll bg-white/95 border rounded-xl noscrollbar px-2">
                         {/* Render Demos and Other as top-level categories */}
                         <div className="mb-2 font-bold text-lg">Demos</div>
                         <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />

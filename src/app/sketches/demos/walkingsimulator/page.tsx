@@ -82,7 +82,7 @@ export default function Home() {
 
                             <MapEntities mapEntities={mapEntitiesState} />
 
-                            <SimpleModel scale={1} position={[4, 0, 0]} model="/models/environment/lamppost2.glb" />
+                            {/* <SimpleModel scale={1} position={[4, 0, 0]} model="/models/environment/lamppost2.glb" /> */}
                         </Physics>
 
                         <fogExp2 attach="fog" args={["#000000", 0.03]} />

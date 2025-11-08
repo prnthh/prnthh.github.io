@@ -6,7 +6,6 @@ import { GameEngine } from "../../editor/scene/editor/EditorContext";
 import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
 import drive from "../../demos/sidescroller/map";
 import { DirectionalLightHelper } from "three";
-import { CustomTSLThing } from "../tiny/CustomTSLThing";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import { Vector3 } from "three";
 import { useState } from "react";
@@ -34,7 +33,6 @@ export default function Home() {
                                 <Environment preset="park" background={false} />
                                 <Game weapon={weapon} setWeapon={setWeapon} />
                                 <Lighting />
-                                <CustomTSLThing />
                                 <FogEnvironment />
                             </Physics>
                         </GameCanvas>
