@@ -33,10 +33,11 @@ const DebugTerrain = ({
 
     return (
         <>
-            <RigidBody type="fixed" position={position}>
+            <RigidBody type="fixed">
                 <mesh
                     receiveShadow
                     rotation={[-Math.PI / 2, 0, 0]}
+                    position={position}
                     onPointerDown={handlePointerDown}
                     onClick={handleClick}
                 >
