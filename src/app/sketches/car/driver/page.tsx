@@ -5,7 +5,7 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { Environment, OrbitControls, Sky } from "@react-three/drei";
 import Vehicle from "./car/base";
 import Lightsource from "@/app/sketches/lighting/simple/lightsource";
-import Ground from "@/app/sketches/floor/ground/flat";
+import Ground from "@/shared/ground/ImageGround";
 import Controls from "@/shared/controls/ControlsProvider";
 
 export default function Home() {

@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import Ped from "@/shared/ped/ped";
 import DialogCollider from "@/shared/ped/DialogCollider";
-import DebugTerrain from "@/shared/debug/DebugTerrain";
+import DebugGround from "@/shared/debug/DebugGround";
 import DebugCamera from "@/shared/debug/DebugCamera";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
 import NavigableWorld from "@/shared/navmesh/NavigableWorld";
@@ -67,7 +67,7 @@ const GameEntityWorld = () => {
 
     return <>
         <NavigableWorld>
-            <DebugTerrain size={200} onClick={(e) => {
+            <DebugGround size={200} onClick={(e) => {
                 addEntity(randomPickupable([e.point.x, e.point.z]));
                 setSelectedEntityID(undefined);
             }} />

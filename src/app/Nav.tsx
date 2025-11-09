@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
@@ -8,11 +8,11 @@ import Shebang from "@/shared/ui/shebang";
 const allExperiments = [
     'barebones',
     'demos/basic', 'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
-    'floor', ,
-    'lighting/simple', 'lighting/probe',
-    'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
+    'floor',
+    'lighting',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/road', 'car/driver',
+    'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
     'tools/character', 'tools/worldeditor', 'tools/narrativegraph',
     'editor/scene', 'editor/dragdrop',
     'ik/ragdoll', 'ik/kick', 'ik/crawler',
@@ -152,7 +152,7 @@ export default function Nav() {
                 onMouseEnter={() => setOpen(true)}
                 onMouseLeave={() => { setClicked(false); setOpen(false); }}
             >
-                <div className={`${open ? 'w-[200px]' : 'w-[42px]'} fixed top-[12px] left-[12px] border-foreground hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
+                <div className={`${open ? 'w-[200px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
                     onClick={() => setClicked(() => true)}
                     onMouseLeave={e => { !clicked && setOpen(false); }}
                 >
@@ -165,14 +165,14 @@ export default function Nav() {
                         </span>
                     </button>
                     <input
-                        className="bg-transparent  focus:outline-none px-2 py-1 border-none placeholder-gray-400"
+                        className="bg-transparent  focus:outline-none px-2 py-1 border-none placeholder-black/80 dark:placeholder-white/80 flex-grow"
                         type="text"
                         placeholder="search demos..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-xs' : open ? 'h-[40px] border opacity-50' : 'opacity-0'} px-2 rounded-xl noscrollbar flex flex-col mt-12 transition-all`}>
+                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : open ? 'h-[40px] border opacity-50' : 'opacity-0'}  bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar flex flex-col mt-12 transition-all`}>
                     <div className="my-1 font-bold text-lg ">Demos</div>
                     {clicked && <>
                         {/* Render Demos and Other as top-level categories */}

@@ -173,7 +173,7 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     return (
         <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId,])}>
             {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
-            <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
+            <div className="w-full items-center justify-items-center min-h-screen" style={{ height: "100vh" }}>
                 {children}
             </div>
             {playMode == EditorModes.Edit && <SceneEditor

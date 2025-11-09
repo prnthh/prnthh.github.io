@@ -1,7 +1,7 @@
 "use client";
 
 import { Physics, RigidBody } from "@react-three/rapier";
-import MapModel from "../../../../shared/MapModel";
+import MapModel from "@/shared/MapModel";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
 import { forwardRef } from "react";
@@ -33,7 +33,6 @@ export default function Home() {
                             <GoalFollowingPed ballRef={ballRef} />
 
                             <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" />
-                            <Environment files="/terraindemo/sunflowers_puresky_1k.hdr" environmentIntensity={0.2} background={true} ground />
                             <ambientLight intensity={0.5} />
                             {/* <pointLight position={[10, 10, 10]} /> */}
                         </Physics>

@@ -3,13 +3,14 @@
 import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
-import { DSGround } from "./ground/DSGround";
-import TerrainTile from "./ground/TerrainTile";
+import { DSGround } from "@/shared/ground/DSGround";
+import TerrainTile from "@/shared/ground/TerrainTile";
 import GameCanvas from "@/shared/GameCanvas";
-import SplatGround from "./ground/SplatGround";
-import ShadedGround from "./ground/ShadedGround";
-import ColliderTerrain from "./ground/ColliderTerrain";
-import Playground from "./ground/Playground";
+import SplatGround from "@/shared/ground/SplatGround";
+import ShadedGround from "@/shared/ground/ShadedGround";
+import ColliderTerrain from "@/shared/ground/ColliderTerrain";
+import Playground from "@/shared/ground/Playground";
+import ImageGround from "@/shared/ground/ImageGround";
 
 export default function Home() {
     return (
@@ -24,6 +25,7 @@ export default function Home() {
                         <DSGround position={[16, 0, -16]} />
                         <Playground position={[48, 0, -16]} />
 
+                        <ImageGround position={[-48, 0, 16]} />
                         <TerrainTile position={[-16, 0, 16]} />
                         <TerrainTile
                             position={[16, 0, 16]}

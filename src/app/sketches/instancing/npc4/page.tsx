@@ -14,7 +14,7 @@ import { MeshStandardNodeMaterial, PostProcessing } from "three/webgpu";
 import { useThree, useFrame, useLoader } from "@react-three/fiber";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
 import { Stats } from '@react-three/drei'
-import { ShinyFloor } from "../../../../shared/shaders/ShinyFloor";
+import { ShinyFloor } from "@/shared/shaders/ShinyFloor";
 import GameCanvas from "@/shared/GameCanvas";
 
 const INSTANCE_COUNT = 50;

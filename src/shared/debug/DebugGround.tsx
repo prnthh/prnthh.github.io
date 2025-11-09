@@ -4,7 +4,7 @@ import { useRef } from "react";
 
 const DRAG_THRESHOLD = 5;
 
-const DebugTerrain = ({
+const DebugGround = ({
     size = 100,
     position = [0, -0.5, 0],
     onClick,
@@ -53,4 +53,4 @@ const DebugTerrain = ({
     );
 };
 
-export default DebugTerrain;
+export default DebugGround;

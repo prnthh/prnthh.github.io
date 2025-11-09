@@ -3,7 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
-import Ground from "../../floor/ground/flat";
+import ImageGround from "@/shared/ground/ImageGround";
 import { Canvas } from "@react-three/fiber";
 import Controls from "@/shared/controls/ControlsProvider";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
@@ -21,7 +21,7 @@ export default function Home() {
 
                         <Physics>
                             <CharacterController lookTarget={ballRef} />
-                            <Ground />
+                            <ImageGround />
                             <ambientLight intensity={0.5} />
                             <pointLight position={[10, 10, 10]} />
                         </Physics>

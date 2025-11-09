@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Box, OrbitControls } from "@react-three/drei";
 import { useState } from "react";
-import { Terrain } from "@/app/sketches/floor/ground/ColliderTerrain";
+import Terrain from "@/shared/ground/ColliderTerrain";
 import Ped from "@/shared/ped/ped";
 
 export default function Home() {

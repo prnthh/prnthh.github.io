@@ -3,7 +3,7 @@
 import { DirectionalLightHelper, PCFSoftShadowMap } from "three";
 import { Helper, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
-import Environment from "../../floor/ground/Playground";
+import Environment from "@/shared/ground/Playground";
 import CrawlerApp from "./crawler";
 import Controls from "@/shared/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";

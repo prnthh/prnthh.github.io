@@ -1,6 +1,6 @@
 "use client";
 import GameCanvas from "@/shared/GameCanvas";
-import InteractiveSphere from "../../../../shared/shaders/InteractiveSphere";
+import InteractiveSphere from "@/shared/shaders/InteractiveSphere";
 
 export default function BasicInteractiveSpherePage() {
     return (

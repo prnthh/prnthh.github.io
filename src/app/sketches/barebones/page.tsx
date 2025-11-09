@@ -3,6 +3,7 @@
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
+import DebugGround from "@/shared/debug/DebugGround";
 
 export default function Home() {
     return (
@@ -16,12 +17,7 @@ export default function Home() {
                                 <meshStandardMaterial color="orange" />
                             </mesh>
                         </RigidBody>
-                        <RigidBody type="fixed">
-                            <mesh position={[0, -2, 0]} scale={[10, 0.1, 10]} receiveShadow>
-                                <boxGeometry />
-                                <meshStandardMaterial color="gray" />
-                            </mesh>
-                        </RigidBody>
+                        <DebugGround />
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
                         <OrbitControls />

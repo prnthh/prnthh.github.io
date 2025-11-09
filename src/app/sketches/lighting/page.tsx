@@ -9,13 +9,15 @@ import { useEffect, useRef, useMemo } from 'react'
 import { reflector } from 'three/tsl'
 import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
 import { pass, screenUV, uv, color, texture, normalWorld } from 'three/tsl'
-import { ShinyFloor } from '../../../../shared/shaders/ShinyFloor'
+import { ShinyFloor } from '@/shared/shaders/ShinyFloor'
 import {
     MeshBasicNodeMaterial,
     WebGPURenderer,
 } from 'three/webgpu';
-import Sun from './Sun'
-import FogBG from '../../../../shared/shaders/FogBG'
+import Sun from './simple/Sun'
+import FogBG from '@/shared/shaders/FogBG'
+import Lightsource from './simple/lightsource'
+import { Physics } from '@react-three/rapier'
 
 extend(THREE as any)
 
@@ -94,6 +96,11 @@ export default function App() {
                     }}
                     camera={{ position: [2, 2.5, 3], fov: 50, near: 0.25, far: 30 }}
                 >
+                    <Physics>
+                        <Lightsource model="/models/environment/lamppost2.glb" position={[-1, 0, 1]} />
+
+                    </Physics>
+
                     <SceneContent />
                 </Canvas>
             </div>

@@ -8,22 +8,8 @@ export type GroundPropsType = {
     image?: string;
 };
 
-
-export default function Ground({ position = [0, 0, 0], image }: GroundPropsType) {
-    return (
-        <RigidBody type="fixed" colliders='trimesh' position={position} >
-            <Suspense fallback={<>
-                <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-                    <planeGeometry args={[100, 100]} />
-                </mesh>
-            </>}>
-                <ImageGround image={image} />
-            </Suspense>
-        </RigidBody>
-    );
-};
-
 const ImageGround = ({
+    position = [0, 0, 0] as [number, number, number],
     image = "/textures/road.jpg"
 }) => {
     const textures = useTexture({
@@ -54,9 +40,13 @@ const ImageGround = ({
     }, [textures.map]);
 
 
-    return <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[100, 100]} />
-        <meshStandardMaterial ref={materialRef} {...textures} />
-        {/* <gridHelper args={[100, 100, 'white', 'lightblue']} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} /> */}
-    </mesh>;
+    return <RigidBody type="fixed" colliders='trimesh' >
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={position} receiveShadow>
+            <planeGeometry args={[32, 32]} />
+            <meshStandardMaterial ref={materialRef} {...textures} />
+            {/* <gridHelper args={[100, 100, 'white', 'lightblue']} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} /> */}
+        </mesh>
+    </RigidBody>;
 }
+
+export default ImageGround;

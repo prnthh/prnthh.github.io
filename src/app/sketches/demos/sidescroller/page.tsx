@@ -101,8 +101,6 @@ const Game = () => {
         <Viewer />
 
         <ambientLight intensity={0.5} />
-        <color attach="background" args={["#000000"]} />
-        <Environment preset="park" background={false} />
     </>
 }
 
