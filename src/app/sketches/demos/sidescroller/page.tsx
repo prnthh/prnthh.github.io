@@ -19,7 +19,7 @@ import GameCanvas from "@/shared/GameCanvas";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import Ped from "@/shared/ped/ped";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
-import { ShadowLight } from "@/shared/lighting/ShadowLight";
+
 const MPProvider = dynamic(() => import('./MP'), { ssr: false })
 
 const ui = tunnel()
@@ -92,15 +92,14 @@ const Game = () => {
         />
 
         <MPProvider roomId="my-room-id" ui={ui}>
-
             <MPStuff />
         </MPProvider>
 
         <ambientLight intensity={0.5} />
-        <ShadowLight />
         <Viewer />
-
-        <ambientLight intensity={0.5} />
+        <hemisphereLight intensity={0.4} color={'#cccccc'} groundColor={"#000000"} />
+        <fogExp2 attach="fog" args={["#000000", 0.03]} />
+        <color attach="background" args={["#000000"]} />
     </>
 }
 

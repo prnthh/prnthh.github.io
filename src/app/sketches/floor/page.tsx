@@ -34,6 +34,7 @@ export default function Home() {
                             normalMap='/textures/floor/rocks/gray_rocks_nor_gl_1k.jpg'
                             roughnessMap='/textures/floor/rocks/gray_rocks_rough_1k.jpg'
                         />
+                        <ImageGround image="/textures/floor/terrain/dirt-512.jpg" position={[48, 0, 16]} />
 
                         <ambientLight intensity={0.5} />
                         <pointLight position={[0, 100, 0]} intensity={20000} />

@@ -1,6 +1,6 @@
 import { ReactNode } from "react"
 
-const DraggableDiv = ({ children, position: [x, y], onDrag }: { children: ReactNode, position: [number, number], onDrag?: (pos: [number, number]) => void }) => {
+const DraggableDiv = ({ children, position: [x, y] = [0, 0], onDrag }: { children: ReactNode, position?: [number, number], onDrag?: (pos: [number, number]) => void }) => {
     return (
         <div className="absolute"
             style={{ top: y, left: x, transform: 'translateX(-50%)' }}

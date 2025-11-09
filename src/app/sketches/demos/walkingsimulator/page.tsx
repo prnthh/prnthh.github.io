@@ -1,105 +1,43 @@
 "use client";
 
-import { Physics } from "@react-three/rapier";
-import { useRef, useState, useEffect } from "react";
-import { Object3D, Vector3 } from "three";
-import ImageGround from "@/shared/ground/ImageGround";
-import { useThree } from "@react-three/fiber";
-import Controls from "@/shared/controls/ControlsProvider";
+import { Physics, RigidBody } from "@react-three/rapier";
 import GameCanvas from "@/shared/GameCanvas";
-import Ped from "@/shared/ped/ped";
-import DialogCollider from "@/shared/ped/DialogCollider";
-import { CharacterController } from "@/shared/shouldercam/CharacterController";
-import { ShadowLight } from "@/shared/lighting/ShadowLight";
+import DemoWorld from "@/shared/DemoWorld";
+import ControllerJoystick from "@/shared/controls/ControllerJoystick";
+import Playground from "@/shared/ground/Playground";
+import FirstPersonController from "@/shared/firstperson/FirstPersonController";
 
 
 export default function Home() {
-
-
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Controls >
-                    <GameCanvas>
-                        <ShadowLight color="#d9c78b" intensity={1} camOffset={new Vector3(0, 10, 0)} />
+                <GameCanvas>
+                    <Physics debug>
+                        <DemoWorld />
+                        <FirstPersonController />
 
-                        <Physics>
-                            <ImageGround image="/textures/floor/terrain/dirt-512.jpg" />
-
-                            <Actors />
-                            <hemisphereLight intensity={0.4} color={'#cccccc'} groundColor={"#000000"} />
-
-                            {/* <SimpleModel scale={1} position={[4, 0, 0]} model="/models/environment/lamppost2.glb" /> */}
-                        </Physics>
-
-                        <fogExp2 attach="fog" args={["#000000", 0.03]} />
-                        <color attach="background" args={["#3d3c39"]} />
-                    </GameCanvas>
-                </Controls>
+                        <Train />
+                    </Physics>
+                    <ambientLight intensity={1} />
+                    <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
+                </GameCanvas>
             </div>
-        </div >
+            <div className='absolute bottom-10 left-10 z-50 text-white'>
+                <ControllerJoystick horizontalAxis='horizontal' verticalAxis='vertical' />
+            </div>
+            <div className='absolute bottom-10 right-10 z-50 text-white'>
+                <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' />
+            </div>
+        </div>
     );
 }
 
-const Actors = () => {
-    const ballRef = useRef<Object3D | null>(null);
-
-    return <>
-        <GoalFollowingPed />
-        <GoalCompletingPed />
-        <CharacterController lookTarget={ballRef} />
-    </>
+const Train = () => {
+    return <RigidBody type='kinematicVelocity' position={[0, 0, -10]} linearVelocity={[0, 0, 1]}>
+        <mesh castShadow>
+            <boxGeometry args={[4, 0.1, 8]} />
+            <meshStandardMaterial color="red" />
+        </mesh>
+    </RigidBody>
 }
-
-const GoalFollowingPed = () => {
-    const [goalPosition, setGoalPosition] = useState<[number, number, number]>([0, 2, 10]);
-    const { scene } = useThree();
-
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const bob = scene.getObjectByName("bob");
-            if (bob) {
-                const { x, y, z } = bob.position;
-                setGoalPosition([x, y, z]);
-            }
-        }, 10000);
-        return () => clearInterval(interval);
-    }, []);
-
-    return <Ped modelUrl="rigga/rigga2.glb"
-        position={goalPosition} modelOffset={[0, -0.5, 0]}
-    >
-        <DialogCollider>
-            Tralalero tralala
-        </DialogCollider>
-
-    </Ped>
-}
-
-const GoalCompletingPed = () => {
-    const [goalPosition, setGoalPosition] = useState<[number, number, number]>([0, 2, 10]);
-    const { scene } = useThree();
-
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const bob = scene.getObjectByName("bob");
-            if (bob) {
-                const { x, y, z } = bob.position;
-                setGoalPosition([x, y, z]);
-            }
-        }, 10000);
-        return () => clearInterval(interval);
-    }, []);
-
-    return <Ped modelUrl="rigga/rigga2.glb"
-        position={goalPosition} modelOffset={[0, -0.5, 0]}
-    >
-        <DialogCollider>
-            Tralalero tralala
-        </DialogCollider>
-
-    </Ped>
-}
-

@@ -6,8 +6,11 @@
  */
 
 import React, { useRef, useState, useEffect } from 'react';
+import { useInputStore } from '@/shared/firstperson/useInputStore';
 
 type JoystickProps = {
+    horizontalAxis?: 'horizontal' | 'lookHorizontal';
+    verticalAxis?: 'vertical' | 'lookVertical';
     onMove?: (pos: { x: number; y: number }) => void;
 };
 
@@ -37,63 +40,29 @@ const getRelativePosition = (
     return { x, y };
 };
 
-const keyMap = [
-    { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
-    { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
-    { name: 'left', keys: ['ArrowLeft', 'KeyA'] },
-    { name: 'right', keys: ['ArrowRight', 'KeyD'] },
-];
-
-function triggerKey(name: string, type: 'keydown' | 'keyup') {
-    const entry = keyMap.find(k => k.name === name);
-    if (!entry) return;
-    for (const key of entry.keys) {
-        const event = new KeyboardEvent(type, { code: key, key: key.replace('Key', ''), bubbles: true });
-        window.dispatchEvent(event);
-    }
-}
-
-const Joystick: React.FC<JoystickProps> = ({ onMove }) => {
+const ControllerJoystick: React.FC<JoystickProps> = ({
+    horizontalAxis = 'horizontal',
+    verticalAxis = 'vertical',
+    onMove
+}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [knob, setKnob] = useState({ x: 0, y: 0 });
     const dragging = useRef(false);
-    const lastDirections = useRef<{ [k: string]: boolean }>({});
-    const activeTouchId = useRef<number | null>(null); // Track active touch
+    const activeTouchId = useRef<number | null>(null);
+    const setAxis = useInputStore(state => state.setAxis);
 
-    // Helper to determine direction from x/y
-    const getDirections = (x: number, y: number) => {
-        const threshold = 0.3;
-        return {
-            forward: y < -threshold,
-            backward: y > threshold,
-            left: x < -threshold,
-            right: x > threshold,
-        };
-    };
-
-    // Fire key events based on joystick movement
+    // Update joystick values in store
     useEffect(() => {
-        const { x, y } = knob;
-        const dirs = getDirections(x / (radius - knobRadius / 2), y / (radius - knobRadius / 2));
-        for (const dir of Object.keys(dirs) as (keyof typeof dirs)[]) {
-            if (dirs[dir] && !lastDirections.current[dir]) {
-                triggerKey(dir, 'keydown');
-            }
-            if (!dirs[dir] && lastDirections.current[dir]) {
-                triggerKey(dir, 'keyup');
-            }
+        const normalizedX = clamp(knob.x / (radius - knobRadius / 2), -1, 1);
+        const normalizedY = clamp(knob.y / (radius - knobRadius / 2), -1, 1);
+
+        setAxis(horizontalAxis, normalizedX);
+        setAxis(verticalAxis, -normalizedY); // Invert Y so up is positive
+
+        if (onMove) {
+            onMove({ x: normalizedX, y: -normalizedY });
         }
-        lastDirections.current = dirs;
-        // Cleanup on unmount: release all keys
-        return () => {
-            for (const dir of Object.keys(lastDirections.current)) {
-                if (lastDirections.current[dir]) {
-                    triggerKey(dir, 'keyup');
-                }
-            }
-            lastDirections.current = {};
-        };
-    }, [knob.x, knob.y]);
+    }, [knob.x, knob.y, horizontalAxis, verticalAxis, setAxis, onMove]);
 
     // Helper to update knob and call onMove
     const updateKnobFromCoords = (clientX: number, clientY: number) => {
@@ -101,12 +70,6 @@ const Joystick: React.FC<JoystickProps> = ({ onMove }) => {
         if (!rect) return;
         const pos = getRelativePosition(clientX, clientY, rect);
         setKnob(pos);
-        if (onMove) {
-            onMove({
-                x: clamp(pos.x / (radius - knobRadius / 2), -1, 1),
-                y: clamp(pos.y / (radius - knobRadius / 2), -1, 1),
-            });
-        }
     };
 
     // Only start joystick drag if touch starts on joystick area and not already dragging
@@ -167,14 +130,6 @@ const Joystick: React.FC<JoystickProps> = ({ onMove }) => {
         dragging.current = false;
         activeTouchId.current = null;
         setKnob({ x: 0, y: 0 });
-        if (onMove) onMove({ x: 0, y: 0 });
-        // Release all keys on joystick release
-        for (const dir of Object.keys(lastDirections.current)) {
-            if (lastDirections.current[dir]) {
-                triggerKey(dir, 'keyup');
-            }
-        }
-        lastDirections.current = {};
     };
 
     return (
@@ -197,17 +152,15 @@ const Joystick: React.FC<JoystickProps> = ({ onMove }) => {
             onMouseDown={e => {
                 e.preventDefault();
                 handleStart(e);
-                // Only listen to mousemove/mouseup on the joystick area
-                const div = containerRef.current;
-                if (!div) return;
+                // Listen to mousemove/mouseup on document so we catch releases outside the joystick
                 const moveListener = handleMove as any;
                 const upListener = () => {
                     handleEnd();
-                    div.removeEventListener('mousemove', moveListener);
-                    div.removeEventListener('mouseup', upListener);
+                    document.removeEventListener('mousemove', moveListener);
+                    document.removeEventListener('mouseup', upListener);
                 };
-                div.addEventListener('mousemove', moveListener);
-                div.addEventListener('mouseup', upListener, { once: true });
+                document.addEventListener('mousemove', moveListener);
+                document.addEventListener('mouseup', upListener, { once: true });
             }}
         >
             <div
@@ -229,4 +182,4 @@ const Joystick: React.FC<JoystickProps> = ({ onMove }) => {
     );
 };
 
-export default Joystick;
+export default ControllerJoystick;

@@ -1,0 +1,234 @@
+
+import { CapsuleCollider, Physics, RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
+import { useRef } from "react";
+import { Object3D, Vector3, Quaternion, Euler } from "three";
+import { useFrame } from "@react-three/fiber";
+import GameCanvas from "@/shared/GameCanvas";
+import * as THREE from "three";
+import DemoWorld from "@/shared/DemoWorld";
+import { PerspectiveCamera } from "@react-three/drei";
+import PointerLockControls from "@/shared/controls/PointerLockControls";
+import ControllerJoystick from "@/shared/controls/ControllerJoystick";
+import { useInputStore } from "./useInputStore";
+import { KeyboardInput } from "./KeyboardInput";
+import Playground from "@/shared/ground/Playground";
+
+
+const tempQuat = new Quaternion();
+const tempEuler = new Euler(0, 0, 0, 'YXZ');
+
+const PLAYER_MASS = 70;
+const CAPSULE_RADIUS = 0.2;
+const CAPSULE_HEIGHT = 0.5;
+const EYE_HEIGHT = 0.5;
+const WALK_SPEED = 5;
+const SPRINT_SPEED = 8;
+const JUMP_VELOCITY = 5;
+const FLOAT_HEIGHT = 1.0;
+const FLOAT_SPRING = 8;
+const FLOAT_DAMPING = 0.3;
+const PITCH_LIMIT = Math.PI / 2;
+const MOUSE_SENSITIVITY = 0.002;
+const JOYSTICK_SENSITIVITY = 2.5;
+
+
+const FirstPersonController = () => {
+    const rigidBodyRef = useRef<RapierRigidBody | null>(null);
+    const bodyMeshRef = useRef<Object3D | null>(null);
+    const cameraRigRef = useRef<THREE.Group | null>(null);
+    const cameraPitch = useRef(0);
+
+    const handleMouseLook = (e: MouseEvent) => {
+        const rb = rigidBodyRef.current;
+        if (!rb) return;
+
+        const yawDelta = -e.movementX * MOUSE_SENSITIVITY;
+        const rot = rb.rotation();
+        tempQuat.set(rot.x, rot.y, rot.z, rot.w);
+        tempEuler.setFromQuaternion(tempQuat);
+        tempEuler.y += yawDelta;
+        tempQuat.setFromEuler(tempEuler);
+        rb.setRotation(tempQuat, true);
+
+        cameraPitch.current = THREE.MathUtils.clamp(
+            cameraPitch.current - e.movementY * MOUSE_SENSITIVITY,
+            -PITCH_LIMIT,
+            PITCH_LIMIT
+        );
+
+        if (cameraRigRef.current) {
+            cameraRigRef.current.rotation.x = cameraPitch.current;
+        }
+    };
+
+    return (
+        <RigidBody
+            position={[0, 2, 0]}
+            colliders={false}
+            ref={rigidBodyRef}
+            type="dynamic"
+            mass={PLAYER_MASS}
+            angularDamping={1}
+            linearDamping={0.5}
+            enabledRotations={[false, false, false]}
+        >
+            <CapsuleCollider args={[CAPSULE_HEIGHT, CAPSULE_RADIUS]} />
+            <mesh ref={bodyMeshRef} castShadow>
+                <capsuleGeometry args={[CAPSULE_RADIUS, 1, 8, 16]} />
+                <meshStandardMaterial color="orange" />
+            </mesh>
+
+            <group name='cameraRig' position={[0, EYE_HEIGHT, 0]} ref={cameraRigRef}>
+                <PerspectiveCamera makeDefault />
+                <mesh position={[0.2, -0.2, -0.5]} rotation={[0, Math.PI, 0]} scale={0.5} castShadow>
+                    <boxGeometry args={[0.1, 0.1, 1]} />
+                    <meshStandardMaterial color="black" />
+                </mesh>
+            </group>
+
+            <KeyboardInput />
+            <MovementSystem rigidBodyRef={rigidBodyRef} />
+            <LookSystem rigidBodyRef={rigidBodyRef} cameraRigRef={cameraRigRef} cameraPitch={cameraPitch} />
+            <PointerLockControls onMouseMove={handleMouseLook} />
+        </RigidBody>
+    );
+};
+
+
+
+const tempForward = new Vector3();
+const tempRight = new Vector3();
+const tempDirection = new Vector3();
+const tempRayOrigin = new Vector3();
+
+const MovementSystem = ({ rigidBodyRef }: { rigidBodyRef: React.RefObject<RapierRigidBody | null> }) => {
+    const horizontal = useInputStore(state => state.horizontal);
+    const vertical = useInputStore(state => state.vertical);
+    const sprint = useInputStore(state => state.sprint);
+    const jump = useInputStore(state => state.jump);
+    const rapier = useRapier();
+
+    const velocityRef = useRef({ x: 0, y: 0, z: 0 });
+    const dirtyRef = useRef(false);
+
+    useFrame(() => {
+        const rb = rigidBodyRef.current;
+        if (!rb) return;
+
+        const vel = rb.linvel();
+        velocityRef.current.x = vel.x;
+        velocityRef.current.y = vel.y;
+        velocityRef.current.z = vel.z;
+        dirtyRef.current = false;
+        const currentSpeed = sprint ? SPRINT_SPEED : WALK_SPEED;
+
+        const pos = rb.translation();
+        tempRayOrigin.set(pos.x, pos.y - CAPSULE_HEIGHT, pos.z);
+        const ray = new rapier.rapier.Ray(tempRayOrigin, { x: 0, y: -1, z: 0 });
+        const hit = rapier.world.castRay(ray, 10, true, undefined, undefined, undefined, rb);
+
+        const isGrounded = hit && hit.timeOfImpact < FLOAT_HEIGHT + 0.1;
+
+        if (hit && hit.timeOfImpact < FLOAT_HEIGHT) {
+            const heightError = FLOAT_HEIGHT - hit.timeOfImpact;
+            const targetUpwardVel = heightError * FLOAT_SPRING;
+            velocityRef.current.y = velocityRef.current.y * (1 - FLOAT_DAMPING) + targetUpwardVel * FLOAT_DAMPING;
+            rb.setGravityScale(0, true);
+            dirtyRef.current = true;
+
+            if (jump && isGrounded) {
+                velocityRef.current.y = JUMP_VELOCITY;
+                rb.setGravityScale(1, true);
+            }
+        } else {
+            rb.setGravityScale(1, true);
+        }
+
+        const rot = rb.rotation();
+        tempQuat.set(rot.x, rot.y, rot.z, rot.w);
+        tempForward.set(0, 0, -1).applyQuaternion(tempQuat).setY(0).normalize();
+        tempRight.set(1, 0, 0).applyQuaternion(tempQuat).setY(0).normalize();
+
+        tempDirection.set(0, 0, 0)
+            .addScaledVector(tempForward, vertical)
+            .addScaledVector(tempRight, horizontal);
+
+        const inputMagnitude = tempDirection.length();
+        if (inputMagnitude > 0) {
+            tempDirection.multiplyScalar(currentSpeed / inputMagnitude);
+            velocityRef.current.x = tempDirection.x;
+            velocityRef.current.z = tempDirection.z;
+            dirtyRef.current = true;
+        } else if (isGrounded) {
+            velocityRef.current.x = 0;
+            velocityRef.current.z = 0;
+            dirtyRef.current = true;
+        }
+
+        // Add ground velocity if standing on a moving object
+        if (hit && isGrounded) {
+            const groundCollider = hit.collider;
+            const groundRigidBody = groundCollider.parent();
+            if (groundRigidBody && !groundRigidBody.isFixed()) {
+                const groundLinvel = groundRigidBody.linvel();
+                const speed = Math.sqrt(groundLinvel.x ** 2 + groundLinvel.y ** 2 + groundLinvel.z ** 2);
+                if (speed > 0.01) {
+                    velocityRef.current.x += groundLinvel.x;
+                    velocityRef.current.z += groundLinvel.z;
+                    dirtyRef.current = true;
+                }
+            }
+        }
+
+        if (dirtyRef.current) {
+            rb.setLinvel(velocityRef.current, true);
+        }
+    });
+
+    return null;
+};
+
+const LookSystem = ({
+    rigidBodyRef,
+    cameraRigRef,
+    cameraPitch
+}: {
+    rigidBodyRef: React.RefObject<RapierRigidBody | null>;
+    cameraRigRef: React.RefObject<THREE.Group | null>;
+    cameraPitch: React.MutableRefObject<number>;
+}) => {
+    const lookHorizontal = useInputStore(state => state.lookHorizontal);
+    const lookVertical = useInputStore(state => state.lookVertical);
+
+    useFrame((_, delta) => {
+        const rb = rigidBodyRef.current;
+        const rig = cameraRigRef.current;
+        if (!rb || !rig) return;
+
+        const absHorizontal = Math.abs(lookHorizontal);
+        const absVertical = Math.abs(lookVertical);
+
+        if (absHorizontal > 0.01) {
+            const yawDelta = -lookHorizontal * JOYSTICK_SENSITIVITY * delta;
+            const rot = rb.rotation();
+            tempQuat.set(rot.x, rot.y, rot.z, rot.w);
+            tempEuler.setFromQuaternion(tempQuat);
+            tempEuler.y += yawDelta;
+            tempQuat.setFromEuler(tempEuler);
+            rb.setRotation(tempQuat, true);
+        }
+
+        if (absVertical > 0.01) {
+            cameraPitch.current = THREE.MathUtils.clamp(
+                cameraPitch.current + lookVertical * JOYSTICK_SENSITIVITY * delta,
+                -PITCH_LIMIT,
+                PITCH_LIMIT
+            );
+            rig.rotation.x = cameraPitch.current;
+        }
+    });
+
+    return null;
+};
+
+export default FirstPersonController;

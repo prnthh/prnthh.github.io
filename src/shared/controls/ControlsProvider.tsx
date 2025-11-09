@@ -115,7 +115,7 @@ function Controls({ children }: { children: React.ReactNode }) {
                 {children}
                 {isMobile && (
                     <div className='absolute bottom-10 left-10 z-50 text-white'>
-                        <Joystick controlScheme={controlScheme} />
+                        <Joystick />
                     </div>
                 )}
             </KeyboardControls>
