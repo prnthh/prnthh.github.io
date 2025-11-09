@@ -17,7 +17,8 @@ import { useWeapon } from "./useWeapon";
 import AnimatedModel from "../ped/HumanoidModel";
 
 
-export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-person', children, forwardRef }: {
+export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = 'bob', mode = 'third-person', children, forwardRef }: {
+    position?: [number, number, number],
     lookTarget?: RefObject<THREE.Object3D | null>
     name?: string,
     mode?: "simple" | "side-scroll" | "third-person",
@@ -270,7 +271,7 @@ export const CharacterController = ({ lookTarget, name = 'bob', mode = 'third-pe
 
     return (
         <>
-            <RigidBody colliders={false} lockRotations ref={rb} position={[0, 4, 0]} name={name} >
+            <RigidBody colliders={false} lockRotations ref={rb} position={position} name={name} >
                 <group ref={container}>
                     <FollowCam
                         height={1 / height}

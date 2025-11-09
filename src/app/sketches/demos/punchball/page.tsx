@@ -27,8 +27,7 @@ export default function Home() {
 
                             <Football ref={ballRef} position={[0, 8, 5]} />
 
-                            <HeavyBox position={[5, 2, 0]} />
-
+                            <PunchingBag position={[5, 2, 0]} />
                             <GoalFollowingPed ballRef={ballRef} />
 
                             <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" />
@@ -53,17 +52,22 @@ const Football = forwardRef<Object3D, { position: [number, number, number] }>(({
     );
 });
 
+const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
+    return <>
+        <HeavyBox position={[5, 2, 0]} />
+    </>
+};
+
 const HeavyBox = forwardRef<Object3D, { position: [number, number, number] }>(({ position }, ref) => {
     return (
         <RigidBody name="box" ccd position={position} density={1} colliders="cuboid" type="dynamic">
             <mesh castShadow receiveShadow ref={ref}>
-                <boxGeometry args={[1, 1, 1]} />
-                <meshStandardMaterial color="blue" />
+                <capsuleGeometry args={[0.2, 0.8]} />
+                <meshStandardMaterial color="red" />
             </mesh>
         </RigidBody>
     );
-}
-);
+});
 
 const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
     const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);
