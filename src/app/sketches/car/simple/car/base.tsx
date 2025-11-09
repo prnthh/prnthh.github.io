@@ -253,6 +253,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
                                 <Cylinder
                                     args={[wheelInfo.radius, wheelInfo.radius, wheelSize[1], 32]}
                                     rotation-z={Math.PI / 2}
+                                    material={new THREE.MeshBasicMaterial({ color: 'black' })}
                                     castShadow
                                     receiveShadow
                                 />

@@ -11,21 +11,16 @@ const allExperiments = [
     'floor',
     'lighting',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
-    'car/simple', 'car/road', 'car/driver',
+    'car/simple', 'car/road',
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
     'tools/character', 'tools/worldeditor', 'tools/narrativegraph',
     'editor/scene', 'editor/dragdrop',
-    'ik/ragdoll', 'ik/kick', 'ik/crawler',
+    'ik/ragdoll', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
     'interior',
     'particles', 'tsl/webgpu', 'tsl/neo',
     '../wfc/index.html', '../chainreaction.html'
 ].map(e => `sketches/${e}`); // Prefix all with 'sketches/'
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
-});
 
 // Separate demos and others
 const demos = allExperiments.filter(e => e.startsWith("sketches/demos/"));
@@ -152,7 +147,7 @@ export default function Nav() {
                 onMouseEnter={() => setOpen(true)}
                 onMouseLeave={() => { setClicked(false); setOpen(false); }}
             >
-                <div className={`${open ? 'w-[200px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
+                <div className={`${open ? 'w-[220px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
                     onClick={() => setClicked(() => true)}
                     onMouseLeave={e => { !clicked && setOpen(false); }}
                 >

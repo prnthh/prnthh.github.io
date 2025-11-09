@@ -34,6 +34,9 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
                 });
                 return renderer
             }}
+            camera={{
+                position: [0, 5, 10],
+            }}
         >
             <Suspense>
                 {children}

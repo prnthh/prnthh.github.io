@@ -24,7 +24,7 @@ const NavigableCrowd = ({ navMeshRef }: { navMeshRef: React.RefObject<NavMesh> }
             radius: 0.5,
             height: 2.0,
             maxAcceleration: 4.0,
-            maxSpeed: 10.0,
+            maxSpeed: 4.0,
             collisionQueryRange: maxAgentRadius * 2,
             pathOptimizationRange: 0.0,
         });

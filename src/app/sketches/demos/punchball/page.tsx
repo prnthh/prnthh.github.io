@@ -5,7 +5,6 @@ import MapModel from "@/shared/MapModel";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
 import { forwardRef } from "react";
-import { Environment } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
 import Controls from "@/shared/controls/ControlsProvider";
 import Ped from "@/shared/ped/ped";

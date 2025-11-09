@@ -8,6 +8,7 @@ import Controls from "@/shared/controls/ControlsProvider";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import DemoWorld from "@/shared/DemoWorld";
+import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -15,7 +16,7 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls>
-                    <Canvas shadows>
+                    <GameCanvas>
                         {/* <Perf /> */}
                         <ShadowLight debug camOffset={new Vector3(2, 10, 2)} />
 
@@ -24,7 +25,7 @@ export default function Home() {
                             <DemoWorld />
 
                         </Physics>
-                    </Canvas>
+                    </GameCanvas>
                 </Controls>
             </div>
         </div >

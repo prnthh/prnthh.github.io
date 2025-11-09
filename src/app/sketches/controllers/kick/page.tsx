@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
-import { Canvas, useLoader } from "@react-three/fiber";
+import { useState, useRef, useMemo } from "react";
+import { useLoader } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import Character from "./Character";
 import DemoWorld from "@/shared/DemoWorld";
+import GameCanvas from "@/shared/GameCanvas";
 
 const NUM_CUBES = 10;
 const KICK_DISTANCE = 1.2;
@@ -130,9 +131,9 @@ const Scene = () => {
 export default function KickboxingPage() {
     return (
         <div className="w-full h-screen relative">
-            <Canvas shadows>
+            <GameCanvas>
                 <Scene />
-            </Canvas>
+            </GameCanvas>
         </div>
     );
 }

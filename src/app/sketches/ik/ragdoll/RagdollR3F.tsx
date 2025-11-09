@@ -5,12 +5,11 @@ import { Ragdoll } from "./ragdoll";
 import { useGLTF } from "@react-three/drei";
 import { SkeletonUtils } from "three/examples/jsm/Addons.js";
 
-export function RagdollR3F() {
+export function RagdollR3F({ modelPath = '/models/human/onimilio/rigged.glb' }) {
     const { world } = useRapier();
     const { scene } = useThree();
     const ragdoll = useRef<Ragdoll | null>(null);
-    const gltf = useGLTF('/models/human/onimilio/rigged.glb');
-
+    const gltf = useGLTF(modelPath);
     useEffect(() => {
         if (world && scene && gltf) {
             const clonedGltf = SkeletonUtils.clone(gltf.scene)

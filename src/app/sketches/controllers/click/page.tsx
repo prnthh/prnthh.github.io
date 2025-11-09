@@ -1,11 +1,11 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
-import { Physics, RigidBody } from "@react-three/rapier";
+import { Physics } from "@react-three/rapier";
 import { Box, OrbitControls } from "@react-three/drei";
 import { useState } from "react";
 import Terrain from "@/shared/ground/ColliderTerrain";
 import Ped from "@/shared/ped/ped";
+import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
     const [target, setTarget] = useState<[number, number, number]>([0, 5, 0])
@@ -13,7 +13,7 @@ export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Canvas shadows>
+                <GameCanvas>
                     <Box position={target} args={[0.1, 0.1, 0.1]} castShadow>
                         <meshBasicMaterial wireframe color="red" />
                     </Box>
@@ -28,7 +28,7 @@ export default function Home() {
                         <directionalLight position={[10, 10, 10]} castShadow />
                         <OrbitControls makeDefault />
                     </Physics>
-                </Canvas>
+                </GameCanvas>
             </div>
         </div >
     );

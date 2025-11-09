@@ -1,53 +1,24 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
-import { Road } from "./Road";
-import { Road as RainbowRoad } from "./RainbowRoad";
-import { Suspense } from "react";
+import { Road as TexturedRoad } from "./TexturedRoad";
 import Controls from "@/shared/controls/ControlsProvider";
-
-function Fallback() {
-    return (
-        <mesh>
-            <boxGeometry />
-            <meshBasicMaterial color="hotpink" wireframe />
-        </mesh>
-    );
-}
+import DemoWorld from "@/shared/DemoWorld";
+import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls>
-                    <Canvas
-                        shadows
-                        gl={{ antialias: true }}
-                        camera={{
-                            fov: 65,
-                            near: 0.01,
-                            far: 200,
-                            position: [0, 8, 16],
-                        }}
-                        onCreated={({ gl }) => {
-                            gl.setClearColor(0x0fbd25, 1);
-                        }}
-                    >
+                    <GameCanvas>
                         <Physics>
-                            <Suspense fallback={<Fallback />}>
-                                <Road />
-
-                                <group position={[0, 10, 0]}>
-                                    <RainbowRoad />
-                                </group>
-
-                            </Suspense>
-                            <ambientLight intensity={1.0} />
+                            <TexturedRoad />
+                            <DemoWorld />
                         </Physics>
                         <OrbitControls />
-                    </Canvas>
+                    </GameCanvas>
                 </Controls>
             </div>
         </div>

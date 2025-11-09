@@ -1,5 +1,5 @@
 import { ThreeEvent } from "@react-three/fiber";
-import { RigidBody } from "@react-three/rapier";
+import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useRef } from "react";
 
 const DRAG_THRESHOLD = 5;
@@ -33,7 +33,8 @@ const DebugGround = ({
 
     return (
         <>
-            <RigidBody type="fixed">
+            <RigidBody type="fixed" colliders={false}>
+                <CuboidCollider args={[size / 2, 0.01, size / 2]} position={position} />
                 <mesh
                     receiveShadow
                     rotation={[-Math.PI / 2, 0, 0]}
