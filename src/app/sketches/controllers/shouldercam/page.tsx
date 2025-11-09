@@ -3,7 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
-import Ground from "../../floor/ground/ground/flat";
+import Ground from "../../floor/ground/flat";
 import { Canvas } from "@react-three/fiber";
 import Controls from "@/shared/controls/ControlsProvider";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";

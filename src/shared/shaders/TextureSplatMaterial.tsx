@@ -11,15 +11,6 @@ const rockTextureUrl = "/textures/floor/terrain/rock-512.jpg"
 const sandTextureUrl = "/textures/floor/terrain/sand-512.jpg"
 
 export function TextureSplatMaterial() {
-    const { gl, invalidate } = useThree();
-
-    // Verify WebGPURenderer
-    useEffect(() => {
-        if (!(gl instanceof THREE.WebGPURenderer)) {
-            console.warn('Terrain requires WebGPURenderer for TSL support');
-        }
-    }, [gl]);
-
     // Load textures
     const [controlMap, heightMap, grassTexture, rockTexture, sandTexture] = useTexture([
         controlMapUrl,
@@ -43,37 +34,42 @@ export function TextureSplatMaterial() {
 
     // Create TSL material
     const splatMaterial = useMemo(() => {
-        const material = new THREE.MeshStandardNodeMaterial();
+        try {
+            const material = new THREE.MeshStandardNodeMaterial();
 
-        // Vertex shader: Displace vertices using heightmap
-        const heightSample = TSL.texture(heightMap, TSL.uv());
-        const height = TSL.float(heightSample.r).mul(2.0); // Scale height
-        // Displace along Z axis (not Y) since the plane is rotated
-        const displacedPosition = TSL.add(TSL.positionLocal, TSL.vec3(0, 0, height));
-        material.positionNode = displacedPosition;
+            // Vertex shader: Displace vertices using heightmap
+            const heightSample = TSL.texture(heightMap, TSL.uv());
+            const height = TSL.float(heightSample.r).mul(2.0); // Scale height
+            // Displace along Z axis (not Y) since the plane is rotated
+            const displacedPosition = TSL.add(TSL.positionLocal, TSL.vec3(0, 0, height));
+            material.positionNode = displacedPosition;
 
-        // Fragment shader: Texture splatting
-        const controlSample = TSL.texture(controlMap, TSL.uv());
-        const grassWeight = TSL.float(controlSample.r); // Red = grass
-        const rockWeight = TSL.float(controlSample.g); // Green = rock
-        const sandWeight = TSL.float(controlSample.b); // Blue = sand
+            // Fragment shader: Texture splatting
+            const controlSample = TSL.texture(controlMap, TSL.uv());
+            const grassWeight = TSL.float(controlSample.r); // Red = grass
+            const rockWeight = TSL.float(controlSample.g); // Green = rock
+            const sandWeight = TSL.float(controlSample.b); // Blue = sand
 
-        // Sample textures with tiled UVs
-        const tiledUV = TSL.mul(TSL.uv(), TSL.float(4.0));
-        const grassColor = TSL.texture(grassTexture, tiledUV);
-        const rockColor = TSL.texture(rockTexture, tiledUV);
-        const sandColor = TSL.texture(sandTexture, tiledUV);
+            // Sample textures with tiled UVs
+            const tiledUV = TSL.mul(TSL.uv(), TSL.float(4.0));
+            const grassColor = TSL.texture(grassTexture, tiledUV);
+            const rockColor = TSL.texture(rockTexture, tiledUV);
+            const sandColor = TSL.texture(sandTexture, tiledUV);
 
-        // Blend textures
-        const grassContribution = TSL.mul(grassColor, grassWeight);
-        const rockContribution = TSL.mul(rockColor, rockWeight);
-        const sandContribution = TSL.mul(sandColor, sandWeight);
-        const finalColor = TSL.add(grassContribution, rockContribution, sandContribution);
+            // Blend textures
+            const grassContribution = TSL.mul(grassColor, grassWeight);
+            const rockContribution = TSL.mul(rockColor, rockWeight);
+            const sandContribution = TSL.mul(sandColor, sandWeight);
+            const finalColor = TSL.add(grassContribution, rockContribution, sandContribution);
 
-        // Assign to material
-        material.colorNode = finalColor;
+            // Assign to material
+            material.colorNode = finalColor;
 
-        return material;
+            return material;
+        } catch (error) {
+            console.error("Error creating TSL material:", error);
+            return new THREE.MeshStandardMaterial({ color: 'magenta' });
+        }
     }, [controlMap, heightMap, grassTexture, rockTexture, sandTexture]);
 
     return <primitive object={splatMaterial} attach="material" />;

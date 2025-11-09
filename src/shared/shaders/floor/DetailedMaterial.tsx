@@ -1,16 +1,28 @@
 import { useTexture } from "@react-three/drei";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
+
+// get more textures from https://polyhaven.com/textures
 
 const DetailedMaterial = ({
     map = '/textures/floor/rocks2/aerial_rocks_04_diff_1k.jpg',
     displacementMap = '/textures/floor/rocks2/aerial_rocks_04_disp_1k.png',
     normalMap = '/textures/floor/rocks2/aerial_rocks_04_nor_gl_1k.jpg',
-    roughnessMap = '/textures/floor/rocks2/aerial_rocks_04_rough_1k.jpg'
-}: { map?: string; displacementMap?: string; normalMap?: string; roughnessMap?: string; }) => {
+    roughnessMap = '/textures/floor/rocks2/aerial_rocks_04_rough_1k.jpg',
+    displacementScale = 0.25,
+    wireframe = false,
+}: { map?: string; displacementMap?: string; normalMap?: string; roughnessMap?: string; displacementScale?: number, wireframe?: boolean }) => {
     const textures = useTexture({
         map, displacementMap, normalMap, roughnessMap
     })
+
+    const materialRef = useRef(new THREE.MeshStandardMaterial());
+
+    useEffect(() => {
+        if (materialRef.current) {
+            materialRef.current.wireframe = wireframe;
+        }
+    }, [materialRef.current, wireframe]);
 
     useEffect(() => {
         if (textures.map) {
@@ -41,7 +53,7 @@ const DetailedMaterial = ({
         }
     }, [textures]);
 
-    return <primitive {...textures} object={new THREE.MeshStandardMaterial({})} />;
+    return <primitive {...textures} displacementScale={displacementScale} object={materialRef.current} />;
 }
 
 export default DetailedMaterial;

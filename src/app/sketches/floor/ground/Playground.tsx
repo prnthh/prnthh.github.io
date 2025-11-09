@@ -37,10 +37,10 @@ const BALLS: Array<{
         },
     ];
 
-export default function Environment() {
-    return <>
+export default function Playground({ position = [0, 0, 0] as [number, number, number] }) {
+    return <group position={position}>
         {/* floor */}
-        <Heightfield />
+        <Heightfield position={position} />
 
         {/* flat platform & misc obstacles */}
         <RigidBody type="fixed" position={[-15, 1, 0]} colliders="cuboid">
@@ -191,7 +191,7 @@ export default function Environment() {
                 </mesh>
             </RigidBody>
         ))}
-    </>
+    </group>;
 }
 
 
@@ -219,7 +219,7 @@ heightFieldGeometry.rotateX(-Math.PI / 2);
 heightFieldGeometry.rotateY(-Math.PI / 2);
 heightFieldGeometry.computeVertexNormals();
 
-const Heightfield = () => {
+const Heightfield = ({ position }: { position: [number, number, number] }) => {
     const { world } = useRapier();
     useEffect(() => {
         const heightfieldDesc = Rapier.ColliderDesc.heightfield(
@@ -230,7 +230,7 @@ const Heightfield = () => {
         );
 
         const collider = world.createCollider(heightfieldDesc);
-        collider.setTranslation({ x: 0, y: 0, z: 0 });
+        collider.setTranslation({ x: position[0], y: position[1], z: position[2] });
 
         return () => {
             world.removeCollider(collider, false);

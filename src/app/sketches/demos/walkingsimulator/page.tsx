@@ -4,7 +4,7 @@ import { Physics } from "@react-three/rapier";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
 import { Environment, Preload } from "@react-three/drei";
-import Ground from "../../floor/ground/ground/flat";
+import Ground from "../../floor/ground/flat";
 import { MapEntities, MapEntity } from "./MapEntity";
 import Vehicle from "../../car/simple/car/base";
 import { useThree } from "@react-three/fiber";

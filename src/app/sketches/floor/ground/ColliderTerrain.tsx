@@ -41,9 +41,9 @@ function VertexVisualizer({ geometry }: { geometry: THREE.PlaneGeometry }) {
     );
 }
 
-export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
-    const width = 30;
-    const height = 30;
+function ColliderTerrain({ position = [0, 0, 0], onClick }: { position?: [number, number, number], onClick?: (coords: number[]) => void }) {
+    const width = 32;
+    const height = 32;
     const tileSize = 4; // New tile size
     const widthSegments = Math.floor(width / tileSize);
     const heightSegments = Math.floor(height / tileSize);
@@ -79,30 +79,11 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
     const geometry2 = new THREE.PlaneGeometry(100, 100);
     geometry2.rotateX(-Math.PI / 2);
 
-    const [treePositions, treeScales] = useMemo(() => {
-        const positions = [];
-        const scales = [];
-
-        for (let i = 0; i < 100; i++) {
-            positions.push([
-                (Math.random() - 0.5) * height,
-                0,
-                (Math.random() - 0.5) * width,
-            ]);
-            scales.push([
-                Math.max(0.8, Math.random()),
-                Math.max(0.7, Math.random()),
-                Math.max(0.8, Math.random()),
-            ]);
-        }
-
-        return [positions, scales];
-    }, []);
-
     return (
         <>
-            <RigidBody colliders={false} position={[0, 0, 0]}>
+            <RigidBody colliders={false} >
                 <mesh
+                    position={position}
                     geometry={geometry}
                     castShadow
                     receiveShadow
@@ -122,6 +103,7 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
                 </mesh>
 
                 <HeightfieldCollider
+                    position={position}
                     args={[
                         widthSegments,
                         heightSegments,
@@ -136,3 +118,5 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
         </>
     );
 }
+
+export default ColliderTerrain;

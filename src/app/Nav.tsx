@@ -8,12 +8,12 @@ import Shebang from "@/shared/ui/shebang";
 const allExperiments = [
     'barebones',
     'demos/basic', 'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
-    'tools/character', 'tools/worldeditor',
-    'floor/ground', 'floor/terrainCollider', 'floor/heightmap', 'floor/splat', 'floor/terrain2',
+    'floor', ,
     'lighting/simple', 'lighting/probe',
     'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/road', 'car/driver',
+    'tools/character', 'tools/worldeditor', 'tools/narrativegraph',
     'editor/scene', 'editor/dragdrop',
     'ik/ragdoll', 'ik/kick', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
@@ -96,7 +96,7 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
         }
     });
     return (
-        <div className="">
+        <div className="flex flex-col">
             {entries.map(([key, value]) => {
                 if (typeof value === "string" || value === null) {
                     // Leaf node
@@ -110,8 +110,8 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                             href={`/${fullPath}`}
                             prefetch={true}
                             key={fullPath}
-                            className={`border mb-1 rounded block tracking-[-.01em] ${geistMono.variable} px-2 py-1 transition-colors cursor-pointer select-none
-                                ${isActive ? "bg-foreground/60 text-white font-bold" : "bg-white/20 text-foreground hover:opacity-80"}`}
+                            className={`border mb-1 rounded  px-2 py-1 transition-colors cursor-pointer select-none
+                                ${isActive ? "/60 font-bold" : "bg-white/20  hover:opacity-80"}`}
                         >
                             {displayName}
                         </Link>
@@ -122,7 +122,7 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                     return (
                         <div key={prefix + key} className="mb-1">
                             <div
-                                className={`flex items-center rounded px-2 py-1 select-none cursor-pointer transition-colors bg-white/20 text-foreground ${isOpen ? "opacity-80" : "hover:opacity-70"}`}
+                                className={`flex items-center rounded px-2 py-1 select-none cursor-pointer transition-colors bg-white/20  ${isOpen ? "opacity-80" : "hover:opacity-70"}`}
                                 onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))}
                                 tabIndex={0}
                                 role="button"
@@ -144,17 +144,15 @@ export default function Nav() {
     const [open, setOpen] = useState(false);
     const [clicked, setClicked] = useState(false);
     const [search, setSearch] = useState("");
-    // Use the new trees
     const pathname = usePathname();
 
     return (
         <div>
-            {/* Minimal floating menu panel, now to the right of the icon */}
-            <div className={`fixed top-3 left-3 z-40 ${clicked || open ? 'w-[220px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : open ? 'h-[100px]' : 'h-8'} transition-all`}
+            <div className={`text-black dark:text-white fixed top-3 left-3 z-40 ${clicked || open ? 'w-[220px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : open ? 'h-[100px]' : 'h-8'} transition-all`}
                 onMouseEnter={() => setOpen(true)}
                 onMouseLeave={() => { setClicked(false); setOpen(false); }}
             >
-                <div className={`${open ? 'w-[200px]' : 'w-[42px]'} fixed top-[12px] left-[12px] bg-background text-foreground border-foreground hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
+                <div className={`${open ? 'w-[200px]' : 'w-[42px]'} fixed top-[12px] left-[12px] border-foreground hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
                     onClick={() => setClicked(() => true)}
                     onMouseLeave={e => { !clicked && setOpen(false); }}
                 >
@@ -167,19 +165,19 @@ export default function Nav() {
                         </span>
                     </button>
                     <input
-                        className="bg-transparent text-foreground focus:outline-none px-2 py-1 border-none placeholder-gray-400"
+                        className="bg-transparent  focus:outline-none px-2 py-1 border-none placeholder-gray-400"
                         type="text"
                         placeholder="search demos..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <div className={`${clicked ? 'overflow-y-scroll bg-background text-foreground border border-foreground h-full opacity-100' : open ? 'h-[40px] border opacity-50' : 'opacity-0'} px-2 rounded-xl noscrollbar flex flex-col mt-12 transition-all`}>
-                    <div className="my-1 font-bold text-lg text-foreground">Demos</div>
+                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-xs' : open ? 'h-[40px] border opacity-50' : 'opacity-0'} px-2 rounded-xl noscrollbar flex flex-col mt-12 transition-all`}>
+                    <div className="my-1 font-bold text-lg ">Demos</div>
                     {clicked && <>
                         {/* Render Demos and Other as top-level categories */}
                         <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />
-                        <div className="my-1 mt-2 font-bold text-lg text-foreground">Other</div>
+                        <div className="my-1 mt-2 font-bold text-lg ">Other</div>
                         <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
                     </>}
                 </div>

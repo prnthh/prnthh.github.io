@@ -1,13 +1,15 @@
-import { HeightfieldCollider, RigidBody, InstancedRigidBodies } from "@react-three/rapier";
-import { useMemo, useRef, useEffect } from "react";
+import { HeightfieldCollider, RigidBody } from "@react-three/rapier";
+import { useMemo, useEffect } from "react";
 import * as THREE from "three";
-import { Instances, Instance, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
+import DetailedMaterial from "@/shared/shaders/floor/DetailedMaterial";
+import { ThreeEvent } from "@react-three/fiber";
 // import { Tree } from "./Tree.tsx";
 
 
-export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
-    const width = 30;
-    const height = 30;
+export function DSGround({ position = [0, 0, 0], onClick }: { position: [number, number, number], onClick?: (event: ThreeEvent<MouseEvent>) => void }) {
+    const width = 32;
+    const height = 32;
     const tileSize = 4; // New tile size
     const widthSegments = Math.floor(width / tileSize / 2); // Halved resolution
     const heightSegments = Math.floor(height / tileSize / 2); // Halved resolution
@@ -20,7 +22,7 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
         for (let h = 0; h <= lowResHeightSegments; h++) {
             for (let w = 0; w <= lowResWidthSegments; w++) {
                 // Example: procedural height, replace with your own logic
-                arr[h * (lowResWidthSegments + 1) + w] = ((h + w) % 5) * Math.random() * 0.3 * 3;
+                arr[h * (lowResWidthSegments + 1) + w] = ((h + w) % 5) * Math.random() * 3;
             }
         }
         return arr;
@@ -69,7 +71,6 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
         for (let i = 0; i < pos.count; i++) {
             pos.setZ(i, meshHeights[i]);
         }
-        geometry.rotateX(-Math.PI / 2);
         geometry.computeVertexNormals();
         return geometry;
     }, [meshHeights]);
@@ -118,29 +119,18 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
 
     return (
         <>
-            <RigidBody colliders={false} position={[0, 0, 0]}>
+            <RigidBody colliders={false}>
                 <mesh
+                    position={position}
                     geometry={geometry}
-                    castShadow
-                    receiveShadow
-                    onClick={e => {
-                        if (onClick) {
-                            // Get intersection point in world coordinates
-                            const point = e.point;
-                            onClick([point.x, point.y, point.z]);
-                        }
-                    }}
+                    rotation={[-Math.PI / 2, 0, 0]}
+                    onClick={onClick}
                 >
-                    <meshStandardMaterial
-                        color="white"
-                        displacementScale={0.2} // Increased for stronger effect
-                        {...textures}
-                        side={THREE.FrontSide}
-                        shadowSide={THREE.FrontSide}
-                    />
+                    <DetailedMaterial />
                 </mesh>
 
                 <HeightfieldCollider
+                    position={position}
                     args={[
                         widthSegments,
                         heightSegments,
