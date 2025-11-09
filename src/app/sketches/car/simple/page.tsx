@@ -5,6 +5,7 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import Vehicle from "./car/base";
 import Controls from "@/shared/controls/ControlsProvider";
+import DemoWorld from "@/shared/DemoWorld";
 
 export default function Home() {
     return (
@@ -14,15 +15,7 @@ export default function Home() {
                     <Canvas>
                         <Physics>
                             <Vehicle debug />
-                            <RigidBody type="fixed">
-                                <mesh position={[0, -2, 0]} scale={[10, 0.5, 10]}>
-                                    <boxGeometry />
-                                    <meshStandardMaterial color="gray" />
-                                </mesh>
-                            </RigidBody>
-                            <ambientLight intensity={0.5} />
-                            <pointLight position={[10, 10, 10]} />
-                            <OrbitControls />
+                            <DemoWorld position={[0, -1, 0]} />
                         </Physics>
                     </Canvas>
                 </Controls>

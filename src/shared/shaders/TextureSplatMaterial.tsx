@@ -10,7 +10,7 @@ const grassTextureUrl = "/textures/floor/terrain/grass-512.jpg"
 const rockTextureUrl = "/textures/floor/terrain/rock-512.jpg"
 const sandTextureUrl = "/textures/floor/terrain/sand-512.jpg"
 
-export function TextureSplatMaterial() {
+export function TextureSplatMaterial({ textureScale = 4 }: { textureScale?: number }) {
     // Load textures
     const [controlMap, heightMap, grassTexture, rockTexture, sandTexture] = useTexture([
         controlMapUrl,
@@ -24,12 +24,17 @@ export function TextureSplatMaterial() {
     useEffect(() => {
         [grassTexture, rockTexture, sandTexture].forEach((tex) => {
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-            tex.repeat.set(4, 4); // Tile textures 4x4
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            tex.generateMipmaps = true;
+            tex.needsUpdate = true;
         });
         controlMap.minFilter = THREE.NearestFilter; // Sharp control map
         controlMap.magFilter = THREE.NearestFilter;
+        controlMap.wrapS = controlMap.wrapT = THREE.ClampToEdgeWrapping;
         heightMap.minFilter = THREE.LinearFilter; // Smooth heightmap
         heightMap.magFilter = THREE.LinearFilter;
+        heightMap.wrapS = heightMap.wrapT = THREE.ClampToEdgeWrapping;
     }, [controlMap, heightMap, grassTexture, rockTexture, sandTexture]);
 
     // Create TSL material
@@ -50,8 +55,8 @@ export function TextureSplatMaterial() {
             const rockWeight = TSL.float(controlSample.g); // Green = rock
             const sandWeight = TSL.float(controlSample.b); // Blue = sand
 
-            // Sample textures with tiled UVs
-            const tiledUV = TSL.mul(TSL.uv(), TSL.float(4.0));
+            // Sample textures with scaled UVs for tiling
+            const tiledUV = TSL.mul(TSL.uv(), TSL.float(textureScale));
             const grassColor = TSL.texture(grassTexture, tiledUV);
             const rockColor = TSL.texture(rockTexture, tiledUV);
             const sandColor = TSL.texture(sandTexture, tiledUV);
@@ -70,7 +75,7 @@ export function TextureSplatMaterial() {
             console.error("Error creating TSL material:", error);
             return new THREE.MeshStandardMaterial({ color: 'magenta' });
         }
-    }, [controlMap, heightMap, grassTexture, rockTexture, sandTexture]);
+    }, [controlMap, heightMap, grassTexture, rockTexture, sandTexture, textureScale]);
 
     return <primitive object={splatMaterial} attach="material" />;
 }

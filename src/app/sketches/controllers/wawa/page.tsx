@@ -5,6 +5,7 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import { CharacterController } from "./CharacterController";
 import Controls from "@/shared/controls/ControlsProvider";
+import DemoWorld from "@/shared/DemoWorld";
 
 export default function Home() {
     return (
@@ -13,22 +14,8 @@ export default function Home() {
                 <Controls>
                     <Canvas>
                         <Physics>
-
                             <CharacterController />
-                            <RigidBody>
-                                <mesh>
-                                    <boxGeometry args={[1, 1, 1]} />
-                                    <meshStandardMaterial color="orange" />
-                                </mesh>
-                            </RigidBody>
-                            <RigidBody type="fixed">
-                                <mesh position={[0, -2, 0]} scale={[10, 0.5, 10]}>
-                                    <boxGeometry />
-                                    <meshStandardMaterial color="gray" />
-                                </mesh>
-                            </RigidBody>
-                            <ambientLight intensity={0.5} />
-                            <pointLight position={[10, 10, 10]} />
+                            <DemoWorld />
                         </Physics>
                     </Canvas>
                 </Controls>

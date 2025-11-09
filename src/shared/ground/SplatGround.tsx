@@ -5,10 +5,11 @@ const SplatGround = ({
     width = 32,
     height = 32,
     widthSegments = 128,
-    heightSegments = 128
+    heightSegments = 128,
+    textureScale = 8
 }) => {
     return <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
-        <TextureSplatMaterial />
+        <TextureSplatMaterial textureScale={textureScale} />
         <planeGeometry args={[width, height, widthSegments, heightSegments]} />
     </mesh>
 }

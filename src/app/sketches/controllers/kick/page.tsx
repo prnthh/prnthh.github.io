@@ -6,6 +6,7 @@ import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics, RigidBody } from "@react-three/rapier";
 import * as THREE from "three";
 import Character from "./Character";
+import DemoWorld from "@/shared/DemoWorld";
 
 const NUM_CUBES = 10;
 const KICK_DISTANCE = 1.2;
@@ -75,12 +76,8 @@ const Scene = () => {
             />
             <OrbitControls ref={controlsRef} />
             <Physics gravity={[0, -9.82, 0]}>
-                <RigidBody type="fixed">
-                    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-                        <planeGeometry args={[25, 25]} />
-                        <meshPhongMaterial map={texture} />
-                    </mesh>
-                </RigidBody>
+                <DemoWorld />
+
                 {cubePositions.map((pos, i) => (
                     <RigidBody
                         key={i}
@@ -126,18 +123,6 @@ const Scene = () => {
                     );
                 })()}
             </Physics>
-            <spotLight
-                position={[2.5, 5, 2.5]}
-                angle={Math.PI / 4}
-                penumbra={0.5}
-                intensity={100}
-                castShadow
-                shadow-mapSize={[1024, 1024]}
-                shadow-camera-near={0.5}
-                shadow-camera-far={20}
-            />
-            <ambientLight intensity={0.5} />
-            <axesHelper args={[5]} />
         </>
     );
 };

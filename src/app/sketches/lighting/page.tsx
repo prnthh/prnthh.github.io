@@ -14,9 +14,9 @@ import {
     MeshBasicNodeMaterial,
     WebGPURenderer,
 } from 'three/webgpu';
-import Sun from './simple/Sun'
+import Sun from '@/shared/lighting/Sun'
 import FogBG from '@/shared/shaders/FogBG'
-import Lightsource from './simple/lightsource'
+import Lightsource from '@/shared/lighting/lightsource'
 import { Physics } from '@react-three/rapier'
 
 extend(THREE as any)

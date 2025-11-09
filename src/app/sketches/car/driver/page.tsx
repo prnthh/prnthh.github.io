@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Environment, OrbitControls, Sky } from "@react-three/drei";
 import Vehicle from "./car/base";
-import Lightsource from "@/app/sketches/lighting/simple/lightsource";
+import Lightsource from "@/shared/lighting/lightsource";
 import Ground from "@/shared/ground/ImageGround";
 import Controls from "@/shared/controls/ControlsProvider";
 
