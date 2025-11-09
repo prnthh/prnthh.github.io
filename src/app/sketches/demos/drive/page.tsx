@@ -27,12 +27,6 @@ export default function Home() {
                                     chassisModel="/models/cars/taxi/chassis.glb"
                                     wheelModel="/models/cars/taxi/wheel.glb"
                                 />
-                                {/* <Ground position={[0, -2, 0]} /> */}
-                                {/* <Bvh firstHitOnly>
-                                    <MapModel modelUrl="/models/maps/burnin_rubber_4_city.glb" position={[-572, -10, 710]} scale={0.4} />
-
-
-                                </Bvh> */}
                                 <Suspense fallback={null}>
                                     <PedSpawner carRBRef={carRBRef} />
                                 </Suspense>

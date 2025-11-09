@@ -10,7 +10,7 @@ const ImageFrame = ({ url, position = [0, 0, 0], broken = false }: { url: string
 
     useEffect(() => {
         if (texture) {
-            const aspect = texture.image.width / texture.image.height;
+            const aspect = (texture as any).image.width / (texture as any).image.height;
             setSize([1, 1 / aspect]);
         }
     }, [texture]);

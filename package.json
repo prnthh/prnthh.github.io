@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@mapbox/martini": "^0.2.0",
+    "@pixiv/three-vrm": "^3.4.4",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.0",
     "@react-three/rapier": "^2.2.0",

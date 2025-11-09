@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Object3D } from "three";
 import { SkeletonUtils } from "three-stdlib";
 
-const SimpleModel = ({ modelUrl, children }: { modelUrl: string, children?: React.ReactNode }) => {
+const SimpleModel = ({ position, modelUrl, children }: { position: [number, number, number], modelUrl: string, children?: React.ReactNode }) => {
     const { scene } = useGLTF(modelUrl);
     const [clone, setClone] = useState<Object3D | undefined>(undefined);
 
@@ -27,7 +27,7 @@ const SimpleModel = ({ modelUrl, children }: { modelUrl: string, children?: Reac
     if (!clone) return null;
 
     return (
-        <group>
+        <group position={position}>
             <primitive object={clone}>
                 {children}
             </primitive>

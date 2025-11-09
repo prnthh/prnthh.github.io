@@ -1,8 +1,7 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
-import MapModel from "../../floor/ground/ground/model";
+import MapModel from "../../../../shared/MapModel";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
 import { forwardRef } from "react";

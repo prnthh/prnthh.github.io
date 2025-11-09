@@ -1,8 +1,6 @@
 "use client";
 
 import { Effects, Html, OrbitControls, PerspectiveCamera, Text } from "@react-three/drei";
-import { EffectComposer, Scanline } from "@react-three/postprocessing";
-import Fire from "../shared/shaders/FireMaterial";
 import { CuboidCollider, Physics, RapierRigidBody, RigidBody, useRevoluteJoint } from "@react-three/rapier";
 import { useRef } from "react";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
