@@ -3,10 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
-import { Preload } from "@react-three/drei";
 import ImageGround from "@/shared/ground/ImageGround";
-import { MapEntities, MapEntity } from "./MapEntity";
-import Vehicle from "../../car/simple/car/base";
 import { useThree } from "@react-three/fiber";
 import Controls from "@/shared/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";
@@ -14,7 +11,6 @@ import Ped from "@/shared/ped/ped";
 import DialogCollider from "@/shared/ped/DialogCollider";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
-import DrivableCar from "../../car/simple/DrivableCar";
 
 
 export default function Home() {
