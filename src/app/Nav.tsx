@@ -7,7 +7,7 @@ import Shebang from "@/shared/ui/shebang";
 
 const allExperiments = [
     'barebones',
-    'demos/basic', 'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/walkingsimulator',
+    'demos/basic', 'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/killbox',
     'floor',
     'lighting',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
@@ -167,7 +167,7 @@ export default function Nav() {
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : open ? 'h-[40px] border opacity-50' : 'opacity-0'}  bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar flex flex-col mt-12 transition-all`}>
+                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : open ? 'h-[40px] border opacity-50' : 'opacity-0'}  bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar select-none flex flex-col mt-12 transition-all`}>
                     <div className="my-1 font-bold text-lg ">Demos</div>
                     {clicked && <>
                         {/* Render Demos and Other as top-level categories */}

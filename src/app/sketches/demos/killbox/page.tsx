@@ -28,7 +28,7 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <MultiplayerProvider roomId="lobby">
                     <GameCanvas>
-                        <Physics debug>
+                        <Physics>
                             <DemoWorld />
                             <Train />
 

@@ -85,7 +85,7 @@ export const setMyState = (state: PeerState) => {
     }
 }
 
-export default function MultiplayerProvider({ appId = 'pockit.world', roomId, children, debug = true }: { appId?: string, roomId: string, children: React.ReactNode, debug?: boolean }) {
+export default function MultiplayerProvider({ appId = 'pockit.world', roomId, children, debug = false }: { appId?: string, roomId: string, children: React.ReactNode, debug?: boolean }) {
     const sendPlayerStateRef = useRef<((data: PeerState, peerId?: string) => void) | null>(null)
 
     // Use hooks for reactive state in debug UI

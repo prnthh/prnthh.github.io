@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) prnth.com. All rights reserved.
+ *
+ * This source code is licensed under the GPL-3.0 license found in the LICENSE
+ * file in the root directory of this source tree.
+ */
 
 import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
 import { useEffect, useRef } from "react";
@@ -8,7 +14,7 @@ import { PerspectiveCamera } from "@react-three/drei";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
 import { useInputStore } from "./useInputStore";
 import { KeyboardInput } from "./KeyboardInput";
-import Gun from "@/app/sketches/demos/walkingsimulator/Gun";
+import Gun from "@/app/sketches/demos/killbox/Gun";
 
 
 const tempQuat = new Quaternion();
