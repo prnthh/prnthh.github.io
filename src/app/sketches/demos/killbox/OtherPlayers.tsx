@@ -2,7 +2,7 @@ import { useRef } from "react";
 import Gun from "./Gun";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { usePeerStates } from "./MultiplayerProvider";
+import { usePeerStates } from "./multiplayerStore";
 
 
 const OtherPlayers = () => {

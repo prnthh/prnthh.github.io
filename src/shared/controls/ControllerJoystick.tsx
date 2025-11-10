@@ -87,6 +87,7 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
                     const x = t.clientX - rect.left;
                     const y = t.clientY - rect.top;
                     if (x >= 0 && x <= size && y >= 0 && y <= size) {
+                        e.preventDefault();
                         dragging.current = true;
                         activeTouchId.current = t.identifier;
                         updateKnobFromCoords(t.clientX, t.clientY);
@@ -106,6 +107,7 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
     const handleMove = (e: React.TouchEvent | React.MouseEvent) => {
         if ('touches' in e) {
             if (!dragging.current || activeTouchId.current === null) return;
+            e.preventDefault();
             // Only track the active touch
             const touch = Array.from(e.touches).find(
                 t => t.identifier === activeTouchId.current

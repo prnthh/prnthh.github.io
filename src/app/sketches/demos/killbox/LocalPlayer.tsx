@@ -1,9 +1,10 @@
 
 import { RapierRigidBody } from "@react-three/rapier";
 import FirstPersonController from "@/shared/firstperson/FirstPersonController";
-import { setMyState, getMyState } from "./MultiplayerProvider";
+import { setMyState } from "./MultiplayerProvider";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { getMyState } from "./multiplayerStore";
 
 const LocalPlayer = () => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
