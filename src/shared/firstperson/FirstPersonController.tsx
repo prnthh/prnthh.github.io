@@ -1,28 +1,25 @@
 
-import { CapsuleCollider, Physics, RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
-import { useRef } from "react";
-import { Object3D, Vector3, Quaternion, Euler } from "three";
+import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
+import { useEffect, useRef } from "react";
+import { Vector3, Quaternion, } from "three";
 import { useFrame } from "@react-three/fiber";
-import GameCanvas from "@/shared/GameCanvas";
 import * as THREE from "three";
-import DemoWorld from "@/shared/DemoWorld";
 import { PerspectiveCamera } from "@react-three/drei";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
-import ControllerJoystick from "@/shared/controls/ControllerJoystick";
 import { useInputStore } from "./useInputStore";
 import { KeyboardInput } from "./KeyboardInput";
-import Playground from "@/shared/ground/Playground";
+import Gun from "@/app/sketches/demos/walkingsimulator/Gun";
 
 
 const tempQuat = new Quaternion();
-const tempEuler = new Euler(0, 0, 0, 'YXZ');
+const tempYawQuat = new Quaternion();
 
 const PLAYER_MASS = 70;
 const CAPSULE_RADIUS = 0.2;
 const CAPSULE_HEIGHT = 0.5;
 const EYE_HEIGHT = 0.5;
 const WALK_SPEED = 5;
-const SPRINT_SPEED = 8;
+const SPRINT_SPEED = 12;
 const JUMP_VELOCITY = 5;
 const FLOAT_HEIGHT = 1.0;
 const FLOAT_SPRING = 8;
@@ -32,11 +29,17 @@ const MOUSE_SENSITIVITY = 0.002;
 const JOYSTICK_SENSITIVITY = 2.5;
 
 
-const FirstPersonController = () => {
+const FirstPersonController = ({ forwardRef }: { forwardRef?: (refs: { rbref: React.RefObject<RapierRigidBody | null>, meshref: React.RefObject<THREE.Group | null>, cameraRigRef: React.RefObject<THREE.Group | null> }) => void }) => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
-    const bodyMeshRef = useRef<Object3D | null>(null);
+    const bodyMeshRef = useRef<THREE.Group | null>(null);
     const cameraRigRef = useRef<THREE.Group | null>(null);
     const cameraPitch = useRef(0);
+
+    useEffect(() => {
+        if (typeof forwardRef === 'function') {
+            forwardRef({ rbref: rigidBodyRef, meshref: bodyMeshRef, cameraRigRef: cameraRigRef });
+        }
+    }, [forwardRef]);
 
     const handleMouseLook = (e: MouseEvent) => {
         const rb = rigidBodyRef.current;
@@ -45,9 +48,8 @@ const FirstPersonController = () => {
         const yawDelta = -e.movementX * MOUSE_SENSITIVITY;
         const rot = rb.rotation();
         tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-        tempEuler.setFromQuaternion(tempQuat);
-        tempEuler.y += yawDelta;
-        tempQuat.setFromEuler(tempEuler);
+        tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
+        tempQuat.premultiply(tempYawQuat);
         rb.setRotation(tempQuat, true);
 
         cameraPitch.current = THREE.MathUtils.clamp(
@@ -80,10 +82,10 @@ const FirstPersonController = () => {
 
             <group name='cameraRig' position={[0, EYE_HEIGHT, 0]} ref={cameraRigRef}>
                 <PerspectiveCamera makeDefault />
-                <mesh position={[0.2, -0.2, -0.5]} rotation={[0, Math.PI, 0]} scale={0.5} castShadow>
-                    <boxGeometry args={[0.1, 0.1, 1]} />
-                    <meshStandardMaterial color="black" />
-                </mesh>
+                <group position={[0.2, -0.2, -0.5]} scale={0.5}>
+                    <Gun />
+                </group>
+
             </group>
 
             <KeyboardInput />
@@ -212,9 +214,8 @@ const LookSystem = ({
             const yawDelta = -lookHorizontal * JOYSTICK_SENSITIVITY * delta;
             const rot = rb.rotation();
             tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-            tempEuler.setFromQuaternion(tempQuat);
-            tempEuler.y += yawDelta;
-            tempQuat.setFromEuler(tempEuler);
+            tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
+            tempQuat.premultiply(tempYawQuat);
             rb.setRotation(tempQuat, true);
         }
 
