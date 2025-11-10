@@ -2,11 +2,12 @@
 
 import { Physics, RigidBody } from "@react-three/rapier";
 import GameCanvas from "@/shared/GameCanvas";
-import DemoWorld from "@/shared/DemoWorld";
 import ControllerJoystick from "@/shared/controls/ControllerJoystick";
 import MultiplayerProvider from "./MultiplayerProvider";
 import OtherPlayers from "./OtherPlayers";
 import LocalPlayer from "./LocalPlayer";
+import DebugGround from "@/shared/debug/DebugGround";
+import { ThreeElements } from "@react-three/fiber";
 
 
 export default function Home() {
@@ -50,7 +51,26 @@ export default function Home() {
     );
 }
 
-const Train = ({ position = [10, 0, -10] }: { position?: [number, number, number] }) => {
+const DemoWorld = ({ ...props }: ThreeElements['group']) => {
+    return <>
+        <group {...props}>
+            <DebugGround position={[0, 0, 0]} />
+            <DebugGround position={[0, 100, 0]} rotation={[-Math.PI, 0, 0]} />
+
+            <DebugGround position={[0, 50, -50]} rotation={[Math.PI / 2, 0, 0]} />
+            <DebugGround position={[-50, 50, 0]} rotation={[Math.PI / 2, 0, -Math.PI / 2]} />
+            <DebugGround position={[0, 50, 50]} rotation={[-Math.PI / 2, 0, 0]} />
+            <DebugGround position={[50, 50, 0]} rotation={[Math.PI / 2, 0, Math.PI / 2]} />
+
+
+            <ambientLight intensity={0.5} />
+            <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
+        </group >
+    </>
+
+}
+
+const Train = ({ position = [10, 0.2, -10] }: { position?: [number, number, number] }) => {
     return <RigidBody type='kinematicVelocity' position={position} linearVelocity={[0, 0, 1]}>
         <mesh castShadow>
             <boxGeometry args={[4, 0.1, 8]} />

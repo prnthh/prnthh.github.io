@@ -7,10 +7,12 @@ const DRAG_THRESHOLD = 5;
 const DebugGround = ({
     size = 100,
     position = [0, -0.5, 0],
+    rotation = [0, 0, 0],
     onClick,
 }: {
     size?: number;
     position?: [number, number, number];
+    rotation?: [number, number, number];
     onClick?: (e: ThreeEvent<MouseEvent>) => void;
 }) => {
     const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
@@ -33,23 +35,24 @@ const DebugGround = ({
 
     return (
         <>
-            <RigidBody type="fixed" colliders={false}>
-                <CuboidCollider args={[size / 2, 0.01, size / 2]} position={position} />
-                <mesh
-                    receiveShadow
-                    rotation={[-Math.PI / 2, 0, 0]}
-                    position={position}
-                    onPointerDown={handlePointerDown}
-                    onClick={handleClick}
-                >
-                    <planeGeometry args={[size, size]} />
-                    <meshStandardMaterial color="gray" />
-                </mesh>
-            </RigidBody>
-            <gridHelper
-                args={[size, size]}
-                position={[position[0], position[1] + 0.01, position[2]]}
-            />
+            <group position={position} rotation={rotation}>
+                <RigidBody type="fixed" colliders={false}>
+                    <CuboidCollider args={[size / 2, 0.01, size / 2]} />
+                    <mesh
+                        receiveShadow
+                        rotation={[-Math.PI / 2, 0, 0]}
+                        onPointerDown={handlePointerDown}
+                        onClick={handleClick}
+                    >
+                        <planeGeometry args={[size, size]} />
+                        <meshStandardMaterial color="gray" />
+                    </mesh>
+                </RigidBody>
+                <gridHelper
+                    args={[size, size]}
+                    position={[0, 0.01, 0]}
+                />
+            </group>
         </>
     );
 };
