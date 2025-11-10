@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import Gun from "./Gun";
+import Gun from "@/app/sketches/demos/killbox/Gun";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { usePeerStates } from "./multiplayerStore";
@@ -53,10 +53,7 @@ const OtherPlayer = ({ peerId, state }: { peerId: string, state: any }) => {
     });
 
     return <group ref={groupRef}>
-        <mesh castShadow>
-            <capsuleGeometry args={[0.3, 1.2, 8, 16]} />
-            <meshStandardMaterial color={color} />
-        </mesh>
+        <CapsulePlayer color={color} />
 
         {/* gun */}
         <group ref={gunRef} position={[0.4, 0.2, -0.3]} >
@@ -64,6 +61,13 @@ const OtherPlayer = ({ peerId, state }: { peerId: string, state: any }) => {
         </group>
 
     </group>
+}
+
+export const CapsulePlayer = ({ color = 'orange' }: { color?: string }) => {
+    return <mesh castShadow>
+        <capsuleGeometry args={[0.3, 1.2, 8, 16]} />
+        <meshStandardMaterial color={color} />
+    </mesh>
 }
 
 export default OtherPlayers;

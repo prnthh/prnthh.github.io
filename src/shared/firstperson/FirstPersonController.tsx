@@ -81,7 +81,7 @@ const FirstPersonController = ({ forwardRef }: { forwardRef?: (refs: { rbref: Re
             enabledRotations={[false, false, false]}
         >
             <CapsuleCollider args={[CAPSULE_HEIGHT, CAPSULE_RADIUS]} />
-            <mesh ref={bodyMeshRef} castShadow>
+            <mesh ref={bodyMeshRef} castShadow onBeforeRender={() => { }}>
                 <capsuleGeometry args={[CAPSULE_RADIUS, 1, 8, 16]} />
                 <meshStandardMaterial color="orange" />
             </mesh>

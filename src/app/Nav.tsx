@@ -18,7 +18,7 @@ const allExperiments = [
     'ik/ragdoll', 'ik/crawler',
     'retargeting/basic', 'retargeting/variety',
     'interior',
-    'particles', 'tsl/webgpu', 'tsl/neo',
+    'particles',
     '../wfc/index.html', '../chainreaction.html'
 ].map(e => `sketches/${e}`); // Prefix all with 'sketches/'
 
@@ -105,8 +105,8 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                             href={`/${fullPath}`}
                             prefetch={true}
                             key={fullPath}
-                            className={`border mb-1 rounded  px-2 py-1 transition-colors cursor-pointer select-none
-                                ${isActive ? "/60 font-bold" : "bg-white/20  hover:opacity-80"}`}
+                            className={`rounded px-2 py-1 transition-colors select-none
+                                ${isActive ? "font-bold dark:bg-white/10 bg-black/10 ring" : "hover:ring cursor-pointer"}`}
                         >
                             {displayName}
                         </Link>
@@ -117,7 +117,7 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                     return (
                         <div key={prefix + key} className="mb-1">
                             <div
-                                className={`flex items-center rounded px-2 py-1 select-none cursor-pointer transition-colors bg-white/20  ${isOpen ? "opacity-80" : "hover:opacity-70"}`}
+                                className={`border flex items-center rounded px-2 py-1 select-none cursor-pointer transition-colors bg-white/20  ${isOpen ? "opacity-80" : "hover:opacity-70"}`}
                                 onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))}
                                 tabIndex={0}
                                 role="button"
@@ -172,7 +172,6 @@ export default function Nav() {
                     {clicked && <>
                         {/* Render Demos and Other as top-level categories */}
                         <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />
-                        <div className="my-1 mt-2 font-bold text-lg ">Other</div>
                         <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
                     </>}
                 </div>

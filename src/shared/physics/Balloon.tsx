@@ -3,9 +3,7 @@ import { RapierRigidBody, RigidBody, useRapier, useSphericalJoint } from "@react
 import { useRef } from "react";
 import HitBox from "./HitBox";
 
-export default function Balloon({ position = [0, 5, 0], children }: { position?: [number, number, number], children?: React.ReactNode }) {
-    const { scene } = useThree();
-    const { world, rapier } = useRapier();
+export default function Balloon({ position = [0, 1, 0], children }: { position?: [number, number, number], children?: React.ReactNode }) {
     const bodyA = useRef<RapierRigidBody>(null);
     const bodyB = useRef<RapierRigidBody>(null);
 

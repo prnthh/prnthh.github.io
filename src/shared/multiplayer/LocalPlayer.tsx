@@ -1,15 +1,16 @@
 
 import { RapierRigidBody } from "@react-three/rapier";
 import FirstPersonController from "@/shared/firstperson/FirstPersonController";
-import { setMyState } from "./MultiplayerProvider";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { getMyState } from "./multiplayerStore";
+import { useMultiplayerProvider } from "./TrysteroMultiplayerProvider";
 
 const LocalPlayer = () => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
     const bodyMeshRef = useRef<THREE.Group | null>(null);
     const cameraRigRef = useRef<THREE.Group | null>(null);
+    const setMyState = useMultiplayerProvider();
 
     // Thresholds for detecting significant changes
     const POSITION_THRESHOLD = 0.05; // 5cm
@@ -17,6 +18,8 @@ const LocalPlayer = () => {
 
     useEffect(() => {
         const updateInterval = setInterval(() => {
+            if (typeof setMyState !== 'function') return;
+
             if (bodyMeshRef.current && rigidBodyRef.current && cameraRigRef.current) {
                 const pos = rigidBodyRef.current.translation();
                 const rot = rigidBodyRef.current.rotation();
@@ -58,7 +61,7 @@ const LocalPlayer = () => {
 
                 // Only send if there's a significant change
                 if (shouldSend) {
-                    setMyState?.({
+                    setMyState({
                         position: newState.position,
                         rotation: newState.rotation,
                         appearance: { color: 'blue' }
@@ -68,7 +71,7 @@ const LocalPlayer = () => {
         }, 100);
 
         return () => clearInterval(updateInterval);
-    }, []);
+    }, [setMyState]);
 
     return <FirstPersonController
         forwardRef={(refs) => {

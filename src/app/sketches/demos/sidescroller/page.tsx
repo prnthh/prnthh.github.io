@@ -1,150 +1,109 @@
 "use client";
 
-import { Physics, RapierRigidBody } from "@react-three/rapier";
-import { Environment, Html } from "@react-three/drei";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
-import drive from "./map";
+import { Physics } from "@react-three/rapier";
+import { Environment, Helper, } from "@react-three/drei";
 import { GameEngine } from "../../editor/scene/editor/EditorContext";
-import dynamic from 'next/dynamic'
-import { Group, Mesh } from "three";
-import { useContext } from 'react'
-import { MPContext } from './MP'
-import tunnel from "tunnel-rat";
-import * as THREE from "three";
-import NetworkThing from "./NetworkThing";
-import type { PeerState } from "./MP";
-import Controls from "@/shared/controls/ControlsProvider";
+import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
+import drive from "../../demos/sidescroller/map";
+import { DirectionalLightHelper } from "three";
+import CrawlerApp from "@/shared/ik/CrawlerPed";
+import { Vector3 } from "three";
+import { useState } from "react";
+import HitBox from "@/shared/physics/HitBox";
+import Balloon from "@/shared/physics/Balloon";
 import GameCanvas from "@/shared/GameCanvas";
+import Controls, { useControlScheme } from "@/shared/controls/ControlsProvider";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
+import DialogCollider from "@/shared/ped/DialogCollider";
 import Ped from "@/shared/ped/ped";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
 
-const MPProvider = dynamic(() => import('./MP'), { ssr: false })
-
-const ui = tunnel()
-
 export default function Home() {
+    const [weapon, setWeapon] = useState<string | null>(null);
+
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls>
                     <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
                         <GameCanvas>
-                            <Physics paused={false}>
-                                <Game />
+                            <Physics debug>
+
+                                <ambientLight intensity={0} />
+                                <Environment preset="park" background={false} />
+                                <Game weapon={weapon} setWeapon={setWeapon} />
+                                <Lighting />
+                                <FogEnvironment />
                             </Physics>
                         </GameCanvas>
                     </GameEngine>
                 </Controls>
             </div>
-            <ui.Out />
+            <div className="absolute bottom-4 right-4">
+                <button className="ml-2 p-2 rounded" onClick={() => setWeapon(weapon ? null : 'katana')}>Toggle Weapon</button>
+
+            </div>
+            <div className="absolute top-1/2 left-1/2 -translate-1/2">
+                +
+            </div>
         </div>
     );
 }
-
-
-
-
-const Game = () => {
-    const rbref = useRef<RapierRigidBody | null>(null);
-    const meshref = useRef<Group | null>(null);
-
-    // Broadcast character position every second
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (rbref.current) {
-                const pos = rbref.current.translation();
-                window.dispatchEvent(new CustomEvent('mp-pos', { detail: [pos.x, pos.y, pos.z] }))
-            }
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
+const FogEnvironment = () => {
     return <>
-        <CharacterController
-            mode="side-scroll"
-            forwardRef={({ rbref: rb, meshref: mesh }) => {
-                rbref.current = rb.current;
-                meshref.current = mesh.current;
-            }}
-        >
-            {<ModelAttachment
-                model="/models/environment/Katana.glb"
-                attachpoint="mixamorigRightHand"
-                offset={new THREE.Vector3(0, 0, 0)}
-                scale={new THREE.Vector3(100, 100, 100)}
-                rotation={new THREE.Vector3(0, 0, 0)}
-            />}
-        </CharacterController>
-
-        <NetworkThing
-            scale={new THREE.Vector3(0.03, 0.03, 0.03)}
-            position={new THREE.Vector3(1.2, 0.64, -0.2)}
-            modelUrl="/models/environment/Bell.glb"
-            id="bell"
-            soundUrl="/sound/click.mp3" // New: Pass the sound URL here
-            onActivate={() => {
-                console.log('Bell activated');
-                // playSound("/sound/click.mp3"); // Play remotely if soundUrl provided
-
-            }}
-        />
-
-        <MPProvider roomId="my-room-id" ui={ui}>
-            <MPStuff />
-        </MPProvider>
-
-        <ambientLight intensity={0.5} />
-        <Viewer />
-        <hemisphereLight intensity={0.4} color={'#cccccc'} groundColor={"#000000"} />
-        <fogExp2 attach="fog" args={["#000000", 0.03]} />
-        <color attach="background" args={["#000000"]} />
+        <fog attach="fog" args={['#87ceeb', 10, 50]} />
+        <color attach={"background"} args={['#87ceeb']} />
     </>
 }
 
-// Separate component for each peer ped
-// ...existing code...
-
-function PeerPed({ peerId, state }: { peerId: string, state: PeerState }) {
-    // Show latest chat message if less than 5 seconds old
-    const now = Date.now();
-    const showMsg = state.latestMessage && (now - state.latestMessage.timestamp < 5000);
-
-    return (
-        <Ped
-            key={peerId}
-            basePath={"/models/human/onimilio/"}
-            modelUrl={"rigged.glb"}
-            position={state.position} height={1.5}
-        >
-            {state?.appearance?.hand && <ModelAttachment
-                model="/models/environment/Katana.glb"
-                attachpoint="mixamorigRightHand"
-                offset={new THREE.Vector3(0, 0, 0)}
-                scale={new THREE.Vector3(100, 100, 100)}
-                rotation={new THREE.Vector3(0, 0, 0)}
-            />}
-            {/* <DialogCollider>
-                Tralalero tralala
-            </DialogCollider> */}
-            {showMsg && (
-                <Html position={[0, 1.4, 0]}>
-                    <div className="-translate-x-[50%] min-w-[300px] text-3xl text-yellow-300 text-center p-2 rounded drop-shadow-[0_1.2px_1.2px_rgba(0,0,0,0.8)]">
-                        {state.latestMessage?.message}
-                    </div>
-                </Html>
-            )}
-        </Ped>
-    );
+const Lighting = ({ debug }: { debug?: boolean }) => {
+    return <directionalLight
+        position={[5, 10, 5]}
+        intensity={2}
+        castShadow
+        shadow-mapSize-height={2048}
+        shadow-mapSize-width={2048}
+        shadow-camera-near={0.1}
+        shadow-camera-far={50}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={15}
+        shadow-camera-bottom={-10}
+        shadow-bias={-0.001}
+    >
+        {debug && <Helper type={DirectionalLightHelper} />}
+    </directionalLight>
 }
 
-const MPStuff = () => {
-    const { peerStates } = useContext(MPContext)
+const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null) => void }) => {
+    const { scheme } = useControlScheme();
     return <>
-        {/* Peer peds */}
-        {Object.entries(peerStates).map(([peerId, state]) => (
-            <PeerPed key={peerId} peerId={peerId} state={state} />
-        ))}
+        <CrawlerApp />
+
+        <CharacterController mode={scheme == 'simple' ? 'side-scroll' : 'third-person'}>
+            {props.weapon && <ModelAttachment
+                model="/models/environment/Katana.glb"
+                attachpoint="mixamorigRightHand"
+                offset={new Vector3(0, 0, 0)}
+                scale={new Vector3(100, 100, 100)}
+                rotation={new Vector3(0, 0.8, -1.2)}
+            />}
+        </CharacterController>
+        <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} modelUrl="/rigga/rigga2.glb">
+            <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
+            <ModelAttachment
+                model="/models/environment/Katana.glb"
+                attachpoint="mixamorigRightHand"
+                offset={new Vector3(2, 0, 0)}
+                scale={new Vector3(100, 100, 100)}
+                rotation={new Vector3(0.7, 0, -1)}
+            />
+        </Ped>
+        <Viewer />
+
+        <HitBox debug key={2} position={[1, 1, 4]} />
+        <HitBox debug key={3} position={[2, 1, 4]} />
+        <HitBox debug key={4} position={[3, 1, 4]} />
+        <Balloon position={[0, 1, -2]} />
     </>
 }

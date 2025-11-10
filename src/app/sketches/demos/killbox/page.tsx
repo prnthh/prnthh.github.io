@@ -3,11 +3,10 @@
 import { Physics, RigidBody } from "@react-three/rapier";
 import GameCanvas from "@/shared/GameCanvas";
 import ControllerJoystick from "@/shared/controls/ControllerJoystick";
-import MultiplayerProvider from "./MultiplayerProvider";
-import OtherPlayers from "./OtherPlayers";
-import LocalPlayer from "./LocalPlayer";
-import DebugGround from "@/shared/debug/DebugGround";
-import { ThreeElements } from "@react-three/fiber";
+import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvider";
+import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
+import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
+import DemoWorld from "@/shared/DemoWorld";
 
 
 export default function Home() {
@@ -49,25 +48,6 @@ export default function Home() {
             </div>
         </div>
     );
-}
-
-const DemoWorld = ({ ...props }: ThreeElements['group']) => {
-    return <>
-        <group {...props}>
-            <DebugGround position={[0, 0, 0]} />
-            <DebugGround position={[0, 100, 0]} rotation={[-Math.PI, 0, 0]} />
-
-            <DebugGround position={[0, 50, -50]} rotation={[Math.PI / 2, 0, 0]} />
-            <DebugGround position={[-50, 50, 0]} rotation={[Math.PI / 2, 0, -Math.PI / 2]} />
-            <DebugGround position={[0, 50, 50]} rotation={[-Math.PI / 2, 0, 0]} />
-            <DebugGround position={[50, 50, 0]} rotation={[Math.PI / 2, 0, Math.PI / 2]} />
-
-
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
-        </group >
-    </>
-
 }
 
 const Train = ({ position = [10, 0.2, -10] }: { position?: [number, number, number] }) => {
