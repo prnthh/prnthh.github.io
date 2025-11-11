@@ -7,7 +7,7 @@ import Shebang from "@/shared/ui/shebang";
 
 const allExperiments = [
     'barebones',
-    'demos/basic', 'demos/drive', 'demos/punchball', 'demos/sidescroller', 'demos/killbox',
+    'demos/basic', 'demos/drive', 'demos/punchball', 'demos/mechanics', 'demos/killbox',
     'floor',
     'lighting',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',

@@ -1,14 +1,14 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { Environment, Helper, } from "@react-three/drei";
+import { Environment, Helper, useGLTF, } from "@react-three/drei";
 import { GameEngine } from "../../editor/scene/editor/EditorContext";
 import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
-import drive from "../../demos/sidescroller/map";
-import { DirectionalLightHelper } from "three";
+import drive from "./map";
+import { DirectionalLightHelper, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import { Vector3 } from "three";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HitBox from "@/shared/physics/HitBox";
 import Balloon from "@/shared/physics/Balloon";
 import GameCanvas from "@/shared/GameCanvas";
@@ -17,6 +17,8 @@ import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/DialogCollider";
 import Ped from "@/shared/ped/ped";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
+import * as THREE from "three";
+import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 
 export default function Home() {
     const [weapon, setWeapon] = useState<string | null>(null);
@@ -105,5 +107,28 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
         <HitBox debug key={3} position={[2, 1, 4]} />
         <HitBox debug key={4} position={[3, 1, 4]} />
         <Balloon position={[0, 1, -2]} />
+        <WavyTree />
     </>
+}
+
+const WavyTree = () => {
+    const { scene } = useGLTF('/models/environment/tree2.glb');
+    const [clone, setClone] = useState<Object3D | undefined>(undefined);
+
+    useEffect(() => {
+        if (!scene) return;
+        const clonedScene = scene.clone();
+        clonedScene.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+                const originalMaterial = child.material;
+                child.material = createWavingMaterial(originalMaterial);
+            }
+        });
+        setClone(clonedScene);
+    }, [scene]);
+
+    if (!clone) return null;
+
+
+    return <primitive position={[-5, 0, -3]} object={clone} />;
 }
