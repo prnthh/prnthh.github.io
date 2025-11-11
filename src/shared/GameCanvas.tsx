@@ -2,6 +2,7 @@ import { Canvas, extend } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 import { Suspense, useState } from "react";
 import { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.Nodes.js";
+import LoadingScreen from "./ui/LoadingScreen";
 
 // generic version
 // extend(THREE as any)
@@ -17,7 +18,8 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
     const [loading, setLoading] = useState(true);
 
     return <>
-        {loading && <Loading />}
+        <LoadingScreen text="loading engine..." zIndex={-1} />
+        {loading && <LoadingScreen text="loading engine..." />}
 
         <Canvas
             shadows={{ type: THREE.PCFSoftShadowMap }}

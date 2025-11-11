@@ -1,6 +1,31 @@
+"use client";
+
 import { useEffect, useRef, useState, createContext, useContext } from "react"
 import { joinRoom } from "trystero"
-import { PeerState, useMultiplayerStore, useMyState, usePeerStates } from "./multiplayerStore"
+import { PeerState, useMultiplayerStore, useMyState, usePeerStates } from "@/shared/providers/MultiplayerStore"
+
+// Hook to manage room joining/leaving
+export const useRoom = (roomConfig: any, roomId: string) => {
+    const roomRef = useRef<ReturnType<typeof joinRoom> | null>(null)
+    const lastRoomIdRef = useRef(roomId)
+
+    useEffect(() => {
+        // Initialize room only in the browser
+        if (!roomRef.current) {
+            roomRef.current = joinRoom(roomConfig, roomId)
+        } else if (roomId !== lastRoomIdRef.current) {
+            roomRef.current.leave()
+            roomRef.current = joinRoom(roomConfig, roomId)
+            lastRoomIdRef.current = roomId
+        }
+
+        return () => {
+            roomRef.current?.leave()
+        }
+    }, [roomConfig, roomId])
+
+    return roomRef.current
+}
 
 // Create context for setMyState function
 const MultiplayerContext = createContext<{
@@ -22,8 +47,10 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ch
     const myState = useMyState()
     const peerStates = usePeerStates()
 
+    const room = useRoom({ appId, password: undefined }, roomId)
+
     useEffect(() => {
-        const room = joinRoom({ appId, password: undefined }, roomId)
+        if (!room) return
 
         const [sendPlayerStateFn, getPlayerState] = room.makeAction('playerState')
         const { updatePeerState: handlePeerState, removePeer, setMyState } = useMultiplayerStore.getState()
@@ -60,12 +87,13 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ch
             if (debug) console.log('Peer left:', peerId)
             removePeer(peerId)
         })
+    }, [room, debug])
 
+    useEffect(() => {
         return () => {
-            room.leave()
             useMultiplayerStore.getState().reset()
         }
-    }, [appId, roomId, debug])
+    }, [])
 
     return <MultiplayerContext.Provider value={{ setMyState: sendPlayerState }}>
         {children}

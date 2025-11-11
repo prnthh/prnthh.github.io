@@ -2,7 +2,7 @@ import { useRef } from "react";
 import Gun from "@/app/sketches/demos/killbox/Gun";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { usePeerStates } from "./multiplayerStore";
+import { usePeerStates } from "@/shared/providers/MultiplayerStore";
 
 
 const OtherPlayers = () => {

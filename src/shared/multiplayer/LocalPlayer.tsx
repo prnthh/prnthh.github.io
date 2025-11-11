@@ -3,7 +3,7 @@ import { RapierRigidBody } from "@react-three/rapier";
 import FirstPersonController from "@/shared/firstperson/FirstPersonController";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { getMyState } from "./multiplayerStore";
+import { getMyState } from "@/shared/providers/MultiplayerStore";
 import { useMultiplayerProvider } from "./TrysteroMultiplayerProvider";
 
 const LocalPlayer = () => {

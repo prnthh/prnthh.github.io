@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useContext, createContext, useMemo 
 import SceneEditor from "../editor/SceneEditor";
 import { Object3D, Object3DEventMap, Scene } from "three";
 import { EditorModes, SceneNode, Viewer } from "../viewer/SceneViewer";
-import { GLTFLoader, FBXLoader } from "three/examples/jsm/Addons.js";
+import { GLTFLoader, FBXLoader, DRACOLoader } from "three/examples/jsm/Addons.js";
 
 interface EditorContextType {
     sceneGraph: SceneNode[];
@@ -138,6 +138,9 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
 
                     if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
                         const loader = new GLTFLoader();
+                        const dracoLoader = new DRACOLoader();
+                        dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+                        loader.setDRACOLoader(dracoLoader);
                         loader.load(`${resourcePath}/${filename}`,
                             gltf => {
                                 setModels(prev => ({ ...prev, [filename]: gltf.scene }));
