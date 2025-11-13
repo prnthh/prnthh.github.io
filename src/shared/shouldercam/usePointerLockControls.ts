@@ -5,12 +5,9 @@
  */
 
 import { useRef, useEffect, useState } from "react";
-import { MathUtils } from "three";
-import { degToRad } from "three/src/math/MathUtils.js";
+import { useInputStore } from "@/shared/firstperson/useInputStore";
 
 export function usePointerLockControls({ enabled = true, onClick }: { enabled?: boolean, onClick?: () => void } = {}) {
-    const rotationTarget = useRef<number>(0);
-    const verticalRotation = useRef<number>(0);
     const [shoulderCamMode, setShoulderCamMode] = useState(false);
     const isPointerLocked = useRef<boolean>(false);
 
@@ -21,19 +18,13 @@ export function usePointerLockControls({ enabled = true, onClick }: { enabled?: 
         const canvas = document.querySelector("canvas");
         if (!canvas || !enabled) return;
 
-        // Sensitivity and clamp constants
-        const H_SENS = 0.005;
-        const V_SENS = 0.005;
-        const MAX_VRAD = degToRad(85);
-        const MIN_VRAD = degToRad(-85);
+        // Touch values are scaled to work like joystick input (-1 to 1 range)
+        const TOUCH_TO_AXIS_SCALE = 0.5;
 
-        const applyDelta = (dx: number, dy: number) => {
-            rotationTarget.current -= dx * H_SENS;
-            verticalRotation.current = MathUtils.clamp(
-                verticalRotation.current + dy * V_SENS,
-                MIN_VRAD,
-                MAX_VRAD
-            );
+        const applyTouchDelta = (dx: number, dy: number) => {
+            // Route touch deltas through the input store as joystick-like values
+            useInputStore.getState().setAxis('lookHorizontal', dx * TOUCH_TO_AXIS_SCALE);
+            useInputStore.getState().setAxis('lookVertical', dy * TOUCH_TO_AXIS_SCALE);
         };
 
         // --- Mouse handlers ---
@@ -42,11 +33,6 @@ export function usePointerLockControls({ enabled = true, onClick }: { enabled?: 
             if (e.button === 0 && e.target instanceof HTMLElement) {
                 e.target.requestPointerLock?.();
             }
-        };
-
-        const onMouseMove = (e: MouseEvent) => {
-            if (!isPointerLocked.current) return;
-            applyDelta(e.movementX, e.movementY);
         };
 
         const onPointerLockChange = () => {
@@ -84,19 +70,23 @@ export function usePointerLockControls({ enabled = true, onClick }: { enabled?: 
             if (!touch) return;
             const dx = touch.clientX - lastTouch.current.x;
             const dy = touch.clientY - lastTouch.current.y;
-            applyDelta(dx, dy);
+            applyTouchDelta(dx, dy);
             lastTouch.current = { id: touch.identifier, x: touch.clientX, y: touch.clientY };
         };
 
         const onTouchEnd = (e: TouchEvent) => {
             if (!lastTouch.current) return;
             const ended = Array.from(e.changedTouches).some((t) => t.identifier === lastTouch.current!.id);
-            if (ended) lastTouch.current = null;
+            if (ended) {
+                lastTouch.current = null;
+                // Reset look axes when touch ends
+                useInputStore.getState().setAxis('lookHorizontal', 0);
+                useInputStore.getState().setAxis('lookVertical', 0);
+            }
         };
 
         // Add listeners (use named handlers so we can remove them cleanly)
         canvas.addEventListener("mousedown", onMouseDownRequest);
-        canvas.addEventListener("mousemove", onMouseMove);
         document.addEventListener("pointerlockchange", onPointerLockChange);
         canvas.addEventListener("mousedown", onMouseButtonDown);
         canvas.addEventListener("mouseup", onMouseButtonUp);
@@ -108,7 +98,6 @@ export function usePointerLockControls({ enabled = true, onClick }: { enabled?: 
 
         return () => {
             canvas.removeEventListener("mousedown", onMouseDownRequest);
-            canvas.removeEventListener("mousemove", onMouseMove);
             document.removeEventListener("pointerlockchange", onPointerLockChange);
             canvas.removeEventListener("mousedown", onMouseButtonDown);
             canvas.removeEventListener("mouseup", onMouseButtonUp);
@@ -120,5 +109,5 @@ export function usePointerLockControls({ enabled = true, onClick }: { enabled?: 
         };
     }, [enabled]);
 
-    return { rotationTarget, verticalRotation, shoulderCamMode, setShoulderCamMode };
+    return { shoulderCamMode, setShoulderCamMode };
 }

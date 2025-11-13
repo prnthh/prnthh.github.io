@@ -73,6 +73,7 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
     const jump = useInputStore(state => state.jump);
     const use = useInputStore(state => state.use);
     const altUse = useInputStore(state => state.altUse);
+    const verticalRotation = useRef(0);
 
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");
 
@@ -83,7 +84,6 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
     const pointerLockControls = usePointerLockControls({
         enabled: true, onClick: () => shoulderCamModeRef.current && weaponHandler()
     });
-    const verticalRotation = pointerLockControls.verticalRotation;
     const shoulderCamMode = pointerLockControls.shoulderCamMode;
     const setShoulderCamMode = pointerLockControls.setShoulderCamMode;
 
@@ -92,7 +92,7 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
         shoulderCamModeRef.current = !!shoulderCamMode;
     }, [shoulderCamMode]);
 
-    // Mouse look handler
+    // Mouse look handler - processes mouse movement directly (not through store)
     const handleMouseLook = useCallback((e: MouseEvent) => {
         if (!rb.current) return;
 
@@ -108,7 +108,7 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
             -PITCH_LIMIT,
             PITCH_LIMIT
         );
-    }, [verticalRotation]);
+    }, []);
 
     // --- Forward refs ---
     useEffect(() => {
@@ -203,7 +203,7 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
         // Jump/grounded logic
         handleJump(jump, checkGrounded());
 
-        // Joystick look (similar to FirstPersonController's LookSystem)
+        // Joystick look system - only processes joystick input from store
         const lookHorizontal = useInputStore.getState().lookHorizontal;
         const lookVertical = useInputStore.getState().lookVertical;
 
