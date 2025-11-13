@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { getMyState } from "@/shared/providers/MultiplayerStore";
 import { useMultiplayerProvider } from "./TrysteroMultiplayerProvider";
+import { CharacterController } from "../shouldercam/CharacterController";
 
 const LocalPlayer = () => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
@@ -73,13 +74,21 @@ const LocalPlayer = () => {
         return () => clearInterval(updateInterval);
     }, [setMyState]);
 
-    return <FirstPersonController
+    // return <FirstPersonController
+    //     forwardRef={(refs) => {
+    //         rigidBodyRef.current = refs.rbref.current;
+    //         bodyMeshRef.current = refs.meshref.current;
+    //         cameraRigRef.current = refs.cameraRigRef.current;
+    //     }}
+    // />;
+
+    return <CharacterController
         forwardRef={(refs) => {
             rigidBodyRef.current = refs.rbref.current;
             bodyMeshRef.current = refs.meshref.current;
             cameraRigRef.current = refs.cameraRigRef.current;
         }}
-    />;
+    />
 }
 
 export default LocalPlayer;

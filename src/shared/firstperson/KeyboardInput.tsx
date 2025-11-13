@@ -21,6 +21,10 @@ const keyMapping = {
     Space: { button: 'jump' as const },
     ShiftLeft: { button: 'sprint' as const },
     ShiftRight: { button: 'sprint' as const },
+    KeyE: { button: 'use' as const },
+    Mouse0: { button: 'use' as const },
+    KeyQ: { button: 'altUse' as const },
+    Mouse2: { button: 'altUse' as const },
 };
 
 type AxisName = 'horizontal' | 'vertical' | 'lookHorizontal' | 'lookVertical';

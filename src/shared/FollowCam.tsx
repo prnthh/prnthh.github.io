@@ -11,7 +11,8 @@ export const FollowCam = ({
     targetOffset = new Vector3(0, 0.3, 3),
     verticalRotation,
     cameraSpeed = 0.1,
-    debug = false
+    debug = false,
+    cameraRigRef
 }: {
     height: number,
     cameraOffset?: Vector3,
@@ -19,6 +20,7 @@ export const FollowCam = ({
     verticalRotation?: React.RefObject<number>
     cameraSpeed?: number
     debug?: boolean
+    cameraRigRef?: React.RefObject<Group | null>
 }) => {
 
     const cameraTarget = useRef<Group>(null);
@@ -26,6 +28,10 @@ export const FollowCam = ({
     const cameraWorldPosition = useRef<Vector3>(new Vector3());
     const cameraLookAtWorldPosition = useRef<Vector3>(new Vector3());
     const cameraLookAt = useRef<Vector3>(new Vector3());
+    const internalCameraRig = useRef<Group>(null);
+
+    // Use provided ref or internal ref
+    const activeCameraRig = cameraRigRef || internalCameraRig;
 
     useFrame(({ camera }) => {
         if (cameraPosition.current && cameraTarget.current) {
@@ -39,7 +45,7 @@ export const FollowCam = ({
             // Calculate rotated target offset
             const rotatedTarget = targetOffset.clone();
             const q = new THREE.Quaternion();
-            q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch);
+            q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -pitch);
             rotatedTarget.applyQuaternion(q);
 
             cameraTarget.current.position.x = rotatedTarget.x;
@@ -59,7 +65,7 @@ export const FollowCam = ({
 
 
 
-    return <>
+    return <group ref={activeCameraRig}>
         <group ref={cameraTarget} position-z={1.5} position-y={height * 0.8}>
             {debug && <Box args={[0.1, 0.1, 0.1]}>
                 <meshBasicMaterial wireframe color="red" />
@@ -70,6 +76,6 @@ export const FollowCam = ({
                 <meshBasicMaterial wireframe color="blue" />
             </Box>}
         </group>
-    </>
+    </group>
 
 }

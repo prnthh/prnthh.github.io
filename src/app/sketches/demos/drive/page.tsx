@@ -12,18 +12,16 @@ import GameCanvas from "@/shared/GameCanvas";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import DrivableCar from "../../car/simple/DrivableCar";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
-import FirstPersonController from "@/shared/firstperson/FirstPersonController";
-import AnimatedModel from "@/shared/ped/HumanoidModel";
-import Player from "./player";
 
 export default function Home() {
+    const [spawnPosition, setSpawnPosition] = useState<[number, number, number] | undefined>([0, -5, 0]);
 
     const setPlayerState = (carName: string | undefined) => {
-        // if (carName) {
-        //     setSpawnPosition(undefined);
-        // } else {
-        //     setSpawnPosition([0, -5, 0]);
-        // }
+        if (carName) {
+            setSpawnPosition(undefined);
+        } else {
+            setSpawnPosition([0, -5, 0]);
+        }
     };
 
     return (
@@ -34,15 +32,14 @@ export default function Home() {
                     <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
                         <GameCanvas>
                             <Physics paused={false}>
-                                <Viewer />
-
-                                <Player />
+                                {spawnPosition !== undefined && <CharacterController position={spawnPosition} />}
 
                                 <DrivableCar name={'car1'} position={[-2, -6, 4]} setPlayerState={setPlayerState} />
                                 <DrivableCar name={'car2'} position={[2, -6, 4]} setPlayerState={setPlayerState} />
 
                                 <ambientLight intensity={0.5} />
                                 <ShadowLight />
+                                <Viewer />
 
                                 <ambientLight intensity={0.5} />
                                 <Environment preset="park" background={true} />

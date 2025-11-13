@@ -17,6 +17,7 @@ type JoystickProps = {
 const size = 100;
 const radius = size / 2;
 const knobRadius = 30;
+const RUN_THRESHOLD = 0.6; // Threshold for running (60% stick push)
 
 const clamp = (value: number, min: number, max: number) =>
     Math.max(min, Math.min(max, value));
@@ -50,6 +51,7 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
     const dragging = useRef(false);
     const activeTouchId = useRef<number | null>(null);
     const setAxis = useInputStore(state => state.setAxis);
+    const setButton = useInputStore(state => state.setButton);
 
     // Update joystick values in store
     useEffect(() => {
@@ -59,10 +61,17 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
         setAxis(horizontalAxis, normalizedX);
         setAxis(verticalAxis, -normalizedY); // Invert Y so up is positive
 
+        // Only set sprint for movement joystick (not look joystick)
+        if (horizontalAxis === 'horizontal' && verticalAxis === 'vertical') {
+            const magnitude = Math.sqrt(normalizedX * normalizedX + normalizedY * normalizedY);
+            const shouldSprint = magnitude > RUN_THRESHOLD;
+            setButton('sprint', shouldSprint);
+        }
+
         if (onMove) {
             onMove({ x: normalizedX, y: -normalizedY });
         }
-    }, [knob.x, knob.y, horizontalAxis, verticalAxis, setAxis, onMove]);
+    }, [knob.x, knob.y, horizontalAxis, verticalAxis, setAxis, setButton, onMove]);
 
     // Helper to update knob and call onMove
     const updateKnobFromCoords = (clientX: number, clientY: number) => {

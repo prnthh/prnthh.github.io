@@ -12,17 +12,15 @@ export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Controls >
-                    <Canvas shadows>
-                        {/* <Perf /> */}
+                <Canvas shadows>
+                    {/* <Perf /> */}
 
-                        <Physics>
-                            <CharacterController lookTarget={ballRef} />
-                            <ambientLight intensity={0.5} />
-                            <pointLight position={[10, 10, 10]} />
-                        </Physics>
-                    </Canvas>
-                </Controls>
+                    <Physics>
+                        <CharacterController lookTarget={ballRef} />
+                        <ambientLight intensity={0.5} />
+                        <pointLight position={[10, 10, 10]} />
+                    </Physics>
+                </Canvas>
             </div>
         </div >
     );

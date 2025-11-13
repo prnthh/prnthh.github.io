@@ -106,7 +106,7 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
         <HitBox debug key={2} position={[1, 1, 4]} />
         <HitBox debug key={3} position={[2, 1, 4]} />
         <HitBox debug key={4} position={[3, 1, 4]} />
-        <Balloon position={[0, 1, -2]} />
+        <Balloon position={[0, 2, -2]} />
         <WavyTree />
     </>
 }

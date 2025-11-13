@@ -7,6 +7,7 @@ import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvide
 import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
 import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
 import DemoWorld from "@/shared/DemoWorld";
+import Controls from "@/shared/controls/ControlsProvider";
 
 
 export default function Home() {
@@ -27,17 +28,19 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen select-none" onClick={handleTap}>
             <div className="w-full" style={{ height: "100vh" }}>
                 <MultiplayerProvider roomId="lobby" debug={true}>
-                    <GameCanvas>
-                        <Physics>
-                            <DemoWorld />
-                            <Train />
+                    <Controls>
+                        <GameCanvas>
+                            <Physics>
+                                <DemoWorld />
+                                <Train />
 
-                            <LocalPlayer />
-                            <OtherPlayers />
-                        </Physics>
-                        <ambientLight intensity={1} />
-                        <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
-                    </GameCanvas>
+                                <LocalPlayer />
+                                <OtherPlayers />
+                            </Physics>
+                            <ambientLight intensity={1} />
+                            <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
+                        </GameCanvas>
+                    </Controls>
                 </MultiplayerProvider>
             </div>
             <div className='absolute bottom-10 left-10 z-50 text-white select-none'>

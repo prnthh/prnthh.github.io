@@ -11,6 +11,7 @@ import Ped from "@/shared/ped/ped";
 import DialogCollider from "@/shared/ped/DialogCollider";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
+import Balloon from "@/shared/physics/Balloon";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -54,20 +55,14 @@ const Football = forwardRef<Object3D, { position: [number, number, number] }>(({
 
 const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
     return <>
-        <HeavyBox position={[5, 2, 0]} />
-    </>
-};
-
-const HeavyBox = forwardRef<Object3D, { position: [number, number, number] }>(({ position }, ref) => {
-    return (
-        <RigidBody name="box" ccd position={position} density={1} colliders="cuboid" type="dynamic">
-            <mesh castShadow receiveShadow ref={ref}>
+        <Balloon position={[5, 2, 5]}>
+            <mesh castShadow receiveShadow >
                 <capsuleGeometry args={[0.2, 0.8]} />
                 <meshStandardMaterial color="red" />
             </mesh>
-        </RigidBody>
-    );
-});
+        </Balloon>
+    </>
+};
 
 const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
     const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);
