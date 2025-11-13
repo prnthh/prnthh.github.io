@@ -1,41 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState, createContext, useContext } from "react"
+import { useEffect, useRef, useState, createContext, useContext, useMemo } from "react"
 import { joinRoom } from "trystero"
 import { PeerState, useMultiplayerStore, useMyState, usePeerStates } from "@/shared/providers/MultiplayerStore"
 
 // Hook to manage room joining/leaving
-export const useRoom = (roomConfig: any, roomId: string) => {
-    const roomRef = useRef<ReturnType<typeof joinRoom> | null>(null)
-    const lastRoomIdRef = useRef(roomId)
+export const useRoom = (appId: string, roomId: string) => {
+    const [room, setRoom] = useState<ReturnType<typeof joinRoom> | null>(null)
 
     useEffect(() => {
-        // Initialize room only in the browser
-        if (!roomRef.current) {
-            roomRef.current = joinRoom(roomConfig, roomId)
-        } else if (roomId !== lastRoomIdRef.current) {
-            roomRef.current.leave()
-            roomRef.current = joinRoom(roomConfig, roomId)
-            lastRoomIdRef.current = roomId
-        }
+        const newRoom = joinRoom({ appId, password: undefined }, roomId)
+        setRoom(newRoom)
 
         return () => {
-            roomRef.current?.leave()
+            newRoom.leave()
+            setRoom(null)
         }
-    }, [roomConfig, roomId])
+    }, [appId, roomId])
 
-    return roomRef.current
+    return room
 }
 
 // Create context for setMyState function
 const MultiplayerContext = createContext<{
     setMyState: ((data: PeerState, peerId?: string) => void) | null
-}>({ setMyState: null })
+} | null>(null)
 
 export const useMultiplayerProvider = () => {
     const context = useContext(MultiplayerContext)
-    if (!context.setMyState) {
-        throw new Error('useSetMyState must be used within MultiplayerProvider')
+    if (context === null) {
+        throw new Error('useMultiplayerProvider must be used within MultiplayerProvider')
     }
     return context.setMyState
 }
@@ -47,7 +41,7 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ch
     const myState = useMyState()
     const peerStates = usePeerStates()
 
-    const room = useRoom({ appId, password: undefined }, roomId)
+    const room = useRoom(appId, roomId)
 
     useEffect(() => {
         if (!room) return
@@ -75,8 +69,6 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ch
 
         // Handle peer joining - send them our current state immediately
         room.onPeerJoin((peerId) => {
-            if (debug) console.log('Peer joined:', peerId)
-
             // Send current state to the new peer
             const myState = useMultiplayerStore.getState().myState
             sendPlayerStateFn(myState, peerId)
@@ -84,10 +76,9 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ch
 
         // Handle peer leaving
         room.onPeerLeave((peerId) => {
-            if (debug) console.log('Peer left:', peerId)
             removePeer(peerId)
         })
-    }, [room, debug])
+    }, [room])
 
     useEffect(() => {
         return () => {

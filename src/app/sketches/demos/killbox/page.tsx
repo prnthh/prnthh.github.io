@@ -26,7 +26,7 @@ export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen select-none" onClick={handleTap}>
             <div className="w-full" style={{ height: "100vh" }}>
-                <MultiplayerProvider roomId="lobby">
+                <MultiplayerProvider roomId="lobby" debug={true}>
                     <GameCanvas>
                         <Physics>
                             <DemoWorld />
