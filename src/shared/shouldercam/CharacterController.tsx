@@ -255,7 +255,27 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
                 playerCollider // filterExcludeCollider - exclude the player's collider
             );
 
-            return !!hit && hit.timeOfImpact < 0.1 && Math.abs(rb.current.linvel().y) < 0.1;
+            const isGrounded = !!hit && hit.timeOfImpact < 0.1 && Math.abs(rb.current.linvel().y) < 0.1;
+
+            // Add ground velocity if standing on a moving object
+            if (hit && isGrounded) {
+                const groundCollider = hit.collider;
+                const groundRigidBody = groundCollider.parent();
+                if (groundRigidBody && !groundRigidBody.isFixed()) {
+                    const groundLinvel = groundRigidBody.linvel();
+                    const speed = Math.sqrt(groundLinvel.x ** 2 + groundLinvel.y ** 2 + groundLinvel.z ** 2);
+                    if (speed > 0.01) {
+                        const currentVel = rb.current.linvel();
+                        rb.current.setLinvel({
+                            x: currentVel.x + groundLinvel.x,
+                            y: currentVel.y,
+                            z: currentVel.z + groundLinvel.z
+                        }, true);
+                    }
+                }
+            }
+
+            return isGrounded;
         };
     }, [rb, rapier, world, height, roundHeight]);
 

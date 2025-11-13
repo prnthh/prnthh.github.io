@@ -38,10 +38,10 @@ const getRelativePosition = (
 };
 
 const keyMap = [
-    { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
-    { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
-    { name: 'left', keys: ['ArrowLeft', 'KeyA'] },
-    { name: 'right', keys: ['ArrowRight', 'KeyD'] },
+    { name: 'forward', keys: ['KeyW'] },
+    { name: 'backward', keys: ['KeyS'] },
+    { name: 'left', keys: ['KeyA'] },
+    { name: 'right', keys: ['KeyD'] },
 ];
 
 function triggerKey(name: string, type: 'keydown' | 'keyup') {

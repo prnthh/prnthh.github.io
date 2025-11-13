@@ -27,20 +27,18 @@ export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen select-none" onClick={handleTap}>
             <div className="w-full" style={{ height: "100vh" }}>
-                <MultiplayerProvider roomId="lobby" debug={true}>
-                    <Controls>
-                        <GameCanvas>
-                            <Physics>
-                                <DemoWorld />
-                                <Train />
+                <MultiplayerProvider roomId="lobby" debug={false}>
+                    <GameCanvas>
+                        <Physics>
+                            <DemoWorld />
+                            <Train />
 
-                                <LocalPlayer />
-                                <OtherPlayers />
-                            </Physics>
-                            <ambientLight intensity={1} />
-                            <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
-                        </GameCanvas>
-                    </Controls>
+                            <LocalPlayer />
+                            <OtherPlayers />
+                        </Physics>
+                        <ambientLight intensity={1} />
+                        <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
+                    </GameCanvas>
                 </MultiplayerProvider>
             </div>
             <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
