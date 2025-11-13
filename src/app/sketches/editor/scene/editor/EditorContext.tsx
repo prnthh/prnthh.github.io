@@ -124,10 +124,24 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
         }
         collectModelFiles(graph);
 
+        // Determine which files need to be loaded
+        const filesToLoad = Array.from(referencedFiles).filter(filename => {
+            const model = models[filename];
+            return !model || model.missing;
+        });
+
+        // If no files need loading, exit early
+        if (filesToLoad.length === 0) {
+            return;
+        }
+
+        // Set loading flag
+        setIsLoadingAssets(true);
+
         // Mark missing models
         setModels(prevModels => {
             const newModels = { ...prevModels };
-            referencedFiles.forEach(filename => {
+            filesToLoad.forEach(filename => {
                 if (!(filename in newModels)) {
                     newModels[filename] = { missing: true };
                 }
@@ -135,45 +149,33 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
             return newModels;
         });
 
-        // Track loading progress
-        const filesToLoad = Array.from(referencedFiles).filter(filename => {
-            const model = models[filename];
-            return !model || model.missing;
-        });
-
-        if (filesToLoad.length > 0) {
-            setIsLoadingAssets(true);
-        }
-
+        // Track loading progress with a ref to avoid closure issues
         let loadedCount = 0;
         const totalToLoad = filesToLoad.length;
 
-        // Defer model loading to prevent canvas initialization race conditions
-        referencedFiles.forEach(filename => {
-            // Check current models state to avoid race conditions
-            setModels(currentModels => {
-                if (currentModels[filename] && !currentModels[filename].missing) {
-                    return currentModels; // Already loaded
+        const onLoadComplete = () => {
+            loadedCount++;
+            console.log(`Loaded ${loadedCount}/${totalToLoad} models`);
+            if (loadedCount >= totalToLoad) {
+                setIsLoadingAssets(false);
+            }
+        };
+
+        // Load only the files that need loading
+        filesToLoad.forEach(filename => {
+            // Use the loadModel utility which handles path construction
+            loadModel(filename, resourcePath).then(result => {
+                if (result.success && result.model) {
+                    setModels(prev => ({ ...prev, [filename]: result.model }));
+                } else {
+                    console.error(`Failed to load model ${filename}:`, result.error);
+                    setModels(prev => ({ ...prev, [filename]: { missing: true, error: result.error } }));
                 }
-
-                const onLoadComplete = () => {
-                    loadedCount++;
-                    if (loadedCount >= totalToLoad) {
-                        setIsLoadingAssets(false);
-                    }
-                };
-
-                // Use the loadModel utility which handles path construction
-                loadModel(filename, resourcePath).then(result => {
-                    if (result.success && result.model) {
-                        setModels(prev => ({ ...prev, [filename]: result.model }));
-                    } else {
-                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: result.error } }));
-                    }
-                    onLoadComplete();
-                });
-
-                return currentModels;
+                onLoadComplete();
+            }).catch(error => {
+                console.error(`Error loading model ${filename}:`, error);
+                setModels(prev => ({ ...prev, [filename]: { missing: true, error: error.message } }));
+                onLoadComplete();
             });
         });
     };
