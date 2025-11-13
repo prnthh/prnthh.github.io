@@ -19,6 +19,7 @@ import Ped from "@/shared/ped/ped";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
 import * as THREE from "three";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
+import { DemoWorldEnvironment } from "@/shared/DemoWorld";
 
 export default function Home() {
     const [weapon, setWeapon] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export default function Home() {
                             <Physics debug>
 
                                 <ambientLight intensity={0} />
-                                <Environment preset="park" background={false} />
+                                <DemoWorldEnvironment />
                                 <Game weapon={weapon} setWeapon={setWeapon} />
                                 <Lighting />
                                 <FogEnvironment />

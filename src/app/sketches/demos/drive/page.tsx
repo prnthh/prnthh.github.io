@@ -12,6 +12,7 @@ import GameCanvas from "@/shared/GameCanvas";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import DrivableCar from "../../car/simple/DrivableCar";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
+import { DemoWorldEnvironment } from "@/shared/DemoWorld";
 
 export default function Home() {
     const [spawnPosition, setSpawnPosition] = useState<[number, number, number] | undefined>([0, -5, 0]);
@@ -42,7 +43,7 @@ export default function Home() {
                                 <Viewer />
 
                                 <ambientLight intensity={0.5} />
-                                <Environment preset="park" background={true} />
+                                <DemoWorldEnvironment />
                             </Physics>
                         </GameCanvas>
                     </GameEngine>

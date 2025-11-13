@@ -7,6 +7,7 @@ import { EditorModes, SceneNode, Viewer } from "./viewer/SceneViewer";
 import presets from "./presets";
 import { GameEngine, useEditorContext } from "./editor/EditorContext";
 import GameCanvas from "@/shared/GameCanvas";
+import { DemoWorldEnvironment } from "@/shared/DemoWorld";
 
 
 export default function EditorApp() {
@@ -27,7 +28,7 @@ export default function EditorApp() {
                     <Viewer />
 
                     <ambientLight intensity={1.5} />
-                    <Environment preset="sunset" background={false} />
+                    <DemoWorldEnvironment />
                 </Physics>
             </GameCanvas>
         </GameEngine>
