@@ -21,13 +21,9 @@ const tempQuat = new Quaternion();
 const tempYawQuat = new Quaternion();
 
 const PLAYER_MASS = 70;
-const CAPSULE_RADIUS = 0.2;
-const CAPSULE_HEIGHT = 0.5;
-const EYE_HEIGHT = 0.5;
 const WALK_SPEED = 5;
 const SPRINT_SPEED = 12;
 const JUMP_VELOCITY = 5;
-const FLOAT_HEIGHT = 1.0;
 const FLOAT_SPRING = 8;
 const FLOAT_DAMPING = 0.3;
 const PITCH_LIMIT = Math.PI / 2;
@@ -35,11 +31,28 @@ const MOUSE_SENSITIVITY = 0.002;
 const JOYSTICK_SENSITIVITY = 2.5;
 
 
-const FirstPersonController = ({ forwardRef }: { forwardRef?: (refs: { rbref: React.RefObject<RapierRigidBody | null>, meshref: React.RefObject<THREE.Group | null>, cameraRigRef: React.RefObject<THREE.Group | null> }) => void }) => {
+const FirstPersonController = ({
+    name = "bob",
+    height = 1,
+    cameraOffset = [0, 0, 0],
+    spawnPosition = [0, 2, 0],
+    children, forwardRef
+}: {
+    name?: string,
+    height?: number,
+    cameraOffset?: [number, number, number],
+    spawnPosition?: [number, number, number],
+    children?: React.ReactNode,
+    forwardRef?: (refs: { rbref: React.RefObject<RapierRigidBody | null>, meshref: React.RefObject<THREE.Group | null>, cameraRigRef: React.RefObject<THREE.Group | null> }) => void
+}) => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
     const bodyMeshRef = useRef<THREE.Group | null>(null);
     const cameraRigRef = useRef<THREE.Group | null>(null);
     const cameraPitch = useRef(0);
+
+    const CAPSULE_RADIUS = height / 5;
+    const CAPSULE_HEIGHT = height / 2;
+    const EYE_HEIGHT = CAPSULE_HEIGHT;
 
     useEffect(() => {
         if (typeof forwardRef === 'function') {
@@ -71,23 +84,30 @@ const FirstPersonController = ({ forwardRef }: { forwardRef?: (refs: { rbref: Re
 
     return (
         <RigidBody
-            position={[0, 2, 0]}
+            name={name}
+            ccd
+            position={spawnPosition}
             colliders={false}
             ref={rigidBodyRef}
             type="dynamic"
             mass={PLAYER_MASS}
             angularDamping={1}
-            linearDamping={0.5}
+            linearDamping={0}
             enabledRotations={[false, false, false]}
         >
             <CapsuleCollider args={[CAPSULE_HEIGHT, CAPSULE_RADIUS]} />
-            <mesh ref={bodyMeshRef} castShadow onBeforeRender={() => { }}>
-                <capsuleGeometry args={[CAPSULE_RADIUS, 1, 8, 16]} />
+            <group ref={bodyMeshRef} position={[0, -(CAPSULE_HEIGHT + CAPSULE_RADIUS), 0]} rotation={[0, Math.PI, 0]}>
+                {children}
+            </group>
+            {!children && <mesh castShadow onBeforeRender={() => { }}>
+                <capsuleGeometry args={[CAPSULE_RADIUS, height, 8, 16]} />
                 <meshStandardMaterial color="orange" />
-            </mesh>
+            </mesh>}
 
             <group name='cameraRig' position={[0, EYE_HEIGHT, 0]} ref={cameraRigRef}>
-                <PerspectiveCamera makeDefault />
+                <group name='camera' position={cameraOffset} >
+                    <PerspectiveCamera makeDefault />
+                </group>
                 <group position={[0.2, -0.2, -0.5]} scale={0.5}>
                     <Gun />
                 </group>
@@ -95,7 +115,7 @@ const FirstPersonController = ({ forwardRef }: { forwardRef?: (refs: { rbref: Re
             </group>
 
             <KeyboardInput />
-            <MovementSystem rigidBodyRef={rigidBodyRef} />
+            <MovementSystem height={CAPSULE_HEIGHT} rigidBodyRef={rigidBodyRef} />
             <LookSystem rigidBodyRef={rigidBodyRef} cameraRigRef={cameraRigRef} cameraPitch={cameraPitch} />
             <PointerLockControls onMouseMove={handleMouseLook} />
         </RigidBody>
@@ -109,7 +129,7 @@ const tempRight = new Vector3();
 const tempDirection = new Vector3();
 const tempRayOrigin = new Vector3();
 
-const MovementSystem = ({ rigidBodyRef }: { rigidBodyRef: React.RefObject<RapierRigidBody | null> }) => {
+const MovementSystem = ({ height = 0.5, rigidBodyRef }: { height?: number, rigidBodyRef: React.RefObject<RapierRigidBody | null> }) => {
     const horizontal = useInputStore(state => state.horizontal);
     const vertical = useInputStore(state => state.vertical);
     const sprint = useInputStore(state => state.sprint);
@@ -131,14 +151,14 @@ const MovementSystem = ({ rigidBodyRef }: { rigidBodyRef: React.RefObject<Rapier
         const currentSpeed = sprint ? SPRINT_SPEED : WALK_SPEED;
 
         const pos = rb.translation();
-        tempRayOrigin.set(pos.x, pos.y - CAPSULE_HEIGHT, pos.z);
+        tempRayOrigin.set(pos.x, pos.y - height, pos.z);
         const ray = new rapier.rapier.Ray(tempRayOrigin, { x: 0, y: -1, z: 0 });
-        const hit = rapier.world.castRay(ray, 10, true, undefined, undefined, undefined, rb);
+        const hit = rapier.world.castRay(ray, 10, true, rapier.rapier.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, rb);
 
-        const isGrounded = hit && hit.timeOfImpact < FLOAT_HEIGHT + 0.1;
+        const isGrounded = hit && hit.timeOfImpact < height + 0.1;
 
-        if (hit && hit.timeOfImpact < FLOAT_HEIGHT) {
-            const heightError = FLOAT_HEIGHT - hit.timeOfImpact;
+        if (hit && hit.timeOfImpact < height) {
+            const heightError = height - hit.timeOfImpact;
             const targetUpwardVel = heightError * FLOAT_SPRING;
             velocityRef.current.y = velocityRef.current.y * (1 - FLOAT_DAMPING) + targetUpwardVel * FLOAT_DAMPING;
             rb.setGravityScale(0, true);
