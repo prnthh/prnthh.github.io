@@ -178,28 +178,38 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
         });
 
         // Track loading progress with a ref to avoid closure issues
-        let loadedCount = 0;
+        const loadedCountRef = { current: 0 };
         const totalToLoad = filesToLoad.length;
 
         const onLoadComplete = () => {
-            loadedCount++;
-            console.log(`Loaded ${loadedCount}/${totalToLoad} models`);
-            if (loadedCount >= totalToLoad) {
+            loadedCountRef.current++;
+            console.log(`Loaded ${loadedCountRef.current}/${totalToLoad} models`);
+            if (loadedCountRef.current >= totalToLoad) {
                 setIsLoadingAssets(false);
                 setLoadingProgress(null);
             }
         };
 
         // Load only the files that need loading
-        filesToLoad.forEach(filename => {
+        filesToLoad.forEach((filename, index) => {
+            // Immediately set the loading progress for this file
+            setLoadingProgress({
+                currentFile: filename,
+                loadedCount: index,
+                totalCount: totalToLoad,
+                currentSizeMB: 0
+            });
+
             // Use the loadModel utility which handles path construction
             loadModel(filename, resourcePath, (file, loaded, total) => {
                 // Update loading progress with current file and size
+                // Handle cache hits where total might be 0
+                const sizeMB = total > 0 ? total / (1024 * 1024) : loaded / (1024 * 1024);
                 setLoadingProgress({
                     currentFile: file,
-                    loadedCount: loadedCount,
+                    loadedCount: index,
                     totalCount: totalToLoad,
-                    currentSizeMB: total / (1024 * 1024)
+                    currentSizeMB: sizeMB
                 });
             }).then(result => {
                 if (result.success && result.model) {
