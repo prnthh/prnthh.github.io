@@ -6,9 +6,12 @@ export type ModelLoadResult = {
     error?: any;
 };
 
+export type ProgressCallback = (filename: string, loaded: number, total: number) => void;
+
 export async function loadModel(
     filename: string,
-    resourcePath: string = ""
+    resourcePath: string = "",
+    onProgress?: ProgressCallback
 ): Promise<ModelLoadResult> {
     try {
         // Construct full path - always prepend resourcePath if provided (even if empty string)
@@ -25,7 +28,13 @@ export async function loadModel(
                 loader.load(
                     fullPath,
                     (gltf) => resolve({ success: true, model: gltf.scene }),
-                    undefined,
+                    (progressEvent) => {
+                        if (onProgress) {
+                            // Use loaded as total if total is not available
+                            const total = progressEvent.total || progressEvent.loaded;
+                            onProgress(filename, progressEvent.loaded, total);
+                        }
+                    },
                     (error) => resolve({ success: false, error })
                 );
             });
@@ -36,7 +45,13 @@ export async function loadModel(
                 loader.load(
                     fullPath,
                     (model) => resolve({ success: true, model }),
-                    undefined,
+                    (progressEvent) => {
+                        if (onProgress) {
+                            // Use loaded as total if total is not available
+                            const total = progressEvent.total || progressEvent.loaded;
+                            onProgress(filename, progressEvent.loaded, total);
+                        }
+                    },
                     (error) => resolve({ success: false, error })
                 );
             });

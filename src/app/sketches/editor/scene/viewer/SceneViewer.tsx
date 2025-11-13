@@ -1,4 +1,4 @@
-import { RapierRigidBody, RigidBody } from "@react-three/rapier";
+import { RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState } from "react";
 import { Object3D, Object3DEventMap } from "three";
 import { GameInstance, GameInstanceProvider } from "../editor/InstanceProvider";
@@ -70,8 +70,23 @@ function cloneObject(object: Object3D): Object3D | null {
     return clone;
 }
 
+// Component to pause physics world during asset loading
+function PhysicsPauser() {
+    const { isLoadingAssets } = useEditorContext();
+    const { world } = useRapier();
+
+    useEffect(() => {
+        if (world) {
+            // Set timestep to 0 to effectively pause physics
+            world.timestep = isLoadingAssets ? 0 : 1 / 60;
+        }
+    }, [isLoadingAssets, world]);
+
+    return null;
+}
+
 export function Viewer() {
-    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, getNodeRef, playMode, sceneRef } = useEditorContext();
+    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, getNodeRef, playMode, sceneRef, isLoadingAssets } = useEditorContext();
     const { scene } = useThree();
 
     useEffect(() => {
@@ -91,6 +106,7 @@ export function Viewer() {
 
     return (
         <>
+            <PhysicsPauser />
             <GameInstanceProvider models={models}>
                 <RecursiveNode
                     node={injectModels(sceneGraph, models)[0]}

@@ -5,6 +5,13 @@ import { Object3D, Object3DEventMap, Scene } from "three";
 import { EditorModes, SceneNode, Viewer } from "../viewer/SceneViewer";
 import { loadModel } from "../../dragdrop/modelLoader";
 
+interface LoadingProgress {
+    currentFile: string;
+    loadedCount: number;
+    totalCount: number;
+    currentSizeMB: number;
+}
+
 interface EditorContextType {
     sceneGraph: SceneNode[];
     setSceneGraph: React.Dispatch<React.SetStateAction<SceneNode[]>>;
@@ -18,6 +25,7 @@ interface EditorContextType {
     scanAndLoadMissingModels: (customSceneGraph?: SceneNode[]) => void;
     sceneRef: React.RefObject<Scene | null>;
     isLoadingAssets: boolean;
+    loadingProgress: LoadingProgress | null;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -50,11 +58,30 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     const [models, setModels] = useState<{ [filename: string]: any }>({});
     const [playMode, setPlayMode] = useState<EditorModes>(mode);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [isLoadingAssets, setIsLoadingAssets] = useState<boolean>(false);
+    const [isLoadingAssets, setIsLoadingAssets] = useState<boolean>(true); // Start as true to keep physics paused initially
+    const [loadingProgress, setLoadingProgress] = useState<LoadingProgress | null>(null);
 
     useEffect(() => {
         setPlayMode(mode);
     }, [mode]);
+
+    // Update DOM directly when loading progress changes
+    useEffect(() => {
+        const loadingTextElement = document.getElementById("loading-screen-text");
+        if (loadingTextElement) {
+            if (isLoadingAssets) {
+                if (loadingProgress) {
+                    const { currentFile, loadedCount, totalCount, currentSizeMB } = loadingProgress;
+                    loadingTextElement.textContent = `Loading ${loadedCount + 1}/${totalCount}: ${currentFile} (${currentSizeMB.toFixed(2)} MB)`;
+                } else {
+                    loadingTextElement.textContent = "Loading...";
+                }
+            } else {
+                // Clear text when done loading
+                loadingTextElement.textContent = "";
+            }
+        }
+    }, [loadingProgress, isLoadingAssets]);
 
     // Map of nodeId to ref
     const nodeRefs = useRef<{ [id: string]: React.RefObject<Object3D<Object3DEventMap> | null> }>({});
@@ -132,6 +159,7 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
 
         // If no files need loading, exit early
         if (filesToLoad.length === 0) {
+            setIsLoadingAssets(false);
             return;
         }
 
@@ -158,13 +186,22 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
             console.log(`Loaded ${loadedCount}/${totalToLoad} models`);
             if (loadedCount >= totalToLoad) {
                 setIsLoadingAssets(false);
+                setLoadingProgress(null);
             }
         };
 
         // Load only the files that need loading
         filesToLoad.forEach(filename => {
             // Use the loadModel utility which handles path construction
-            loadModel(filename, resourcePath).then(result => {
+            loadModel(filename, resourcePath, (file, loaded, total) => {
+                // Update loading progress with current file and size
+                setLoadingProgress({
+                    currentFile: file,
+                    loadedCount: loadedCount,
+                    totalCount: totalToLoad,
+                    currentSizeMB: total / (1024 * 1024)
+                });
+            }).then(result => {
                 if (result.success && result.model) {
                     setModels(prev => ({ ...prev, [filename]: result.model }));
                 } else {
@@ -185,7 +222,7 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     }, []);
 
     return (
-        <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef, isLoadingAssets }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId, isLoadingAssets])}>
+        <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef, isLoadingAssets, loadingProgress }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId, isLoadingAssets, loadingProgress])}>
             {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
             <div className="w-full items-center justify-items-center min-h-screen" style={{ height: "100vh" }}>
                 {children}
