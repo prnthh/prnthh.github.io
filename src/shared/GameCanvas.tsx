@@ -18,8 +18,7 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
     const [loading, setLoading] = useState(true);
 
     return <>
-        <LoadingScreen text="loading engine..." zIndex={-1} />
-        {loading && <LoadingScreen text="loading engine..." />}
+        {<LoadingScreen text="loading engine..." zIndex={!loading ? -1 : 1} />}
 
         <Canvas
             shadows={{ type: THREE.PCFSoftShadowMap }}

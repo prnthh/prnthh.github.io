@@ -10,35 +10,43 @@ interface DragDropLoaderProps {
 function handleFiles(files: File[], onModelLoaded: (model: any, filename: string) => void) {
     files.forEach((file) => {
         if (file.name.endsWith(".glb") || file.name.endsWith(".gltf")) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const arrayBuffer = event.target?.result;
-                if (arrayBuffer) {
-                    const loader = new GLTFLoader();
-                    const dracoLoader = new DRACOLoader();
-                    dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
-                    loader.setDRACOLoader(dracoLoader);
-                    loader.parse(arrayBuffer as ArrayBuffer, "", (gltf) => {
-                        onModelLoaded(gltf.scene, file.name);
-                    }, (error) => {
-                        console.error("GLTFLoader parse error", error);
-                    });
-                }
-            };
-            reader.readAsArrayBuffer(file);
+            loadGLTFFile(file, onModelLoaded);
         } else if (file.name.endsWith(".fbx")) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const arrayBuffer = event.target?.result;
-                if (arrayBuffer) {
-                    const loader = new FBXLoader();
-                    const model = loader.parse(arrayBuffer as ArrayBuffer, "");
-                    onModelLoaded(model, file.name);
-                }
-            };
-            reader.readAsArrayBuffer(file);
+            loadFBXFile(file, onModelLoaded);
         }
     });
+}
+
+function loadGLTFFile(file: File, onModelLoaded: (model: any, filename: string) => void) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const arrayBuffer = event.target?.result;
+        if (arrayBuffer) {
+            const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+            loader.setDRACOLoader(dracoLoader);
+            loader.parse(arrayBuffer as ArrayBuffer, "", (gltf) => {
+                onModelLoaded(gltf.scene, file.name);
+            }, (error) => {
+                console.error("GLTFLoader parse error", error);
+            });
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function loadFBXFile(file: File, onModelLoaded: (model: any, filename: string) => void) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        const arrayBuffer = event.target?.result;
+        if (arrayBuffer) {
+            const loader = new FBXLoader();
+            const model = loader.parse(arrayBuffer as ArrayBuffer, "");
+            onModelLoaded(model, file.name);
+        }
+    };
+    reader.readAsArrayBuffer(file);
 }
 
 export function DragDropLoader({ onModelLoaded }: DragDropLoaderProps) {

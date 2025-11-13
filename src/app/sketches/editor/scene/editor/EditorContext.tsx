@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useContext, createContext, useMemo 
 import SceneEditor from "../editor/SceneEditor";
 import { Object3D, Object3DEventMap, Scene } from "three";
 import { EditorModes, SceneNode, Viewer } from "../viewer/SceneViewer";
-import { GLTFLoader, FBXLoader, DRACOLoader } from "three/examples/jsm/Addons.js";
+import { loadModel } from "../../dragdrop/modelLoader";
 
 interface EditorContextType {
     sceneGraph: SceneNode[];
@@ -17,6 +17,7 @@ interface EditorContextType {
     getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>;
     scanAndLoadMissingModels: (customSceneGraph?: SceneNode[]) => void;
     sceneRef: React.RefObject<Scene | null>;
+    isLoadingAssets: boolean;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -49,6 +50,7 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     const [models, setModels] = useState<{ [filename: string]: any }>({});
     const [playMode, setPlayMode] = useState<EditorModes>(mode);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+    const [isLoadingAssets, setIsLoadingAssets] = useState<boolean>(false);
 
     useEffect(() => {
         setPlayMode(mode);
@@ -65,6 +67,9 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     const sceneRef = useRef<Scene | null>(null);
 
     function addModelNodeToSceneGraph(model: any, filename: string) {
+        // Set loading flag when adding model
+        setIsLoadingAssets(true);
+
         // Always store the model in models state by filename
         setModels(prevModels => ({
             ...prevModels,
@@ -93,6 +98,9 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
                 }
             ] as SceneNode[];
         });
+
+        // Clear loading flag after a brief delay
+        setTimeout(() => setIsLoadingAssets(false), 100);
     }
 
     // --- Scan and load missing models ---
@@ -127,46 +135,47 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
             return newModels;
         });
 
+        // Track loading progress
+        const filesToLoad = Array.from(referencedFiles).filter(filename => {
+            const model = models[filename];
+            return !model || model.missing;
+        });
+
+        if (filesToLoad.length > 0) {
+            setIsLoadingAssets(true);
+        }
+
+        let loadedCount = 0;
+        const totalToLoad = filesToLoad.length;
+
         // Defer model loading to prevent canvas initialization race conditions
-        setTimeout(() => {
-            referencedFiles.forEach(filename => {
-                // Check current models state to avoid race conditions
-                setModels(currentModels => {
-                    if (currentModels[filename] && !currentModels[filename].missing) {
-                        return currentModels; // Already loaded
-                    }
+        referencedFiles.forEach(filename => {
+            // Check current models state to avoid race conditions
+            setModels(currentModels => {
+                if (currentModels[filename] && !currentModels[filename].missing) {
+                    return currentModels; // Already loaded
+                }
 
-                    if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
-                        const loader = new GLTFLoader();
-                        const dracoLoader = new DRACOLoader();
-                        dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
-                        loader.setDRACOLoader(dracoLoader);
-                        loader.load(`${resourcePath}/${filename}`,
-                            gltf => {
-                                setModels(prev => ({ ...prev, [filename]: gltf.scene }));
-                            },
-                            undefined,
-                            err => {
-                                setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
-                            }
-                        );
-                    } else if (filename.endsWith('.fbx')) {
-                        const loader = new FBXLoader();
-                        loader.load(`${resourcePath}/${filename}`,
-                            model => {
-                                setModels(prev => ({ ...prev, [filename]: model }));
-                            },
-                            undefined,
-                            err => {
-                                setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
-                            }
-                        );
+                const onLoadComplete = () => {
+                    loadedCount++;
+                    if (loadedCount >= totalToLoad) {
+                        setIsLoadingAssets(false);
                     }
+                };
 
-                    return currentModels;
+                // Use the loadModel utility which handles path construction
+                loadModel(filename, resourcePath).then(result => {
+                    if (result.success && result.model) {
+                        setModels(prev => ({ ...prev, [filename]: result.model }));
+                    } else {
+                        setModels(prev => ({ ...prev, [filename]: { missing: true, error: result.error } }));
+                    }
+                    onLoadComplete();
                 });
+
+                return currentModels;
             });
-        }, 100); // Small delay to let canvas initialize
+        });
     };
     // Run once on mount
     React.useEffect(() => {
@@ -174,7 +183,7 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     }, []);
 
     return (
-        <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId,])}>
+        <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef, isLoadingAssets }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId, isLoadingAssets])}>
             {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
             <div className="w-full items-center justify-items-center min-h-screen" style={{ height: "100vh" }}>
                 {children}
