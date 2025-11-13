@@ -8,6 +8,7 @@
 import React, { useMemo, createContext, useState, useContext, useEffect } from 'react';
 import { KeyboardControls, KeyboardControlsEntry } from '@react-three/drei';
 import Joystick from './Joystick';
+import ControllerJoystick from './ControllerJoystick';
 
 export enum WalkControls {
     forward = 'forward',
@@ -114,9 +115,14 @@ function Controls({ children }: { children: React.ReactNode }) {
             <KeyboardControls map={map}>
                 {children}
                 {isMobile && (
-                    <div className='absolute bottom-10 left-10 z-50 text-white'>
-                        <Joystick />
-                    </div>
+                    <>
+                        <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
+                            <ControllerJoystick horizontalAxis='horizontal' verticalAxis='vertical' />
+                        </div>
+                        <div className='absolute bottom-10 right-10 z-50 text-white select-none'>
+                            <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' />
+                        </div>
+                    </>
                 )}
             </KeyboardControls>
         </ControlSchemeContext.Provider>

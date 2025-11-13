@@ -60,11 +60,12 @@ const FirstPersonController = ({
         }
     }, [forwardRef]);
 
-    const handleMouseLook = (e: MouseEvent) => {
+    // Shared look logic - processes movement deltas directly
+    const applyLookDelta = (dx: number, dy: number) => {
         const rb = rigidBodyRef.current;
         if (!rb) return;
 
-        const yawDelta = -e.movementX * MOUSE_SENSITIVITY;
+        const yawDelta = -dx * MOUSE_SENSITIVITY;
         const rot = rb.rotation();
         tempQuat.set(rot.x, rot.y, rot.z, rot.w);
         tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
@@ -72,7 +73,7 @@ const FirstPersonController = ({
         rb.setRotation(tempQuat, true);
 
         cameraPitch.current = THREE.MathUtils.clamp(
-            cameraPitch.current - e.movementY * MOUSE_SENSITIVITY,
+            cameraPitch.current - dy * MOUSE_SENSITIVITY,
             -PITCH_LIMIT,
             PITCH_LIMIT
         );
@@ -117,7 +118,7 @@ const FirstPersonController = ({
             <KeyboardInput />
             <MovementSystem height={CAPSULE_HEIGHT} rigidBodyRef={rigidBodyRef} />
             <LookSystem rigidBodyRef={rigidBodyRef} cameraRigRef={cameraRigRef} cameraPitch={cameraPitch} />
-            <PointerLockControls onMouseMove={handleMouseLook} />
+            <PointerLockControls onLook={applyLookDelta} />
         </RigidBody>
     );
 };

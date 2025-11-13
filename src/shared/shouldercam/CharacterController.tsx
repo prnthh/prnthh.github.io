@@ -10,7 +10,6 @@ import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from "@react-t
 import { useEffect, useRef, useState, useMemo, useCallback, RefObject } from "react";
 import { MathUtils, Vector3, Group, Quaternion } from "three";
 import * as THREE from "three";
-import { usePointerLockControls } from "./usePointerLockControls";
 import { FollowCam } from "@/shared/FollowCam";
 import TSLLine from "./TSLLine";
 import { useWeapon } from "./useWeapon";
@@ -79,24 +78,18 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
 
     const shoulderCamModeRef = useRef(false);
     const { weaponHandler } = useWeapon();
-
-    // --- Camera & controls ---
-    const pointerLockControls = usePointerLockControls({
-        enabled: true, onClick: () => shoulderCamModeRef.current && weaponHandler()
-    });
-    const shoulderCamMode = pointerLockControls.shoulderCamMode;
-    const setShoulderCamMode = pointerLockControls.setShoulderCamMode;
+    const [shoulderCamMode, setShoulderCamMode] = useState(false);
 
     // Keep ref updated with latest value
     useEffect(() => {
         shoulderCamModeRef.current = !!shoulderCamMode;
     }, [shoulderCamMode]);
 
-    // Mouse look handler - processes mouse movement directly (not through store)
-    const handleMouseLook = useCallback((e: MouseEvent) => {
+    // Shared look logic - processes movement deltas directly
+    const applyLookDelta = useCallback((dx: number, dy: number) => {
         if (!rb.current) return;
 
-        const yawDelta = -e.movementX * MOUSE_SENSITIVITY;
+        const yawDelta = -dx * MOUSE_SENSITIVITY;
         const rot = rb.current.rotation();
         tempQuat.set(rot.x, rot.y, rot.z, rot.w);
         tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
@@ -104,7 +97,7 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
         rb.current.setRotation(tempQuat, true);
 
         verticalRotation.current = THREE.MathUtils.clamp(
-            verticalRotation.current + e.movementY * MOUSE_SENSITIVITY,
+            verticalRotation.current + dy * MOUSE_SENSITIVITY,
             -PITCH_LIMIT,
             PITCH_LIMIT
         );
@@ -334,7 +327,11 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
                 </group>
                 <CapsuleCollider args={[(height - (roundHeight * 1.9)) / 2, roundHeight]} position={[0, (height / 2), 0]} />
             </RigidBody>
-            <PointerLockControls onMouseMove={handleMouseLook} />
+            <PointerLockControls
+                onLook={applyLookDelta}
+                onClick={() => shoulderCamModeRef.current && weaponHandler()}
+                onShoulderCamModeChange={setShoulderCamMode}
+            />
             <KeyboardInput />
         </>
     );
