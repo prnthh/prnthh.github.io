@@ -82,7 +82,7 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
     return <>
         <CrawlerApp />
 
-        <CharacterController mode={scheme == 'simple' ? 'side-scroll' : 'third-person'}>
+        <CharacterController>
             {props.weapon && <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"

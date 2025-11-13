@@ -263,7 +263,7 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
         <>
             <RigidBody
                 colliders={false}
-                enabledRotations={[false, true, false]}
+                enabledRotations={[false, false, false]}
                 ref={rb}
                 position={position}
                 name={name}
