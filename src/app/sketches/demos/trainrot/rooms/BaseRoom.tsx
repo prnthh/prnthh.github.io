@@ -15,8 +15,6 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
     const effectiveWidth = config?.width ?? 5;
     const effectiveLength = config?.length ?? 10;
     const wallHeight = config?.wallHeight ?? 4;
-    const wallThickness = config?.wallThickness ?? 0.1;
-    const height = config?.height ?? 1;
 
     // Get previous room for transition walls
     const prevRoomId = index > 0 ? allRooms[index - 1] : null;
@@ -84,7 +82,6 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
             width={effectiveWidth}
             length={effectiveLength}
             wallHeight={wallHeight}
-            wallThickness={wallThickness}
             wallColor={config?.wallColor}
             prevRoom={prevRoom}
         />
@@ -92,7 +89,6 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
             position={[0, 0, 0]}
             width={effectiveWidth}
             length={effectiveLength}
-            height={height}
             floorColor={config?.floorColor}
         />
     </group >
@@ -101,7 +97,7 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
 export default Room;
 
 
-const TiledPlatform = ({ position, width = 5, length = 10, height = 1, floorColor = "gray" }: { position: [number, number, number], width?: number, length?: number, height?: number, floorColor?: string }) => {
+const TiledPlatform = ({ position, width = 5, length = 10, height = 0.1, floorColor = "gray" }: { position: [number, number, number], width?: number, length?: number, height?: number, floorColor?: string }) => {
     // platform is centered on X, sits so top is at y=0, z is centered at length/2
     const yPos = -height / 2;
     const zPos = length / 2;

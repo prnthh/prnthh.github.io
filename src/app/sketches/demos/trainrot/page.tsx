@@ -13,10 +13,12 @@ import Room from "./rooms/BaseRoom";
 import Chaser from "./Chaser";
 
 export default function Home() {
-    const playerRef = useRef<{ tap: () => void; getSpeed: () => number }>(null!);
+    const playerRef = useRef<{ tap: () => void; getSpeed: () => number; swipe: (type: 'left' | 'right') => void }>(null!);
     const speedDisplayRef = useRef<HTMLDivElement>(null);
 
     const handleTap = () => playerRef.current.tap();
+    const handleSwipeLeft = () => playerRef.current.swipe('right'); // Swipe left = right punch
+    const handleSwipeRight = () => playerRef.current.swipe('left'); // Swipe right = left punch
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -56,7 +58,7 @@ export default function Home() {
                         </mesh>
                     </Environment>
                 </GameCanvas>
-                <SwipeControls onTap={handleTap} />
+                <SwipeControls onTap={handleTap} onSwipeLeft={handleSwipeLeft} onSwipeRight={handleSwipeRight} />
             </div>
             <div className="z-20 absolute top-0">
                 <DraggableDiv position={[0, 20]}>
@@ -76,18 +78,17 @@ type RoomVariant = {
     width?: number;
     length?: number;
     wallHeight?: number;
-    wallThickness?: number;
     height?: number;
 }
 
 const ROOM_VARIANTS: RoomVariant[] = [
-    { wallColor: "lightgray", floorColor: "gray", width: 5, length: 10, wallHeight: 4, wallThickness: 0.1, height: 1 },
-    { wallColor: "#805AD5", floorColor: "#D53F8C", width: 6, length: 12, wallHeight: 4, wallThickness: 0.12, height: 1 },
-    { wallColor: "#2C7A7B", floorColor: "#F6E05E", width: 7, length: 8, wallHeight: 5, wallThickness: 0.08, height: 1 },
-    { wallColor: "#1A365D", floorColor: "#38B2AC", width: 8, length: 14, wallHeight: 3.5, wallThickness: 0.12, height: 1 }
+    { wallColor: "lightgray", floorColor: "gray", width: 5, length: 10, wallHeight: 4, },
+    { wallColor: "#805AD5", floorColor: "#D53F8C", width: 6, length: 12, wallHeight: 4, },
+    { wallColor: "#2C7A7B", floorColor: "#F6E05E", width: 7, length: 8, wallHeight: 5, },
+    { wallColor: "#1A365D", floorColor: "#38B2AC", width: 8, length: 14, wallHeight: 3.5, }
 ];
 
-const GameEntityWorld = ({ playerRef: parentPlayerRef }: { playerRef: React.RefObject<{ tap: () => void; getSpeed: () => number }> }) => {
+const GameEntityWorld = ({ playerRef: parentPlayerRef }: { playerRef: React.RefObject<{ tap: () => void; getSpeed: () => number; swipe: (type: 'left' | 'right') => void }> }) => {
     const playerRef = useRef<THREE.Group>(null!);
     const { addEntity, resetWorld } = useGameStore();
     const initialized = useRef(false);

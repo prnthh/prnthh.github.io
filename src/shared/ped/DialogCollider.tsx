@@ -40,8 +40,8 @@ export default function DialogCollider({
             onIntersectionExit={() => { setDialogVisible(false); onExit?.() }}
         />
         {dialogVisible && sceneChildren}
-        {<Html sprite transform position={[0, height * 1.1, 0]} scale={0.4}>
-            <div style={{ visibility: dialogVisible ? 'visible' : 'hidden' }} className="select-none max-w-[250px] hover:text-yellow-500 font-serif p-1 text text-yellow-300 text-center bg-black-800/20 rounded">
+        {dialogVisible && <Html sprite transform position={[0, height * 1.1, 0]} scale={0.4}>
+            <div className="select-none max-w-[250px] hover:text-yellow-500 font-serif p-1 text text-yellow-300 text-center bg-black-800/20 rounded">
                 {children || "Default Dialog Text"}
             </div>
         </Html>}

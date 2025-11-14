@@ -10,6 +10,7 @@ import Rapier from '@dimforge/rapier3d-compat';
 interface PlayerHandle {
     tap: () => void;
     getSpeed: () => number;
+    swipe: (type: 'left' | 'right') => void;
 }
 
 interface PlayerProps {
@@ -24,6 +25,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const animRef = useRef('idle');
     const speedRef = useRef(0);
     const hasTapped = useRef(false);
+    const isPaused = useRef(false);
 
     const MAX_SPEED = 5;
 
@@ -31,12 +33,32 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
         tap: () => {
             hasTapped.current = true;
         },
-        getSpeed: () => speedRef.current
+        getSpeed: () => speedRef.current,
+        swipe: (type: 'left' | 'right') => {
+            // Stop the player
+            speedRef.current = 0;
+            isPaused.current = true;
+
+            // Set punch animation
+            const punchAnim = type === 'left' ? 'lpunch' : 'rpunch';
+            animRef.current = punchAnim;
+            setAnimation(punchAnim);
+
+            // Reset to idle after animation duration (approx 0.5s)
+            setTimeout(() => {
+                isPaused.current = false;
+                animRef.current = 'idle';
+                setAnimation('idle');
+            }, 500);
+        }
     }), []);
 
     useImperativeHandle(groupRef, () => internalRef.current, []);
 
     useFrame((state, delta) => {
+        // Early return if paused
+        if (isPaused.current) return;
+
         // Process tap flag
         if (hasTapped.current) {
             speedRef.current = Math.min(speedRef.current + 0.5, MAX_SPEED);
