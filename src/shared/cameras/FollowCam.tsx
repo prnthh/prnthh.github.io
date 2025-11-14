@@ -64,7 +64,7 @@ export const FollowCam = forwardRef(({
             cameraRef.current.position.lerp(cameraWorldPosition.current, cameraSpeed);
             cameraRef.current.lookAt(cameraLookAtWorldPosition.current);
         }
-    });
+    }, -50); // Camera updates after player movement (-100) for smooth following
 
     return <SceneCamera ref={sceneCameraRef} fov={fov}>
         <group ref={cameraTarget} position-z={1.5} position-y={height * 0.8}>

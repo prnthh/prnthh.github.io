@@ -1,5 +1,6 @@
 import { CylinderCollider } from "@react-three/rapier";
 import React, { useRef, useState, useEffect, DOMElement } from "react";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import { Html } from "@react-three/drei";
 
@@ -32,15 +33,15 @@ export default function DialogCollider({
 
     return <>
         <CylinderCollider
-            args={[height / 2, dialogVisible ? radius * 1.2 : radius]}
+            args={[height / 2, radius]}
             position={[0, (height / 2), 0]}
             sensor
             onIntersectionEnter={handleIntersectionEnter}
             onIntersectionExit={() => { setDialogVisible(false); onExit?.() }}
         />
         {dialogVisible && sceneChildren}
-        {dialogVisible && <Html sprite transform position={[0, height * 1.1, 0]} scale={0.05}>
-            <div className="min-w-[250px] text-3xl text-yellow-300 text-center bg-red-800 rounded">
+        {<Html sprite transform position={[0, height * 1.1, 0]} scale={0.4}>
+            <div style={{ visibility: dialogVisible ? 'visible' : 'hidden' }} className="select-none max-w-[250px] hover:text-yellow-500 font-serif p-1 text text-yellow-300 text-center bg-black-800/20 rounded">
                 {children || "Default Dialog Text"}
             </div>
         </Html>}

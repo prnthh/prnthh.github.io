@@ -1,4 +1,118 @@
-import { Entity } from "@/shared/providers/GameStore";
+
+import useGameStore, { allEntityIDsByType, Entity, useEntityById } from "@/shared/providers/GameStore";
+import * as THREE from "three";
+import AnimatedModel from "@/shared/ped/HumanoidModel";
+import DialogCollider from "@/shared/ped/DialogCollider";
+import CutsceneCamera from "@/shared/cameras/CutsceneCamera";
+
+const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>, roomId: string }) => {
+    const room = useEntityById(roomId);
+    const allRooms = allEntityIDsByType('room');
+
+    if (!room) return null;
+
+    const { variant = 0, config, position, index } = room;
+    const effectiveWidth = config?.width ?? 5;
+    const effectiveLength = config?.length ?? 10;
+    const wallHeight = config?.wallHeight ?? 4;
+    const wallThickness = config?.wallThickness ?? 0.1;
+    const height = config?.height ?? 1;
+
+    // Get previous room for transition walls
+    const prevRoomId = index > 0 ? allRooms[index - 1] : null;
+    const prevRoom = prevRoomId ? useGameStore.getState().entities.find(e => e.id === prevRoomId) : null;
+
+    return <group position={position}>
+        <group>
+            <AnimatedModel
+                rotation={[0, -Math.PI / 2, 0]}
+                position={[2, 0, 3]}
+                scale={1.7}
+                lookTarget={playerRef}
+                basePath={"/models/human/rigga/"}
+                model={"rigga.glb"}
+                // animation={'walk'}
+                animationOverrides={{
+                    walk: 'anim/walk.fbx',
+                    run: 'anim/run.fbx',
+                    jump: 'anim/jump.fbx',
+                }} />
+        </group>
+        <group >
+            <AnimatedModel
+                rotation={[0, Math.PI / 2, 0]}
+                position={[-2, 0, 3]}
+                scale={1.7}
+                lookTarget={playerRef}
+                basePath={"/models/human/rigga/"}
+                model={"rigga.glb"}
+                // animation={'walk'}
+                animationOverrides={{
+                    walk: 'anim/walk.fbx',
+                    run: 'anim/run.fbx',
+                    jump: 'anim/jump.fbx',
+                }} />
+        </group>
+
+        <group >
+            <AnimatedModel
+                rotation={[0, Math.PI, 0]}
+                position={[0, 0, 8]}
+                scale={1.7}
+                lookTarget={playerRef}
+                basePath={"/models/human/rigga/"}
+                model={"rigga.glb"}
+                // animation={'walk'}
+                animationOverrides={{
+                    walk: 'anim/walk.fbx',
+                    run: 'anim/run.fbx',
+                    jump: 'anim/jump.fbx',
+                }}
+            >
+                <DialogCollider
+                    height={1.9}
+                    sceneChildren={<CutsceneCamera position={[-0.2, 2, -2]} rotation={[0.2, Math.PI, 0]} />}
+                >
+                    hello there
+                </DialogCollider>
+            </AnimatedModel>
+        </group>
+
+
+        <VisualSection
+            position={[0, 0, 0]}
+            width={effectiveWidth}
+            length={effectiveLength}
+            wallHeight={wallHeight}
+            wallThickness={wallThickness}
+            wallColor={config?.wallColor}
+            prevRoom={prevRoom}
+        />
+        <TiledPlatform
+            position={[0, 0, 0]}
+            width={effectiveWidth}
+            length={effectiveLength}
+            height={height}
+            floorColor={config?.floorColor}
+        />
+    </group >
+}
+
+export default Room;
+
+
+const TiledPlatform = ({ position, width = 5, length = 10, height = 1, floorColor = "gray" }: { position: [number, number, number], width?: number, length?: number, height?: number, floorColor?: string }) => {
+    // platform is centered on X, sits so top is at y=0, z is centered at length/2
+    const yPos = -height / 2;
+    const zPos = length / 2;
+    return <group position={position}>
+        <mesh receiveShadow castShadow position={[0, yPos, zPos]}>
+            <boxGeometry args={[width, height, length]} />
+            <meshStandardMaterial color={floorColor} />
+        </mesh>
+    </group>;
+};
+
 
 const VisualSection = ({ position, width = 5, length = 10, wallHeight = 4, wallThickness = 0.1, wallColor = "lightgray", prevRoom }: { position: [number, number, number], width?: number, length?: number, wallHeight?: number, wallThickness?: number, wallColor?: string, prevRoom?: Entity | null }) => {
     const xPos = width / 2;
@@ -87,4 +201,3 @@ const VisualSection = ({ position, width = 5, length = 10, wallHeight = 4, wallT
     </group>;
 }
 
-export default VisualSection;

@@ -22,42 +22,55 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const rigidBodyRef = useRef<RapierRigidBody>(null!);
     const internalRef = useRef<THREE.Group>(null!);
     const animRef = useRef('idle');
-    const velCache = useRef({ x: 0, y: 0, z: 0 });
+    const speedRef = useRef(0);
+    const hasTapped = useRef(false);
+
+    const MAX_SPEED = 5;
 
     useImperativeHandle(ref, () => ({
         tap: () => {
-            velCache.current.z += 0.5;
-            rigidBodyRef.current.setLinvel(velCache.current, true);
+            hasTapped.current = true;
         },
-        getSpeed: () => velCache.current.z
+        getSpeed: () => speedRef.current
     }), []);
 
     useImperativeHandle(groupRef, () => internalRef.current, []);
 
     useFrame((state, delta) => {
-        const vel = rigidBodyRef.current.linvel();
-        const clamped = Math.min(Math.max(vel.z - delta, 0), 5);
+        // Process tap flag
+        if (hasTapped.current) {
+            speedRef.current = Math.min(speedRef.current + 0.5, MAX_SPEED);
+            hasTapped.current = false;
+        }
 
-        velCache.current.z = clamped;
-        rigidBodyRef.current.setLinvel(velCache.current, true);
+        if (!rigidBodyRef.current) return;
 
-        const next = animRef.current === 'idle' && clamped > 0.3 ? 'walk'
-            : animRef.current === 'walk' ? (clamped < 0.1 ? 'idle' : clamped > 3.2 ? 'run' : 'walk')
-                : animRef.current === 'run' && clamped < 3.0 ? 'walk'
+        // Decay speed over time
+        speedRef.current = Math.min(Math.max(speedRef.current - delta, 0), MAX_SPEED);
+        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: speedRef.current }, true);
+
+        const speed = speedRef.current;
+        const next = animRef.current === 'idle' && speed > 0.3 ? 'walk'
+            : animRef.current === 'walk' ? (speed < 0.1 ? 'idle' : speed > 3.2 ? 'run' : 'walk')
+                : animRef.current === 'run' && speed < 3.0 ? 'walk'
                     : animRef.current;
 
         if (next !== animRef.current) {
             animRef.current = next;
             setAnimation(next);
         }
-    });
+    }, -100); // Player movement runs early, before camera updates
 
     return <RigidBody
         name="bob"
         ref={rigidBodyRef}
-        position={[0, 0, 5]}
+        position={[0, 0, 2]}
         type="kinematicVelocity"
-        activeCollisionTypes={Rapier.ActiveCollisionTypes.KINEMATIC_FIXED | Rapier.ActiveCollisionTypes.DYNAMIC_KINEMATIC}
+        activeCollisionTypes={
+            Rapier.ActiveCollisionTypes.KINEMATIC_FIXED |
+            Rapier.ActiveCollisionTypes.DYNAMIC_KINEMATIC |
+            Rapier.ActiveCollisionTypes.KINEMATIC_KINEMATIC
+        }
     >
         <AnimatedModel
             ref={internalRef}
