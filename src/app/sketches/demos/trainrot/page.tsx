@@ -24,7 +24,7 @@ export default function Home() {
     useEffect(() => {
         const interval = setInterval(() => {
             if (speedDisplayRef.current) {
-                speedDisplayRef.current.textContent = `Speed: ${playerRef.current.getSpeed().toFixed(1)}`;
+                speedDisplayRef.current.textContent = `Speed: ${playerRef.current?.getSpeed?.().toFixed(1)}`;
             }
         }, 60);
 

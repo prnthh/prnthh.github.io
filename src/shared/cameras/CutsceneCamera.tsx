@@ -39,7 +39,7 @@ const CutsceneCamera = forwardRef<any, CutsceneCameraProps>(({
         camera.quaternion.copy(startQuaternion);
 
         // Calculate target quaternion from rotation prop or use start quaternion
-        const targetQuaternion = rotation 
+        const targetQuaternion = rotation
             ? new THREE.Quaternion().setFromEuler(new THREE.Euler(rotation[0], rotation[1], rotation[2]))
             : startQuaternion.clone();
 
