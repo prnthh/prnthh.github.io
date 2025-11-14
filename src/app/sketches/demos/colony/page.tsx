@@ -10,7 +10,7 @@ import { useThree } from "@react-three/fiber";
 import Ped from "@/shared/ped/ped";
 import DialogCollider from "@/shared/ped/DialogCollider";
 import DebugGround from "@/shared/debug/DebugGround";
-import DebugCamera from "@/shared/debug/DebugCamera";
+import DebugCamera from "@/shared/cameras/DebugCamera";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
 import NavigableWorld from "@/shared/navmesh/NavigableWorld";
 

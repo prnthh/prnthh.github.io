@@ -10,7 +10,7 @@ import { CapsuleCollider, RapierRigidBody, RigidBody, useRapier } from "@react-t
 import { useEffect, useRef, useState, useMemo, useCallback, RefObject } from "react";
 import { MathUtils, Vector3, Group, Quaternion } from "three";
 import * as THREE from "three";
-import { FollowCam } from "@/shared/FollowCam";
+import { FollowCam } from "@/shared/cameras/FollowCam";
 import TSLLine from "./TSLLine";
 import { useWeapon } from "./useWeapon";
 import AnimatedModel from "../ped/HumanoidModel";
@@ -288,15 +288,14 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
                         verticalRotation={verticalRotation}
                         cameraOffset={
                             shoulderCamMode
-                                ? new Vector3(-0.5, 0.5, 0.5)
-                                : new Vector3(0, 0.5, 1.5)
+                                ? [-0.5, 0.5, 0.5]
+                                : [0, 0.5, 1.5]
                         }
                         targetOffset={
                             shoulderCamMode
-                                ? new Vector3(0, 0.5, -1.5)
-                                : new Vector3(0, 0.5, -1.5)
+                                ? [0, 0.5, -1.5]
+                                : [0, 0.5, -1.5]
                         }
-                        cameraRigRef={cameraRig}
                     />
                     <group ref={character} rotation={[0, Math.PI, 0]}>
                         {/* {shoulderCamMode && <TSLLine container={character} />} */}

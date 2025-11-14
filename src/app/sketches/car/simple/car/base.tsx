@@ -5,7 +5,7 @@ import { CuboidCollider, RapierRigidBody, RigidBody, useRapier } from '@react-th
 import { RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { WheelInfo, useVehicleController } from './vehicleController'
-import { FollowCam } from '@/shared/FollowCam'
+import { FollowCam } from '@/shared/cameras/FollowCam'
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js'
 import React from 'react'
 import { useControlScheme } from '@/shared/controls/ControlsProvider'

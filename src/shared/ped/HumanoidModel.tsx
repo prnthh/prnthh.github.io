@@ -40,6 +40,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
         debug = false, lookTarget, retargetOptions, onActions, attachments, children, ...props
     }, ref) => {
         const modelRef = useRef<THREE.Object3D | undefined>(undefined);
+        const groupRef = useRef<THREE.Group>(null!);
         const { scene, animations } = useGLTF(basePath + model);
         const [clonedScene, setClonedScene] = useState<THREE.Object3D | undefined>(undefined);
 
@@ -110,10 +111,11 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
             if (mixer) mixer.update(delta);
         });
 
-        useImperativeHandle(ref, () => modelRef.current as THREE.Object3D, [modelRef]);
+        useImperativeHandle(ref, () => groupRef.current, [groupRef]);
 
         return (
             <group
+                ref={groupRef}
                 {...props}
                 position={position}
                 onPointerDown={(e) => {

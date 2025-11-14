@@ -3,7 +3,7 @@ import { combine } from 'zustand/middleware'
 import { useShallow } from 'zustand/react/shallow'
 import { immer } from "zustand/middleware/immer";
 
-export const knownEntityTypes = ['pickupable', 'NPC'] as const
+export const knownEntityTypes = ['pickupable', 'NPC', 'room'] as const
 
 export type Entity = {
     id: string

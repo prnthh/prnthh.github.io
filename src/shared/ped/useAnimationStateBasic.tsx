@@ -98,13 +98,14 @@ export default function useAnimationState(
         }
 
         if (mixer && actions && animationKey && actions[animationKey]) {
-            if (lastKeyRef.current !== animationKey) {
-                const action = actions[animationKey] || actions.idle;
+            const action = actions[animationKey] || actions.idle;
+
+            if (lastKeyRef.current !== animationKey || !action.isRunning()) {
                 let loops = 1;
 
                 if (true) {
-                    loops = 100;
-                } else if (animationKey === 'eating') loops = 4;
+                    loops = 1000;
+                }
                 action.clampWhenFinished = true;
 
                 if (prevActionRef.current && prevActionRef.current !== action) {

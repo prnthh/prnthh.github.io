@@ -2,7 +2,6 @@ import { Canvas, extend } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 import { Suspense, useState } from "react";
 import { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.Nodes.js";
-import LoadingScreen from "./ui/LoadingScreen";
 
 // generic version
 // extend(THREE as any)
@@ -18,10 +17,12 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
     const [loading, setLoading] = useState(true);
 
     return <>
-        {<LoadingScreen text="loading engine..." zIndex={!loading ? -1 : 1} />}
+        {<div className="fixed inset-0 flex items-center justify-center bg-black" style={{ zIndex: loading ? 1000 : -1, }}>
+            <div id="loading-screen-text" className="text-white text-xl animate-pulse">loading...</div>
+        </div>}
 
         <Canvas
-            shadows={{ type: THREE.PCFSoftShadowMap }}
+            shadows={{ type: THREE.PCFShadowMap, }}
             frameloop={frameloop}
             gl={async ({ canvas }) => {
                 const renderer = new THREE.WebGPURenderer({
