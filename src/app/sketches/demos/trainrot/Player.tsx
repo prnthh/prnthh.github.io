@@ -23,19 +23,30 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const { groupRef } = props;
     const rigidBodyRef = useRef<RapierRigidBody>(null!);
     const internalRef = useRef<THREE.Group>(null!);
-    const animRef = useRef('idle');
-    const speedRef = useRef(0);
-    const isPaused = useRef(false);
-    const lastTapSignal = useRef(0);
-    const lastSwipeTimestamp = useRef(0);
+    const stateRef = useRef({
+        isPaused: false,
+        lastSwipeTimestamp: 0,
+        lastTapSignal: 0
+    });
 
     const MAX_SPEED = 5;
+
+    const applyImpulse = () => {
+        if (!rigidBodyRef.current) return;
+        const currentVel = rigidBodyRef.current.linvel();
+        if (currentVel.z < MAX_SPEED) {
+            rigidBodyRef.current.applyImpulse({ x: 0, y: 0, z: 0.5 }, true);
+        }
+    };
 
     useImperativeHandle(ref, () => ({
         tap: () => {
             useInputStore.getState().tap();
         },
-        getSpeed: () => speedRef.current,
+        getSpeed: () => {
+            if (!rigidBodyRef.current) return 0;
+            return rigidBodyRef.current.linvel().z;
+        },
         swipe: (type: 'left' | 'right') => {
             useInputStore.getState().swipe(type);
         }
@@ -48,49 +59,40 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
         const { tapSignal, swipeSignal } = useInputStore.getState();
 
         // Handle swipe
-        if (swipeSignal && swipeSignal.timestamp !== lastSwipeTimestamp.current) {
-            lastSwipeTimestamp.current = swipeSignal.timestamp;
-
-            // Stop the player
-            speedRef.current = 0;
-            isPaused.current = true;
+        if (swipeSignal && swipeSignal.timestamp !== stateRef.current.lastSwipeTimestamp) {
+            stateRef.current.lastSwipeTimestamp = swipeSignal.timestamp;
+            stateRef.current.isPaused = true;
 
             // Set punch animation
             const punchAnim = swipeSignal.type === 'left' ? 'lpunch' : 'rpunch';
-            animRef.current = punchAnim;
             setAnimation(punchAnim);
 
             // Reset to idle after animation duration (approx 0.5s)
             setTimeout(() => {
-                isPaused.current = false;
-                animRef.current = 'idle';
+                stateRef.current.isPaused = false;
                 setAnimation('idle');
             }, 500);
         }
 
         // Early return if paused
-        if (isPaused.current) return;
-
-        // Handle tap
-        if (tapSignal !== lastTapSignal.current) {
-            lastTapSignal.current = tapSignal;
-            speedRef.current = Math.min(speedRef.current + 0.5, MAX_SPEED);
-        }
+        if (stateRef.current.isPaused) return;
 
         if (!rigidBodyRef.current) return;
 
-        // Decay speed over time
-        speedRef.current = Math.min(Math.max(speedRef.current - delta, 0), MAX_SPEED);
-        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: speedRef.current }, true);
+        // Handle tap - apply impulse only when tapped
+        if (tapSignal !== stateRef.current.lastTapSignal) {
+            stateRef.current.lastTapSignal = tapSignal;
+            applyImpulse();
+        }
 
-        const speed = speedRef.current;
-        const next = animRef.current === 'idle' && speed > 0.3 ? 'walk'
-            : animRef.current === 'walk' ? (speed < 0.1 ? 'idle' : speed > 3.2 ? 'run' : 'walk')
-                : animRef.current === 'run' && speed < 3.0 ? 'walk'
-                    : animRef.current;
+        // Get speed from rigidbody and update animation
+        const speed = rigidBodyRef.current.linvel().z;
+        const next = animation === 'idle' && speed > 0.3 ? 'walk'
+            : animation === 'walk' ? (speed < 0.1 ? 'idle' : speed > 3.2 ? 'run' : 'walk')
+                : animation === 'run' && speed < 3.0 ? 'walk'
+                    : animation;
 
-        if (next !== animRef.current) {
-            animRef.current = next;
+        if (next !== animation) {
             setAnimation(next);
         }
     }, -100); // Player movement runs early, before camera updates
@@ -99,12 +101,10 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
         name="bob"
         ref={rigidBodyRef}
         position={[0, 0, 2]}
-        type="kinematicVelocity"
-        activeCollisionTypes={
-            Rapier.ActiveCollisionTypes.KINEMATIC_FIXED |
-            Rapier.ActiveCollisionTypes.DYNAMIC_KINEMATIC |
-            Rapier.ActiveCollisionTypes.KINEMATIC_KINEMATIC
-        }
+        type="dynamic"
+        linearDamping={0.5}
+        enabledTranslations={[false, false, true]}
+        lockRotations
     >
         <AnimatedModel
             ref={internalRef}

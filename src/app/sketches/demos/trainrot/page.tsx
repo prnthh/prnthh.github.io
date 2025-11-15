@@ -1,7 +1,7 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { Environment } from "@react-three/drei";
+import { Environment, useTexture } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
 import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameStore";
 import { useEffect, useRef } from "react";
@@ -12,6 +12,8 @@ import Player from "./Player";
 import Room from "./rooms/BaseRoom";
 import Chaser from "./Chaser";
 import { useInputStore } from "@/shared/firstperson/useInputStore";
+import { useThree } from "@react-three/fiber";
+import { RoomEnvironment } from "three/examples/jsm/Addons.js";
 
 export default function Home() {
     const playerRef = useRef<{ tap: () => void; getSpeed: () => number; swipe: (type: 'left' | 'right') => void }>(null!);
@@ -52,12 +54,7 @@ export default function Home() {
                         <GameEntityWorld playerRef={playerRef} />
 
                     </Physics>
-                    <Environment>
-                        <mesh>
-                            <sphereGeometry args={[50, 32, 32]} />
-                            <meshBasicMaterial color="lightblue" side={THREE.BackSide} />
-                        </mesh>
-                    </Environment>
+                    <CoolRoomEnvironment />
                 </GameCanvas>
                 <SwipeControls onTap={handleTap} onSwipeLeft={handleSwipeLeft} onSwipeRight={handleSwipeRight} />
             </div>
@@ -72,6 +69,14 @@ export default function Home() {
         </div>
     );
 }
+
+const CoolRoomEnvironment = () => {
+    const { texture } = useTexture({
+        texture: '/textures/skybox1.jpg',
+    });
+
+    return <Environment map={texture} />;
+};
 
 type RoomVariant = {
     wallColor?: string;
