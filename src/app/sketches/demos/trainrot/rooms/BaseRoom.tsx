@@ -52,7 +52,7 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
                 }} />
         </group>
 
-        <group >
+        {variant == 0 && <group >
             <AnimatedModel
                 rotation={[0, Math.PI, 0]}
                 position={[0, 0, 8]}
@@ -69,12 +69,17 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
             >
                 <DialogCollider
                     height={1.9}
+                    onEnter={() => {
+                        // play mp3
+
+                        new Audio('/sound/npc-theme.mp3').play();
+                    }}
                     sceneChildren={<CutsceneCamera position={[-0.2, 2, -2]} rotation={[0.2, Math.PI, 0]} />}
                 >
                     hello there
                 </DialogCollider>
             </AnimatedModel>
-        </group>
+        </group>}
 
 
         <VisualSection

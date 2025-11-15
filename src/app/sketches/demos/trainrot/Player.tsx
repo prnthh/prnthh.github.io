@@ -1,12 +1,12 @@
 
 import { useRef, forwardRef, useImperativeHandle, useState } from "react";
 import * as THREE from "three";
+import { useFrame } from "@react-three/fiber";
+import { RigidBody, RapierRigidBody, useBeforePhysicsStep } from "@react-three/rapier";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { FollowCam } from "@/shared/cameras/FollowCam";
-import { useFrame } from "@react-three/fiber";
-import { RigidBody, RapierRigidBody } from "@react-three/rapier";
-import Rapier from '@dimforge/rapier3d-compat';
 import { useInputStore } from "@/shared/firstperson/useInputStore";
+import Rapier from '@dimforge/rapier3d-compat';
 
 interface PlayerHandle {
     tap: () => void;
@@ -23,6 +23,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const { groupRef } = props;
     const rigidBodyRef = useRef<RapierRigidBody>(null!);
     const internalRef = useRef<THREE.Group>(null!);
+    const velocityRef = useRef(0);
     const stateRef = useRef({
         isPaused: false,
         lastSwipeTimestamp: 0,
@@ -30,22 +31,15 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     });
 
     const MAX_SPEED = 5;
-
-    const applyImpulse = () => {
-        if (!rigidBodyRef.current) return;
-        const currentVel = rigidBodyRef.current.linvel();
-        if (currentVel.z < MAX_SPEED) {
-            rigidBodyRef.current.applyImpulse({ x: 0, y: 0, z: 0.5 }, true);
-        }
-    };
+    const ACCELERATION = 1;
+    const DECAY = 0.99;
 
     useImperativeHandle(ref, () => ({
         tap: () => {
             useInputStore.getState().tap();
         },
         getSpeed: () => {
-            if (!rigidBodyRef.current) return 0;
-            return rigidBodyRef.current.linvel().z;
+            return velocityRef.current;
         },
         swipe: (type: 'left' | 'right') => {
             useInputStore.getState().swipe(type);
@@ -55,38 +49,30 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     useImperativeHandle(groupRef, () => internalRef.current, []);
 
     useFrame((state, delta) => {
-        // Read signals directly from store (no React re-render)
         const { tapSignal, swipeSignal } = useInputStore.getState();
 
-        // Handle swipe
         if (swipeSignal && swipeSignal.timestamp !== stateRef.current.lastSwipeTimestamp) {
             stateRef.current.lastSwipeTimestamp = swipeSignal.timestamp;
             stateRef.current.isPaused = true;
-
-            // Set punch animation
             const punchAnim = swipeSignal.type === 'left' ? 'lpunch' : 'rpunch';
             setAnimation(punchAnim);
-
-            // Reset to idle after animation duration (approx 0.5s)
             setTimeout(() => {
                 stateRef.current.isPaused = false;
                 setAnimation('idle');
             }, 500);
         }
 
-        // Early return if paused
         if (stateRef.current.isPaused) return;
 
-        if (!rigidBodyRef.current) return;
-
-        // Handle tap - apply impulse only when tapped
         if (tapSignal !== stateRef.current.lastTapSignal) {
             stateRef.current.lastTapSignal = tapSignal;
-            applyImpulse();
+            velocityRef.current = Math.min(velocityRef.current + ACCELERATION, MAX_SPEED);
         }
 
-        // Get speed from rigidbody and update animation
-        const speed = rigidBodyRef.current.linvel().z;
+        velocityRef.current *= DECAY;
+        if (velocityRef.current < 0.01) velocityRef.current = 0;
+
+        const speed = velocityRef.current;
         const next = animation === 'idle' && speed > 0.3 ? 'walk'
             : animation === 'walk' ? (speed < 0.1 ? 'idle' : speed > 3.2 ? 'run' : 'walk')
                 : animation === 'run' && speed < 3.0 ? 'walk'
@@ -95,31 +81,40 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
         if (next !== animation) {
             setAnimation(next);
         }
-    }, -100); // Player movement runs early, before camera updates
+    }, -100);
+
+    useBeforePhysicsStep(() => {
+        if (!rigidBodyRef.current) return;
+        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: velocityRef.current }, true);
+    });
 
     return <RigidBody
         name="bob"
         ref={rigidBodyRef}
         position={[0, 0, 2]}
-        type="dynamic"
-        linearDamping={0.5}
+        type="kinematicVelocity"
         enabledTranslations={[false, false, true]}
+        activeCollisionTypes={
+            Rapier.ActiveCollisionTypes.KINEMATIC_FIXED |
+            Rapier.ActiveCollisionTypes.DYNAMIC_KINEMATIC |
+            Rapier.ActiveCollisionTypes.KINEMATIC_KINEMATIC
+        }
         lockRotations
     >
         <AnimatedModel
             ref={internalRef}
             scale={1}
-            basePath={"/models/human/onimilio/"}
-            model={"rigged.glb"}
+            basePath="/models/human/onimilio/"
+            model="rigged.glb"
             animation={animation}
             animationOverrides={{
                 idle: 'anim/idle.fbx',
                 walk: 'anim/walk.fbx',
                 run: 'anim/run.fbx',
                 jump: 'anim/jump.fbx',
-                walkLeft: "/anim/walkLeft.fbx",
-                lpunch: "/anim/lpunch.fbx",
-                rpunch: "/anim/rpunch.fbx",
+                walkLeft: 'anim/walkLeft.fbx',
+                lpunch: 'anim/lpunch.fbx',
+                rpunch: 'anim/rpunch.fbx',
             }}
         >
             <FollowCam height={1} cameraOffset={[0, 1, -2]} targetOffset={[0, 1.8, 0]} />
