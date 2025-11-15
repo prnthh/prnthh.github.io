@@ -40,19 +40,21 @@ const LocalPlayer = () => {
 
                 // Check if there's a significant change
                 let shouldSend = false;
+                let posDiff = 0;
+                let rotDiff = 0;
 
                 if (!lastSentState) {
                     shouldSend = true;
                 } else {
                     // Check position difference
-                    const posDiff = Math.sqrt(
+                    posDiff = Math.sqrt(
                         Math.pow(newState.position[0] - lastSentState.position[0], 2) +
                         Math.pow(newState.position[1] - lastSentState.position[1], 2) +
                         Math.pow(newState.position[2] - lastSentState.position[2], 2)
                     );
 
                     // Check rotation difference
-                    const rotDiff = Math.max(
+                    rotDiff = Math.max(
                         Math.abs(newState.rotation[0] - lastSentState.rotation[0]),
                         Math.abs(newState.rotation[1] - lastSentState.rotation[1])
                     );

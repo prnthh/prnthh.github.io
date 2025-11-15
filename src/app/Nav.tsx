@@ -12,7 +12,7 @@ const allExperiments = [
     'lighting',
     'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
     'car/simple', 'car/road',
-    'instancing/simple', 'instancing/merged', 'instancing/instancedMesh2', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc3', 'instancing/npc4', 'instancing/npc5', 'instancing/npc6',
+    'instancing/simple', 'instancing/merged', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc4',
     'tools/character', 'tools/worldeditor', 'tools/narrativegraph',
     'editor/scene', 'editor/dragdrop',
     'ik/ragdoll', 'ik/crawler',

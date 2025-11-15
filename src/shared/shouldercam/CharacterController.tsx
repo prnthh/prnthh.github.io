@@ -106,7 +106,15 @@ export const CharacterController = ({ position = [0, 2, 0], lookTarget, name = '
     // --- Forward refs ---
     useEffect(() => {
         if (typeof forwardRef === 'function') {
-            forwardRef({ rbref: rb, meshref: container, cameraRigRef: cameraRig });
+            // Create a fake cameraRig that exposes the vertical rotation
+            const fakeCameraRig: any = {
+                current: {
+                    rotation: {
+                        get x() { return verticalRotation.current; }
+                    }
+                }
+            };
+            forwardRef({ rbref: rb, meshref: container, cameraRigRef: fakeCameraRig });
         }
     }, [forwardRef]);
 

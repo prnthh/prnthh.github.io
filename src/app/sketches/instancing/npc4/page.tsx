@@ -54,7 +54,6 @@ const SceneContent = () => {
             {/* Animated model */}
             <AnimatedModel />
             <ShinyFloor />
-            <Environment preset="sunset" background backgroundBlurriness={0.1} />
 
             <OrbitControls enableDamping={false} />
         </>
