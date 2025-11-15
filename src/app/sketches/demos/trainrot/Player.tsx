@@ -85,7 +85,8 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
 
     useBeforePhysicsStep(() => {
         if (!rigidBodyRef.current) return;
-        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: velocityRef.current }, true);
+        // round to avoid floating point issues and rapier jitters
+        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: parseFloat(velocityRef.current.toFixed(1)) }, true);
     });
 
     return <RigidBody

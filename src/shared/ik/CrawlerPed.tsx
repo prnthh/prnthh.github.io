@@ -1,20 +1,16 @@
 import Rapier from '@dimforge/rapier3d-compat';
-import { useKeyboardControls } from '@react-three/drei';
 import { type ThreeElements, useFrame } from '@react-three/fiber';
 import {
     BallCollider,
-    Physics,
-    type RapierContext,
     type RapierRigidBody,
     RigidBody,
     type RigidBodyProps,
-    useRapier,
+    useAfterPhysicsStep,
+    useBeforePhysicsStep,
 } from '@react-three/rapier';
-import { World } from '@/shared/ik/dist/index';
 import {
     type Ref,
     useEffect,
-    useImperativeHandle,
     useMemo,
     useRef,
 } from 'react';
@@ -42,21 +38,7 @@ import {
     bone,
     fabrikFixedIterations,
 } from '@/shared/ik/fabrik';
-
-type EntityType = {
-    crawler: CrawlerState;
-    rigidBody: RapierRigidBody;
-    three: Object3D;
-    isControlTarget?: boolean;
-};
-
-const world = new World<EntityType>();
-const crawlerQuery = world.query((e) =>
-    e.is('crawler').and.has('rigidBody', 'three'),
-);
-const controlTargetCrawlerQuery = world.query((e) =>
-    e.is('isControlTarget').and.has('crawler').and.has('rigidBody', 'three'),
-);
+import { useInputStore } from '@/shared/providers/InputStore';
 
 const _footPlacementOffset = new Vector3();
 const _legOrigin = new Vector3();
@@ -213,14 +195,25 @@ const updateCrawlerMovement = (
     // determine velocity from input
     _velocity.set(crawler.input.direction.x, 0, crawler.input.direction.y);
     _velocity.normalize();
-    _velocity.multiplyScalar(crawler.def.speed);
+    _velocity.multiplyScalar(crawler.def.speed * dt);
     if (crawler.input.sprint) {
         _velocity.multiplyScalar(crawler.def.sprintMultiplier);
     }
-    _velocity.multiplyScalar(dt);
 
-    // preserve y velocity
-    _velocity.y = rigidBody.linvel().y;
+    // preserve y velocity and add to current velocity
+    const currentVel = rigidBody.linvel();
+    _velocity.x += currentVel.x * 0.9; // damping
+    _velocity.y = currentVel.y;
+    _velocity.z += currentVel.z * 0.9; // damping
+
+    // clamp horizontal velocity
+    const horizontalSpeed = Math.sqrt(_velocity.x * _velocity.x + _velocity.z * _velocity.z);
+    const maxSpeed = crawler.def.speed * dt * (crawler.input.sprint ? crawler.def.sprintMultiplier : 1) * 2;
+    if (horizontalSpeed > maxSpeed) {
+        const scale = maxSpeed / horizontalSpeed;
+        _velocity.x *= scale;
+        _velocity.z *= scale;
+    }
 
     // set velocity
     rigidBody.setLinvel(_velocity, true);
@@ -1031,35 +1024,95 @@ const CrawlerGooglyEye = ({
 type CrawlerProps = Omit<RigidBodyProps, 'ref'> & {
     def: CrawlerDef;
     debug?: boolean;
+    controlled?: boolean;
     ref?: Ref<CrawlerState>;
-    isControlTarget?: boolean;
 };
 
 const Crawler = ({
     ref,
     def,
     debug = false,
-    isControlTarget = false,
+    controlled = false,
     ...rigidBodyProps
 }: CrawlerProps) => {
+    const inputStore = useInputStore();
     const rigidBodyRef = useRef<Rapier.RigidBody>(null!);
     const groupRef = useRef<Group>(null!);
+    const crawlerRef = useRef<CrawlerState | null>(null);
 
     useEffect(() => {
         const crawler = initCrawler(def);
+        crawlerRef.current = crawler;
 
-        const entity = world.create({
-            crawler,
-            rigidBody: rigidBodyRef.current,
-            three: groupRef.current,
-            isControlTarget,
-        });
+        // Expose the crawler state through the ref prop
+        if (ref && typeof ref === 'function') {
+            ref(crawler);
+        } else if (ref) {
+            (ref as React.MutableRefObject<CrawlerState | null>).current = crawler;
+        }
 
         return () => {
-            world.destroy(entity);
+            if (ref && typeof ref === 'function') {
+                ref(null);
+            } else if (ref) {
+                (ref as React.MutableRefObject<CrawlerState | null>).current = null;
+            }
             disposeCrawler(crawler);
+            crawlerRef.current = null;
         };
-    }, [def, isControlTarget]);
+    }, [def, ref]);
+
+    useBeforePhysicsStep((world) => {
+        if (!crawlerRef.current) return;
+
+        const dt = world.timestep;
+        const crawler = crawlerRef.current;
+        const rigidBody = rigidBodyRef.current;
+
+        /* update input */
+        if (controlled) {
+            const input = crawler.input;
+            const cmd = crawler.cmd;
+
+            input.direction.set(inputStore.horizontal, inputStore.vertical);
+            input.sprint = inputStore.sprint;
+
+            if (inputStore.jump) {
+                cmd.push('jump');
+            }
+        }
+
+        /* before physics step */
+        updateCrawlerMovement(crawler, rigidBody, dt);
+        updateCrawlerTimer(crawler, dt);
+        updateCrawlerSuspension(crawler, rigidBody, world, dt);
+    });
+
+    useAfterPhysicsStep((world) => {
+        if (!crawlerRef.current) return;
+
+        const dt = world.timestep;
+        const crawler = crawlerRef.current;
+        const rigidBody = rigidBodyRef.current;
+        const three = groupRef.current;
+
+        /* after physics step */
+        updateCrawlerPosition(crawler, rigidBody);
+        updateCrawlerFootPlacement(crawler, three, rigidBody, world);
+        updateCrawlerStepping(crawler, rigidBody, dt);
+        updateCrawlerIK(crawler, three);
+    });
+
+    useFrame(({ scene }) => {
+        if (!crawlerRef.current) return;
+
+        const crawler = crawlerRef.current;
+        const three = groupRef.current;
+
+        /* debug visuals - runs at render rate */
+        updateCrawlerDebugVisuals(crawler, debug, three, scene);
+        updateCrawlerVisuals(crawler, three);
+    });
 
     return (
         <RigidBody
@@ -1094,26 +1147,7 @@ const Crawler = ({
     );
 };
 
-
-
-
-type PhysicsRefCaptureProps = {
-    ref: Ref<RapierContext>;
-};
-
-const PhysicsRefCapture = ({ ref }: PhysicsRefCaptureProps) => {
-    const context = useRapier();
-
-    useImperativeHandle(ref, () => context, [context]);
-
-    return null;
-};
-
-const CrawlerApp = ({ controlled, spawn = [0, 10, 5] }: { controlled?: boolean, spawn?: [number, number, number] }) => {
-    const rapierRef = useRef<RapierContext>(null!);
-
-    // const controls = useControlScheme();
-
+const CrawlerApp = ({ controlled = true }: { controlled?: boolean }) => {
     const {
         debug,
         color,
@@ -1150,6 +1184,12 @@ const CrawlerApp = ({ controlled, spawn = [0, 10, 5] }: { controlled?: boolean, 
         stepCycleSpeed: 2,
     };
 
+    const crawlerRef = useRef<CrawlerState | null>(null);
+    const cameraTarget = useRef<Vector3>(new Vector3());
+
+    useEffect(() => {
+        cameraTarget.current.set(0, 4, 0);
+    }, []);
 
     const crawlerDef: CrawlerDef = useMemo(() => {
         const legs: LegDef[] = [];
@@ -1200,106 +1240,31 @@ const CrawlerApp = ({ controlled, spawn = [0, 10, 5] }: { controlled?: boolean, 
         stepCycleSpeed,
     ]);
 
-    // const cameraTarget = useRef<Vector3>(new Vector3());
-
-    // useEffect(() => {
-    //     cameraTarget.current.set(0, 4, 0);
-    // }, []);
-
-    const [, getKeyboardControls] = useKeyboardControls()
-
-
-    useFrame(({ camera, scene }, frameDt) => {
-        // clamp delta
-        const dt = Math.min(frameDt, 0.1);
-
-        /* input */
-        const controlTargetCrawler = controlTargetCrawlerQuery.first;
-        const controls = getKeyboardControls();
-
-        if (controlTargetCrawler && controlled) {
-            const input = controlTargetCrawler.crawler.input;
-            const cmd = controlTargetCrawler.crawler.cmd;
-
-            /* update crawler input */
-            input.direction.set(0, 0);
-
-            if (controls.forward) {
-                input.direction.y = -1;
-            }
-            if (controls.backward) {
-                input.direction.y = 1;
-            }
-            if (controls.left) {
-                input.direction.x = -1;
-            }
-            if (controls.right) {
-                input.direction.x = 1;
-            }
-            // input.crouch = controls.crouch;
-            input.sprint = controls.sprint;
-
-            if (controls.jump) {
-                cmd.push('jump');
-            }
-        }
-
-        /* before physics step */
-        for (const entity of crawlerQuery) {
-            updateCrawlerMovement(entity.crawler, entity.rigidBody, dt);
-            updateCrawlerTimer(entity.crawler, dt);
-            updateCrawlerSuspension(
-                entity.crawler,
-                entity.rigidBody,
-                rapierRef.current.world,
-                dt,
-            );
-        }
-
-        /* physics step */
-        rapierRef.current.step(dt);
-
-        /* after physics step */
-        for (const entity of crawlerQuery) {
-            updateCrawlerPosition(entity.crawler, entity.rigidBody);
-            updateCrawlerFootPlacement(
-                entity.crawler,
-                entity.three,
-                entity.rigidBody,
-                rapierRef.current.world,
-            );
-            updateCrawlerStepping(entity.crawler, entity.rigidBody, dt);
-            updateCrawlerIK(entity.crawler, entity.three);
-            updateCrawlerDebugVisuals(entity.crawler, debug, entity.three, scene);
-            updateCrawlerVisuals(entity.crawler, entity.three);
-        }
+    useFrame(({ camera }, frameDt) => {
+        if (!crawlerRef.current) return;
 
         /* camera rig */
-        // if (!debug && controlTargetCrawler) {
-        //     cameraTarget.current.lerp(
-        //         controlTargetCrawler.crawler.state.position,
-        //         dt * 5,
-        //     );
-        //     camera.position
-        //         .copy(cameraTarget.current)
-        //         .add(_cameraOffset.set(0, 5, 15));
+        if (controlled && !debug) {
+            cameraTarget.current.lerp(crawlerRef.current.state.position, frameDt * 5);
+            camera.position
+                .copy(cameraTarget.current)
+                .add(_cameraOffset.set(0, 5, 15));
 
-        //     camera.quaternion.setFromUnitVectors(
-        //         _axis.set(0, 0, -1),
-        //         _direction.copy(cameraTarget.current).sub(camera.position).normalize(),
-        //     );
-        // }
+            camera.quaternion.setFromUnitVectors(
+                _axis.set(0, 0, -1),
+                _direction.copy(cameraTarget.current).sub(camera.position).normalize(),
+            );
+        }
     });
 
     return (
         <>
-            <PhysicsRefCapture ref={rapierRef} />
-
             <Crawler
-                position={spawn}
+                position={[0, 10, 2]}
                 def={crawlerDef}
                 debug={debug}
-                isControlTarget
+                controlled={controlled}
+                ref={crawlerRef}
             />
         </>
     );

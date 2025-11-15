@@ -81,7 +81,7 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
 const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null) => void }) => {
     const { scheme } = useControlScheme();
     return <>
-        <CrawlerApp />
+        <CrawlerApp controlled={false} />
 
         <CharacterController>
             {props.weapon && <ModelAttachment

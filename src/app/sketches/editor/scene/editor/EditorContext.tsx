@@ -65,24 +65,6 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
         setPlayMode(mode);
     }, [mode]);
 
-    // Update DOM directly when loading progress changes
-    useEffect(() => {
-        const loadingTextElement = document.getElementById("loading-screen-text");
-        if (loadingTextElement) {
-            if (isLoadingAssets) {
-                if (loadingProgress) {
-                    const { currentFile, loadedCount, totalCount, currentSizeMB } = loadingProgress;
-                    loadingTextElement.textContent = `Loading ${loadedCount + 1}/${totalCount}: ${currentFile} (${currentSizeMB.toFixed(2)} MB)`;
-                } else {
-                    loadingTextElement.textContent = "Loading...";
-                }
-            } else {
-                // Clear text when done loading
-                loadingTextElement.textContent = "";
-            }
-        }
-    }, [loadingProgress, isLoadingAssets]);
-
     // Map of nodeId to ref
     const nodeRefs = useRef<{ [id: string]: React.RefObject<Object3D<Object3DEventMap> | null> }>({});
     const getNodeRef = (id: string): React.RefObject<Object3D<Object3DEventMap> | null> => {
