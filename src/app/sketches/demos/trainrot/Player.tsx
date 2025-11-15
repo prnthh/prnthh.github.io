@@ -6,6 +6,7 @@ import { FollowCam } from "@/shared/cameras/FollowCam";
 import { useFrame } from "@react-three/fiber";
 import { RigidBody, RapierRigidBody } from "@react-three/rapier";
 import Rapier from '@dimforge/rapier3d-compat';
+import { useInputStore } from "@/shared/firstperson/useInputStore";
 
 interface PlayerHandle {
     tap: () => void;
@@ -24,23 +25,38 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const internalRef = useRef<THREE.Group>(null!);
     const animRef = useRef('idle');
     const speedRef = useRef(0);
-    const hasTapped = useRef(false);
     const isPaused = useRef(false);
+    const lastTapSignal = useRef(0);
+    const lastSwipeTimestamp = useRef(0);
 
     const MAX_SPEED = 5;
 
     useImperativeHandle(ref, () => ({
         tap: () => {
-            hasTapped.current = true;
+            useInputStore.getState().tap();
         },
         getSpeed: () => speedRef.current,
         swipe: (type: 'left' | 'right') => {
+            useInputStore.getState().swipe(type);
+        }
+    }), []);
+
+    useImperativeHandle(groupRef, () => internalRef.current, []);
+
+    useFrame((state, delta) => {
+        // Read signals directly from store (no React re-render)
+        const { tapSignal, swipeSignal } = useInputStore.getState();
+
+        // Handle swipe
+        if (swipeSignal && swipeSignal.timestamp !== lastSwipeTimestamp.current) {
+            lastSwipeTimestamp.current = swipeSignal.timestamp;
+
             // Stop the player
             speedRef.current = 0;
             isPaused.current = true;
 
             // Set punch animation
-            const punchAnim = type === 'left' ? 'lpunch' : 'rpunch';
+            const punchAnim = swipeSignal.type === 'left' ? 'lpunch' : 'rpunch';
             animRef.current = punchAnim;
             setAnimation(punchAnim);
 
@@ -51,18 +67,14 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
                 setAnimation('idle');
             }, 500);
         }
-    }), []);
 
-    useImperativeHandle(groupRef, () => internalRef.current, []);
-
-    useFrame((state, delta) => {
         // Early return if paused
         if (isPaused.current) return;
 
-        // Process tap flag
-        if (hasTapped.current) {
+        // Handle tap
+        if (tapSignal !== lastTapSignal.current) {
+            lastTapSignal.current = tapSignal;
             speedRef.current = Math.min(speedRef.current + 0.5, MAX_SPEED);
-            hasTapped.current = false;
         }
 
         if (!rigidBodyRef.current) return;

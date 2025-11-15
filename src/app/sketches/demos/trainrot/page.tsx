@@ -11,14 +11,15 @@ import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
 import Room from "./rooms/BaseRoom";
 import Chaser from "./Chaser";
+import { useInputStore } from "@/shared/firstperson/useInputStore";
 
 export default function Home() {
     const playerRef = useRef<{ tap: () => void; getSpeed: () => number; swipe: (type: 'left' | 'right') => void }>(null!);
     const speedDisplayRef = useRef<HTMLDivElement>(null);
 
-    const handleTap = () => playerRef.current.tap();
-    const handleSwipeLeft = () => playerRef.current.swipe('right'); // Swipe left = right punch
-    const handleSwipeRight = () => playerRef.current.swipe('left'); // Swipe right = left punch
+    const handleTap = () => useInputStore.getState().tap();
+    const handleSwipeLeft = () => useInputStore.getState().swipe('right'); // Swipe left = right punch
+    const handleSwipeRight = () => useInputStore.getState().swipe('left'); // Swipe right = left punch
 
     useEffect(() => {
         const interval = setInterval(() => {
