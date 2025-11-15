@@ -3,7 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import { Environment, useTexture } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
-import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameStore";
+import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameEntityStore";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
@@ -11,7 +11,7 @@ import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
 import Room from "./rooms/BaseRoom";
 import Chaser from "./Chaser";
-import { useInputStore } from "@/shared/firstperson/useInputStore";
+import { useInputStore } from "@/shared/providers/InputStore";
 import { useThree } from "@react-three/fiber";
 import { RoomEnvironment } from "three/examples/jsm/Addons.js";
 
@@ -69,14 +69,6 @@ export default function Home() {
         </div>
     );
 }
-
-const CoolRoomEnvironment = () => {
-    const { texture } = useTexture({
-        texture: '/textures/skybox1.jpg',
-    });
-
-    return <Environment map={texture} />;
-};
 
 type RoomVariant = {
     wallColor?: string;
@@ -175,4 +167,11 @@ const GameEntityWorld = ({ playerRef: parentPlayerRef }: { playerRef: React.RefO
             {/* <Chaser /> */}
         </>
     );
+};
+
+const CoolRoomEnvironment = () => {
+    const { texture } = useTexture({
+        texture: '/textures/skybox1.jpg',
+    });
+    return <Environment map={texture} />;
 };

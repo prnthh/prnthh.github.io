@@ -1,5 +1,5 @@
 
-import useGameStore, { allEntityIDsByType, Entity, useEntityById } from "@/shared/providers/GameStore";
+import useGameStore, { allEntityIDsByType, Entity, useEntityById } from "@/shared/providers/GameEntityStore";
 import * as THREE from "three";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import DialogCollider from "@/shared/ped/DialogCollider";

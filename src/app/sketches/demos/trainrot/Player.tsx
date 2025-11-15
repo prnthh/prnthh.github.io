@@ -5,7 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { RigidBody, RapierRigidBody, useBeforePhysicsStep } from "@react-three/rapier";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { FollowCam } from "@/shared/cameras/FollowCam";
-import { useInputStore } from "@/shared/firstperson/useInputStore";
+import { useInputStore } from "@/shared/providers/InputStore";
 import Rapier from '@dimforge/rapier3d-compat';
 
 interface PlayerHandle {
@@ -32,7 +32,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
 
     const MAX_SPEED = 5;
     const ACCELERATION = 1;
-    const DECAY = 0.99;
+    const DECAY = 0.02;
 
     useImperativeHandle(ref, () => ({
         tap: () => {
@@ -69,13 +69,13 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
             velocityRef.current = Math.min(velocityRef.current + ACCELERATION, MAX_SPEED);
         }
 
-        velocityRef.current *= DECAY;
+        velocityRef.current -= DECAY * delta * 60;
         if (velocityRef.current < 0.01) velocityRef.current = 0;
 
         const speed = velocityRef.current;
-        const next = animation === 'idle' && speed > 0.3 ? 'walk'
-            : animation === 'walk' ? (speed < 0.1 ? 'idle' : speed > 3.2 ? 'run' : 'walk')
-                : animation === 'run' && speed < 3.0 ? 'walk'
+        const next = animation === 'idle' && speed > 0.1 ? 'walk'
+            : animation === 'walk' ? (speed < 0.1 ? 'idle' : speed > 3.0 ? 'run' : 'walk')
+                : animation === 'run' && speed < 2.0 ? 'walk'
                     : animation;
 
         if (next !== animation) {

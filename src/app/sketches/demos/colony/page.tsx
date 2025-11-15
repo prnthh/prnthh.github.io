@@ -3,7 +3,7 @@
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Html, MapControls, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
-import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityById } from "@/shared/providers/GameStore";
+import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityById } from "@/shared/providers/GameEntityStore";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";

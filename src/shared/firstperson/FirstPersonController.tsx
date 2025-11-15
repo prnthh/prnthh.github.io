@@ -12,7 +12,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { PerspectiveCamera } from "@react-three/drei";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
-import { useInputStore } from "./useInputStore";
+import { useInputStore } from "../providers/InputStore";
 import { KeyboardInput } from "./KeyboardInput";
 import Gun from "@/app/sketches/demos/killbox/Gun";
 

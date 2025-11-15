@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useInputStore } from './useInputStore';
+import { useInputStore } from '../providers/InputStore';
 
 // Keyboard to controller mapping
 const keyMapping = {

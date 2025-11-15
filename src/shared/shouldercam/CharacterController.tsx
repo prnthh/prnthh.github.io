@@ -14,7 +14,7 @@ import { FollowCam } from "@/shared/cameras/FollowCam";
 import TSLLine from "./TSLLine";
 import { useWeapon } from "./useWeapon";
 import AnimatedModel from "../ped/HumanoidModel";
-import { useInputStore } from "@/shared/firstperson/useInputStore";
+import { useInputStore } from "@/shared/providers/InputStore";
 import { KeyboardInput } from "@/shared/firstperson/KeyboardInput";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
 
