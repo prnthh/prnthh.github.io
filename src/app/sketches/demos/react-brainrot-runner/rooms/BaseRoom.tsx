@@ -59,7 +59,7 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
 export default Room;
 
 const LazyWorld = () => {
-    const { scene } = useGLTF('/models/rooms/road.glb');
+    const { scene } = useGLTF('/models/rooms/Road.glb');
     const ref = useRef<THREE.Group>(null);
     const [clone, setClone] = useState<THREE.Group | null>(null);
     const [offset, setOffset] = useState(0);
