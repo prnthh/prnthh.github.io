@@ -2,9 +2,7 @@
 
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-const DynamicGame = dynamic(() => import('./sketches/demos/trainrot2/game'), { ssr: false });
-
-
+const RunnerGame = dynamic(() => import('./sketches/demos/react-brainrot-runner'), { ssr: false });
 
 export default function Home() {
   return (
@@ -12,7 +10,7 @@ export default function Home() {
       <main className="w-full min-h-screen">
 
         <div className="absolute top-0 left-0 w-screen h-screen">
-          <DynamicGame />
+          <RunnerGame />
         </div>
         <header className="fixed top-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-6 z-30 dark:text-white">
           <a

@@ -3,8 +3,6 @@ import useGameStore, { allEntityIDsByType, Entity, useEntityById } from "@/share
 import * as THREE from "three";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { Suspense } from "react";
-// import DialogCollider from "@/shared/ped/DialogCollider";
-// import CutsceneCamera from "@/shared/cameras/CutsceneCamera";
 
 const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>, roomId: string }) => {
     const room = useEntityById(roomId);
@@ -27,7 +25,7 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
             <Suspense fallback={null}>
                 <AnimatedModel
                     rotation={[0, Math.PI, 0]}
-                    position={[0, 0, 8]}
+                    position={[2, 0, 8]}
                     scale={1.7}
                     lookTarget={playerRef}
                     basePath={"/models/human/rigga/"}
@@ -39,19 +37,6 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
                         jump: 'anim/jump.fbx',
                     }}
                 >
-                    {/* DialogCollider removed - requires physics
-                <DialogCollider
-                    height={1.9}
-                    onEnter={() => {
-                        // play mp3
-
-                        new Audio('/sound/npc-theme.mp3').play();
-                    }}
-                    sceneChildren={<CutsceneCamera position={[-0.2, 2, -2]} rotation={[0.2, Math.PI, 0]} />}
-                >
-                    hello there
-                </DialogCollider>
-                */}
                 </AnimatedModel>
             </Suspense>
         </group>

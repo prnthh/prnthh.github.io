@@ -1,11 +1,11 @@
 
-import { useRef, forwardRef, useImperativeHandle, useState, useMemo, useEffect, Suspense } from "react";
+import { useRef, forwardRef, useImperativeHandle, useState, useEffect, Suspense } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { FollowCam } from "@/shared/cameras/FollowCam";
 import { useInputStore } from "@/shared/providers/InputStore";
-import { Box } from "@react-three/drei";
+import { Box, Capsule } from "@react-three/drei";
 
 interface PlayerHandle {
     tap: () => void;
@@ -34,16 +34,6 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const MAX_SPEED = 6;
     const ACCELERATION = 1.5;
     const DECAY = 0.03;
-    const SPLINE_LENGTH = 10000; // Very long straight line
-
-    // Create a straight line spline (along Z axis)
-    const spline = useMemo(() => {
-        const points = [
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 0, SPLINE_LENGTH)
-        ];
-        return new THREE.CatmullRomCurve3(points);
-    }, []);
 
     useImperativeHandle(ref, () => ({
         tap: () => {
@@ -101,33 +91,19 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
             setAnimation(next);
         }
 
-        // Move along spline
+        // Move forward along Z axis
         const moveDistance = speed * delta;
-        const normalizedDistance = moveDistance / SPLINE_LENGTH;
-        progressRef.current += normalizedDistance;
+        progressRef.current += moveDistance;
 
-        // Keep progress in valid range
-        if (progressRef.current > 1) {
-            progressRef.current = progressRef.current % 1;
-        }
-
-        // Get position and tangent from spline
-        const position = spline.getPointAt(progressRef.current);
-        const tangent = spline.getTangentAt(progressRef.current);
-
-        // Update container position
+        // Update container position - move straight forward
         if (containerRef.current) {
-            containerRef.current.position.copy(position);
-
-            // Set rotation to face along the spline direction
-            const lookAtPoint = position.clone().add(tangent);
-            containerRef.current.lookAt(lookAtPoint);
+            containerRef.current.position.z = progressRef.current;
         }
     });
 
     return (
         <group ref={containerRef} position={[0, 0, 0]}>
-            <Suspense fallback={<Box args={[0.5, 2, 0.5]} />}>
+            <Suspense fallback={<Capsule position={[0, 1.2, 0]} args={[0.25, 0.6, 3]} />}>
                 <AnimatedModel
                     scale={1}
                     basePath="/models/human/onimilio/"
