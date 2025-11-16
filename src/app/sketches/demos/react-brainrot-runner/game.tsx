@@ -9,6 +9,7 @@ import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
 import Room from "./rooms/BaseRoom";
 import { useInputStore } from "@/shared/providers/InputStore";
+import DebugCamera from "@/shared/cameras/DebugCamera";
 
 // npm i react-brainrot-runner - make a runner game, just provide models for room sections
 // use it instead of a loading screen!
@@ -37,8 +38,9 @@ export default function Game() {
                 shadow-camera-bottom={-15}
                 shadow-bias={-0.001}
             />
+            {/* <fog attach="fog" args={["#ffffff", 25, 30]} /> */}
+            {/* <color attach="background" args={["#ffffff"]} /> */}
             <GameEntityWorld playerRef={playerRef} />
-
         </GameCanvas>
         <SwipeControls onTap={handleTap} onSwipeLeft={handleSwipeLeft} onSwipeRight={handleSwipeRight} />
     </div>
@@ -60,7 +62,7 @@ const ROOM_VARIANTS: RoomVariant[] = [
     {},
     { wallColor: "lightgray", floorColor: "gray", width: 5, length: 10, wallHeight: 4, },
     { wallColor: "#805AD5", floorColor: "#D53F8C", width: 6, length: 12, wallHeight: 5, },
-    { wallColor: "#2C7A7B", floorColor: "#F6E05E", width: 7, length: 8, wallHeight: 6, },
+    { wallColor: "#2C7A7B", floorColor: "#F6E05E", width: 7, length: 10, wallHeight: 6, },
     { wallColor: "#1A365D", floorColor: "#38B2AC", width: 8, length: 14, wallHeight: 5, }
 ];
 

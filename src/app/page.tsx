@@ -12,9 +12,9 @@ export default function Home() {
         <div className="absolute top-0 left-0 w-screen h-screen">
           <RunnerGame />
         </div>
-        <header className="fixed top-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-6 z-30 dark:text-white">
+        <header className="fixed top-8 right-12 underline underline-offset-4 text-lg flex items-center justify-center gap-6 z-30 dark:text-white">
           <a
-            className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+            className="flex items-center gap-2 hover:underline-offset-5"
             href="https://x.com/prnth_"
             target="_blank"
             rel="noopener noreferrer"
@@ -22,7 +22,7 @@ export default function Home() {
             X
           </a>
           <a
-            className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+            className="flex items-center gap-2 hover:underline-offset-5"
             href="https://pockit.world/"
             target="_blank"
             rel="noopener noreferrer"
