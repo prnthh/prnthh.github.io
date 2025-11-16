@@ -1,9 +1,10 @@
 import { useGLTF } from "@react-three/drei";
 import type { MathProps, ReactProps, EventHandlers, InstanceProps, } from '@react-three/fiber';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { Object3D, Object3DEventMap, Group } from "three";
 import { CCDIKHelper, CCDIKSolver, SkeletonUtils } from "three-stdlib";
 import * as THREE from "three";
+import { addBoneAxesHelpers } from "./SkeletonAxesHelper";
 
 type SimpleModelProps = {
     modelUrl: string;
@@ -13,6 +14,7 @@ type SimpleModelProps = {
 const SimpleModel: React.FC<SimpleModelProps> = ({ modelUrl, children, ...props }) => {
     const { scene } = useGLTF(modelUrl);
     const [clone, setClone] = useState<Object3D | undefined>(undefined);
+    const cloneRef = useRef<Object3D>(null!);
 
     useEffect(() => {
         if (scene) {
@@ -32,20 +34,25 @@ const SimpleModel: React.FC<SimpleModelProps> = ({ modelUrl, children, ...props 
             });
 
             setClone(cloned);
-
-            const helper = new THREE.SkeletonHelper(cloned);
-            cloned.add(helper);
         }
     }, [scene]);
+
+    // Add bone axes helpers using the functional approach
+    useLayoutEffect(() => {
+        if (clone) {
+            console.log("Adding bone axes helpers to clone");
+            return addBoneAxesHelpers(clone, 4.0); // Much larger size
+        }
+    }, [clone]);
 
     if (!clone) return null;
 
     return (
-        <group {...props}>
-            <primitive object={clone}>
+        <>
+            <primitive object={clone} ref={cloneRef} {...props}>
                 {children}
             </primitive>
-        </group>
+        </>
     );
 };
 

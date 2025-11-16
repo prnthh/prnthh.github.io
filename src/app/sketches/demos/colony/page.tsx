@@ -12,7 +12,6 @@ import DialogCollider from "@/shared/ped/DialogCollider";
 import DebugGround from "@/shared/debug/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
-import NavigableWorld from "@/shared/navmesh/NavigableWorld";
 
 export default function Home() {
     return (
@@ -60,18 +59,18 @@ const GameEntityWorld = () => {
         addEntity(randomPickupable());
 
         addEntity({ name: 'PockitCEO', type: 'NPC', position: [1, 0, -4], basePath: "/models/human/rigga/", modelUrl: "rigga.glb", goal: 'follow' });
+        addEntity({ name: 'Employee', type: 'NPC', position: [1, 0, -4], goal: 'hunt' });
+        addEntity({ name: 'Employee', type: 'NPC', position: [-1, 0, 4], goal: 'hunt' });
         addEntity({ name: 'Employee', type: 'NPC', position: [-1, 0, -4], goal: 'hunt' });
 
         initialized.current = true;
     }, [addEntity]);
 
     return <>
-        <NavigableWorld>
-            <DebugGround size={200} onClick={(e) => {
-                addEntity(randomPickupable([e.point.x, e.point.z]));
-                setSelectedEntityID(undefined);
-            }} />
-        </NavigableWorld>
+        <DebugGround size={200} onClick={(e) => {
+            addEntity(randomPickupable([e.point.x, e.point.z]));
+            setSelectedEntityID(undefined);
+        }} />
         {allEntityIDsByType('NPC').map((id) => <TalkativeNPC key={id} id={id} />)}
         {allEntityIDsByType('pickupable').map((id) => <Pickupable key={id} id={id} />)}
     </>;

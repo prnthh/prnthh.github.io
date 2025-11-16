@@ -5,22 +5,50 @@ import { Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Shebang from "@/shared/ui/shebang";
 
-const allExperiments = [
-    'barebones',
-    'demos/trainrot', 'demos/colony', 'demos/killbox', 'demos/drive', 'demos/punchball', 'demos/mechanics',
-    'floor',
-    'lighting',
-    'controllers/wawa', 'controllers/shouldercam', 'controllers/click', 'controllers/kick',
-    'car/simple', 'car/road',
-    'instancing/simple', 'instancing/merged', 'instancing/InstanceProvider', 'instancing/npc', 'instancing/npc4',
-    'tools/character', 'tools/worldeditor', 'tools/narrativegraph',
-    'editor/scene', 'editor/dragdrop',
-    'ik/ragdoll', 'ik/crawler',
-    'retargeting/basic', 'retargeting/variety',
-    'interior',
-    'particles',
-    '../wfc/index.html', '../chainreaction.html'
-].map(e => `sketches/${e}`); // Prefix all with 'sketches/'
+const experimentsConfig: Record<string, { name?: string; description?: string }> = {
+    'demos/colony': {},
+    'demos/killbox': {},
+    'demos/drive': {},
+    'demos/punchball': {},
+    'demos/mechanics': {},
+    'barebones': {
+        description: 'Minimal Three.js + Rapier + React Three Fiber setup with WebGPU support.'
+    },
+    'floor': {
+        description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
+    },
+    'lighting': {
+        description: 'Lighting and reflections.'
+    },
+    'controllers/wawa': {},
+    'controllers/shouldercam': {},
+    'controllers/click': {},
+    'controllers/kick': {},
+    'controllers/tap': {},
+    'car/simple': {},
+    'car/road': {},
+    'navmesh': {},
+    'instancing/simple': {},
+    'instancing/merged': {},
+    'instancing/InstanceProvider': {},
+    'instancing/npc': {},
+    'instancing/npc4': {},
+    'tools/character': {},
+    'tools/worldeditor': {},
+    'tools/narrativegraph': {},
+    'editor/scene': {},
+    'editor/dragdrop': {},
+    'ik/ragdoll': {},
+    'ik/crawler': {},
+    'retargeting/basic': {},
+    'retargeting/variety': {},
+    'interior': {},
+    'particles': {},
+    '../wfc/index.html': {},
+    '../chainreaction.html': {}
+};
+
+const allExperiments = Object.keys(experimentsConfig).map(e => `sketches/${e}`); // Prefix all with 'sketches/'
 
 // Separate demos and others
 const demos = allExperiments.filter(e => e.startsWith("sketches/demos/"));
@@ -108,7 +136,11 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                             className={`rounded px-2 py-1 transition-colors select-none
                                 ${isActive ? "font-bold dark:bg-white/10 bg-black/10 ring" : "hover:ring cursor-pointer"}`}
                         >
-                            {displayName}
+                            {displayName} <br />
+                            <span className="text-sm font-light">
+                                {experimentsConfig[fullPath.replace(/^sketches\//, '')]?.description}
+
+                            </span>
                         </Link>
                     );
                 } else {
@@ -143,11 +175,11 @@ export default function Nav() {
 
     return (
         <div>
-            <div className={`text-black dark:text-white fixed top-3 left-3 z-40 ${clicked || open ? 'w-[220px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : open ? 'h-[100px]' : 'h-8'} transition-all`}
+            <div className={`text-black dark:text-white fixed top-3 left-3 z-40 ${clicked || open ? 'w-[280px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : open ? 'h-[100px]' : 'h-8'} transition-all`}
                 onMouseEnter={() => setOpen(true)}
                 onMouseLeave={() => { setClicked(false); setOpen(false); }}
             >
-                <div className={`${open ? 'w-[220px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
+                <div className={`${open ? 'w-[280px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
                     onClick={() => setClicked(() => true)}
                     onMouseLeave={e => { !clicked && setOpen(false); }}
                 >

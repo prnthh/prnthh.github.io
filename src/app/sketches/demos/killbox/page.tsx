@@ -8,6 +8,8 @@ import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
 import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
 import DemoWorld from "@/shared/DemoWorld";
 import Controls from "@/shared/controls/ControlsProvider";
+import { Html } from "@react-three/drei";
+import { useTimeRNGNumber } from "./TimeRNG";
 
 
 export default function Home() {
@@ -32,6 +34,7 @@ export default function Home() {
                         <Physics>
                             <DemoWorld />
                             <Train />
+                            <RandomNumberExample />
 
                             <LocalPlayer />
                             <OtherPlayers />
@@ -58,4 +61,20 @@ const Train = ({ position = [10, 0.2, -10] }: { position?: [number, number, numb
             <meshStandardMaterial color="red" />
         </mesh>
     </RigidBody>
+}
+
+const RandomNumberExample = () => {
+    const randomNum = useTimeRNGNumber({ min: 0, max: 100 });
+    const randomNum2 = useTimeRNGNumber({ min: 0, max: Math.PI * 2, seedOffset: 42 });
+
+    return <>
+        <Html transform className="flex gap-x-2" position={[0, 2, -4]}>
+            <div className="">
+                {randomNum.toFixed()}
+            </div>
+            <div className="">
+                {randomNum2.toFixed()}
+            </div>
+        </Html>
+    </>
 }

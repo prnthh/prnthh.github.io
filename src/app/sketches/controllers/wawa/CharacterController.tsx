@@ -161,9 +161,15 @@ export const CharacterController = () => {
                 <group ref={cameraPosition} position-y={4} position-z={-4} />
                 <group ref={character}>
                     <AnimatedModel
-                        model="rigga.glb"
+                        basePath="/models/human/onimilio/"
+                        model="rigged.glb"
                         animation={animation}
                         height={0.9}
+                        animationOverrides={{
+                            idle: 'anim/idle.fbx',
+                            walk: 'anim/walk.fbx',
+                            run: 'anim/run.fbx',
+                        }}
                     />
                 </group>
             </group>

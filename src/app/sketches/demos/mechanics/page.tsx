@@ -87,9 +87,9 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
             {props.weapon && <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
-                offset={new Vector3(0, 0, 0)}
-                scale={new Vector3(100, 100, 100)}
-                rotation={new Vector3(0, 0.8, -1.2)}
+                offset={[0, 0, 0]}
+                scale={[100, 100, 100]}
+                rotation={[0, 0.8, -1.2]}
             />}
         </CharacterController>
         <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} modelUrl="/rigga/rigga2.glb">
@@ -97,9 +97,9 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
             <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
-                offset={new Vector3(2, 0, 0)}
-                scale={new Vector3(100, 100, 100)}
-                rotation={new Vector3(0.7, 0, -1)}
+                offset={[2, 0, 0]}
+                scale={[100, 100, 100]}
+                rotation={[0.7, 0, -1]}
             />
         </Ped>
         <Viewer />

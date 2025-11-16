@@ -13,7 +13,7 @@ extend({
 });
 
 
-export default function GameCanvas({ noLoader = false, children, ...props }: { noLoader?: boolean, children: React.ReactNode, props?: WebGPURendererParameters }) {
+export default function GameCanvas({ loader = false, children, ...props }: { loader?: boolean, children: React.ReactNode, props?: WebGPURendererParameters }) {
     const [frameloop, setFrameloop] = useState<"never" | "always">("never");
     const [loading, setLoading] = useState(true);
 
@@ -39,25 +39,8 @@ export default function GameCanvas({ noLoader = false, children, ...props }: { n
         >
             <Suspense>
                 {children}
-                <DelayedLoadingScreen onLoad={() => setLoading(false)} />
             </Suspense>
         </Canvas>
-        {noLoader ? null : <Loader />}
+        {loader ? <Loader /> : null}
     </>;
 }
-
-
-const Loading = () => {
-    return (
-        <div className="absolute flex items-center justify-center w-screen h-screen z-5 backdrop-blur-md text-white font-black">
-            Loading...
-        </div>
-    );
-}
-
-const DelayedLoadingScreen = ({ onLoad }: { onLoad: () => void }) => {
-    setTimeout(() => {
-        onLoad();
-    }, 100);
-    return null;
-};

@@ -7,6 +7,7 @@ import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { FollowCam } from "@/shared/cameras/FollowCam";
 import { useInputStore } from "@/shared/providers/InputStore";
 import Rapier from '@dimforge/rapier3d-compat';
+import ModelAttachment from "@/shared/ped/ModelAttachment";
 
 interface PlayerHandle {
     tap: () => void;
@@ -118,6 +119,13 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
                 rpunch: 'anim/rpunch.fbx',
             }}
         >
+            <ModelAttachment
+                model="/models/environment/Katana.glb"
+                attachpoint="mixamorigRightHand"
+                offset={[2, 0, 0]}
+                scale={[100, 100, 100]}
+                rotation={[0.7, 0, -1]}
+            />
             <FollowCam height={1} cameraOffset={[0, 1, -2]} targetOffset={[0, 1.8, 0]} />
         </AnimatedModel>
     </RigidBody>
