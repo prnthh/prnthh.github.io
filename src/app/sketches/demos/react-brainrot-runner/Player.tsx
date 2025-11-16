@@ -83,7 +83,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
             if (velocityRef.current < BASE_SPEED) velocityRef.current = BASE_SPEED;
         }
 
-        const speed = velocityRef.current;
+        const speed = parseFloat(velocityRef.current.toFixed(1));
 
         // Update animation based on speed
         const next = speed > 4.5 ? 'run' : 'walk';

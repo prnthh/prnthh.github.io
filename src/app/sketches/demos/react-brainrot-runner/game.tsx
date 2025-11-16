@@ -58,12 +58,10 @@ type RoomVariant = {
 }
 
 const ROOM_VARIANTS: RoomVariant[] = [
-    {},
-    {},
-    { wallColor: "lightgray", floorColor: "gray", width: 5, length: 10, wallHeight: 4, },
-    { wallColor: "#805AD5", floorColor: "#D53F8C", width: 6, length: 12, wallHeight: 5, },
-    { wallColor: "#2C7A7B", floorColor: "#F6E05E", width: 7, length: 10, wallHeight: 6, },
-    { wallColor: "#1A365D", floorColor: "#38B2AC", width: 8, length: 14, wallHeight: 5, }
+    { floorColor: "green", width: 5, length: 10, },
+    { floorColor: "#D53F8C", width: 6, length: 10, },
+    { floorColor: "#F6E05E", width: 7, length: 10, },
+    { floorColor: "#38B2AC", width: 8, length: 10, }
 ];
 
 const GameEntityWorld = ({
@@ -81,30 +79,30 @@ const GameEntityWorld = ({
     const INITIAL_ROOMS = 4;
     const nextRoomIndex = useRef(INITIAL_ROOMS);
 
+    function addRoomToQueue(variant?: number) {
+        const randomVariant = variant !== undefined ? variant : Math.floor(Math.random() * rooms.length);
+        const config = rooms[randomVariant];
+        const roomLength = config?.length ?? 10;
+
+        addEntity({
+            type: 'room',
+            variant: randomVariant,
+            config,
+            position: [0, 0, lastAddedZ.current] as [number, number, number],
+            index: nextRoomIndex.current,
+        });
+
+        lastAddedZ.current += roomLength;
+        nextRoomIndex.current += 1;
+    }
+
     useEffect(() => {
         if (initialized.current) return;
 
         resetWorld();
-
-        let zPosition = 0;
-
         for (let i = 0; i < INITIAL_ROOMS; i++) {
-            const variant = i % rooms.length;
-            const config = rooms[variant];
-            const roomLength = config?.length ?? 10;
-
-            addEntity({
-                type: 'room',
-                variant,
-                config,
-                position: [0, 0, zPosition] as [number, number, number],
-                index: i,
-            });
-
-            zPosition += roomLength;
+            addRoomToQueue(i);
         }
-
-        lastAddedZ.current = zPosition;
         initialized.current = true;
     }, [addEntity, resetWorld]);
 

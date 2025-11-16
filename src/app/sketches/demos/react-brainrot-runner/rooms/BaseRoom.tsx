@@ -14,7 +14,6 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
     const { variant = 0, config, position, index } = room;
     const effectiveWidth = config?.width ?? 5;
     const effectiveLength = config?.length ?? 10;
-    const wallHeight = config?.wallHeight ?? 4;
 
     // Get previous room for transition walls
     const prevRoomId = index > 0 ? allRooms[index - 1] : null;
@@ -23,8 +22,17 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
     const [rng,] = useState(() => Math.random()); // Stable random per room instance
 
     return <group position={position}>
-        <Suspense fallback={null}>
-            <LazyWorld />
+        <mesh position={[0, 2, 0]}>
+            <boxGeometry args={[0.1, 0.1, 0.1]} />
+            <meshBasicMaterial color={config?.floorColor} />
+        </mesh>
+        <Suspense fallback={<TiledPlatform
+            position={[0, 0, 0]}
+            width={effectiveWidth}
+            length={effectiveLength}
+            floorColor={config?.floorColor}
+        />}>
+            <LazyWorld variant={variant} />
         </Suspense>
         <group >
             <Suspense fallback={null}>
@@ -46,20 +54,21 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
             </Suspense>
         </group>
 
-        <TiledPlatform
-            position={[0, 0, 0]}
-            width={effectiveWidth}
-            length={effectiveLength}
-            floorColor={config?.floorColor}
-        />
+
 
     </group >
 }
 
 export default Room;
 
-const LazyWorld = () => {
-    const { scene } = useGLTF('/models/rooms/Road.glb');
+const models = [
+    // '/models/rooms/BaseRoad.glb',
+    '/models/rooms/Road3.glb',
+    '/models/rooms/Road.glb',
+];
+
+const LazyWorld = ({ variant = 0 }: { variant?: number }) => {
+    const { scene } = useGLTF(models[variant % models.length]);
     const ref = useRef<THREE.Group>(null);
     const [clone, setClone] = useState<THREE.Group | null>(null);
     const [offset, setOffset] = useState(0);
@@ -91,7 +100,7 @@ const TiledPlatform = ({ position, width = 5, length = 10, height = 0.1, floorCo
     return <group position={position}>
         <mesh receiveShadow castShadow position={[0, yPos, zPos]}>
             <boxGeometry args={[width, height, length]} />
-            <meshStandardMaterial color={floorColor} />
+            <meshBasicMaterial color={floorColor} wireframe />
         </mesh>
     </group>;
 };
