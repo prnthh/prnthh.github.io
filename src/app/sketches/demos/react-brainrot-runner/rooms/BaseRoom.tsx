@@ -1,9 +1,11 @@
 
-import useGameStore, { allEntityIDsByType, Entity, useEntityById } from "@/shared/providers/GameEntityStore";
-import * as THREE from "three";
+import useGameStore, { allEntityIDsByType, useEntityById } from "@/shared/providers/GameEntityStore";
+import * as THREE from "three/webgpu";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useGLTF, useHelper } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
+import { color, float, reflector } from "three/tsl";
+import { useThree } from "@react-three/fiber";
 
 const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>, roomId: string }) => {
     const room = useEntityById(roomId);
@@ -22,10 +24,15 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
     const [rng,] = useState(() => Math.random()); // Stable random per room instance
 
     return <group position={position}>
-        <mesh position={[0, 2, 0]}>
+        {/* <mesh position={[0, 2, 0]}>
             <boxGeometry args={[0.1, 0.1, 0.1]} />
             <meshBasicMaterial color={config?.floorColor} />
-        </mesh>
+        </mesh> */}
+        {/* <gridHelper
+            args={[effectiveLength, effectiveLength, 'white', 'gray']}
+            rotation={[0, 0, 0]}
+            position={[0, 0.01, effectiveLength / 2]}
+        /> */}
         <Suspense fallback={<TiledPlatform
             position={[0, 0, 0]}
             width={effectiveWidth}
@@ -69,12 +76,38 @@ const models = [
 
 const LazyWorld = ({ variant = 0 }: { variant?: number }) => {
     const { scene } = useGLTF(models[variant % models.length]);
+    const { scene: threeScene } = useThree();
     const ref = useRef<THREE.Group>(null);
     const [clone, setClone] = useState<THREE.Group | null>(null);
     const [offset, setOffset] = useState(0);
+
     useEffect(() => {
         if (scene) {
             const clonedScene = scene.clone() as THREE.Group;
+
+            // Create reflector for glass materials
+            const reflection = reflector({ resolution: 0.5 });
+            reflection.target.rotation.x = -Math.PI / 2;
+            threeScene.add(reflection.target);
+
+            clonedScene.traverse((child) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    const mesh = child as THREE.Mesh;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+
+                    // if material has userdata, replace it 
+                    if (mesh.material && (mesh.material as any).userData && (mesh.material as any).userData.material) {
+                        if ((mesh.material as any).userData.material === 'glass') {
+                            mesh.material = new THREE.MeshPhongNodeMaterial({
+                                transparent: true,
+                                opacity: 0.3,
+                                colorNode: reflection
+                            });
+                        }
+                    }
+                }
+            });
             setClone(clonedScene);
 
             // Calculate offset based on bounding box to align start at z=0
@@ -100,7 +133,7 @@ const TiledPlatform = ({ position, width = 5, length = 10, height = 0.1, floorCo
     return <group position={position}>
         <mesh receiveShadow castShadow position={[0, yPos, zPos]}>
             <boxGeometry args={[width, height, length]} />
-            <meshBasicMaterial color={floorColor} wireframe />
+            <meshBasicMaterial color={floorColor} />
         </mesh>
     </group>;
 };

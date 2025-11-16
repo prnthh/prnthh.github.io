@@ -103,7 +103,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
 
     return (
         <group ref={containerRef} position={[0, 0, 0]}>
-            <Suspense fallback={<Capsule position={[0, 1.2, 0]} args={[0.25, 0.6, 3]} />}>
+            <Suspense fallback={<Capsule castShadow receiveShadow position={[0, 1.2, 0]} args={[0.25, 0.6, 3]} />}>
                 <AnimatedModel
                     scale={1}
                     basePath="/models/human/onimilio/"

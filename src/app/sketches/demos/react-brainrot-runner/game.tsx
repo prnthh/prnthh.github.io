@@ -38,8 +38,6 @@ export default function Game() {
                 shadow-camera-bottom={-15}
                 shadow-bias={-0.001}
             />
-            {/* <fog attach="fog" args={["#ffffff", 25, 30]} /> */}
-            {/* <color attach="background" args={["#ffffff"]} /> */}
             <GameEntityWorld playerRef={playerRef} />
         </GameCanvas>
         <SwipeControls onTap={handleTap} onSwipeLeft={handleSwipeLeft} onSwipeRight={handleSwipeRight} />
@@ -58,8 +56,8 @@ type RoomVariant = {
 }
 
 const ROOM_VARIANTS: RoomVariant[] = [
-    { floorColor: "green", width: 5, length: 10, },
-    { floorColor: "#D53F8C", width: 6, length: 10, },
+    { floorColor: "white", width: 5, length: 10, },
+    { floorColor: "#168fec", width: 6, length: 10, },
     { floorColor: "#F6E05E", width: 7, length: 10, },
     { floorColor: "#38B2AC", width: 8, length: 10, }
 ];
@@ -159,7 +157,7 @@ const GameEntityWorld = ({
 
 const CoolRoomEnvironment = () => {
     const { texture } = useTexture({
-        texture: '/textures/skybox1.jpg',
+        texture: '/textures/skybox3.jpg',
     });
     return <Environment map={texture} />;
 };
