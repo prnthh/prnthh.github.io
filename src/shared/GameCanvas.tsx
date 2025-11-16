@@ -13,7 +13,7 @@ extend({
 });
 
 
-export default function GameCanvas({ children, ...props }: { children: React.ReactNode, props?: WebGPURendererParameters }) {
+export default function GameCanvas({ noLoader = false, children, ...props }: { noLoader?: boolean, children: React.ReactNode, props?: WebGPURendererParameters }) {
     const [frameloop, setFrameloop] = useState<"never" | "always">("never");
     const [loading, setLoading] = useState(true);
 
@@ -42,7 +42,7 @@ export default function GameCanvas({ children, ...props }: { children: React.Rea
                 <DelayedLoadingScreen onLoad={() => setLoading(false)} />
             </Suspense>
         </Canvas>
-        <Loader />
+        {noLoader ? null : <Loader />}
     </>;
 }
 

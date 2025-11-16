@@ -32,12 +32,13 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
     retargetOptions?: { boneMap?: Record<string, string>, preserveHipPosition?: boolean }
     onActions?: (actions: { [key: string]: THREE.AnimationAction }) => void
     attachments?: { [key: string]: { model: string, attachpoint: string, offset: THREE.Vector3, scale: THREE.Vector3, rotation: THREE.Vector3 } },
+    enableBoneCollider?: boolean, // Add option to disable BoneCollider
     children?: React.ReactNode;
 }>(
     ({ name, model, basePath = "/models/human/", animation = "idle", onClick,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
-        debug = false, lookTarget, retargetOptions, onActions, attachments, children, ...props
+        debug = false, lookTarget, retargetOptions, onActions, attachments, enableBoneCollider = true, children, ...props
     }, ref) => {
         const modelRef = useRef<THREE.Object3D | undefined>(undefined);
         const groupRef = useRef<THREE.Group>(null!);
@@ -134,7 +135,7 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
                 </mesh>
                 <group position={modelOffset}>
                     {clonedScene && <primitive name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
-                    {clonedScene && <BoneCollider parentName={name} rootModel={clonedScene}
+                    {clonedScene && enableBoneCollider && <BoneCollider parentName={name} rootModel={clonedScene}
                         boneName={animation == 'rpunch' ? "RightHand" :
                             animation == 'lpunch' ? "LeftHand" :
                                 undefined}

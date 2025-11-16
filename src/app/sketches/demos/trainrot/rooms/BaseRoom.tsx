@@ -52,7 +52,7 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>,
                 }} />
         </group>
 
-        {variant == 0 && <group >
+        {variant == 1 && <group >
             <AnimatedModel
                 rotation={[0, Math.PI, 0]}
                 position={[0, 0, 8]}
