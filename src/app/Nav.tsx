@@ -131,7 +131,7 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                     return (
                         <Link
                             href={`/${fullPath}`}
-                            prefetch={true}
+                            prefetch={false}
                             key={fullPath}
                             className={`rounded px-2 py-1 transition-colors select-none
                                 ${isActive ? "font-bold dark:bg-white/10 bg-black/10 ring" : "hover:ring cursor-pointer"}`}

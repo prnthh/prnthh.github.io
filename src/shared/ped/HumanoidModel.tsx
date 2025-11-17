@@ -5,7 +5,7 @@ import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import useAnimationState from "./useAnimationStateBasic";
 import useLookAtTarget from "./useLookAtTarget";
-import BoneCollider from "@/shared/BoneCollider";
+// import BoneCollider from "@/shared/BoneCollider";
 // import { MeshToonNodeMaterial } from "three/webgpu";
 
 // steps to go from AI generated model to animated model:
@@ -135,11 +135,11 @@ const AnimatedModel = forwardRef<Object3D, {
                 </mesh>
                 <group position={modelOffset}>
                     {clonedScene && <primitive name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
-                    {clonedScene && enableBoneCollider && <BoneCollider parentName={name} rootModel={clonedScene}
+                    {/* {clonedScene && enableBoneCollider && <BoneCollider parentName={name} rootModel={clonedScene}
                         boneName={animation == 'rpunch' ? "RightHand" :
                             animation == 'lpunch' ? "LeftHand" :
                                 undefined}
-                    />}
+                    />} */}
                     {children}
                 </group>
             </group>

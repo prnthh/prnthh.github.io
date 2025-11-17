@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { Ref, type RefObject, useEffect, useRef } from 'react'
+import { type RefObject, useEffect, useRef } from 'react'
 import {
     Object3D,
     type Object3DEventMap,

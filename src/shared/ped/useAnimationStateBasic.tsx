@@ -1,5 +1,4 @@
 import { useLoader } from '@react-three/fiber'
-import TWEEN, { type Tween } from '@tweenjs/tween.js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
     type AnimationAction,
