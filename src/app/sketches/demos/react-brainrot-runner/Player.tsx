@@ -1,6 +1,6 @@
 
 import { useRef, forwardRef, useImperativeHandle, useState, useEffect, Suspense } from "react";
-import * as THREE from "three";
+import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { FollowCam } from "@/shared/cameras/FollowCam";
@@ -14,13 +14,13 @@ interface PlayerHandle {
 }
 
 interface PlayerProps {
-    groupRef?: React.RefObject<THREE.Group>;
+    groupRef?: React.RefObject<Group>;
 }
 
 const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const [animation, setAnimation] = useState<string>('run');
     const { groupRef } = props;
-    const containerRef = useRef<THREE.Group>(null!);
+    const containerRef = useRef<Group>(null!);
 
     const velocityRef = useRef(3); // Start with base running speed
     const progressRef = useRef(0); // Progress along the spline (0 to 1)
@@ -50,7 +50,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     // Forward the containerRef to groupRef after mount to avoid blocking Suspense
     useEffect(() => {
         if (groupRef && containerRef.current) {
-            (groupRef as React.MutableRefObject<THREE.Group>).current = containerRef.current;
+            (groupRef as React.MutableRefObject<Group>).current = containerRef.current;
         }
     }, [groupRef]);
 

@@ -4,7 +4,7 @@ import { Environment, useTexture } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
 import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameEntityStore";
 import { Suspense, useEffect, useRef } from "react";
-import * as THREE from "three";
+import { Group } from "three";
 import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
 import Room from "./rooms/BaseRoom";
@@ -69,7 +69,7 @@ const GameEntityWorld = ({
     playerRef: React.RefObject<{ tap: () => void; getSpeed: () => number; swipe: (type: 'left' | 'right') => void }>,
     rooms?: RoomVariant[],
 }) => {
-    const playerRef = useRef<THREE.Group>(null!);
+    const playerRef = useRef<Group>(null!);
     const { addEntity, resetWorld } = useGameStore();
     const initialized = useRef(false);
     const lastAddedZ = useRef(0);
