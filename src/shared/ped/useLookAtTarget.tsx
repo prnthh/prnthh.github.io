@@ -1,12 +1,11 @@
 import { useFrame } from '@react-three/fiber'
 import { Ref, type RefObject, useEffect, useRef } from 'react'
 import {
-    type Bone,
-    type Object3D,
+    Object3D,
     type Object3DEventMap,
     Vector3,
+    Bone
 } from 'three'
-import * as THREE from 'three'
 
 export default function useLookAtTarget(
     clone?: Object3D<Object3DEventMap>,
@@ -20,7 +19,7 @@ export default function useLookAtTarget(
     useEffect(() => {
         if (!clone) return
         clone.traverse((obj) => {
-            if (obj.name === neckBoneName && obj instanceof THREE.Bone) {
+            if (obj.name === neckBoneName && obj instanceof Bone) {
                 neckBoneRef.current = obj
             }
         })

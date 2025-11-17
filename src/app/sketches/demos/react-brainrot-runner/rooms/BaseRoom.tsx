@@ -1,13 +1,13 @@
 
 import useGameStore, { allEntityIDsByType, useEntityById } from "@/shared/providers/GameEntityStore";
-import * as THREE from "three/webgpu";
+import { Group, Mesh, Box3, MeshPhongNodeMaterial } from "three/webgpu";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { color, float, reflector } from "three/tsl";
 import { useThree } from "@react-three/fiber";
 
-const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<THREE.Group>, roomId: string }) => {
+const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<Group>, roomId: string }) => {
     const room = useEntityById(roomId);
     const allRooms = allEntityIDsByType('room');
 
@@ -77,13 +77,13 @@ const models = [
 const LazyWorld = ({ variant = 0 }: { variant?: number }) => {
     const { scene } = useGLTF(models[variant % models.length]);
     const { scene: threeScene } = useThree();
-    const ref = useRef<THREE.Group>(null);
-    const [clone, setClone] = useState<THREE.Group | null>(null);
+    const ref = useRef<Group>(null);
+    const [clone, setClone] = useState<Group | null>(null);
     const [offset, setOffset] = useState(0);
 
     useEffect(() => {
         if (scene) {
-            const clonedScene = scene.clone() as THREE.Group;
+            const clonedScene = scene.clone() as Group;
 
             // Create reflector for glass materials
             const reflection = reflector({ resolution: 0.5 });
@@ -91,15 +91,15 @@ const LazyWorld = ({ variant = 0 }: { variant?: number }) => {
             threeScene.add(reflection.target);
 
             clonedScene.traverse((child) => {
-                if ((child as THREE.Mesh).isMesh) {
-                    const mesh = child as THREE.Mesh;
+                if ((child as Mesh).isMesh) {
+                    const mesh = child as Mesh;
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
 
                     // if material has userdata, replace it 
                     if (mesh.material && (mesh.material as any).userData && (mesh.material as any).userData.material) {
                         if ((mesh.material as any).userData.material === 'glass') {
-                            mesh.material = new THREE.MeshPhongNodeMaterial({
+                            mesh.material = new MeshPhongNodeMaterial({
                                 transparent: true,
                                 opacity: 0.3,
                                 colorNode: reflection
@@ -111,7 +111,7 @@ const LazyWorld = ({ variant = 0 }: { variant?: number }) => {
             setClone(clonedScene);
 
             // Calculate offset based on bounding box to align start at z=0
-            const bbox = new THREE.Box3().setFromObject(clonedScene);
+            const bbox = new Box3().setFromObject(clonedScene);
             const offset = -bbox.min.z;
             setOffset(offset);
         }

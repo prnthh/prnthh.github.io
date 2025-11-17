@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import * as THREE from "three";
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
+import { Object3D, Vector3 } from "three";
 
 /**
  * BoneCollider
@@ -15,21 +15,20 @@ export default function BoneCollider({
     boneName,
     parentName = "bob",
 }: {
-    rootModel?: THREE.Object3D,
+    rootModel?: Object3D,
     boneName?: string,
     parentName?: string
 }) {
-    const [bone, setBone] = useState<THREE.Object3D | null>(null);
-
+    const [bone, setBone] = useState<Object3D | null>(null);
     const rbRef = useRef<RapierRigidBody>(null);
 
     // Find the bone once the model is loaded
     useEffect(() => {
         if (!rootModel || !boneName) { setBone(null); return; }
-        let found: THREE.Object3D | null = null;
+        let found: Object3D | null = null;
         // Check if rootModel has traverse method
         if (typeof (rootModel as any).traverse === "function") {
-            (rootModel as any).traverse((child: THREE.Object3D) => {
+            (rootModel as any).traverse((child: Object3D) => {
                 if (child.name.includes(boneName)) {
                     found = child;
                 }
@@ -52,7 +51,7 @@ export default function BoneCollider({
     useFrame(() => {
         if (bone && rootModel && rbRef.current) {
             try {
-                const boneWorldPos = new THREE.Vector3();
+                const boneWorldPos = new Vector3();
                 bone.getWorldPosition(boneWorldPos);
                 // Use world position directly for the collider
                 const newPos: [number, number, number] = [
@@ -77,11 +76,11 @@ export default function BoneCollider({
 
                 if (otherRb && bone) {
                     // Get positions
-                    const boneWorldPos = new THREE.Vector3();
+                    const boneWorldPos = new Vector3();
                     bone.getWorldPosition(boneWorldPos);
                     const otherPos = otherRb.translation();
                     // Compute direction from collider to other body
-                    const dir = new THREE.Vector3(
+                    const dir = new Vector3(
                         otherPos.x - boneWorldPos.x,
                         otherPos.y - boneWorldPos.y,
                         otherPos.z - boneWorldPos.z

@@ -1,8 +1,5 @@
-"use client";
-
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
-const RunnerGame = dynamic(() => import('./sketches/demos/react-brainrot-runner'), { ssr: false });
+const RunnerGame = dynamic(() => import('./sketches/demos/react-brainrot-runner'), { ssr: true });
 
 export default function Home() {
   return (

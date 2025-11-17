@@ -1,12 +1,12 @@
+import { forwardRef, RefObject, useEffect, useRef, useState, useImperativeHandle } from "react";
+import { AnimationAction, Group, Mesh, Object3D, Vector3 } from "three";
+import { SimplifyModifier, SkeletonUtils } from "three-stdlib";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { forwardRef, RefObject, useEffect, useRef, useState, useImperativeHandle } from "react";
-import * as THREE from "three";
-import { SimplifyModifier, SkeletonUtils } from "three-stdlib";
 import useAnimationState from "./useAnimationStateBasic";
 import useLookAtTarget from "./useLookAtTarget";
-import BoneCollider from "../BoneCollider";
-import { MeshToonNodeMaterial } from "three/webgpu";
+import BoneCollider from "@/shared/BoneCollider";
+// import { MeshToonNodeMaterial } from "three/webgpu";
 
 // steps to go from AI generated model to animated model:
 // 1. Generate .glb model from AI tool (eg. https://www.meshy.ai/)
@@ -16,7 +16,7 @@ import { MeshToonNodeMaterial } from "three/webgpu";
 // 5. Convert mixamo rigged .fbx (3) to .glb using Blender to preserve bones, fix rotations etc.
 // 6. This module loads the rigged .glb (5) and applies Mixamo animation .fbx (4) as needed
 
-const AnimatedModel = forwardRef<THREE.Object3D, {
+const AnimatedModel = forwardRef<Object3D, {
     name?: string,
     model: string;
     basePath?: string,
@@ -28,10 +28,10 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
     rotation?: [number, number, number],
     modelOffset?: [number, number, number],
     debug?: boolean, onClick?: (e?: any) => void,
-    lookTarget?: RefObject<THREE.Object3D | null>
+    lookTarget?: RefObject<Object3D | null>
     retargetOptions?: { boneMap?: Record<string, string>, preserveHipPosition?: boolean }
-    onActions?: (actions: { [key: string]: THREE.AnimationAction }) => void
-    attachments?: { [key: string]: { model: string, attachpoint: string, offset: THREE.Vector3, scale: THREE.Vector3, rotation: THREE.Vector3 } },
+    onActions?: (actions: { [key: string]: AnimationAction }) => void
+    attachments?: { [key: string]: { model: string, attachpoint: string, offset: Vector3, scale: Vector3, rotation: Vector3 } },
     enableBoneCollider?: boolean, // Add option to disable BoneCollider
     children?: React.ReactNode;
 }>(
@@ -40,19 +40,19 @@ const AnimatedModel = forwardRef<THREE.Object3D, {
         modelOffset = [0, 0, 0],
         debug = false, lookTarget, retargetOptions, onActions, attachments, enableBoneCollider = true, children, ...props
     }, ref) => {
-        const modelRef = useRef<THREE.Object3D | undefined>(undefined);
-        const groupRef = useRef<THREE.Group>(null!);
+        const modelRef = useRef<Object3D | undefined>(undefined);
+        const groupRef = useRef<Group>(null!);
         const { scene, animations } = useGLTF(basePath + model);
-        const [clonedScene, setClonedScene] = useState<THREE.Object3D | undefined>(undefined);
+        const [clonedScene, setClonedScene] = useState<Object3D | undefined>(undefined);
 
         // Create a clone of the scene to avoid modifying the original
         useEffect(() => {
             if (scene) {
-                const cloned = SkeletonUtils.clone(scene as unknown as THREE.Object3D);
+                const cloned = SkeletonUtils.clone(scene as unknown as Object3D);
                 const modifier = new SimplifyModifier();
                 cloned.traverse((child) => {
                     if (!('isMesh' in child && child.isMesh)) return;
-                    const mesh = child as THREE.Mesh;
+                    const mesh = child as Mesh;
                     mesh.castShadow = mesh.receiveShadow = true;
 
                     // TOON SHADING

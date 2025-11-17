@@ -1,5 +1,5 @@
 import { Canvas, extend } from "@react-three/fiber";
-import * as THREE from "three/webgpu";
+import { WebGPURenderer, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PCFShadowMap } from "three/webgpu";
 import { Suspense, useState } from "react";
 import { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.Nodes.js";
 import { Loader } from "@react-three/drei";
@@ -8,8 +8,8 @@ import { Loader } from "@react-three/drei";
 // extend(THREE as any)
 
 extend({
-    MeshBasicNodeMaterial: THREE.MeshBasicNodeMaterial,
-    MeshStandardNodeMaterial: THREE.MeshStandardNodeMaterial,
+    MeshBasicNodeMaterial: MeshBasicNodeMaterial,
+    MeshStandardNodeMaterial: MeshStandardNodeMaterial,
 });
 
 
@@ -19,10 +19,10 @@ export default function GameCanvas({ loader = false, children, ...props }: { loa
 
     return <>
         <Canvas
-            shadows={{ type: THREE.PCFShadowMap, }}
+            shadows={{ type: PCFShadowMap, }}
             frameloop={frameloop}
             gl={async ({ canvas }) => {
-                const renderer = new THREE.WebGPURenderer({
+                const renderer = new WebGPURenderer({
                     canvas: canvas as HTMLCanvasElement,
                     // @ts-expect-error futuristic
                     shadowMap: true,
