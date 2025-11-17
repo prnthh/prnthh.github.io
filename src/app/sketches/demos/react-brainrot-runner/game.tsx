@@ -24,7 +24,7 @@ export default function Game() {
 
 
     return <><div className="w-full" style={{ height: "100vh" }}>
-        <GameCanvas noLoader>
+        <GameCanvas>
             <ambientLight intensity={0.5} />
             <directionalLight
                 position={[10, 15, 10]}

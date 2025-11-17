@@ -1,13 +1,13 @@
 "use client";
 
-import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls, Sky } from "@react-three/drei";
 import Smoke from "./ParticleEmitter";
 import { Vector3 } from "three";
 import { useRef, useState, ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
-import Fire from "@/shared/shaders/FireMaterial";
+import GameCanvas from "@/shared/GameCanvas";
+import DemoWorld from "@/shared/DemoWorld";
 
 function Circular({
     radius = 5,
@@ -40,9 +40,8 @@ export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Canvas>
+                <GameCanvas>
                     <Physics>
-                        <Fire scale={[2, 2, 1]} position={[0, 0, 0]} />
 
                         <Smoke
                             debug
@@ -72,18 +71,12 @@ export default function Home() {
                                 <meshStandardMaterial color="orange" />
                             </mesh>
                         </RigidBody>
-                        <RigidBody type="fixed">
-                            <mesh position={[0, -2, 0]} scale={[10, 0.1, 10]}>
-                                <boxGeometry />
-                                <meshStandardMaterial color="gray" />
-                            </mesh>
-                        </RigidBody>
+                        <DemoWorld />
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} />
                         <OrbitControls />
                     </Physics>
-                    <Sky sunPosition={new Vector3(100, 10, 100)} />
-                </Canvas>
+                </GameCanvas>
             </div>
         </div>
     );
