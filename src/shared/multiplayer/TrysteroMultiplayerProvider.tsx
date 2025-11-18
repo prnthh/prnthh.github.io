@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, createContext, useContext, useMemo } from "react"
-import { joinRoom } from "trystero"
+import { joinRoom } from "trystero/torrent"
 import { PeerState, useMultiplayerStore, useMyState, usePeerStates } from "@/shared/providers/MultiplayerStore"
 
 // Hook to manage room joining/leaving
