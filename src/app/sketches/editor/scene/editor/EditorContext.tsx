@@ -1,16 +1,9 @@
 import { DragDropLoader } from "../../dragdrop/DragDropLoader";
 import React, { useEffect, useRef, useState, useContext, createContext, useMemo } from "react";
 import SceneEditor from "../editor/SceneEditor";
-import { Object3D, Object3DEventMap, Scene } from "three";
+import { Object3D, Object3DEventMap, Scene, Vector3 } from "three";
 import { EditorModes, SceneNode, Viewer } from "../viewer/SceneViewer";
-import { loadModel } from "../../dragdrop/modelLoader";
-
-interface LoadingProgress {
-    currentFile: string;
-    loadedCount: number;
-    totalCount: number;
-    currentSizeMB: number;
-}
+import { GLTFLoader, FBXLoader, DRACOLoader } from "three/examples/jsm/Addons.js";
 
 interface EditorContextType {
     sceneGraph: SceneNode[];
@@ -24,8 +17,8 @@ interface EditorContextType {
     getNodeRef: (id: string) => React.RefObject<Object3D<Object3DEventMap> | null>;
     scanAndLoadMissingModels: (customSceneGraph?: SceneNode[]) => void;
     sceneRef: React.RefObject<Scene | null>;
-    isLoadingAssets: boolean;
-    loadingProgress: LoadingProgress | null;
+    loadRadius: number;
+    unloadRadius: number;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -36,7 +29,44 @@ export function useEditorContext() {
     return ctx;
 }
 
-export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGraph: initialSceneGraph, children }: { resourcePath?: string, mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode }) {
+function calculateNetPosition(node: SceneNode, parentPosition: [number, number, number] = [0, 0, 0]): [number, number, number] {
+    const nodePos = node.transform?.position || [0, 0, 0];
+    return [
+        (parentPosition[0] ?? 0) + (nodePos[0] ?? 0),
+        (parentPosition[1] ?? 0) + (nodePos[1] ?? 0),
+        (parentPosition[2] ?? 0) + (nodePos[2] ?? 0),
+    ];
+}
+
+function isLeafNode(node: SceneNode): boolean {
+    return !node.children || node.children.length === 0;
+}
+
+function calculateDistance(pos1: [number, number, number], pos2: Vector3): number {
+    return Math.sqrt(
+        Math.pow(pos1[0] - pos2.x, 2) +
+        Math.pow(pos1[1] - pos2.y, 2) +
+        Math.pow(pos1[2] - pos2.z, 2)
+    );
+}
+
+export function filterNodesByRadius(nodes: SceneNode[], viewerPos: Vector3, loadRadius: number, unloadRadius: number, parentPosition: [number, number, number] = [0, 0, 0]): SceneNode[] {
+    return nodes.map(node => {
+        const netPosition = calculateNetPosition(node, parentPosition);
+        const distance = calculateDistance(netPosition, viewerPos);
+
+        if (isLeafNode(node)) {
+            return distance <= loadRadius ? node : null;
+        }
+
+        return {
+            ...node,
+            children: node.children ? filterNodesByRadius(node.children, viewerPos, loadRadius, unloadRadius, netPosition) : []
+        };
+    }).filter((node): node is SceneNode => node !== null);
+}
+
+export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGraph: initialSceneGraph, children, loadRadius = Infinity, unloadRadius = Infinity }: { resourcePath?: string, mode?: EditorModes, sceneGraph?: SceneNode[], children?: React.ReactNode, loadRadius?: number, unloadRadius?: number }) {
     const [sceneGraph, setSceneGraph] = useState<SceneNode[]>(
         initialSceneGraph ??
         [{
@@ -58,8 +88,6 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     const [models, setModels] = useState<{ [filename: string]: any }>({});
     const [playMode, setPlayMode] = useState<EditorModes>(mode);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-    const [isLoadingAssets, setIsLoadingAssets] = useState<boolean>(true); // Start as true to keep physics paused initially
-    const [loadingProgress, setLoadingProgress] = useState<LoadingProgress | null>(null);
 
     useEffect(() => {
         setPlayMode(mode);
@@ -76,9 +104,6 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     const sceneRef = useRef<Scene | null>(null);
 
     function addModelNodeToSceneGraph(model: any, filename: string) {
-        // Set loading flag when adding model
-        setIsLoadingAssets(true);
-
         // Always store the model in models state by filename
         setModels(prevModels => ({
             ...prevModels,
@@ -107,9 +132,6 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
                 }
             ] as SceneNode[];
         });
-
-        // Clear loading flag after a brief delay
-        setTimeout(() => setIsLoadingAssets(false), 100);
     }
 
     // --- Scan and load missing models ---
@@ -133,25 +155,10 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
         }
         collectModelFiles(graph);
 
-        // Determine which files need to be loaded
-        const filesToLoad = Array.from(referencedFiles).filter(filename => {
-            const model = models[filename];
-            return !model || model.missing;
-        });
-
-        // If no files need loading, exit early
-        if (filesToLoad.length === 0) {
-            setIsLoadingAssets(false);
-            return;
-        }
-
-        // Set loading flag
-        setIsLoadingAssets(true);
-
         // Mark missing models
         setModels(prevModels => {
             const newModels = { ...prevModels };
-            filesToLoad.forEach(filename => {
+            referencedFiles.forEach(filename => {
                 if (!(filename in newModels)) {
                     newModels[filename] = { missing: true };
                 }
@@ -159,54 +166,46 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
             return newModels;
         });
 
-        // Track loading progress with a ref to avoid closure issues
-        const loadedCountRef = { current: 0 };
-        const totalToLoad = filesToLoad.length;
+        // Defer model loading to prevent canvas initialization race conditions
+        setTimeout(() => {
+            referencedFiles.forEach(filename => {
+                // Check current models state to avoid race conditions
+                setModels(currentModels => {
+                    if (currentModels[filename] && !currentModels[filename].missing) {
+                        return currentModels; // Already loaded
+                    }
 
-        const onLoadComplete = () => {
-            loadedCountRef.current++;
-            console.log(`Loaded ${loadedCountRef.current}/${totalToLoad} models`);
-            if (loadedCountRef.current >= totalToLoad) {
-                setIsLoadingAssets(false);
-                setLoadingProgress(null);
-            }
-        };
+                    if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
+                        const loader = new GLTFLoader();
+                        const dracoLoader = new DRACOLoader();
+                        dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+                        loader.setDRACOLoader(dracoLoader);
+                        loader.load(`${resourcePath}/${filename}`,
+                            gltf => {
+                                setModels(prev => ({ ...prev, [filename]: gltf.scene }));
+                            },
+                            undefined,
+                            err => {
+                                setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+                            }
+                        );
+                    } else if (filename.endsWith('.fbx')) {
+                        const loader = new FBXLoader();
+                        loader.load(`${resourcePath}/${filename}`,
+                            model => {
+                                setModels(prev => ({ ...prev, [filename]: model }));
+                            },
+                            undefined,
+                            err => {
+                                setModels(prev => ({ ...prev, [filename]: { missing: true, error: err } }));
+                            }
+                        );
+                    }
 
-        // Load only the files that need loading
-        filesToLoad.forEach((filename, index) => {
-            // Immediately set the loading progress for this file
-            setLoadingProgress({
-                currentFile: filename,
-                loadedCount: index,
-                totalCount: totalToLoad,
-                currentSizeMB: 0
-            });
-
-            // Use the loadModel utility which handles path construction
-            loadModel(filename, resourcePath, (file, loaded, total) => {
-                // Update loading progress with current file and size
-                // Handle cache hits where total might be 0
-                const sizeMB = total > 0 ? total / (1024 * 1024) : loaded / (1024 * 1024);
-                setLoadingProgress({
-                    currentFile: file,
-                    loadedCount: index,
-                    totalCount: totalToLoad,
-                    currentSizeMB: sizeMB
+                    return currentModels;
                 });
-            }).then(result => {
-                if (result.success && result.model) {
-                    setModels(prev => ({ ...prev, [filename]: result.model }));
-                } else {
-                    console.error(`Failed to load model ${filename}:`, result.error);
-                    setModels(prev => ({ ...prev, [filename]: { missing: true, error: result.error } }));
-                }
-                onLoadComplete();
-            }).catch(error => {
-                console.error(`Error loading model ${filename}:`, error);
-                setModels(prev => ({ ...prev, [filename]: { missing: true, error: error.message } }));
-                onLoadComplete();
             });
-        });
+        }, 100); // Small delay to let canvas initialize
     };
     // Run once on mount
     React.useEffect(() => {
@@ -214,9 +213,9 @@ export function GameEngine({ resourcePath = "", mode = EditorModes.Play, sceneGr
     }, []);
 
     return (
-        <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef, isLoadingAssets, loadingProgress }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId, isLoadingAssets, loadingProgress])}>
+        <EditorContext.Provider value={useMemo(() => ({ sceneGraph, setSceneGraph, models, setModels, playMode, setPlayMode, selectedNodeId, setSelectedNodeId, getNodeRef, scanAndLoadMissingModels, sceneRef, loadRadius, unloadRadius }), [sceneGraph, models, playMode, setPlayMode, selectedNodeId, loadRadius, unloadRadius])}>
             {playMode == EditorModes.Edit && <DragDropLoader onModelLoaded={(model, filename) => addModelNodeToSceneGraph(model, filename)} />}
-            <div className="w-full items-center justify-items-center min-h-screen" style={{ height: "100vh" }}>
+            <div className="w-full items-center justify-items-center min-h-screen bg-black/70" style={{ height: "100vh" }}>
                 {children}
             </div>
             {playMode == EditorModes.Edit && <SceneEditor

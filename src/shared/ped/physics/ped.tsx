@@ -31,16 +31,14 @@ const Ped = memo(({
                 {...rigidHumanoidProps}
             >
                 {children}
-                {modelRef.current?.rbref && (
-                    <SteeringBehavior
-                        type={steeringType}
-                        rigidBodyRef={modelRef.current.rbref}
-                        setAnimation={setAnimation}
-                        position={position || spawnPosition}
-                        paused={false}
-                        onDestinationReached={onDestinationReached}
-                    />
-                )}
+                <SteeringBehavior
+                    type={steeringType}
+                    rigidBodyRef={modelRef}
+                    setAnimation={setAnimation}
+                    position={position || spawnPosition}
+                    paused={false}
+                    onDestinationReached={onDestinationReached}
+                />
             </RigidHumanoidModel>
         </Suspense>
     );

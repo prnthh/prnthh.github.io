@@ -3,6 +3,7 @@ import { BallCollider, RapierRigidBody } from "@react-three/rapier";
 import { RefObject, useEffect, useRef } from "react";
 import { Matrix4, Quaternion, Vector3 } from "three";
 import { degToRad } from "three/src/math/MathUtils.js";
+import { RigidHumanoidModelRef } from "./types";
 
 const WALK_SPEED = 1.0;
 const RUN_SPEED = 2.0;
@@ -18,7 +19,7 @@ export enum SteeringType {
 
 interface SteeringBehaviorProps {
     type: SteeringType;
-    rigidBodyRef: RefObject<RapierRigidBody | null>;
+    rigidBodyRef: RefObject<RigidHumanoidModelRef | null>;
     setAnimation: (animation: "idle" | "walk" | "run") => void;
     position: [number, number, number];
     paused?: boolean;
@@ -55,10 +56,11 @@ const SteeringBehavior = ({
     });
 
     function stopMovement() {
-        if (!rigidBodyRef.current) return;
+        const rigidBody = rigidBodyRef.current?.rbref?.current;
+        if (!rigidBody) return;
         target.current = undefined;
         targetReached.current = true;
-        rigidBodyRef.current.setLinvel({ x: 0, y: rigidBodyRef.current.linvel().y, z: 0 }, true);
+        rigidBody.setLinvel({ x: 0, y: rigidBody.linvel().y, z: 0 }, true);
         setAnimation("idle");
     }
 
@@ -69,7 +71,7 @@ const SteeringBehavior = ({
     }, [paused, setAnimation]);
 
     useFrame((_, delta) => {
-        const rigidBody = rigidBodyRef.current;
+        const rigidBody = rigidBodyRef.current?.rbref?.current;
         if (!rigidBody) return;
 
         // Update target when position changes
@@ -150,7 +152,7 @@ const SteeringBehavior = ({
         }
     });
 
-    const isMoving = !!target.current && !targetReached.current && !paused;
+    const isMoving = !!target.current && !targetReached.current && !paused && !!rigidBodyRef.current?.rbref?.current;
 
     return <>
         {isMoving && <>

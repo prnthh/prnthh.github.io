@@ -1,10 +1,10 @@
-import { RapierRigidBody, RigidBody, useRapier } from "@react-three/rapier";
-import { useEffect, useRef, useState } from "react";
-import { Object3D, Object3DEventMap } from "three";
+import { RapierRigidBody, RigidBody } from "@react-three/rapier";
+import { useEffect, useRef, useState, useMemo } from "react";
+import { Object3D, Object3DEventMap, Vector3 } from "three";
 import { GameInstance, GameInstanceProvider } from "../editor/InstanceProvider";
 import * as THREE from "three";
 import { MapControls, TransformControls } from "@react-three/drei";
-import { useEditorContext } from "../editor/EditorContext";
+import { useEditorContext, filterNodesByRadius } from "../editor/EditorContext";
 import WaterMaterial from "@/shared/shaders/Water";
 import { useThree } from "@react-three/fiber";
 
@@ -70,24 +70,10 @@ function cloneObject(object: Object3D): Object3D | null {
     return clone;
 }
 
-// Component to pause physics world during asset loading
-function PhysicsPauser() {
-    const { isLoadingAssets } = useEditorContext();
-    const { world } = useRapier();
-
-    useEffect(() => {
-        if (world) {
-            // Set timestep to 0 to effectively pause physics
-            world.timestep = isLoadingAssets ? 0 : 1 / 60;
-        }
-    }, [isLoadingAssets, world]);
-
-    return null;
-}
-
 export function Viewer() {
-    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, getNodeRef, playMode, sceneRef, isLoadingAssets } = useEditorContext();
-    const { scene } = useThree();
+    const { sceneGraph, setSceneGraph, models, selectedNodeId, setSelectedNodeId, getNodeRef, playMode, sceneRef, loadRadius, unloadRadius } = useEditorContext();
+    const { scene, camera } = useThree();
+    const [localViewerPosition, setLocalViewerPosition] = useState(new THREE.Vector3(0, 0, 0));
 
     useEffect(() => {
         if (sceneRef.current !== scene) {
@@ -104,41 +90,66 @@ export function Viewer() {
     const selectedRef = selectedNodeId ? getNodeRef(selectedNodeId) : undefined;
     const isEditMode = playMode === EditorModes.Edit;
 
+    // Update viewer position from camera in play mode at 1s interval
+    useEffect(() => {
+        if (playMode === EditorModes.Play && loadRadius !== Infinity) {
+            const updateViewerPos = () => {
+                setLocalViewerPosition(camera.position.clone());
+            };
+            updateViewerPos();
+            const interval = setInterval(updateViewerPos, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [playMode, loadRadius, camera]);
+
+    // Apply radius filtering in play mode
+    const filteredSceneGraph = useMemo(
+        () => playMode === EditorModes.Play && loadRadius !== Infinity
+            ? filterNodesByRadius(sceneGraph, localViewerPosition, loadRadius, unloadRadius)
+            : sceneGraph,
+        [sceneGraph, playMode, loadRadius, unloadRadius, localViewerPosition]
+    );
+
+    // Memoize injected models to prevent unnecessary recalculations
+    const injectedSceneGraph = useMemo(
+        () => injectModels(filteredSceneGraph, models),
+        [filteredSceneGraph, models]
+    );
+
     return (
-        <>
-            <PhysicsPauser />
-            <GameInstanceProvider models={models}>
+        <GameInstanceProvider models={models}>
+            <>
                 <RecursiveNode
-                    node={injectModels(sceneGraph, models)[0]}
+                    node={injectedSceneGraph[0]}
                     onSelect={setSelectedNodeId}
                     selectedNodeId={selectedNodeId}
                     setSceneGraph={setSceneGraph}
                     getNodeRef={getNodeRef}
                     playMode={playMode}
                 />
-            </GameInstanceProvider>
 
-            {isEditMode && (
-                <>
-                    <MapControls makeDefault />
-                    <gridHelper args={[10, 10]} />
-                    {selectedNodeId && selectedRef?.current && nodeExists(sceneGraph, selectedNodeId) && (
-                        <TransformControls
-                            object={selectedRef.current}
-                            mode="translate"
-                            onObjectChange={() => {
-                                const obj = selectedRef.current;
-                                if (obj) {
-                                    setSceneGraph(prev => updateNodeTransform(prev, selectedNodeId, {
-                                        position: [obj.position.x, obj.position.y, obj.position.z],
-                                    }));
-                                }
-                            }}
-                        />
-                    )}
-                </>
-            )}
-        </>
+                {isEditMode && (
+                    <>
+                        <MapControls makeDefault />
+                        <gridHelper args={[10, 10]} />
+                        {selectedNodeId && selectedRef?.current && nodeExists(sceneGraph, selectedNodeId) && (
+                            <TransformControls
+                                object={selectedRef.current}
+                                mode="translate"
+                                onObjectChange={() => {
+                                    const obj = selectedRef.current;
+                                    if (obj) {
+                                        setSceneGraph(prev => updateNodeTransform(prev, selectedNodeId, {
+                                            position: [obj.position.x, obj.position.y, obj.position.z],
+                                        }));
+                                    }
+                                }}
+                            />
+                        )}
+                    </>
+                )}
+            </>
+        </GameInstanceProvider>
     );
 }
 
@@ -193,13 +204,6 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
         const pointerEventComp = node.components?.find(c => c.type === 'pointerEvent');
 
         if (movedRef.current) return;
-
-        if (playMode === EditorModes.Edit && node.id) {
-            e.stopPropagation();
-            onSelect(node.id);
-            return;
-        }
-
         if (!!pointerEventComp) {
             const mode = pointerEventComp.args?.[0] || 'event';
             if (mode === 'link') {
@@ -214,6 +218,11 @@ export default function RecursiveNode({ node, onSelect, selectedNodeId, setScene
             e.stopPropagation();
         }
         movedRef.current = false;
+
+        if (playMode === EditorModes.Edit && node.id) {
+            e.stopPropagation();
+            onSelect(node.id);
+        }
     };
 
     // Regular rendering

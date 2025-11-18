@@ -1,0 +1,13 @@
+{
+    "models": [
+        {
+            "name": "rigga",
+            "path": "/rigga/rigga.glb"
+        },
+        {
+            "name": "rigga2",
+            "path": "/rigga/rigga2.glb"
+        }
+    ],
+    "maps": []
+}
