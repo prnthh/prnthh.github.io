@@ -5,7 +5,7 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { Box, OrbitControls, useTexture } from "@react-three/drei";
 import { useEffect, useState } from "react";
 import MovableTarget from "@/shared/MovableTarget";
-import Ped from "@/shared/ped/ped";
+import Ped from "@/shared/ped/physics/ped";
 
 export default function Home() {
     const [target, setTarget] = useState<[number, number, number] | undefined>([0, 0, -2])
@@ -15,7 +15,7 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <Canvas camera={{ position: [0, 4, 4] }} shadows>
                     <Physics debug>
-                        <Ped modelOffset={[0, -0.5, 0]} modelUrl="/rigga/rigga.glb" position={target} />
+                        <Ped modelOffset={[0, -0.5, 0]} model="/rigga/rigga.glb" position={target} />
                         <MovableTarget setPosition={setTarget} />
 
 
@@ -115,7 +115,7 @@ const RandomPedBehavior = ({ npc }: { npc: { id: string; position: [number, numb
     }, []);
     return (
         <>
-            <Ped modelOffset={[0, -0.5, 0]} modelUrl="/rigga/rigga2.glb" position={position} />
+            <Ped modelOffset={[0, -0.5, 0]} model="/rigga/rigga2.glb" position={position} />
         </>
     );
 };

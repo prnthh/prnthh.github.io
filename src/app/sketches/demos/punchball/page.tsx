@@ -7,8 +7,8 @@ import { Object3D, Vector3 } from "three";
 import { forwardRef } from "react";
 import GameCanvas from "@/shared/GameCanvas";
 import Controls from "@/shared/controls/ControlsProvider";
-import Ped from "@/shared/ped/ped";
-import DialogCollider from "@/shared/ped/DialogCollider";
+import Ped from "@/shared/ped/physics/ped";
+import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import Balloon from "@/shared/physics/Balloon";
@@ -79,7 +79,7 @@ const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | nul
         return () => clearInterval(interval);
     }, [ballRef]);
 
-    return <Ped modelUrl="rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
+    return <Ped model="rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
         <DialogCollider>Ole!</DialogCollider>
     </Ped>
 }

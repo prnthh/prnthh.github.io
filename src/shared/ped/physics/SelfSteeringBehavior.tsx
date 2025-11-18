@@ -1,7 +1,8 @@
 import { useFrame } from "@react-three/fiber";
 import { BallCollider, RapierRigidBody } from "@react-three/rapier";
 import { RefObject, useEffect, useRef } from "react";
-import * as THREE from "three";
+import { Matrix4, Quaternion, Vector3 } from "three";
+import { degToRad } from "three/src/math/MathUtils.js";
 
 const WALK_SPEED = 1.0;
 const RUN_SPEED = 2.0;
@@ -15,42 +16,42 @@ export enum SteeringType {
     DRIVE,
 }
 
-const SteeringBehavior = (
-    {
-        type,
-        rigidBodyRef,
-        setAnimation,
-        position,
-        paused = false,
-        onDestinationReached,
-    }: {
-        type: SteeringType,
-        rigidBodyRef: RefObject<RapierRigidBody | null>,
-        setAnimation: any,
-        position: [number, number, number] | undefined,
-        paused: boolean,
-        onDestinationReached?: RefObject<() => void>,
-    }
-) => {
-    const target = useRef<THREE.Vector3 | undefined>(undefined);
+interface SteeringBehaviorProps {
+    type: SteeringType;
+    rigidBodyRef: RefObject<RapierRigidBody | null>;
+    setAnimation: (animation: "idle" | "walk" | "run") => void;
+    position: [number, number, number];
+    paused?: boolean;
+    onDestinationReached?: () => void;
+}
+
+const SteeringBehavior = ({
+    type,
+    rigidBodyRef,
+    setAnimation,
+    position,
+    paused = false,
+    onDestinationReached,
+}: SteeringBehaviorProps) => {
+    const target = useRef<Vector3 | undefined>(undefined);
     const targetReached = useRef(false);
-    const targetPos = useRef<THREE.Vector3>(new THREE.Vector3());
-    const groundNormal = useRef<THREE.Vector3>(new THREE.Vector3(0, 1, 0));
+    const targetPos = useRef<Vector3>(new Vector3());
+    const groundNormal = useRef<Vector3>(new Vector3(0, 1, 0));
 
     const centerWhisker = useRef<boolean>(false);
 
     // Pre-allocated objects to avoid GC in useFrame
     const cache = useRef({
-        currentPos: new THREE.Vector3(),
-        directionToTarget: new THREE.Vector3(),
-        currentQuat: new THREE.Quaternion(),
-        targetQuat: new THREE.Quaternion(),
-        rotatedQuat: new THREE.Quaternion(),
-        lookAtTarget: new THREE.Vector3(),
-        projectedDir: new THREE.Vector3(),
-        velocity: new THREE.Vector3(),
-        tempMatrix: new THREE.Matrix4(),
-        angleThreshold: THREE.MathUtils.degToRad(30),
+        currentPos: new Vector3(),
+        directionToTarget: new Vector3(),
+        currentQuat: new Quaternion(),
+        targetQuat: new Quaternion(),
+        rotatedQuat: new Quaternion(),
+        lookAtTarget: new Vector3(),
+        projectedDir: new Vector3(),
+        velocity: new Vector3(),
+        tempMatrix: new Matrix4(),
+        angleThreshold: degToRad(30),
     });
 
     function stopMovement() {
@@ -61,30 +62,7 @@ const SteeringBehavior = (
         setAnimation("idle");
     }
 
-    useEffect(() => {
-        const rigidBody = rigidBodyRef.current;
-        if (!rigidBody || !position) return;
-
-        const newTarget = cache.current.lookAtTarget.set(position[0], position[1], position[2]);
-
-        // Check if target changed using direct comparison
-        if (target.current?.equals(newTarget)) return;
-
-        const pos = rigidBody.translation();
-        const distance = cache.current.currentPos.set(pos.x, pos.y, pos.z).distanceTo(newTarget);
-
-        // Update target
-        if (!target.current) target.current = new THREE.Vector3();
-        target.current.copy(newTarget);
-        targetReached.current = false;
-        targetPos.current.copy(newTarget);
-
-        // Check if already at destination
-        if (distance <= IDLE_THRESHOLD) {
-            stopMovement();
-            onDestinationReached?.current?.();
-        }
-    }, [position, rigidBodyRef.current]);
+    const lastPosition = useRef<[number, number, number] | undefined>(undefined);
 
     useEffect(() => {
         if (paused) setAnimation("idle");
@@ -92,7 +70,37 @@ const SteeringBehavior = (
 
     useFrame((_, delta) => {
         const rigidBody = rigidBodyRef.current;
-        if (!rigidBody || !target.current || targetReached.current || paused) return;
+        if (!rigidBody) return;
+
+        // Update target when position changes
+        if (position && (!lastPosition.current ||
+            position[0] !== lastPosition.current[0] ||
+            position[1] !== lastPosition.current[1] ||
+            position[2] !== lastPosition.current[2])) {
+            lastPosition.current = position;
+            const newTarget = new Vector3(position[0], position[1], position[2]);
+
+            // Check if target changed using direct comparison
+            if (!target.current || !target.current.equals(newTarget)) {
+                const pos = rigidBody.translation();
+                const distance = cache.current.currentPos.set(pos.x, pos.y, pos.z).distanceTo(newTarget);
+
+                // Update target
+                if (!target.current) target.current = new Vector3();
+                target.current.copy(newTarget);
+                targetReached.current = false;
+                targetPos.current.copy(newTarget);
+
+                // Check if already at destination
+                if (distance <= IDLE_THRESHOLD) {
+                    stopMovement();
+                    onDestinationReached?.();
+                    return;
+                }
+            }
+        }
+
+        if (!target.current || targetReached.current || paused) return;
 
         const { currentPos, directionToTarget, currentQuat } = cache.current;
         const pos = rigidBody.translation();
@@ -102,7 +110,7 @@ const SteeringBehavior = (
 
         if (distance <= IDLE_THRESHOLD) {
             stopMovement();
-            onDestinationReached?.current?.();
+            onDestinationReached?.();
             return;
         }
 

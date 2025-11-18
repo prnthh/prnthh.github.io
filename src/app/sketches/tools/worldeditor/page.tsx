@@ -19,3 +19,5 @@ export default function MapEditorPage() {
 
 // should be able to load this json
 // https://github.com/mrdoob/three.js/blob/dev/editor/examples/arkanoid.app.json
+
+// the main goal is to be able to animate the camera around with keyframes.

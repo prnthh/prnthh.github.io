@@ -7,8 +7,8 @@ import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityB
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
-import Ped from "@/shared/ped/ped";
-import DialogCollider from "@/shared/ped/DialogCollider";
+import Ped from "@/shared/ped/physics/ped";
+import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import DebugGround from "@/shared/debug/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
@@ -180,10 +180,10 @@ const TalkativeNPC = ({ id }: { id: string }) => {
     return <><Ped
         key={name}
         basePath={entity.basePath || "/models/human/onimilio/"}
-        modelUrl={entity.modelUrl || "rigged.glb"}
+        model={entity.modelUrl || "rigged.glb"}
         position={position} height={1.5}
         lookTarget={{ current: playerRef }}
-        onDestinationReached={reachedDestinationHandler}
+        onDestinationReached={reachedDestinationHandler.current}
     >
         <Html center position={[0, 3, 0]} zIndexRange={[5, 10]}>
             <pre className="noscrollbar text-xs text-white bg-gray-800/70 w-[300px] rounded overflow-auto text-wrap">

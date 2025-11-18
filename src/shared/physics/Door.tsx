@@ -1,7 +1,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import DialogCollider from '@/shared/ped/DialogCollider';
+import DialogCollider from '@/shared/ped/physics/DialogCollider';
 import { RapierRigidBody, RigidBody } from '@react-three/rapier';
 import { Object3D, Quaternion, Vector3 } from 'three';
 import TextView from '../shaders/TextView';

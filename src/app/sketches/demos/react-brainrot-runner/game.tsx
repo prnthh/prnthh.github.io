@@ -9,6 +9,7 @@ import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/pr
 import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
 import Room from "./rooms/BaseRoom";
+import { getTimeRNGNumber } from "../killbox/TimeRNG";
 
 // npm i react-brainrot-runner - make a runner game, just provide models for room sections
 // use it instead of a loading screen!
@@ -74,16 +75,24 @@ const GameEntityWorld = ({
     const lastAddedZ = useRef(0);
 
     const INITIAL_ROOMS = 4;
-    const nextRoomIndex = useRef(INITIAL_ROOMS);
+    const nextRoomIndex = useRef(0);
 
-    function addRoomToQueue(variant?: number) {
-        const randomVariant = variant !== undefined ? variant : Math.floor(Math.random() * rooms.length);
-        const config = rooms[randomVariant];
+    function addRoomToQueue() {
+        // Use time-based RNG that changes every minute
+        // Same room for everyone until the next minute
+        const timeBasedRandom = getTimeRNGNumber({
+            min: 0,
+            max: rooms.length,
+            granularity: 'minute'
+        });
+        const selectedVariant = Math.floor(timeBasedRandom);
+
+        const config = rooms[selectedVariant];
         const roomLength = config?.length ?? 10;
 
         addEntity({
             type: 'room',
-            variant: randomVariant,
+            variant: selectedVariant,
             config,
             position: [0, 0, lastAddedZ.current] as [number, number, number],
             index: nextRoomIndex.current,
@@ -98,7 +107,7 @@ const GameEntityWorld = ({
 
         resetWorld();
         for (let i = 0; i < INITIAL_ROOMS; i++) {
-            addRoomToQueue(i);
+            addRoomToQueue();
         }
         initialized.current = true;
     }, [addEntity, resetWorld]);
@@ -117,20 +126,7 @@ const GameEntityWorld = ({
             const secondToLastRoomZ = allRooms[allRooms.length - 2]?.position?.[2] ?? 0;
 
             if (playerZ >= secondToLastRoomZ) {
-                const variant = nextRoomIndex.current % rooms.length;
-                const config = rooms[variant];
-                const roomLength = config?.length ?? 10;
-
-                addEntity({
-                    type: 'room',
-                    variant,
-                    config,
-                    position: [0, 0, lastAddedZ.current] as [number, number, number],
-                    index: nextRoomIndex.current,
-                });
-
-                lastAddedZ.current += roomLength;
-                nextRoomIndex.current += 1;
+                addRoomToQueue();
             }
         }, 200);
 

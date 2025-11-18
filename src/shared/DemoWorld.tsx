@@ -1,10 +1,10 @@
 import { RigidBody } from "@react-three/rapier"
-import { ThreeElements } from "@react-three/fiber"
+import { ThreeElements, ThreeEvent } from "@react-three/fiber"
 import { Environment } from "@react-three/drei"
 import DebugGround from "@/shared/debug/DebugGround"
 import { BackSide } from "three"
 
-const DemoWorld = ({ ...props }: ThreeElements['group']) => {
+const DemoWorld = ({ onClick, ...props }: ThreeElements['group']) => {
     return <>
         <group {...props}>
             <RigidBody>
@@ -14,7 +14,7 @@ const DemoWorld = ({ ...props }: ThreeElements['group']) => {
                 </mesh>
             </RigidBody>
 
-            <DebugGround />
+            <DebugGround onClick={onClick as any} />
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
             <DemoWorldEnvironment />

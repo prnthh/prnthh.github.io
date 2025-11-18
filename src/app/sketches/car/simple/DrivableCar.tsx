@@ -1,7 +1,7 @@
 import { Preload } from "@react-three/drei";
 import { useEffect, useState } from "react";
 import Vehicle from "./car/base";
-import DialogCollider from "@/shared/ped/DialogCollider";
+import DialogCollider from "@/shared/ped/physics/DialogCollider";
 
 const DrivableCar = ({ position = [2, 5, 4], setPlayerState, name }: {
     position?: [number, number, number],

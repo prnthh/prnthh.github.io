@@ -1,11 +1,11 @@
-import { forwardRef, RefObject, useEffect, useRef, useState, useImperativeHandle } from "react";
-import { AnimationAction, Group, Mesh, Object3D, Vector3 } from "three";
+import { forwardRef, useEffect, useRef, useState, useImperativeHandle } from "react";
+import { Group, Mesh, Object3D, } from "three";
 import { SimplifyModifier, SkeletonUtils } from "three-stdlib";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import useAnimationState from "./useAnimationStateBasic";
 import useLookAtTarget from "./useLookAtTarget";
-// import BoneCollider from "@/shared/BoneCollider";
+import { AnimatedModelProps, AnimatedModelRef } from "./types";
 // import { MeshToonNodeMaterial } from "three/webgpu";
 
 // steps to go from AI generated model to animated model:
@@ -16,25 +16,7 @@ import useLookAtTarget from "./useLookAtTarget";
 // 5. Convert mixamo rigged .fbx (3) to .glb using Blender to preserve bones, fix rotations etc.
 // 6. This module loads the rigged .glb (5) and applies Mixamo animation .fbx (4) as needed
 
-const AnimatedModel = forwardRef<Object3D, {
-    name?: string,
-    model: string;
-    basePath?: string,
-    animation?: string | string[], // <-- allow string or array
-    height?: number,
-    animationOverrides?: { [key: string]: string },
-    position?: [number, number, number],
-    scale?: number
-    rotation?: [number, number, number],
-    modelOffset?: [number, number, number],
-    debug?: boolean, onClick?: (e?: any) => void,
-    lookTarget?: RefObject<Object3D | null>
-    retargetOptions?: { boneMap?: Record<string, string>, preserveHipPosition?: boolean }
-    onActions?: (actions: { [key: string]: AnimationAction }) => void
-    attachments?: { [key: string]: { model: string, attachpoint: string, offset: Vector3, scale: Vector3, rotation: Vector3 } },
-    enableBoneCollider?: boolean, // Add option to disable BoneCollider
-    children?: React.ReactNode;
-}>(
+const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
     ({ name, model, basePath = "/models/human/", animation = "idle", onClick,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
@@ -112,7 +94,14 @@ const AnimatedModel = forwardRef<Object3D, {
             if (mixer) mixer.update(delta);
         });
 
-        useImperativeHandle(ref, () => groupRef.current, [groupRef]);
+        useImperativeHandle(ref, () => {
+            const group = groupRef.current;
+            return Object.assign(group, {
+                setAnimation: setThisAnimation,
+                groupRef,
+                modelRef
+            });
+        }, [setThisAnimation]);
 
         return (
             <group
@@ -133,15 +122,8 @@ const AnimatedModel = forwardRef<Object3D, {
                     <boxGeometry args={[0.6, 2, 0.6]} />
                     <meshBasicMaterial color={debug ? "red" : undefined} transparent={!debug} opacity={debug ? 1 : 0} wireframe={debug} />
                 </mesh>
-                <group position={modelOffset}>
-                    {clonedScene && <primitive name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
-                    {/* {clonedScene && enableBoneCollider && <BoneCollider parentName={name} rootModel={clonedScene}
-                        boneName={animation == 'rpunch' ? "RightHand" :
-                            animation == 'lpunch' ? "LeftHand" :
-                                undefined}
-                    />} */}
-                    {children}
-                </group>
+                {clonedScene && <primitive position={modelOffset} name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
+                {children}
             </group>
         );
     }
@@ -149,5 +131,7 @@ const AnimatedModel = forwardRef<Object3D, {
 
 // Syntax to preload a model synchronously
 // useGLTF.preload('/rigga.glb');
+
+AnimatedModel.displayName = "AnimatedModel";
 
 export default AnimatedModel;

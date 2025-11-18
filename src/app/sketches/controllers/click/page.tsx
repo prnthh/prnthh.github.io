@@ -4,7 +4,7 @@ import { Physics } from "@react-three/rapier";
 import { Box, OrbitControls } from "@react-three/drei";
 import { useState } from "react";
 import Terrain from "@/shared/ground/ColliderTerrain";
-import Ped from "@/shared/ped/ped";
+import Ped from "@/shared/ped/physics/ped";
 import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
@@ -18,7 +18,7 @@ export default function Home() {
                         <meshBasicMaterial wireframe color="red" />
                     </Box>
                     <Physics>
-                        <Ped modelUrl={'rigga.glb'} position={target} />
+                        <Ped model={'rigga.glb'} position={target} />
                         <Terrain onClick={(coords: number[]) => {
                             const [x = 0, y = 0, z = 0] = coords;
                             setTarget([x, y, z]);

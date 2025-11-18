@@ -14,8 +14,8 @@ import Balloon from "@/shared/physics/Balloon";
 import GameCanvas from "@/shared/GameCanvas";
 import Controls, { useControlScheme } from "@/shared/controls/ControlsProvider";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
-import DialogCollider from "@/shared/ped/DialogCollider";
-import Ped from "@/shared/ped/ped";
+import DialogCollider from "@/shared/ped/physics/DialogCollider";
+import Ped from "@/shared/ped/physics/ped";
 import { CharacterController } from "@/shared/shouldercam/CharacterController";
 import * as THREE from "three";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
@@ -92,7 +92,7 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
                 rotation={[0, 0.8, -1.2]}
             />}
         </CharacterController>
-        <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} modelUrl="/rigga/rigga2.glb">
+        <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} model="/rigga/rigga2.glb">
             <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
             <ModelAttachment
                 model="/models/environment/Katana.glb"

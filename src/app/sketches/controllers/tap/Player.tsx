@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { RigidBody, RapierRigidBody, useBeforePhysicsStep } from "@react-three/rapier";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
+import { AnimatedModelRef } from "@/shared/ped/types";
 import { FollowCam } from "@/shared/cameras/FollowCam";
 import { useInputStore } from "@/shared/providers/InputStore";
 import Rapier from '@dimforge/rapier3d-compat';
@@ -23,7 +24,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const [animation, setAnimation] = useState<string>('idle');
     const { groupRef } = props;
     const rigidBodyRef = useRef<RapierRigidBody>(null!);
-    const internalRef = useRef<THREE.Group>(null!);
+    const internalRef = useRef<AnimatedModelRef>(null!);
     const velocityRef = useRef(0);
     const stateRef = useRef({
         isPaused: false,
@@ -47,7 +48,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
         }
     }), []);
 
-    useImperativeHandle(groupRef, () => internalRef.current, []);
+    useImperativeHandle(groupRef, () => internalRef.current?.groupRef.current, []);
 
     useFrame((state, delta) => {
         const { tapSignal, swipeSignal } = useInputStore.getState();
