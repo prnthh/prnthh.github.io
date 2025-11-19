@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef } from "react";
 import { Group } from "three";
 import { Environment, useTexture } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
-import { useInputStore } from "@/shared/providers/InputStore";
+import useInputStore from "@/shared/providers/InputStore";
 import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameEntityStore";
 import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";

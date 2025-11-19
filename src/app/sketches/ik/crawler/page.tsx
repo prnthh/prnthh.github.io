@@ -5,8 +5,8 @@ import { Helper, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import Environment from "@/shared/ground/Playground";
 import GameCanvas from "@/shared/GameCanvas";
-import { KeyboardInput } from "@/shared/firstperson/KeyboardInput";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
+import KeyboardInput from "../../controllers/firstperson/KeyboardInput";
 
 export default function Home() {
     return (
