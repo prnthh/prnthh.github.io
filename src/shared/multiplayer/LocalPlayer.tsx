@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { getMyState } from "@/shared/providers/MultiplayerStore";
 import { useMultiplayerProvider } from "./TrysteroMultiplayerProvider";
 import FirstPersonController from "@/app/sketches/controllers/firstperson/FirstPersonController";
-import { CharacterController } from "@/app/sketches/controllers/shouldercam/CharacterController";
+import { ThirdPersonController } from "@/app/sketches/controllers/thirdperson/ThirdPersonController";
 
 const LocalPlayer = () => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
@@ -84,7 +84,7 @@ const LocalPlayer = () => {
         }}
     />;
 
-    return <CharacterController
+    return <ThirdPersonController
         forwardRef={(refs) => {
             rigidBodyRef.current = refs.rbref.current;
             bodyMeshRef.current = refs.meshref.current;

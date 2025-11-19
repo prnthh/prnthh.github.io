@@ -6,7 +6,7 @@ import { Physics } from "@react-three/rapier";
 import Environment from "@/shared/ground/Playground";
 import GameCanvas from "@/shared/GameCanvas";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
-import KeyboardInput from "../../controllers/firstperson/KeyboardInput";
+import KeyboardInput from "../../../../shared/controls/KeyboardInput";
 
 export default function Home() {
     return (

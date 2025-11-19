@@ -3,7 +3,6 @@
 import { Physics } from "@react-three/rapier";
 import { Environment, useTexture } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
-import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameEntityStore";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
@@ -74,27 +73,6 @@ const GameEntityWorld = ({
     playerRef: React.RefObject<{ tap: () => void; getSpeed: () => number; swipe: (type: 'left' | 'right') => void }>,
 }) => {
     const playerRef = useRef<THREE.Group>(null!);
-    const { addEntity, resetWorld } = useGameStore();
-    const initialized = useRef(false);
-
-    useEffect(() => {
-        if (initialized.current) return;
-
-        resetWorld();
-
-        initialized.current = true;
-    }, [addEntity, resetWorld]);
-
-    // Monitor player position and add rooms dynamically
-    useEffect(() => {
-        const checkInterval = setInterval(() => {
-            if (!playerRef.current) return;
-
-
-        }, 200);
-
-        return () => clearInterval(checkInterval);
-    }, [addEntity]);
 
     return (
         <>

@@ -19,8 +19,7 @@ import GameCanvas from "@/shared/GameCanvas";
 
 const INSTANCE_COUNT = 100;
 const MODEL_URL = "/models/human/rigga/rigga2.glb";
-const ANIM_URL = "/models/human/anim/idle.fbx";
-
+const ANIM_URL = "/models/human/anim/run.fbx";
 
 export default function Home() {
     return (
@@ -97,11 +96,9 @@ const AnimatedModel = () => {
                     child.count = INSTANCE_COUNT;
 
                     for (let i = 0; i < INSTANCE_COUNT; i++) {
-                        dummy.position.x = ((i % 10) * 100) - 400;
+                        dummy.position.x = -200 + ((i % 10) * 70);
                         dummy.position.y = -50;
-                        dummy.position.z = ((i / 10) * 100);
-
-                        dummy.rotation.y = Math.random() * Math.PI * 2;
+                        dummy.position.z = Math.floor(i / 10) * -70;
 
                         dummy.updateMatrix();
                         dummy.matrix.toArray(child.instanceMatrix.array, i * 16);

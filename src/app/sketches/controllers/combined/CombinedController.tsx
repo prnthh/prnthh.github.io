@@ -8,9 +8,10 @@ import SwipeControls from "@/shared/controls/SwipeControls";
 import useInputStore from "@/shared/providers/InputStore";
 import TapControls from "../tap/TapControls";
 import FollowCam from "@/shared/cameras/FollowCam";
+import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
 
 export default function CombinedController({ mode, target = [0, 0, 0] }: { mode: string, target?: [number, number, number] }) {
-    const [animation, setAnimation] = useState<"idle" | "walk" | "run">("idle");
+    const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "third-person">("idle");
     const modelRef = useRef<RigidHumanoidModelRef>(null);
 
     const modelProps = {
@@ -65,6 +66,12 @@ export default function CombinedController({ mode, target = [0, 0, 0] }: { mode:
                     />
                     <FollowCam height={2.5} />
                 </>}
+
+                {mode === 'third-person' && <ThirdPersonControls
+                    modelRef={modelRef}
+                    height={1.2}
+                    roundHeight={0.25}
+                />}
 
             </RigidHumanoidModel>
 

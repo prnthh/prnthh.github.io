@@ -14,7 +14,7 @@ import CombinedController from "./CombinedController";
 
 export default function Home() {
     const { mode } = useControls({
-        mode: { value: 'click', options: ['click', 'wawa', 'tap'] }
+        mode: { value: 'click', options: ['click', 'wawa', 'tap', 'third-person'] }
     });
     const [target, setTarget] = useState<[number, number, number]>([0, 5, 0]);
 

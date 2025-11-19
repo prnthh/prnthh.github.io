@@ -6,12 +6,11 @@
 
 import { useThree, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
-import { Vector3 } from "three";
-import { useRapier } from "@react-three/rapier";
-import * as THREE from "three";
+import { Mesh, MeshStandardMaterial, SphereGeometry, Vector3 } from "three";
+import { useRapier, RapierRigidBody } from "@react-three/rapier";
 import useInputStore from "@/shared/providers/InputStore";
 
-export function Weapon() {
+export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObject<RapierRigidBody | null> } = {}) {
     const { camera, scene } = useThree();
     const { rapier, world } = useRapier();
     const tapSignal = useInputStore(state => state.tapSignal);
@@ -20,10 +19,10 @@ export function Weapon() {
     function addSensorBullet({ position }: { position: Vector3 }) {
         const size = 0.01;
 
-        const geometry = new THREE.SphereGeometry(size, 8, 8);
-        const material = new THREE.MeshStandardMaterial({ color: Math.floor(Math.random() * 0xFFFFFF) });
+        const geometry = new SphereGeometry(size, 8, 8);
+        const material = new MeshStandardMaterial({ color: Math.floor(Math.random() * 0xFFFFFF) });
 
-        const mesh = new THREE.Mesh(geometry, material);
+        const mesh = new Mesh(geometry, material);
         mesh.castShadow = true;
 
         mesh.position.set(position.x, position.y, position.z);
@@ -60,7 +59,18 @@ export function Weapon() {
 
             const ray = new rapier.Ray(rayOrigin, direction);
             const maxToi = 50;
-            const hit = world.castRay(ray, maxToi, true, 8);
+
+            // Exclude the player's own collider from the raycast
+            const playerRb = excludeRigidBody?.current;
+            const hit = world.castRay(
+                ray,
+                maxToi,
+                true,
+                undefined,
+                undefined,
+                undefined,
+                playerRb || undefined
+            );
 
             if (hit) {
                 const hitPoint = new Vector3(

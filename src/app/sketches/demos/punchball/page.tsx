@@ -9,9 +9,9 @@ import GameCanvas from "@/shared/GameCanvas";
 import Controls from "@/shared/controls/ControlsProvider";
 import Ped from "@/shared/ped/physics/ped";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
-import { CharacterController } from "@/app/sketches/controllers/shouldercam/CharacterController";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import Balloon from "@/shared/physics/Balloon";
+import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -24,7 +24,7 @@ export default function Home() {
                         <ShadowLight intensity={4} debug camOffset={new Vector3(2, 10, 2)} />
 
                         <Physics>
-                            <CharacterController lookTarget={ballRef} />
+                            <ThirdPersonController lookTarget={ballRef} />
 
                             <Football ref={ballRef} position={[0, 8, 5]} />
 

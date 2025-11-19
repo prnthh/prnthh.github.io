@@ -5,15 +5,14 @@
  */
 
 import { useFrame } from "@react-three/fiber";
-import { RapierRigidBody, useRapier } from "@react-three/rapier";
+import { useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
-import { Vector3, Group, Quaternion, Object3D, AnimationAction, MathUtils } from "three";
+import { Vector3, Quaternion, Object3D, AnimationAction, MathUtils } from "three";
 import FollowCam from "@/shared/cameras/FollowCam";
 import { Weapon } from "./Weapon";
-import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 import useInputStore from "@/shared/providers/InputStore";
-import KeyboardInput from "../firstperson/KeyboardInput";
+import KeyboardInput from "../../../../shared/controls/KeyboardInput";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
 
 const tempQuat = new Quaternion();
@@ -25,38 +24,34 @@ const tempDirection = new Vector3();
 const MOUSE_SENSITIVITY = 0.002;
 const JOYSTICK_SENSITIVITY = 2.5;
 const PITCH_LIMIT = Math.PI / 2; // 90 degrees up/down
-const WALK_SPEED = 1.2;
-const RUN_SPEED = 3;
-const JUMP_FORCE = 1;
 
+interface ThirdPersonControlsProps {
+    modelRef: RefObject<RigidHumanoidModelRef | null>;
+    height: number;
+    roundHeight: number;
+    walkSpeed?: number;
+    runSpeed?: number;
+    jumpForce?: number;
+    lookTarget?: RefObject<Object3D | null>;
+}
 
-export const CharacterController = ({
-    position = [0, 2, 0], lookTarget, name = 'bob', children, forwardRef
-}: {
-    position?: [number, number, number],
-    lookTarget?: RefObject<Object3D | null>
-    name?: string,
-    children?: React.ReactNode,
-    forwardRef?: (refs: { rbref: RefObject<RapierRigidBody | null>, meshref: RefObject<Group | null>, cameraRigRef: RefObject<Group | null> }) => void
-}) => {
-    // --- Constants & refs ---
-    const height = 1.2, roundHeight = 0.25;
-    const modelRef = useRef<RigidHumanoidModelRef>(null);
+const ThirdPersonControls = ({
+    modelRef,
+    height,
+    roundHeight,
+    walkSpeed = 1.2,
+    runSpeed = 3,
+    jumpForce = 1,
+    lookTarget,
+}: ThirdPersonControlsProps) => {
     const verticalRotation = useRef(0);
     const walkActionRef = useRef<AnimationAction | null>(null);
     const walkLeftActionRef = useRef<AnimationAction | null>(null);
     const runActionRef = useRef<AnimationAction | null>(null);
 
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");
-
-    const shoulderCamModeRef = useRef(false);
     const [shoulderCamMode, setShoulderCamMode] = useState(false);
     const tap = useInputStore(state => state.tap);
-
-    // Keep ref updated with latest value
-    useEffect(() => {
-        shoulderCamModeRef.current = !!shoulderCamMode;
-    }, [shoulderCamMode]);
 
     // Shared look logic - processes movement deltas directly
     const applyLookDelta = useCallback((dx: number, dy: number) => {
@@ -75,98 +70,67 @@ export const CharacterController = ({
             -PITCH_LIMIT,
             PITCH_LIMIT
         );
-    }, []);
+    }, [modelRef]);
 
-    // --- Forward refs ---
+    // Update animation on the model
     useEffect(() => {
-        if (typeof forwardRef === 'function' && modelRef.current) {
-            // Create a fake cameraRig that exposes the vertical rotation
-            const fakeCameraRig: any = {
-                current: {
-                    rotation: {
-                        get x() { return verticalRotation.current; }
-                    }
-                }
-            };
-            forwardRef({
-                rbref: modelRef.current.rbref,
-                meshref: modelRef.current.groupRef,
-                cameraRigRef: fakeCameraRig
-            });
+        if (modelRef.current?.setAnimation) {
+            modelRef.current.setAnimation(animation);
         }
-    }, [forwardRef]);
+    }, [animation, modelRef]);
 
     return (
         <>
-            <RigidHumanoidModel
-                ref={modelRef}
-                position={position}
-                name={name}
-                basePath="/models/human/onimilio/"
-                model="rigged.glb"
-                animation={animation}
+            <MovementSystem
+                modelRef={modelRef}
                 height={height}
                 roundHeight={roundHeight}
-                lookTarget={lookTarget}
-                animationOverrides={{
-                    walk: 'anim/walk.fbx',
-                    run: 'anim/run.fbx',
-                    jump: 'anim/jump.fbx',
-                    walkLeft: "/anim/walkLeft.fbx",
-                    lpunch: "/anim/lpunch.fbx",
-                    rpunch: "/anim/rpunch.fbx",
-                }}
-                rbChildren={
-                    <>
-                        <MovementSystem
-                            rigidBodyRef={modelRef.current?.rbref || { current: null }}
-                            height={height}
-                            roundHeight={roundHeight}
-                            animation={animation}
-                            setAnimation={setAnimation}
-                            walkActionRef={walkActionRef}
-                            walkLeftActionRef={walkLeftActionRef}
-                            runActionRef={runActionRef}
-                        />
-                        <LookSystem
-                            rigidBodyRef={modelRef.current?.rbref || { current: null }}
-                            verticalRotation={verticalRotation}
-                        />
-                        <group position={[0, -height / 2, 0]}>
-                            <FollowCam
-                                height={1 / height}
-                                verticalRotation={verticalRotation}
-                                cameraOffset={
-                                    shoulderCamMode
-                                        ? [-0.5, 1.5, -0.5]
-                                        : [0, 1.5, -1.5]
-                                }
-                                targetOffset={
-                                    shoulderCamMode
-                                        ? [0, 0.5, 1.5]
-                                        : [0, 0.5, 1.5]
-                                }
-                            />
-                        </group>
-                    </>
-                }
-            >
-                {children}
-            </RigidHumanoidModel>
+                animation={animation}
+                setAnimation={setAnimation}
+                walkActionRef={walkActionRef}
+                walkLeftActionRef={walkLeftActionRef}
+                runActionRef={runActionRef}
+                walkSpeed={walkSpeed}
+                runSpeed={runSpeed}
+                jumpForce={jumpForce}
+            />
+            <LookSystem
+                modelRef={modelRef}
+                verticalRotation={verticalRotation}
+            />
+            <group position={[0, -height / 2, 0]}>
+                <FollowCam
+                    height={1 / height}
+                    verticalRotation={verticalRotation}
+                    cameraOffset={
+                        shoulderCamMode
+                            ? [-0.5, 1.5, -0.5]
+                            : [0, 1.5, -1.5]
+                    }
+                    targetOffset={
+                        shoulderCamMode
+                            ? [0, 0.5, 1.5]
+                            : [0, 0.5, 1.5]
+                    }
+                />
+            </group>
             <PointerLockControls
                 onLook={applyLookDelta}
-                onClick={() => shoulderCamModeRef.current && tap()}
-                onShoulderCamModeChange={setShoulderCamMode}
+                onClick={() => { shoulderCamMode && tap(); }}
+                onRightClickDown={() => setShoulderCamMode(true)}
+                onRightClickUp={() => setShoulderCamMode(false)}
             />
             <KeyboardInput />
-            {shoulderCamMode && <Weapon />}
+            {shoulderCamMode && <Weapon excludeRigidBody={modelRef.current?.rbref} />}
         </>
     );
 };
 
+export default ThirdPersonControls;
+
 // Movement System - handles character movement, jumping, and animations
-const MovementSystem = ({
-    rigidBodyRef,
+export const MovementSystem = ({
+    modelRef,
     height,
     roundHeight,
     animation,
@@ -174,8 +138,11 @@ const MovementSystem = ({
     walkActionRef,
     walkLeftActionRef,
     runActionRef,
+    walkSpeed,
+    runSpeed,
+    jumpForce,
 }: {
-    rigidBodyRef: RefObject<RapierRigidBody | null>;
+    modelRef: RefObject<RigidHumanoidModelRef | null>;
     height: number;
     roundHeight: number;
     animation: "idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[];
@@ -183,6 +150,9 @@ const MovementSystem = ({
     walkActionRef: RefObject<AnimationAction | null>;
     walkLeftActionRef: RefObject<AnimationAction | null>;
     runActionRef: RefObject<AnimationAction | null>;
+    walkSpeed: number;
+    runSpeed: number;
+    jumpForce: number;
 }) => {
     const horizontal = useInputStore(state => state.horizontal);
     const vertical = useInputStore(state => state.vertical);
@@ -197,7 +167,7 @@ const MovementSystem = ({
     const jumpReleased = useRef(true);
 
     const checkGrounded = useCallback(() => {
-        const rb = rigidBodyRef.current;
+        const rb = modelRef.current?.rbref.current;
         if (!rb || !rapier) return false;
 
         const origin = rb.translation();
@@ -243,15 +213,15 @@ const MovementSystem = ({
         }
 
         return isGrounded;
-    }, [rigidBodyRef, rapier, world]);
+    }, [modelRef, rapier, world]);
 
     useFrame(() => {
-        const rb = rigidBodyRef.current;
+        const rb = modelRef.current?.rbref.current;
         if (!rb) return;
 
         const moveX = horizontal;
         const moveZ = vertical;
-        const speed = sprint ? RUN_SPEED : WALK_SPEED;
+        const speed = sprint ? runSpeed : walkSpeed;
         const grounded = checkGrounded();
 
         // Handle jump
@@ -259,7 +229,7 @@ const MovementSystem = ({
         if (jumping.current && grounded) jumping.current = false;
         if (jump && jumpReleased.current && !jumping.current && grounded) {
             rb.wakeUp?.();
-            rb.applyImpulse({ x: 0, y: JUMP_FORCE, z: 0 }, true);
+            rb.applyImpulse({ x: 0, y: jumpForce, z: 0 }, true);
             jumping.current = true;
             jumpReleased.current = false;
         }
@@ -281,7 +251,7 @@ const MovementSystem = ({
                 nextAnimation = "walkLeft";
                 if (walkLeftActionRef.current) walkLeftActionRef.current.timeScale = -moveX;
             } else {
-                nextAnimation = speed === RUN_SPEED ? "run" : "walk";
+                nextAnimation = speed === runSpeed ? "run" : "walk";
                 if (walkActionRef.current) walkActionRef.current.timeScale = moveZ;
                 if (runActionRef.current) runActionRef.current.timeScale = moveZ;
             }
@@ -321,18 +291,18 @@ const MovementSystem = ({
 };
 
 // Look System - handles joystick camera rotation
-const LookSystem = ({
-    rigidBodyRef,
+export const LookSystem = ({
+    modelRef,
     verticalRotation,
 }: {
-    rigidBodyRef: RefObject<RapierRigidBody | null>;
+    modelRef: RefObject<RigidHumanoidModelRef | null>;
     verticalRotation: React.MutableRefObject<number>;
 }) => {
     const lookHorizontal = useInputStore(state => state.lookHorizontal);
     const lookVertical = useInputStore(state => state.lookVertical);
 
     useFrame((_, delta) => {
-        const rb = rigidBodyRef.current;
+        const rb = modelRef.current?.rbref.current;
         if (!rb) return;
 
         const absHorizontal = Math.abs(lookHorizontal);

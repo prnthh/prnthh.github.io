@@ -1,15 +1,13 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { Environment } from "@react-three/drei";
-import { Suspense, useRef, useState } from "react";
-import Vehicle, { ObjectRef } from "../../car/simple/car/base";
+import { useState } from "react";
 import Controls from "@/shared/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import DrivableCar from "../../car/simple/DrivableCar";
-import { CharacterController } from "@/app/sketches/controllers/shouldercam/CharacterController";
 import DemoWorld, { DemoWorldEnvironment } from "@/shared/DemoWorld";
+import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Home() {
     const [spawnPosition, setSpawnPosition] = useState<[number, number, number] | undefined>([0, 2, 0]);
@@ -29,7 +27,7 @@ export default function Home() {
 
                     <GameCanvas>
                         <Physics paused={false}>
-                            {spawnPosition !== undefined && <CharacterController position={spawnPosition} />}
+                            {spawnPosition !== undefined && <ThirdPersonController position={spawnPosition} />}
 
                             {/* <DrivableCar name={'car1'} position={[-2, -6, 4]} setPlayerState={setPlayerState} />
                             <DrivableCar name={'car2'} position={[2, -6, 4]} setPlayerState={setPlayerState} /> */}

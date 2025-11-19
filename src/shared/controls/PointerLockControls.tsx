@@ -3,25 +3,34 @@ import { useEffect, useRef, useState } from "react";
 const PointerLockControls = ({
     onLook,
     onClick,
-    shoulderCamMode,
-    onShoulderCamModeChange
+    onRightClickDown,
+    onRightClickUp
 }: {
     onLook?: (dx: number, dy: number) => void,
     onClick?: () => void,
-    shoulderCamMode?: boolean,
-    onShoulderCamModeChange?: (mode: boolean) => void
+    onRightClickDown?: () => void,
+    onRightClickUp?: () => void
 }) => {
     const [isLocked, setIsLocked] = useState(false);
     const lastTouch = useRef<{ id: number; x: number; y: number } | null>(null);
     const isPointerLocked = useRef<boolean>(false);
+    const rightClickActive = useRef<boolean>(false);
 
     useEffect(() => {
         const canvas = document.querySelector('canvas');
         if (!canvas) return;
 
         // --- Pointer lock setup ---
-        const handleClick = () => {
-            canvas.requestPointerLock();
+        const handleClick = (e: MouseEvent) => {
+            // Don't request pointer lock on right-click
+            if (e.button === 2 || rightClickActive.current) {
+                rightClickActive.current = false;
+                return;
+            }
+            // Only request pointer lock if not already locked
+            if (document.pointerLockElement !== canvas) {
+                canvas.requestPointerLock();
+            }
         };
 
         const handlePointerLockChange = () => {
@@ -35,12 +44,29 @@ const PointerLockControls = ({
 
         // --- Mouse button handlers ---
         const onMouseButtonDown = (e: MouseEvent) => {
-            if (onClick && e.button === 0) onClick();
-            if (e.button === 2 && onShoulderCamModeChange) onShoulderCamModeChange(true);
+            // Handle right-click first
+            if (e.button === 2) {
+                rightClickActive.current = true;
+                if (onRightClickDown) {
+                    onRightClickDown();
+                }
+                return; // Exit early for right-click
+            }
+
+            // Only trigger onClick for left-click when pointer is locked
+            if (e.button === 0 && onClick && isPointerLocked.current) {
+                onClick();
+            }
         };
 
         const onMouseButtonUp = (e: MouseEvent) => {
-            if (e.button === 2 && onShoulderCamModeChange) onShoulderCamModeChange(false);
+            if (e.button === 2) {
+                if (onRightClickUp) onRightClickUp();
+                // Reset right-click state after a short delay to prevent click event
+                setTimeout(() => {
+                    rightClickActive.current = false;
+                }, 10);
+            }
         };
 
         const onContextMenu = (e: Event) => e.preventDefault();
@@ -56,7 +82,7 @@ const PointerLockControls = ({
             canvas.removeEventListener("mouseup", onMouseButtonUp);
             canvas.removeEventListener("contextmenu", onContextMenu);
         };
-    }, [onClick, onShoulderCamModeChange]);
+    }, [onClick, onRightClickDown, onRightClickUp]);
 
     // Mouse handling
     useEffect(() => {

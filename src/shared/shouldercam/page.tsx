@@ -1,11 +1,10 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import Controls from "@/shared/controls/ControlsProvider";
-import { CharacterController } from "../../app/sketches/controllers/shouldercam/CharacterController";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
 import { Canvas } from "@react-three/fiber";
+import { ThirdPersonController } from "@/app/sketches/controllers/thirdperson/ThirdPersonController";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -16,7 +15,7 @@ export default function Home() {
                     {/* <Perf /> */}
 
                     <Physics>
-                        <CharacterController lookTarget={ballRef} />
+                        <ThirdPersonController lookTarget={ballRef} />
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} />
                     </Physics>

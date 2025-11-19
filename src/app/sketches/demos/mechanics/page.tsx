@@ -13,10 +13,10 @@ import Controls, { useControlScheme } from "@/shared/controls/ControlsProvider";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import Ped from "@/shared/ped/physics/ped";
-import { CharacterController } from "@/app/sketches/controllers/shouldercam/CharacterController";
 import * as THREE from "three";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import DemoWorld, { DemoWorldEnvironment } from "@/shared/DemoWorld";
+import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Home() {
     const [weapon, setWeapon] = useState<string | null>(null);
@@ -79,7 +79,7 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
         <DemoWorld />
         <CrawlerApp controlled={false} />
 
-        <CharacterController>
+        <ThirdPersonController>
             {<ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
@@ -87,7 +87,7 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
                 scale={[100, 100, 100]}
                 rotation={[0, 0.8, -1.2]}
             />}
-        </CharacterController>
+        </ThirdPersonController>
         <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} model="/rigga/rigga2.glb">
             <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
             <ModelAttachment
