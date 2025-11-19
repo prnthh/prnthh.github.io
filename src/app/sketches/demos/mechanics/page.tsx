@@ -80,7 +80,7 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
         <CrawlerApp controlled={false} />
 
         <CharacterController>
-            {props.weapon && <ModelAttachment
+            {<ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
                 offset={[0, 0, 0]}

@@ -1,14 +1,11 @@
 
 import { useRef, forwardRef, useImperativeHandle, useState } from "react";
 import * as THREE from "three";
-import { useFrame } from "@react-three/fiber";
-import { RigidBody, RapierRigidBody, useBeforePhysicsStep } from "@react-three/rapier";
-import AnimatedModel from "@/shared/ped/HumanoidModel";
-import { AnimatedModelRef } from "@/shared/ped/types";
-import { FollowCam } from "@/shared/cameras/FollowCam";
-import { useInputStore } from "@/shared/providers/InputStore";
-import Rapier from '@dimforge/rapier3d-compat';
+import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
+import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
+import FollowCam from "@/shared/cameras/FollowCam";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
+import TapControls from "./TapControls";
 
 interface PlayerHandle {
     tap: () => void;
@@ -23,113 +20,53 @@ interface PlayerProps {
 const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {
     const [animation, setAnimation] = useState<string>('idle');
     const { groupRef } = props;
-    const rigidBodyRef = useRef<RapierRigidBody>(null!);
-    const internalRef = useRef<AnimatedModelRef>(null!);
-    const velocityRef = useRef(0);
-    const stateRef = useRef({
-        isPaused: false,
-        lastSwipeTimestamp: 0,
-        lastTapSignal: 0
-    });
-
-    const MAX_SPEED = 5;
-    const ACCELERATION = 1;
-    const DECAY = 0.02;
+    const modelRef = useRef<RigidHumanoidModelRef>(null!);
 
     useImperativeHandle(ref, () => ({
         tap: () => {
-            useInputStore.getState().tap();
+            // TapControls handles this internally
         },
         getSpeed: () => {
-            return velocityRef.current;
+            return 0; // Could expose this from TapControls if needed
         },
         swipe: (type: 'left' | 'right') => {
-            useInputStore.getState().swipe(type);
+            // TapControls handles this internally
         }
     }), []);
 
-    useImperativeHandle(groupRef, () => internalRef.current?.groupRef.current, []);
+    useImperativeHandle(groupRef, () => modelRef.current?.groupRef.current, []);
 
-    useFrame((state, delta) => {
-        const { tapSignal, swipeSignal } = useInputStore.getState();
-
-        if (swipeSignal && swipeSignal.timestamp !== stateRef.current.lastSwipeTimestamp) {
-            stateRef.current.lastSwipeTimestamp = swipeSignal.timestamp;
-            stateRef.current.isPaused = true;
-            const punchAnim = swipeSignal.type === 'left' ? 'lpunch' : 'rpunch';
-            setAnimation(punchAnim);
-            setTimeout(() => {
-                stateRef.current.isPaused = false;
-                setAnimation('idle');
-            }, 500);
-        }
-
-        if (stateRef.current.isPaused) return;
-
-        if (tapSignal !== stateRef.current.lastTapSignal) {
-            stateRef.current.lastTapSignal = tapSignal;
-            velocityRef.current = Math.min(velocityRef.current + ACCELERATION, MAX_SPEED);
-        }
-
-        velocityRef.current -= DECAY * delta * 60;
-        if (velocityRef.current < 0.01) velocityRef.current = 0;
-
-        const speed = velocityRef.current;
-        const next = animation === 'idle' && speed > 0.1 ? 'walk'
-            : animation === 'walk' ? (speed < 0.1 ? 'idle' : speed > 3.0 ? 'run' : 'walk')
-                : animation === 'run' && speed < 2.0 ? 'walk'
-                    : animation;
-
-        if (next !== animation) {
-            setAnimation(next);
-        }
-    }, -100);
-
-    useBeforePhysicsStep(() => {
-        if (!rigidBodyRef.current) return;
-        // round to avoid floating point issues and rapier jitters
-        rigidBodyRef.current.setLinvel({ x: 0, y: 0, z: parseFloat(velocityRef.current.toFixed(1)) }, true);
-    });
-
-    return <RigidBody
+    return <RigidHumanoidModel
+        ref={modelRef}
         name="bob"
-        ref={rigidBodyRef}
         position={[0, 0, 2]}
-        type="kinematicVelocity"
-        enabledTranslations={[false, false, true]}
-        activeCollisionTypes={
-            Rapier.ActiveCollisionTypes.KINEMATIC_FIXED |
-            Rapier.ActiveCollisionTypes.DYNAMIC_KINEMATIC |
-            Rapier.ActiveCollisionTypes.KINEMATIC_KINEMATIC
-        }
-        lockRotations
+        basePath="/models/human/onimilio/"
+        model="rigged.glb"
+        animation={animation}
+        height={0.9}
+        animationOverrides={{
+            idle: 'anim/idle.fbx',
+            walk: 'anim/walk.fbx',
+            run: 'anim/run.fbx',
+            jump: 'anim/jump.fbx',
+            walkLeft: 'anim/walkLeft.fbx',
+            lpunch: 'anim/lpunch.fbx',
+            rpunch: 'anim/rpunch.fbx',
+        }}
     >
-        <AnimatedModel
-            ref={internalRef}
-            scale={1}
-            basePath="/models/human/onimilio/"
-            model="rigged.glb"
-            animation={animation}
-            animationOverrides={{
-                idle: 'anim/idle.fbx',
-                walk: 'anim/walk.fbx',
-                run: 'anim/run.fbx',
-                jump: 'anim/jump.fbx',
-                walkLeft: 'anim/walkLeft.fbx',
-                lpunch: 'anim/lpunch.fbx',
-                rpunch: 'anim/rpunch.fbx',
-            }}
-        >
-            <ModelAttachment
-                model="/models/environment/Katana.glb"
-                attachpoint="mixamorigRightHand"
-                offset={[2, 0, 0]}
-                scale={[100, 100, 100]}
-                rotation={[0.7, 0, -1]}
-            />
-            <FollowCam height={1} cameraOffset={[0, 1, -2]} targetOffset={[0, 1.8, 0]} />
-        </AnimatedModel>
-    </RigidBody>
+        <TapControls
+            modelRef={modelRef}
+            setAnimation={setAnimation}
+        />
+        <FollowCam height={1} cameraOffset={[0, 1, -2]} targetOffset={[0, 1.8, 0]} />
+        <ModelAttachment
+            model="/models/environment/Katana.glb"
+            attachpoint="mixamorigRightHand"
+            offset={[2, 0, 0]}
+            scale={[100, 100, 100]}
+            rotation={[0.7, 0, -1]}
+        />
+    </RigidHumanoidModel>
 })
 
 export default Player;

@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useBeforePhysicsStep } from "@react-three/rapier";
-import { useInputStore } from "@/shared/providers/InputStore";
+import useInputStore from "@/shared/providers/InputStore";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 
 interface TapControlsProps {
@@ -66,7 +66,7 @@ export default function TapControls({ modelRef, setAnimation }: TapControlsProps
     useBeforePhysicsStep(() => {
         if (!modelRef.current?.rbref.current) return;
 
-        // Move forward in the Z direction
+        // Move forward in positive Z direction (standard Three.js convention)
         const rb = modelRef.current.rbref.current;
         const speed = parseFloat(velocityRef.current.toFixed(1));
         rb.setLinvel({ x: 0, y: rb.linvel().y, z: speed }, true);

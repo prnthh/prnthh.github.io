@@ -2,10 +2,9 @@ import { Box } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { forwardRef, useRef, useImperativeHandle } from "react";
 import { Vector3, Group, MathUtils } from "three";
-import * as THREE from "three";
 import { SceneCamera } from "./SceneCamera";
 
-export const FollowCam = forwardRef(({
+const FollowCam = forwardRef(({
     height,
     cameraOffset = [0, -0.3, -3],
     targetOffset = [0, 0.3, 3],
@@ -40,19 +39,9 @@ export const FollowCam = forwardRef(({
             cameraPosition.current.position.z = cameraOffset[2];
 
             let pitch = verticalRotation?.current ?? 0;
-            pitch = MathUtils.clamp(pitch, -Math.PI / 2, Math.PI / 2);
 
-            // Calculate rotated target offset
-            const rotatedTarget = new THREE.Vector3(...targetOffset);
-            const q = new THREE.Quaternion();
-            q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -pitch);
-            rotatedTarget.applyQuaternion(q);
-
-            cameraTarget.current.position.set(rotatedTarget.x, rotatedTarget.y, rotatedTarget.z);
-
-            // Get world positions
+            // Get world position for camera
             cameraPosition.current.getWorldPosition(cameraWorldPosition.current);
-            cameraTarget.current.getWorldPosition(cameraLookAtWorldPosition.current);
 
             // Convert world position to local position relative to parent
             const parent = cameraRef.current.parent;
@@ -60,9 +49,14 @@ export const FollowCam = forwardRef(({
                 parent.worldToLocal(cameraWorldPosition.current);
             }
 
-            // Move camera to position and look at target
+            // Move camera to position
             cameraRef.current.position.lerp(cameraWorldPosition.current, cameraSpeed);
-            cameraRef.current.lookAt(cameraLookAtWorldPosition.current);
+
+            // Apply pitch rotation directly to camera
+            // Camera at negative Z needs to look back toward positive Z (180 degrees)
+            cameraRef.current.rotation.x = pitch;
+            cameraRef.current.rotation.y = Math.PI;
+            cameraRef.current.rotation.z = 0;
         }
     }, -50); // Camera updates after player movement (-100) for smooth following
 
@@ -78,5 +72,6 @@ export const FollowCam = forwardRef(({
             </Box>}
         </group>
     </SceneCamera>
-
 });
+
+export default FollowCam;

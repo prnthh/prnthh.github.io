@@ -9,7 +9,7 @@ import * as THREE from "three";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
 import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
-import { useInputStore } from "@/shared/providers/InputStore";
+import useInputStore from "@/shared/providers/InputStore";
 import DemoWorld from "@/shared/DemoWorld";
 
 // npm i react-brainrot-runner - make a runner game, just provide models for room sections

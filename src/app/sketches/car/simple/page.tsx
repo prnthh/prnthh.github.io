@@ -9,7 +9,7 @@ import Controls from "@/shared/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";
 import DemoWorld from "@/shared/DemoWorld";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
-import { FollowCam } from "@/shared/cameras/FollowCam";
+import FollowCam from "@/shared/cameras/FollowCam";
 
 export default function Home() {
     return (

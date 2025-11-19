@@ -4,15 +4,18 @@
  * This source code is licensed under the GPL-3.0 license
  */
 
-import { useThree } from "@react-three/fiber";
-import { RefObject } from "react";
+import { useThree, useFrame } from "@react-three/fiber";
+import { useRef } from "react";
 import { Vector3 } from "three";
 import { useRapier } from "@react-three/rapier";
 import * as THREE from "three";
+import useInputStore from "@/shared/providers/InputStore";
 
-export function useWeapon() {
+export function Weapon() {
     const { camera, scene } = useThree();
     const { rapier, world } = useRapier();
+    const tapSignal = useInputStore(state => state.tapSignal);
+    const prevTapSignalRef = useRef(0);
 
     function addSensorBullet({ position }: { position: Vector3 }) {
         const size = 0.01;
@@ -50,16 +53,20 @@ export function useWeapon() {
         if (camera) {
             const direction = new Vector3();
             camera.getWorldDirection(direction);
-            const rayOrigin = camera.position;
+
+            // Get the actual world position of the camera
+            const rayOrigin = new Vector3();
+            camera.getWorldPosition(rayOrigin);
+
             const ray = new rapier.Ray(rayOrigin, direction);
             const maxToi = 50;
             const hit = world.castRay(ray, maxToi, true, 8);
 
             if (hit) {
                 const hitPoint = new Vector3(
-                    camera.position.x + direction.x * hit.timeOfImpact,
-                    camera.position.y + direction.y * hit.timeOfImpact,
-                    camera.position.z + direction.z * hit.timeOfImpact
+                    rayOrigin.x + direction.x * hit.timeOfImpact,
+                    rayOrigin.y + direction.y * hit.timeOfImpact,
+                    rayOrigin.z + direction.z * hit.timeOfImpact
                 );
 
                 // correct syntax for decals:
@@ -85,5 +92,13 @@ export function useWeapon() {
         }
     };
 
-    return { weaponHandler };
+    useFrame(() => {
+        // Check if tap signal has changed (new tap occurred)
+        if (tapSignal !== prevTapSignalRef.current) {
+            prevTapSignalRef.current = tapSignal;
+            weaponHandler();
+        }
+    });
+
+    return null;
 }

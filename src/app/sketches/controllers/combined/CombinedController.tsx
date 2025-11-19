@@ -5,9 +5,9 @@ import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior, { SteeringType } from "@/shared/ped/physics/SelfSteeringBehavior";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 import SwipeControls from "@/shared/controls/SwipeControls";
-import { useInputStore } from "@/shared/providers/InputStore";
+import useInputStore from "@/shared/providers/InputStore";
 import TapControls from "../tap/TapControls";
-import { FollowCam } from "@/shared/cameras/FollowCam";
+import FollowCam from "@/shared/cameras/FollowCam";
 
 export default function CombinedController({ mode, target = [0, 0, 0] }: { mode: string, target?: [number, number, number] }) {
     const [animation, setAnimation] = useState<"idle" | "walk" | "run">("idle");

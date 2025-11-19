@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useInputStore } from '@/shared/providers/InputStore';
+import useInputStore from '@/shared/providers/InputStore';
 
 // Keyboard to controller mapping
 const keyMapping = {
@@ -29,7 +29,7 @@ const keyMapping = {
 
 type AxisName = 'horizontal' | 'vertical' | 'lookHorizontal' | 'lookVertical';
 
-export function KeyboardInput() {
+export default function KeyboardInput() {
     useEffect(() => {
         const pressedKeys = new Set<string>();
         const axisValues = new Map<AxisName, number>();

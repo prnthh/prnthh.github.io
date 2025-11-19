@@ -26,7 +26,7 @@ interface InputState {
   swipe: (type: 'left' | 'right') => void;
 }
 
-export const useInputStore = create<InputState>((set) => ({
+const useInputStore = create<InputState>((set) => ({
   // Initial values
   horizontal: 0,
   vertical: 0,
@@ -45,3 +45,5 @@ export const useInputStore = create<InputState>((set) => ({
   tap: () => set((state) => ({ tapSignal: state.tapSignal + 1 })),
   swipe: (type) => set({ swipeSignal: { type, timestamp: Date.now() } }),
 }));
+
+export default useInputStore;
