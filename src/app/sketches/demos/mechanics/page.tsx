@@ -2,7 +2,6 @@
 
 import { Physics } from "@react-three/rapier";
 import { Environment, Helper, useGLTF, } from "@react-three/drei";
-import drive from "./map";
 import { DirectionalLightHelper, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import { Vector3 } from "three";
@@ -14,10 +13,10 @@ import Controls, { useControlScheme } from "@/shared/controls/ControlsProvider";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import Ped from "@/shared/ped/physics/ped";
-import { CharacterController } from "@/shared/shouldercam/CharacterController";
+import { CharacterController } from "@/app/sketches/controllers/shouldercam/CharacterController";
 import * as THREE from "three";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
-import { DemoWorldEnvironment } from "@/shared/DemoWorld";
+import DemoWorld, { DemoWorldEnvironment } from "@/shared/DemoWorld";
 
 export default function Home() {
     const [weapon, setWeapon] = useState<string | null>(null);
@@ -77,6 +76,7 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
 const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null) => void }) => {
     const { scheme } = useControlScheme();
     return <>
+        <DemoWorld />
         <CrawlerApp controlled={false} />
 
         <CharacterController>

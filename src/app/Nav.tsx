@@ -21,6 +21,7 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
         description: 'Lighting and reflections.'
     },
     'controllers/combined': {},
+    'controllers/firstperson': {},
     'controllers/shouldercam': {},
     'controllers/wawa': {},
     'controllers/click': {},

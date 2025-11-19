@@ -2,7 +2,7 @@
 
 import { Physics } from "@react-three/rapier";
 import Controls from "@/shared/controls/ControlsProvider";
-import { CharacterController } from "./CharacterController";
+import { CharacterController } from "../../app/sketches/controllers/shouldercam/CharacterController";
 import { useRef, useState, useEffect } from "react";
 import { Object3D, Vector3 } from "three";
 import { Canvas } from "@react-three/fiber";

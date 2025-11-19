@@ -1,13 +1,13 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { useRef, useState, useEffect } from "react";
+import { useRef, } from "react";
 import { Object3D, Vector3 } from "three";
 import Controls from "@/shared/controls/ControlsProvider";
-import { CharacterController } from "@/app/sketches/controllers/shouldercam/CharacterController";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import DemoWorld from "@/shared/DemoWorld";
 import GameCanvas from "@/shared/GameCanvas";
+import FirstPersonController from "./FirstPersonController";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -20,7 +20,7 @@ export default function Home() {
                         <ShadowLight debug camOffset={new Vector3(2, 10, 2)} />
 
                         <Physics>
-                            <CharacterController lookTarget={ballRef} />
+                            <FirstPersonController />
                             <DemoWorld />
 
                         </Physics>

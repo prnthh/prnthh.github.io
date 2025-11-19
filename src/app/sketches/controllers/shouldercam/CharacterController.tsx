@@ -13,9 +13,9 @@ import * as THREE from "three";
 import { FollowCam } from "@/shared/cameras/FollowCam";
 import TSLLine from "./TSLLine";
 import { useWeapon } from "./useWeapon";
-import AnimatedModel from "../ped/HumanoidModel";
+import AnimatedModel from "../../../../shared/ped/HumanoidModel";
 import { useInputStore } from "@/shared/providers/InputStore";
-import { KeyboardInput } from "@/shared/firstperson/KeyboardInput";
+import { KeyboardInput } from "../firstperson/KeyboardInput";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
 
 const tempQuat = new Quaternion();

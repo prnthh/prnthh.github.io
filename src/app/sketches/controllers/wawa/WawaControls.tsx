@@ -8,7 +8,7 @@
 
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 import { useInputStore } from "@/shared/providers/InputStore";
-import { KeyboardInput } from "@/shared/firstperson/KeyboardInput";
+import { KeyboardInput } from "../firstperson/KeyboardInput";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, RefObject } from "react";
 import { MathUtils, Vector3, Group } from "three";
