@@ -4,9 +4,7 @@ import { Physics } from "@react-three/rapier";
 import { Environment } from "@react-three/drei";
 import { Suspense, useRef, useState } from "react";
 import Vehicle, { ObjectRef } from "../../car/simple/car/base";
-import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
 import drive from "./map";
-import { GameEngine } from "../../editor/scene/editor/EditorContext";
 import Controls from "@/shared/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
@@ -30,23 +28,20 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls>
 
-                    <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
-                        <GameCanvas>
-                            <Physics paused={false}>
-                                {spawnPosition !== undefined && <CharacterController position={spawnPosition} />}
+                    <GameCanvas>
+                        <Physics paused={false}>
+                            {spawnPosition !== undefined && <CharacterController position={spawnPosition} />}
 
-                                <DrivableCar name={'car1'} position={[-2, -6, 4]} setPlayerState={setPlayerState} />
-                                <DrivableCar name={'car2'} position={[2, -6, 4]} setPlayerState={setPlayerState} />
+                            <DrivableCar name={'car1'} position={[-2, -6, 4]} setPlayerState={setPlayerState} />
+                            <DrivableCar name={'car2'} position={[2, -6, 4]} setPlayerState={setPlayerState} />
 
-                                <ambientLight intensity={0.5} />
-                                <ShadowLight />
-                                <Viewer />
+                            <ambientLight intensity={0.5} />
+                            <ShadowLight />
 
-                                <ambientLight intensity={0.5} />
-                                <DemoWorldEnvironment />
-                            </Physics>
-                        </GameCanvas>
-                    </GameEngine>
+                            <ambientLight intensity={0.5} />
+                            <DemoWorldEnvironment />
+                        </Physics>
+                    </GameCanvas>
 
                 </Controls>
             </div>

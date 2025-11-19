@@ -20,11 +20,11 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
     'lighting': {
         description: 'Lighting and reflections.'
     },
-    'controllers/wawa': {},
+    'controllers/combined': {},
     'controllers/shouldercam': {},
+    'controllers/wawa': {},
     'controllers/click': {},
     'controllers/tap': {},
-    'controllers/combined': {},
     'car/simple': {},
     'car/road': {},
     'navmesh': {},
@@ -36,7 +36,6 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
     'tools/character': {},
     'tools/worldeditor': {},
     'tools/narrativegraph': {},
-    'editor/scene': {},
     'editor/dragdrop': {},
     'ik/ragdoll': {},
     'ik/crawler': {},

@@ -13,6 +13,10 @@ import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior, { SteeringType } from "@/shared/ped/physics/SelfSteeringBehavior";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
+import SwipeControls from "@/shared/controls/SwipeControls";
+import { useInputStore } from "@/shared/providers/InputStore";
+import TapControls from "../tap/TapControls";
+import { FollowCam } from "@/shared/cameras/FollowCam";
 
 
 function Scene({ mode }: { mode: string }) {
@@ -46,7 +50,6 @@ function Scene({ mode }: { mode: string }) {
                 <RigidHumanoidModel
                     ref={modelRef}
                     {...modelProps}
-
                 >
                     {mode === 'wawa' && (
                         <WawaControls
@@ -58,13 +61,30 @@ function Scene({ mode }: { mode: string }) {
                         />
                     )}
 
-                    {mode === 'click' && modelRef.current?.rbref.current && <SteeringBehavior
-                        type={SteeringType.WALK}
-                        rigidBodyRef={modelRef.current.rbref}
-                        setAnimation={setAnimation}
-                        position={target}
-                        paused={false}
-                    />}
+                    {mode === 'click' && (
+                        <SteeringBehavior
+                            type={SteeringType.WALK}
+                            rigidBodyRef={modelRef}
+                            setAnimation={setAnimation}
+                            position={target}
+                            paused={false}
+                        />
+                    )}
+
+                    {mode === 'tap' && (
+                        <TapControls
+                            modelRef={modelRef}
+                            setAnimation={setAnimation}
+                        />
+                    )}
+
+                    {mode === 'tap' && <> <SwipeControls
+                        onTap={() => useInputStore.getState().tap()}
+                        onSwipeLeft={() => useInputStore.getState().swipe('right')}
+                        onSwipeRight={() => useInputStore.getState().swipe('left')}
+                    />
+                        <FollowCam height={2.5} />
+                    </>}
                 </RigidHumanoidModel>
 
                 {mode === 'click' && <OrbitControls />}
@@ -75,7 +95,7 @@ function Scene({ mode }: { mode: string }) {
 
 export default function Home() {
     const { mode } = useControls({
-        mode: { value: 'click', options: ['click', 'wawa'] }
+        mode: { value: 'click', options: ['click', 'wawa', 'tap'] }
     });
 
     return (

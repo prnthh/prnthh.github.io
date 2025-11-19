@@ -2,8 +2,6 @@
 
 import { Physics } from "@react-three/rapier";
 import { Environment, Helper, useGLTF, } from "@react-three/drei";
-import { GameEngine } from "../../editor/scene/editor/EditorContext";
-import { EditorModes, SceneNode, Viewer } from "../../editor/scene/viewer/SceneViewer";
 import drive from "./map";
 import { DirectionalLightHelper, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
@@ -28,18 +26,16 @@ export default function Home() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <Controls>
-                    <GameEngine mode={EditorModes.Play} sceneGraph={drive as unknown as SceneNode[]}>
-                        <GameCanvas>
-                            <Physics debug>
+                    <GameCanvas>
+                        <Physics debug>
 
-                                <ambientLight intensity={0} />
-                                <DemoWorldEnvironment />
-                                <Game weapon={weapon} setWeapon={setWeapon} />
-                                <Lighting />
-                                <FogEnvironment />
-                            </Physics>
-                        </GameCanvas>
-                    </GameEngine>
+                            <ambientLight intensity={0} />
+                            <DemoWorldEnvironment />
+                            <Game weapon={weapon} setWeapon={setWeapon} />
+                            <Lighting />
+                            <FogEnvironment />
+                        </Physics>
+                    </GameCanvas>
                 </Controls>
             </div>
             <div className="absolute bottom-4 right-4">
@@ -102,7 +98,6 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
                 rotation={[0.7, 0, -1]}
             />
         </Ped>
-        <Viewer />
 
         <HitBox debug key={2} position={[1, 1, 4]} />
         <HitBox debug key={3} position={[2, 1, 4]} />

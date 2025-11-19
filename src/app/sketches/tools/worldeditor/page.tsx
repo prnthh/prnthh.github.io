@@ -1,6 +1,7 @@
 "use client";
 
 import GameCanvas from "@/shared/GameCanvas";
+import { ThreeElements, ThreeEvent } from "@react-three/fiber"
 
 export default function MapEditorPage() {
     return <div className="w-screen h-screen">
@@ -21,3 +22,5 @@ export default function MapEditorPage() {
 // https://github.com/mrdoob/three.js/blob/dev/editor/examples/arkanoid.app.json
 
 // the main goal is to be able to animate the camera around with keyframes.
+
+// ThreeElements to extend all existing three elements.
