@@ -44,7 +44,7 @@ interface GeometryComponent extends Component {
         geometryType: "box" | "sphere" | "plane";
         args?: number[];
     };
-}
+} 
 
 interface MaterialComponent extends Component {
     type: "Material";
@@ -52,6 +52,13 @@ interface MaterialComponent extends Component {
         color: string;
         wireframe?: boolean;
         texture?: string;
+    };
+}
+
+interface PhysicsComponent extends Component {
+    type: "Physics";
+    properties: {
+        type: "dynamic" | "fixed";
     };
 }
 
@@ -66,5 +73,6 @@ export interface ModelComponent extends Component {
     type: "Model";
     properties: {
         filename: string;
+        instanced?: boolean;
     };
 }
