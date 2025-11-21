@@ -1,21 +1,12 @@
 "use client";
 
 import GameCanvas from "@/shared/GameCanvas";
-import { TransformControls, useHelper } from "@react-three/drei";
-import { useState } from "react";
-import { BoxHelper, Mesh } from "three";
+import { MapControls, TransformControls } from "@react-three/drei";
+import { useState, useRef, useEffect, forwardRef } from "react";
+import { DoubleSide, Group, Mesh, Object3D, SRGBColorSpace, Texture, TextureLoader } from "three";
 import { Prefab, GameObject as GameObjectType } from "./types";
 import { ThreeEvent } from "@react-three/fiber";
-
-export default function PrefabEditorPage() {
-    return <div className="w-screen h-screen">
-        <GameCanvas>
-            <ambientLight intensity={1.5} />
-            <gridHelper args={[10, 10]} position={[0, -1, 0]} />
-            <PrefabEditor />
-        </GameCanvas>
-    </div>
-}
+import { loadModel } from "../dragdrop/modelLoader";
 
 const testPrefab: Prefab = {
     id: "prefab-1",
@@ -28,25 +19,26 @@ const testPrefab: Prefab = {
             transform: {
                 type: "Transform",
                 properties: {
-                    position: [0, 0, 0],
-                    rotation: [0, 0, 0],
+                    position: [0, -1, 0],
+                    rotation: [-Math.PI / 2, 0, 0],
                     scale: [1, 1, 1],
                 },
             },
             geometry: {
                 type: "Geometry",
                 properties: {
-                    geometryType: "box",
-                    args: [1, 1, 1],
+                    geometryType: "plane",
+                    args: [5, 5],
                 },
             },
             material: {
                 type: "Material",
                 properties: {
-                    color: "red",
-                    wireframe: true,
-                },
-            },
+                    color: "white",
+                    texture: "/textures/grid-pattern.png"
+                }
+            }
+
         },
         children: [
             {
@@ -138,39 +130,236 @@ const testPrefab: Prefab = {
                     },
                 },
             },
+            {
+                id: "model-node",
+                enabled: true,
+                visible: true,
+                components: {
+                    transform: {
+                        type: "Transform",
+                        properties: {
+                            position: [0, 0, 2],
+                            rotation: [0, 0, 0],
+                            scale: [1, 1, 1],
+                        },
+                    },
+                    model: {
+                        type: "Model",
+                        properties: {
+                            filename: "models/environment/tree.glb"
+                        }
+                    }
+                }
+            },
+            {
+                id: "model-node2",
+                enabled: true,
+                visible: true,
+                components: {
+                    transform: {
+                        type: "Transform",
+                        properties: {
+                            position: [-2, 0, 2],
+                            rotation: [0, 0, 0],
+                            scale: [1, 1, 1],
+                        },
+                    },
+                    model: {
+                        type: "Model",
+                        properties: {
+                            filename: "models/environment/tree.glb"
+                        }
+                    }
+                }
+            },
+            {
+                id: "textured-node",
+                enabled: true,
+                visible: true,
+                components: {
+                    transform: {
+                        type: "Transform",
+                        properties: {
+                            position: [2, 0, 2],
+                            rotation: [0, 0, 0],
+                            scale: [1, 1, 1],
+                        },
+                    },
+                    geometry: {
+                        type: "Geometry",
+                        properties: {
+                            geometryType: "box",
+                            args: [1, 1, 1],
+                        },
+                    },
+                    material: {
+                        type: "Material",
+                        properties: {
+                            color: "red",
+                            wireframe: true,
+                        },
+                    },
+                }
+            }
         ],
     }
 };
 
-export function PrefabEditor() {
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const [prefab] = useState<Prefab>(testPrefab);
+export default function PrefabEditorPage() {
+    const [loadedPrefab, setLoadedPrefab] = useState<Prefab>(testPrefab);
+    const prefabRef = useRef<Group>(null);
+    return <div className="w-screen h-screen">
+        <GameCanvas>
+            <ambientLight intensity={1.5} />
+            <gridHelper args={[10, 10]} position={[0, -1, 0]} />
+            <PrefabEditor editMode data={loadedPrefab} ref={prefabRef} />
+        </GameCanvas>
+    </div>
+}
 
-    return <>
+
+
+function updatePrefabNode(root: GameObjectType, id: string, update: (node: GameObjectType) => GameObjectType): GameObjectType {
+    if (root.id === id) {
+        return update(root);
+    }
+    if (root.children) {
+        return {
+            ...root,
+            children: root.children.map(child => updatePrefabNode(child, id, update))
+        };
+    }
+    return root;
+}
+
+export const PrefabEditor = forwardRef<Group, { editMode?: boolean; data: Prefab }>(({ editMode, data }, ref) => {
+    const [loadedModels, setLoadedModels] = useState<Record<string, Object3D>>({});
+    const [loadedTextures, setLoadedTextures] = useState<Record<string, Texture>>({});
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [prefab, setPrefab] = useState<Prefab>(data);
+    const objectRefs = useRef<Record<string, Object3D | null>>({});
+    const loadingRefs = useRef<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (!editMode)
+            setSelectedId(null);
+    }, [editMode]);
+
+
+    const registerRef = (id: string, obj: Object3D | null) => {
+        objectRefs.current[id] = obj;
+    };
+
+    useEffect(() => {
+        const loadAssets = async () => {
+            const modelsToLoad = new Set<string>();
+            const texturesToLoad = new Set<string>();
+
+            const traverse = (node: GameObjectType) => {
+                if (node.components?.model?.properties?.filename) {
+                    modelsToLoad.add(node.components.model.properties.filename);
+                }
+                if (node.components?.material?.properties?.texture) {
+                    texturesToLoad.add(node.components.material.properties.texture);
+                }
+                node.children?.forEach(traverse);
+            };
+            traverse(prefab.root);
+
+            for (const filename of modelsToLoad) {
+                if (!loadedModels[filename] && !loadingRefs.current.has(filename)) {
+                    loadingRefs.current.add(filename);
+                    const result = await loadModel(filename, "");
+                    if (result.success && result.model) {
+                        setLoadedModels(prev => ({ ...prev, [filename]: result.model }));
+                    }
+                }
+            }
+
+            const textureLoader = new TextureLoader();
+            for (const filename of texturesToLoad) {
+                if (!loadedTextures[filename] && !loadingRefs.current.has(filename)) {
+                    loadingRefs.current.add(filename);
+                    textureLoader.load(filename, (texture) => {
+                        texture.colorSpace = SRGBColorSpace;
+                        setLoadedTextures(prev => ({ ...prev, [filename]: texture }));
+                    });
+                }
+            }
+        };
+        loadAssets();
+    }, [prefab, loadedModels, loadedTextures]);
+
+    const onTransformChange = () => {
+        if (!selectedId) return;
+        const obj = objectRefs.current[selectedId];
+        if (!obj) return;
+
+        setPrefab(prev => {
+            const newRoot = updatePrefabNode(prev.root, selectedId, (node) => {
+                return {
+                    ...node,
+                    components: {
+                        ...node.components,
+                        transform: {
+                            type: "Transform",
+                            properties: {
+                                position: [obj.position.x, obj.position.y, obj.position.z],
+                                rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+                                scale: [obj.scale.x, obj.scale.y, obj.scale.z],
+                            },
+                        },
+                        geometry: node.components?.geometry,
+                        material: node.components?.material,
+                        model: node.components?.model,
+                    }
+                };
+            });
+            return { ...prev, root: newRoot };
+        });
+    };
+
+    return <group ref={ref}>
         <GameObjectRenderer
             gameObject={prefab.root}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            onSelect={editMode ? setSelectedId : undefined}
+            registerRef={registerRef}
+            loadedModels={loadedModels}
+            loadedTextures={loadedTextures}
         />
-    </>
-}
+        {selectedId && objectRefs.current[selectedId] && (
+            <TransformControls
+                object={objectRefs.current[selectedId]}
+                mode="translate"
+                space="local"
+                onObjectChange={onTransformChange}
+            />
+        )}
+
+        <MapControls makeDefault />
+    </group>;
+});
 
 interface GameObjectRendererProps {
     gameObject: GameObjectType;
     selectedId: string | null;
-    onSelect: (id: string) => void;
+    onSelect?: (id: string) => void;
+    registerRef: (id: string, obj: Object3D | null) => void;
+    loadedModels: Record<string, Object3D>;
+    loadedTextures: Record<string, Texture>;
 }
 
-function GameObjectRenderer({ gameObject, selectedId, onSelect }: GameObjectRendererProps) {
-    const [meshRef, setMeshRef] = useState<Mesh | null>(null);
+function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loadedModels, loadedTextures }: GameObjectRendererProps) {
     const transform = gameObject.components?.transform;
     const geometry = gameObject.components?.geometry;
     const material = gameObject.components?.material;
+    const modelComp = gameObject.components?.model;
     const isSelected = selectedId === gameObject.id;
 
     const handleClick = (e: ThreeEvent<MouseEvent>) => {
         e.stopPropagation();
-        onSelect(gameObject.id);
+        onSelect?.(gameObject.id);
     };
 
     if (!gameObject.enabled || !gameObject.visible) {
@@ -188,6 +377,8 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect }: GameObjectRend
                 return <boxGeometry args={args as [number, number, number]} />;
             case "sphere":
                 return <sphereGeometry args={args as [number, number?, number?]} />;
+            case "plane":
+                return <planeGeometry args={args as [number, number]} />;
             default:
                 return <boxGeometry args={[1, 1, 1]} />;
         }
@@ -199,30 +390,45 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect }: GameObjectRend
             return <meshStandardMaterial color="red" wireframe />;
         }
 
-        const { color, wireframe = false } = material.properties;
+        const { color, wireframe = false, texture: textureName } = material.properties;
         const displayColor = isSelected ? "cyan" : color;
+        const texture = textureName ? loadedTextures[textureName] : undefined;
 
-        return <meshStandardMaterial color={displayColor} wireframe={wireframe} />;
+        return <meshStandardMaterial
+            key={texture?.uuid ?? 'no-texture'}
+            color={displayColor}
+            wireframe={wireframe}
+            map={texture}
+            transparent={!!texture}
+            side={DoubleSide}
+        />;
+    };
+
+    const renderModel = () => {
+        if (!modelComp) return null;
+        const filename = modelComp.properties.filename;
+        const model = loadedModels[filename];
+        if (!model) return null;
+        return <primitive object={model.clone()} />;
     };
 
     return (
-        <group>
-            {(transform || geometry || material) && (
-                <>
-                    <mesh
-                        ref={setMeshRef}
-                        onClick={handleClick}
-                        position={transform?.properties.position}
-                        rotation={transform?.properties.rotation}
-                        scale={transform?.properties.scale}
-                    >
-                        {renderGeometry()}
-                        {renderMaterial()}
-                    </mesh>
-
-                    {meshRef && isSelected && <TransformTool meshRef={meshRef} />}
-                </>
+        <group
+            ref={(el) => {
+                registerRef(gameObject.id, el);
+            }}
+            onClick={handleClick}
+            position={transform?.properties.position}
+            rotation={transform?.properties.rotation}
+            scale={transform?.properties.scale}
+        >
+            {geometry && (
+                <mesh>
+                    {renderGeometry()}
+                    {renderMaterial()}
+                </mesh>
             )}
+            {renderModel()}
 
             {gameObject.children?.map((child) => (
                 <GameObjectRenderer
@@ -230,24 +436,11 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect }: GameObjectRend
                     gameObject={child}
                     selectedId={selectedId}
                     onSelect={onSelect}
+                    registerRef={registerRef}
+                    loadedModels={loadedModels}
+                    loadedTextures={loadedTextures}
                 />
             ))}
         </group>
     );
-}
-
-function TransformTool({ meshRef }: { meshRef: Mesh }) {
-    // @ts-expect-error it works, fuck drei
-    useHelper(meshRef, BoxHelper, "cyan");
-
-    return <TransformControls object={meshRef} />;
-}
-
-function GameObject() {
-    return null;
-}
-
-
-export function PrefabViewer() {
-    return null;
 }

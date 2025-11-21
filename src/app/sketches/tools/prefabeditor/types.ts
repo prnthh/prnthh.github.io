@@ -19,6 +19,7 @@ export interface GameObject {
         transform?: TransformComponent;
         geometry?: GeometryComponent;
         material?: MaterialComponent;
+        model?: ModelComponent;
         [uuid: string]: Component | undefined;
     };
 }
@@ -40,7 +41,7 @@ interface TransformComponent extends Component {
 interface GeometryComponent extends Component {
     type: "Geometry";
     properties: {
-        geometryType: "box" | "sphere";
+        geometryType: "box" | "sphere" | "plane";
         args?: number[];
     };
 }
@@ -50,6 +51,7 @@ interface MaterialComponent extends Component {
     properties: {
         color: string;
         wireframe?: boolean;
+        texture?: string;
     };
 }
 
@@ -57,5 +59,12 @@ interface StateComponent extends Component {
     type: "State";
     properties: {
         [key: string]: any;
+    };
+}
+
+export interface ModelComponent extends Component {
+    type: "Model";
+    properties: {
+        filename: string;
     };
 }
