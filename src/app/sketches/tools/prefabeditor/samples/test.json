@@ -10,32 +10,47 @@
                 "type": "Transform",
                 "properties": {
                     "position": [0, -1, 0],
-                    "rotation": [-1.57, 0, 0],
+                    "rotation": [0, 0, 0],
                     "scale": [1, 1, 1]
-                }
-            },
-            "geometry": {
-                "type": "Geometry",
-                "properties": {
-                    "geometryType": "plane",
-                    "args": [50, 50]
-                }
-            },
-            "material": {
-                "type": "Material",
-                "properties": {
-                    "color": "white",
-                    "texture": "/textures/grid-pattern.png"
-                }
-            },
-            "physics": {
-                "type": "Physics",
-                "properties": {
-                    "type": "fixed"
                 }
             }
         },
         "children": [
+            {
+                "id": "ground",
+                "enabled": true,
+                "visible": true,
+                "components": {
+                    "transform": {
+                        "type": "Transform",
+                        "properties": {
+                            "position": [0, 0, 0],
+                            "rotation": [-1.57, 0, 0],
+                            "scale": [1, 1, 1]
+                        }
+                    },
+                    "geometry": {
+                        "type": "Geometry",
+                        "properties": {
+                            "geometryType": "plane",
+                            "args": [50, 50]
+                        }
+                    },
+                    "material": {
+                        "type": "Material",
+                        "properties": {
+                            "color": "white",
+                            "texture": "/textures/grid-pattern.png"
+                        }
+                    },
+                    "physics": {
+                        "type": "Physics",
+                        "properties": {
+                            "type": "fixed"
+                        }
+                    }
+                }
+            },
             {
                 "id": "child-1",
                 "enabled": true,
@@ -181,7 +196,7 @@
                     "model": {
                         "type": "Model",
                         "properties": {
-                            "filename": "models/environment/tree.glb",
+                            "filename": "models/environment/servers.glb",
                             "instanced": true
                         }
                     },

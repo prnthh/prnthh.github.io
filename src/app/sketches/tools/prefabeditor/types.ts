@@ -1,3 +1,5 @@
+import { ThreeElements } from "@react-three/fiber"
+
 export interface Prefab {
     id: string;
     name: string;
@@ -20,6 +22,9 @@ export interface GameObject {
         geometry?: GeometryComponent;
         material?: MaterialComponent;
         model?: ModelComponent;
+        physics?: PhysicsComponent;
+        state?: StateComponent;
+        spotLight?: SpotLightComponent;
         [uuid: string]: Component | undefined;
     };
 }
@@ -52,6 +57,8 @@ interface MaterialComponent extends Component {
         color: string;
         wireframe?: boolean;
         texture?: string;
+        repeat?: boolean;
+        repeatCount?: [number, number];
     };
 }
 
@@ -76,3 +83,21 @@ export interface ModelComponent extends Component {
         instanced?: boolean;
     };
 }
+
+export interface SpotLightComponent extends Component {
+    type: "SpotLight";
+    properties: {
+        color: string;
+        intensity: number;
+    };
+}
+
+
+export const COMPONENT_DEFS: Record<string, { type: string, defaultProps: any }> = {
+    transform: { type: 'Transform', defaultProps: { position: [0, 0, 0], rotation: [0, 0, 0], scale: [1, 1, 1] } },
+    geometry: { type: 'Geometry', defaultProps: { geometryType: 'box' } },
+    material: { type: 'Material', defaultProps: { color: '#ffffff' } },
+    model: { type: 'Model', defaultProps: { filename: '' } },
+    physics: { type: 'Physics', defaultProps: { type: 'dynamic' } },
+    spotLight: { type: 'SpotLight', defaultProps: { color: '#ffffff', intensity: 1 } }
+};

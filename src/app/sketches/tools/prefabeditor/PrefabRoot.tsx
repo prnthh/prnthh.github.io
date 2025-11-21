@@ -1,25 +1,89 @@
+"use client";
 
 import { MapControls, TransformControls } from "@react-three/drei";
-import { useState, useRef, useEffect, forwardRef } from "react";
-import { DoubleSide, Group, Object3D, SRGBColorSpace, Texture, TextureLoader } from "three";
+import { useState, useRef, useEffect, forwardRef, useMemo, useCallback } from "react";
+import { ClampToEdgeWrapping, DoubleSide, Group, Object3D, RepeatWrapping, SRGBColorSpace, Texture, TextureLoader } from "three";
 import { Prefab, GameObject as GameObjectType } from "./types";
 import { ThreeEvent } from "@react-three/fiber";
 import { loadModel } from "../dragdrop/modelLoader";
 import { RigidBody } from "@react-three/rapier";
 import { GameInstance, GameInstanceProvider } from "./InstanceProvider";
-import EditorUI from "./EditorUI";
 
+function updatePrefabNode(root: GameObjectType, id: string, update: (node: GameObjectType) => GameObjectType): GameObjectType {
+    if (root.id === id) {
+        return update(root);
+    }
+    if (root.children) {
+        return {
+            ...root,
+            children: root.children.map(child => updatePrefabNode(child, id, update))
+        };
+    }
+    return root;
+}
 
-export const PrefabEditor = forwardRef<Group, { editMode?: boolean; data: Prefab }>(({ editMode, data }, ref) => {
+export const PrefabRoot = forwardRef<Group, {
+    editMode?: boolean;
+    data: Prefab;
+    onPrefabChange?: (data: Prefab) => void;
+    selectedId: string | null;
+    onSelect: (id: string | null) => void;
+    transformMode: "translate" | "rotate" | "scale";
+    setTransformMode: (mode: "translate" | "rotate" | "scale") => void;
+}>(({ editMode, data, onPrefabChange, selectedId, onSelect, transformMode, setTransformMode }, ref) => {
     const [loadedModels, setLoadedModels] = useState<Record<string, Object3D>>({});
     const [loadedTextures, setLoadedTextures] = useState<Record<string, Texture>>({});
-    const [prefabRoot, setPrefabRoot] = useState<Prefab>(data);
+    // const [prefabRoot, setPrefabRoot] = useState<Prefab>(data); // Removed local state
     const loadingRefs = useRef<Set<string>>(new Set());
     const objectRefs = useRef<Record<string, Object3D | null>>({});
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [selectedObject, setSelectedObject] = useState<Object3D | null>(null);
 
-    const registerRef = (id: string, obj: Object3D | null) => {
+    const registerRef = useCallback((id: string, obj: Object3D | null) => {
         objectRefs.current[id] = obj;
+        if (id === selectedId) {
+            setSelectedObject(obj);
+        }
+    }, [selectedId]);
+
+    useEffect(() => {
+        if (selectedId) {
+            setSelectedObject(objectRefs.current[selectedId] || null);
+        } else {
+            setSelectedObject(null);
+        }
+    }, [selectedId]);
+
+
+    // const [transformMode, setTransformMode] = useState<"translate" | "rotate" | "scale">("translate"); // Removed local state
+
+    const updateNode = (updater: (node: GameObjectType) => GameObjectType) => {
+        if (!selectedId || !onPrefabChange) return;
+        const newRoot = updatePrefabNode(data.root, selectedId, updater);
+        onPrefabChange({ ...data, root: newRoot });
+    };
+
+    const onTransformChange = () => {
+        if (!selectedId) return;
+        const obj = objectRefs.current[selectedId];
+        if (!obj) return;
+
+        updateNode(node => ({
+            ...node,
+            components: {
+                ...node.components,
+                transform: {
+                    type: "Transform",
+                    properties: {
+                        position: [obj.position.x, obj.position.y, obj.position.z],
+                        rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
+                        scale: [obj.scale.x, obj.scale.y, obj.scale.z],
+                    },
+                },
+                geometry: node.components?.geometry,
+                material: node.components?.material,
+                model: node.components?.model,
+            }
+        }));
     };
 
     useEffect(() => {
@@ -36,7 +100,7 @@ export const PrefabEditor = forwardRef<Group, { editMode?: boolean; data: Prefab
                 }
                 node.children?.forEach(traverse);
             };
-            traverse(prefabRoot.root);
+            traverse(data.root);
 
             for (const filename of modelsToLoad) {
                 if (!loadedModels[filename] && !loadingRefs.current.has(filename)) {
@@ -60,16 +124,16 @@ export const PrefabEditor = forwardRef<Group, { editMode?: boolean; data: Prefab
             }
         };
         loadAssets();
-    }, [prefabRoot, loadedModels, loadedTextures]);
+    }, [data, loadedModels, loadedTextures]);
 
 
 
     return <group ref={ref}>
         <GameInstanceProvider models={loadedModels}>
             <GameObjectRenderer
-                gameObject={prefabRoot.root}
+                gameObject={data.root}
                 selectedId={selectedId}
-                onSelect={editMode ? setSelectedId : undefined}
+                onSelect={editMode ? onSelect : undefined}
                 registerRef={registerRef}
                 loadedModels={loadedModels}
                 loadedTextures={loadedTextures}
@@ -78,14 +142,16 @@ export const PrefabEditor = forwardRef<Group, { editMode?: boolean; data: Prefab
         </GameInstanceProvider>
 
         {editMode && <>
-            <EditorUI
-                prefabData={prefabRoot}
-                setPrefabData={setPrefabRoot}
-                selectedId={selectedId}
-                setSelectedId={setSelectedId}
-                objectRefs={objectRefs}
-            />
             <MapControls makeDefault />
+
+            {selectedId && selectedObject && (
+                <TransformControls
+                    object={selectedObject}
+                    mode={transformMode}
+                    space="local"
+                    onObjectChange={onTransformChange}
+                />
+            )}
         </>}
     </group>;
 });
@@ -152,16 +218,30 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
             return <meshStandardMaterial color="red" wireframe />;
         }
 
-        const { color, wireframe = false, texture: textureName } = material.properties;
+        const { color, wireframe = false, texture: textureName, repeat, repeatCount } = material.properties;
         const displayColor = isSelected ? "cyan" : color;
         const texture = textureName ? loadedTextures[textureName] : undefined;
 
+        const finalTexture = useMemo(() => {
+            if (!texture) return undefined;
+            const t = texture.clone();
+            if (repeat) {
+                t.wrapS = t.wrapT = RepeatWrapping;
+                if (repeatCount) t.repeat.set(repeatCount[0], repeatCount[1]);
+            } else {
+                t.wrapS = t.wrapT = ClampToEdgeWrapping;
+                t.repeat.set(1, 1);
+            }
+            t.needsUpdate = true;
+            return t;
+        }, [texture, repeat, repeatCount?.[0], repeatCount?.[1]]);
+
         return <meshStandardMaterial
-            key={texture?.uuid ?? 'no-texture'}
+            key={finalTexture?.uuid ?? 'no-texture'}
             color={displayColor}
             wireframe={wireframe}
-            map={texture}
-            transparent={!!texture}
+            map={finalTexture}
+            transparent={!!finalTexture}
             side={DoubleSide}
         />;
     };
@@ -169,7 +249,6 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
     const renderModel = () => {
         if (!modelComp) return null;
         const filename = modelComp.properties.filename;
-        // @ts-ignore
         if (modelComp.properties.instanced) return null; // Handled by GameInstance wrapper
 
         const model = loadedModels[filename];
@@ -177,7 +256,13 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
         return <primitive object={model.clone()} />;
     };
 
-    // @ts-ignore
+    const renderSpotLight = () => {
+        const light = gameObject.components?.spotLight;
+        if (!light) return null;
+        const { color, intensity } = light.properties;
+        return <spotLight color={color} intensity={intensity} />;
+    };
+
     const isInstanced = modelComp?.properties?.instanced;
 
     const content = (
@@ -189,6 +274,7 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
                 </mesh>
             )}
             {renderModel()}
+            {renderSpotLight()}
 
             {gameObject.children?.map((child) => (
                 <GameObjectRenderer
@@ -214,6 +300,9 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
             rotation={transform?.properties.rotation || [0, 0, 0]}
             scale={transform?.properties.scale || [1, 1, 1]}
             physics={editMode ? undefined : (physics?.properties as any)}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
         >
             {content}
         </GameInstance>;
@@ -257,4 +346,4 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
     );
 }
 
-export default PrefabEditor;
+export default PrefabRoot;

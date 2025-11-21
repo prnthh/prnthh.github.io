@@ -204,6 +204,9 @@ export const GameInstance = React.forwardRef<THREE.Group, {
     scale: [number, number, number];
     physics?: { type: 'dynamic' | 'fixed' };
     children?: React.ReactNode;
+    onPointerDown?: (e: any) => void;
+    onPointerUp?: (e: any) => void;
+    onPointerMove?: (e: any) => void;
 }>(({
     id,
     modelUrl,
@@ -211,7 +214,10 @@ export const GameInstance = React.forwardRef<THREE.Group, {
     rotation,
     scale,
     physics = undefined,
-    children
+    children,
+    onPointerDown,
+    onPointerUp,
+    onPointerMove
 }, ref) => {
     const ctx = useContext(GameInstanceContext);
     const addInstance = ctx?.addInstance;
@@ -249,6 +255,9 @@ export const GameInstance = React.forwardRef<THREE.Group, {
             position={position}
             rotation={rotation}
             scale={scale}
+            onPointerDown={onPointerDown}
+            onPointerUp={onPointerUp}
+            onPointerMove={onPointerMove}
         >
             {Array.from({ length: partCount }).map((_, i) => {
                 const Instance = ctx.instancesMap![`${modelUrl}__${i}`];
