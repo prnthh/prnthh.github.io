@@ -108,7 +108,7 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
 }
 
 const WavyTree = () => {
-    const { scene } = useGLTF('/models/environment/tree2.glb');
+    const { scene } = useGLTF('/models/environment/tree.glb');
     const [clone, setClone] = useState<Object3D | undefined>(undefined);
 
     useEffect(() => {
