@@ -59,7 +59,6 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
 
     return <div className="flex flex-col gap-4">
         <div>
-            <label className="block text-xs text-gray-400 mb-1">ID</label>
             <input
                 className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
                 value={node.id}
@@ -68,21 +67,21 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
         </div>
 
         <div className="flex justify-between items-center">
-            <label className="text-sm font-bold">Node Actions</label>
+            <label className="text-sm font-bold">Components</label>
             <button onClick={deleteNode} className="p-1">❌</button>
         </div>
 
         <div>
             <label className="block text-xs text-gray-400 mb-1">Transform Mode</label>
-            <select
-                className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
-                value={transformMode}
-                onChange={e => setTransformMode(e.target.value as any)}
-            >
-                <option value="translate">Translate</option>
-                <option value="rotate">Rotate</option>
-                <option value="scale">Scale</option>
-            </select>
+            {["translate", "rotate", "scale"].map(mode => (
+                <button
+                    key={mode}
+                    onClick={() => setTransformMode(mode as any)}
+                    className={`mr-2 px-2 py-1 text-sm rounded ${transformMode === mode ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+                >
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+            ))}
         </div>
 
         {/* Components */}

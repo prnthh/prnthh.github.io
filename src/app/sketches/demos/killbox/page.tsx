@@ -10,6 +10,7 @@ import DemoWorld from "@/shared/DemoWorld";
 import Controls from "@/shared/controls/ControlsProvider";
 import { Html } from "@react-three/drei";
 import { useTimeRNGNumber } from "./TimeRNG";
+import Balloon from "@/shared/physics/Balloon";
 
 
 export default function Home() {
@@ -35,6 +36,8 @@ export default function Home() {
                             <DemoWorld />
                             <Train />
                             <RandomNumberExample />
+
+                            <Balloon position={[0, 2, -5]} />
 
                             <LocalPlayer />
                             <OtherPlayers />

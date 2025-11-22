@@ -37,6 +37,7 @@ interface FirstPersonControlsProps {
     jumpVelocity?: number;
     floatSpring?: number;
     floatDamping?: number;
+    cameraRigRef?: RefObject<Group | null>;
 }
 
 const FirstPersonControls = ({
@@ -49,8 +50,10 @@ const FirstPersonControls = ({
     jumpVelocity = 5,
     floatSpring = 8,
     floatDamping = 0.3,
+    cameraRigRef: providedCameraRigRef,
 }: FirstPersonControlsProps) => {
-    const cameraRigRef = useRef<Group | null>(null);
+    const internalCameraRigRef = useRef<Group | null>(null);
+    const cameraRigRef = providedCameraRigRef || internalCameraRigRef;
     const cameraPitch = useRef(0);
     const tap = useInputStore(state => state.tap);
 

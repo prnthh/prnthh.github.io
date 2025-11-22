@@ -29,6 +29,7 @@ const FirstPersonController = ({
 }) => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
     const bodyMeshRef = useRef<Group | null>(null);
+    const cameraRigRef = useRef<Group | null>(null);
 
     const CAPSULE_RADIUS = height / 5;
     const CAPSULE_HEIGHT = height / 2;
@@ -36,7 +37,7 @@ const FirstPersonController = ({
 
     useEffect(() => {
         if (typeof forwardRef === 'function') {
-            forwardRef({ rbref: rigidBodyRef, meshref: bodyMeshRef, cameraRigRef: { current: null } });
+            forwardRef({ rbref: rigidBodyRef, meshref: bodyMeshRef, cameraRigRef });
         }
     }, [forwardRef]);
 
@@ -67,6 +68,7 @@ const FirstPersonController = ({
                 height={CAPSULE_HEIGHT}
                 eyeHeight={EYE_HEIGHT}
                 cameraOffset={cameraOffset}
+                cameraRigRef={cameraRigRef}
             />
         </RigidBody>
     );
