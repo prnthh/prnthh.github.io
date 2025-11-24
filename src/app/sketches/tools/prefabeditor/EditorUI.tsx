@@ -12,6 +12,8 @@ function EditorUI({ prefabData, setPrefabData, selectedId, setSelectedId, transf
     transformMode: "translate" | "rotate" | "scale";
     setTransformMode: (m: "translate" | "rotate" | "scale") => void;
 }) {
+    const [isInspectorCollapsed, setIsInspectorCollapsed] = useState(false);
+
     const updateNode = (updater: (n: GameObjectType) => GameObjectType) => {
         if (!prefabData || !setPrefabData || !selectedId) return;
         setPrefabData(prev => ({
@@ -37,16 +39,25 @@ function EditorUI({ prefabData, setPrefabData, selectedId, setSelectedId, transf
 
     if (!selectedNode) return null;
     return <>
-        <div className='absolute top-4 right-4 z-20 bg-gray-800 text-white p-4 rounded shadow-lg w-80 max-h-[90vh] overflow-y-auto'>
-            <NodeInspector
-                node={selectedNode}
-                updateNode={updateNode}
-                deleteNode={deleteNode}
-                transformMode={transformMode}
-                setTransformMode={setTransformMode}
-            />
+        <div className='absolute top-2 right-2 z-20 bg-black/70 backdrop-blur-sm text-white border border-cyan-500/30 max-h-[95vh] overflow-y-auto overflow-x-hidden' style={{ width: isInspectorCollapsed ? 'auto' : '16rem' }}>
+            <div
+                className="px-1.5 py-1 font-mono text-[10px] bg-cyan-500/10 border-b border-cyan-500/30 sticky top-0 uppercase tracking-wider text-cyan-400/80 cursor-pointer hover:bg-cyan-500/20 flex items-center justify-between"
+                onClick={() => setIsInspectorCollapsed(!isInspectorCollapsed)}
+            >
+                <span>Inspector</span>
+                <span className="text-[8px]">{isInspectorCollapsed ? '◀' : '▶'}</span>
+            </div>
+            {!isInspectorCollapsed && (
+                <NodeInspector
+                    node={selectedNode}
+                    updateNode={updateNode}
+                    deleteNode={deleteNode}
+                    transformMode={transformMode}
+                    setTransformMode={setTransformMode}
+                />
+            )}
         </div>
-        <div className='absolute top-16 left-4 z-20'>
+        <div className='absolute top-12 left-2 z-20'>
             <EditorTree
                 prefabData={prefabData}
                 setPrefabData={setPrefabData}
@@ -74,65 +85,69 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
         }
     }, [componentKeys, addComponentType, node.components]);
 
-    return <div className="flex flex-col gap-4">
-        <div>
+    return <div className="flex flex-col gap-1 text-[11px]">
+        <div className="border-b border-cyan-500/20 pb-1 px-1.5 pt-1">
             <input
-                className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm"
+                className="w-full bg-black/40 border border-cyan-500/30 px-1 py-0.5 text-[11px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50"
                 value={node.id}
                 onChange={e => updateNode(n => ({ ...n, id: e.target.value }))}
             />
         </div>
 
-        <div className="flex justify-between items-center">
-            <label className="text-sm font-bold">Components</label>
-            <button onClick={deleteNode} className="p-1">❌</button>
+        <div className="flex justify-between items-center px-1.5 py-0.5 border-b border-cyan-500/20">
+            <label className="text-[10px] font-mono text-cyan-400/80 uppercase tracking-wider">Components</label>
+            <button onClick={deleteNode} className="text-[10px] text-red-400/80 hover:text-red-400">✕</button>
         </div>
 
-        <div>
-            <label className="block text-xs text-gray-400 mb-1">Transform Mode</label>
-            {["translate", "rotate", "scale"].map(mode => (
-                <button
-                    key={mode}
-                    onClick={() => setTransformMode(mode as any)}
-                    className={`mr-2 px-2 py-1 text-sm rounded ${transformMode === mode ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
-                >
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                </button>
-            ))}
+        <div className="px-1.5 py-1 border-b border-cyan-500/20">
+            <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">Mode</label>
+            <div className="flex gap-0.5">
+                {["translate", "rotate", "scale"].map(mode => (
+                    <button
+                        key={mode}
+                        onClick={() => setTransformMode(mode as any)}
+                        className={`flex-1 px-1 py-0.5 text-[10px] font-mono border ${transformMode === mode ? 'bg-cyan-500/30 border-cyan-400/50 text-cyan-200' : 'bg-black/30 border-cyan-500/20 text-cyan-400/60 hover:border-cyan-400/30'}`}
+                    >
+                        {mode[0].toUpperCase()}
+                    </button>
+                ))}
+            </div>
         </div>
 
         {/* Components */}
         {node.components && Object.entries(node.components).map(([key, comp]: [string, any]) => {
             if (!comp) return null;
             return (
-                <div key={key} className="border border-gray-600 rounded p-2 bg-gray-700/30">
-                    <div className="flex justify-between items-center mb-2 border-b border-gray-600 pb-1">
-                        <span className="font-bold capitalize text-sm">{key}</span>
+                <div key={key} className="border border-cyan-500/20 mx-1 my-0.5 bg-black/20">
+                    <div className="flex justify-between items-center px-1 py-0.5 border-b border-cyan-500/20 bg-cyan-500/5">
+                        <span className="font-mono text-[10px] text-cyan-300 uppercase">{key}</span>
                         <button
                             onClick={() => updateNode(n => {
                                 const components = { ...n.components };
                                 delete components[key as keyof typeof components];
                                 return { ...n, components };
                             })}
-                            className="text-xs"
+                            className="text-[9px] text-red-400/60 hover:text-red-400"
                         >
-                            ❌
+                            ✕
                         </button>
                     </div>
-                    <ComponentEditor component={comp} onChange={(newComp: any) => updateNode(n => ({
-                        ...n,
-                        components: { ...n.components, [key]: newComp }
-                    }))} />
+                    <div className="px-1 py-0.5">
+                        <ComponentEditor component={comp} onChange={(newComp: any) => updateNode(n => ({
+                            ...n,
+                            components: { ...n.components, [key]: newComp }
+                        }))} />
+                    </div>
                 </div>
             );
         })}
 
         {/* Add Component */}
-        <div className="mt-2 pt-2 border-t border-gray-600">
-            <label className="block text-xs text-gray-400 mb-1">Add Component</label>
-            <div className="flex gap-2">
+        <div className="px-1.5 py-1 border-t border-cyan-500/20">
+            <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">Add Component</label>
+            <div className="flex gap-0.5">
                 <select
-                    className="bg-gray-700 border border-gray-600 rounded px-2 py-1 flex-1 text-sm"
+                    className="bg-black/40 border border-cyan-500/30 px-1 py-0.5 flex-1 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50"
                     value={addComponentType}
                     onChange={e => setAddComponentType(e.target.value)}
                 >
@@ -141,7 +156,7 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
                     ))}
                 </select>
                 <button
-                    className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
+                    className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 px-2 py-0.5 text-[10px] text-cyan-300 font-mono disabled:opacity-30"
                     disabled={!addComponentType}
                     onClick={() => {
                         if (!addComponentType) return;
@@ -157,7 +172,7 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
                         }
                     }}
                 >
-                    Add
+                    +
                 </button>
             </div>
         </div>
@@ -193,20 +208,20 @@ export function Vector3Input({ label, value, onChange }: { label: string, value:
         onChange(newValue);
     };
 
-    return <div>
-        <label className="block text-xs text-gray-400 mb-1">{label}</label>
-        <div className="flex gap-1">
+    return <div className="mb-1">
+        <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">{label}</label>
+        <div className="flex gap-0.5">
             <div className="relative flex-1">
-                <span className="absolute left-1 top-1 text-xs text-red-400 font-bold">X</span>
-                <input className="w-full bg-gray-700 border border-gray-600 rounded pl-4 pr-1 py-1 text-xs" type="number" step="0.1" value={value[0]} onChange={e => handleChange(0, e.target.value)} />
+                <span className="absolute left-0.5 top-0 text-[8px] text-red-400/80 font-mono">X</span>
+                <input className="w-full bg-black/40 border border-cyan-500/30 pl-3 pr-0.5 py-0.5 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50" type="number" step="0.1" value={value[0]} onChange={e => handleChange(0, e.target.value)} />
             </div>
             <div className="relative flex-1">
-                <span className="absolute left-1 top-1 text-xs text-green-400 font-bold">Y</span>
-                <input className="w-full bg-gray-700 border border-gray-600 rounded pl-4 pr-1 py-1 text-xs" type="number" step="0.1" value={value[1]} onChange={e => handleChange(1, e.target.value)} />
+                <span className="absolute left-0.5 top-0 text-[8px] text-green-400/80 font-mono">Y</span>
+                <input className="w-full bg-black/40 border border-cyan-500/30 pl-3 pr-0.5 py-0.5 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50" type="number" step="0.1" value={value[1]} onChange={e => handleChange(1, e.target.value)} />
             </div>
             <div className="relative flex-1">
-                <span className="absolute left-1 top-1 text-xs text-blue-400 font-bold">Z</span>
-                <input className="w-full bg-gray-700 border border-gray-600 rounded pl-4 pr-1 py-1 text-xs" type="number" step="0.1" value={value[2]} onChange={e => handleChange(2, e.target.value)} />
+                <span className="absolute left-0.5 top-0 text-[8px] text-blue-400/80 font-mono">Z</span>
+                <input className="w-full bg-black/40 border border-cyan-500/30 pl-3 pr-0.5 py-0.5 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50" type="number" step="0.1" value={value[2]} onChange={e => handleChange(2, e.target.value)} />
             </div>
         </div>
     </div>

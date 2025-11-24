@@ -12,6 +12,7 @@ export default function EditorTree({ prefabData, setPrefabData, selectedId, setS
     const [contextMenu, setContextMenu] = useState<{ x: number, y: number, nodeId: string } | null>(null);
     const [draggedId, setDraggedId] = useState<string | null>(null);
     const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+    const [isTreeCollapsed, setIsTreeCollapsed] = useState(false);
 
     if (!prefabData || !setPrefabData) return null;
 
@@ -152,8 +153,8 @@ export default function EditorTree({ prefabData, setPrefabData, selectedId, setS
         return (
             <div key={node.id} className="select-none">
                 <div
-                    className={`flex items-center py-1 px-2 cursor-pointer hover:bg-gray-700 ${isSelected ? 'bg-blue-600 hover:bg-blue-500' : ''}`}
-                    style={{ paddingLeft: `${depth * 12 + 4}px` }}
+                    className={`flex items-center py-0.5 px-1 cursor-pointer border-b border-cyan-500/10 ${isSelected ? 'bg-cyan-500/30 hover:bg-cyan-500/40 border-cyan-400/30' : 'hover:bg-cyan-500/10'}`}
+                    style={{ paddingLeft: `${depth * 8 + 4}px` }}
                     onClick={(e) => { e.stopPropagation(); setSelectedId(node.id); }}
                     onContextMenu={(e) => handleContextMenu(e, node.id)}
                     draggable={node.id !== prefabData.root.id}
@@ -162,16 +163,13 @@ export default function EditorTree({ prefabData, setPrefabData, selectedId, setS
                     onDrop={(e) => handleDrop(e, node.id)}
                 >
                     <span
-                        className={`mr-1 w-4 text-center text-gray-400 hover:text-white cursor-pointer ${hasChildren ? '' : 'invisible'}`}
+                        className={`mr-0.5 w-3 text-center text-cyan-400/50 hover:text-cyan-400 cursor-pointer text-[8px] ${hasChildren ? '' : 'invisible'}`}
                         onClick={(e) => hasChildren && toggleCollapse(e, node.id)}
                     >
                         {isCollapsed ? '▶' : '▼'}
                     </span>
-                    <span className="text-sm truncate">
+                    <span className="text-[10px] truncate font-mono text-cyan-300">
                         {node.id}
-                        {/* <span className="text-gray-400 text-xs ml-2">
-                            {Object.keys(node.components || {}).join(', ')}
-                        </span> */}
                     </span>
                 </div>
                 {!isCollapsed && node.children && (
@@ -184,21 +182,30 @@ export default function EditorTree({ prefabData, setPrefabData, selectedId, setS
     };
 
     return (
-        <div className="bg-gray-800 text-white rounded shadow-lg w-64 max-h-[80vh] overflow-y-auto flex flex-col" onClick={closeContextMenu}>
-            <div className="p-2 font-bold bg-gray-900 border-b border-gray-700 sticky top-0">
-                Prefab Graph
-            </div>
-            <div className="flex-1 py-2">
-                {renderNode(prefabData.root)}
+        <>
+            <div className="bg-black/70 backdrop-blur-sm text-white border border-cyan-500/30 max-h-[85vh] overflow-y-auto flex flex-col" style={{ width: isTreeCollapsed ? 'auto' : '14rem' }} onClick={closeContextMenu}>
+                <div
+                    className="px-1.5 py-1 font-mono text-[10px] bg-cyan-500/10 border-b border-cyan-500/30 sticky top-0 uppercase tracking-wider text-cyan-400/80 cursor-pointer hover:bg-cyan-500/20 flex items-center justify-between"
+                    onClick={(e) => { e.stopPropagation(); setIsTreeCollapsed(!isTreeCollapsed); }}
+                >
+                    <span>Prefab Graph</span>
+                    <span className="text-[8px]">{isTreeCollapsed ? '▶' : '◀'}</span>
+                </div>
+                {!isTreeCollapsed && (
+                    <div className="flex-1 py-0.5">
+                        {renderNode(prefabData.root)}
+                    </div>
+                )}
             </div>
 
             {contextMenu && (
                 <div
-                    className="fixed bg-gray-700 border border-gray-600 shadow-xl rounded py-1 z-50 min-w-[120px]"
+                    className="fixed bg-black/90 backdrop-blur-sm border border-cyan-500/40 z-50 min-w-[100px]"
                     style={{ top: contextMenu.y, left: contextMenu.x }}
+                    onClick={(e) => e.stopPropagation()}
                 >
                     <button
-                        className="w-full text-left px-4 py-2 hover:bg-gray-600 text-sm"
+                        className="w-full text-left px-2 py-1 hover:bg-cyan-500/20 text-[10px] text-cyan-300 font-mono border-b border-cyan-500/20"
                         onClick={() => handleAddChild(contextMenu.nodeId)}
                     >
                         Add Child
@@ -206,13 +213,13 @@ export default function EditorTree({ prefabData, setPrefabData, selectedId, setS
                     {contextMenu.nodeId !== prefabData.root.id && (
                         <>
                             <button
-                                className="w-full text-left px-4 py-2 hover:bg-gray-600 text-sm"
+                                className="w-full text-left px-2 py-1 hover:bg-cyan-500/20 text-[10px] text-cyan-300 font-mono border-b border-cyan-500/20"
                                 onClick={() => handleDuplicate(contextMenu.nodeId)}
                             >
                                 Duplicate
                             </button>
                             <button
-                                className="w-full text-left px-4 py-2 hover:bg-gray-600 text-sm text-red-400"
+                                className="w-full text-left px-2 py-1 hover:bg-red-500/20 text-[10px] text-red-400 font-mono"
                                 onClick={() => handleDelete(contextMenu.nodeId)}
                             >
                                 Delete
@@ -221,7 +228,7 @@ export default function EditorTree({ prefabData, setPrefabData, selectedId, setS
                     )}
                 </div>
             )}
-        </div>
+        </>
     );
 }
 

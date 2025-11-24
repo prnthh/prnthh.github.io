@@ -37,15 +37,16 @@ const PrefabEditor = ({ children }: { children?: React.ReactNode }) => {
 
     </GameCanvas>
 
-        <div className="absolute top-4 left-1/2 -translate-x-1/2">
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm border border-cyan-500/30 px-2 py-1 flex items-center gap-1">
             <button
-                className="px-1"
+                className="px-1 py-0.5 text-[10px] font-mono text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/30"
                 onClick={() => setEditMode(!editMode)}
             >
-                {editMode ? "▶️" : "⏸️"}
+                {editMode ? "▶" : "⏸"}
             </button>
-            <span className="mx-2">|</span>
+            <span className="text-cyan-500/30 text-[10px]">|</span>
             <button
+                className="px-1 py-0.5 text-[10px] font-mono text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/30"
                 onClick={async () => {
                     const prefab = await loadJson();
                     if (prefab) setLoadedPrefab(prefab);
@@ -54,11 +55,11 @@ const PrefabEditor = ({ children }: { children?: React.ReactNode }) => {
                 📥
             </button>
             <button
+                className="px-1 py-0.5 text-[10px] font-mono text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/30"
                 onClick={() => saveJson(loadedPrefab, "prefab")}
             >
                 💾
             </button>
-
         </div>
         {editMode && <EditorUI
             prefabData={loadedPrefab}

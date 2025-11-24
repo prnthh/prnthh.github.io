@@ -11,6 +11,7 @@ import ShadedGround from "@/shared/ground/ShadedGround";
 import ColliderTerrain from "@/shared/ground/ColliderTerrain";
 import Playground from "@/shared/ground/Playground";
 import ImageGround from "@/shared/ground/ImageGround";
+import { WaterMaterial } from "@/shared/shaders/Water";
 
 export default function Home() {
     return (
@@ -36,6 +37,10 @@ export default function Home() {
                         />
                         <ImageGround image="/textures/floor/terrain/dirt-512.jpg" position={[48, 0, 16]} />
 
+                        <mesh position={[-16, 0, -48]}>
+                            <boxGeometry args={[32, 1, 32]} />
+                            <WaterMaterial />
+                        </mesh>
                         <ambientLight intensity={0.5} />
                         <pointLight position={[0, 100, 0]} intensity={20000} />
                         <OrbitControls />

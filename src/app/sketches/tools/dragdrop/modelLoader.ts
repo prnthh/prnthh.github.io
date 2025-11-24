@@ -8,6 +8,15 @@ export type ModelLoadResult = {
 
 export type ProgressCallback = (filename: string, loaded: number, total: number) => void;
 
+// Singleton loader instances
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
+
+const gltfLoader = new GLTFLoader();
+gltfLoader.setDRACOLoader(dracoLoader);
+
+const fbxLoader = new FBXLoader();
+
 export async function loadModel(
     filename: string,
     resourcePath: string = "",
@@ -19,13 +28,8 @@ export async function loadModel(
         const fullPath = `${resourcePath}/${filename}`;
 
         if (filename.endsWith('.glb') || filename.endsWith('.gltf')) {
-            const loader = new GLTFLoader();
-            const dracoLoader = new DRACOLoader();
-            dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
-            loader.setDRACOLoader(dracoLoader);
-
             return new Promise((resolve) => {
-                loader.load(
+                gltfLoader.load(
                     fullPath,
                     (gltf) => resolve({ success: true, model: gltf.scene }),
                     (progressEvent) => {
@@ -39,10 +43,8 @@ export async function loadModel(
                 );
             });
         } else if (filename.endsWith('.fbx')) {
-            const loader = new FBXLoader();
-
             return new Promise((resolve) => {
-                loader.load(
+                fbxLoader.load(
                     fullPath,
                     (model) => resolve({ success: true, model }),
                     (progressEvent) => {
