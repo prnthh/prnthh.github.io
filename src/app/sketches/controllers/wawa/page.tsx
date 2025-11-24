@@ -2,7 +2,7 @@
 
 import { Physics } from "@react-three/rapier";
 import { CharacterController } from "./CharacterController";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {

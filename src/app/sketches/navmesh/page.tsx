@@ -3,7 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import GameCanvas from "@/shared/GameCanvas";
 
-import DebugGround from "@/shared/debug/DebugGround";
+import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
 import NavigableWorld from "@/shared/navmesh/NavigableWorld";

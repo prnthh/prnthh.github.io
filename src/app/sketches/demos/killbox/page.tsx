@@ -6,7 +6,7 @@ import ControllerJoystick from "@/shared/controls/ControllerJoystick";
 import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvider";
 import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
 import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 import Controls from "@/shared/controls/ControlsProvider";
 import { Html } from "@react-three/drei";
 import { useTimeRNGNumber } from "./TimeRNG";

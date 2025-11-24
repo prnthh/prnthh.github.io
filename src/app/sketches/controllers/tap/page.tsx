@@ -9,7 +9,7 @@ import DraggableDiv from "@/shared/ui/DraggableDiv";
 import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
 import useInputStore from "@/shared/providers/InputStore";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 
 // npm i react-brainrot-runner - make a runner game, just provide models for room sections
 // use it instead of a loading screen!

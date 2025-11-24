@@ -1,6 +1,7 @@
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { Prefab, GameObject as GameObjectType, COMPONENT_DEFS } from "./types";
 import ComponentEditors from './components';
+import EditorTree from './EditorTree';
 
 
 function EditorUI({ prefabData, setPrefabData, selectedId, setSelectedId, transformMode, setTransformMode }: {
@@ -35,7 +36,7 @@ function EditorUI({ prefabData, setPrefabData, selectedId, setSelectedId, transf
     const selectedNode = selectedId && prefabData ? findNode(prefabData.root, selectedId) : null;
 
     if (!selectedNode) return null;
-    return (
+    return <>
         <div className='absolute top-4 right-4 z-20 bg-gray-800 text-white p-4 rounded shadow-lg w-80 max-h-[90vh] overflow-y-auto'>
             <NodeInspector
                 node={selectedNode}
@@ -45,7 +46,15 @@ function EditorUI({ prefabData, setPrefabData, selectedId, setSelectedId, transf
                 setTransformMode={setTransformMode}
             />
         </div>
-    );
+        <div className='absolute top-16 left-4 z-20'>
+            <EditorTree
+                prefabData={prefabData}
+                setPrefabData={setPrefabData}
+                selectedId={selectedId}
+                setSelectedId={setSelectedId}
+            />
+        </div>
+    </>;
 }
 
 function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransformMode }: {
@@ -56,6 +65,14 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
     setTransformMode: (m: "translate" | "rotate" | "scale") => void;
 }) {
     const [addComponentType, setAddComponentType] = useState(Object.keys(COMPONENT_DEFS)[0]);
+
+    const componentKeys = Object.keys(node.components || {}).join(',');
+    useEffect(() => {
+        const available = Object.keys(COMPONENT_DEFS).filter(k => !node.components?.[k]);
+        if (!available.includes(addComponentType)) {
+            setAddComponentType(available[0] || "");
+        }
+    }, [componentKeys, addComponentType, node.components]);
 
     return <div className="flex flex-col gap-4">
         <div>
@@ -125,7 +142,9 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
                 </select>
                 <button
                     className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
+                    disabled={!addComponentType}
                     onClick={() => {
+                        if (!addComponentType) return;
                         const def = COMPONENT_DEFS[addComponentType];
                         if (def && !node.components?.[addComponentType]) {
                             updateNode(n => ({

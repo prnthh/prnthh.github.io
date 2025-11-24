@@ -5,11 +5,13 @@ import { useRef } from "react";
 const DRAG_THRESHOLD = 5;
 
 const DebugGround = ({
+    debug = false,
     size = 100,
     position = [0, -0.5, 0],
     rotation = [0, 0, 0],
     onClick,
 }: {
+    debug?: boolean;
     size?: number;
     position?: [number, number, number];
     rotation?: [number, number, number];
@@ -48,10 +50,10 @@ const DebugGround = ({
                         <meshStandardMaterial color="gray" />
                     </mesh>
                 </RigidBody>
-                <gridHelper
+                {debug && <gridHelper
                     args={[size, size]}
                     position={[0, 0.01, 0]}
-                />
+                />}
             </group>
         </>
     );

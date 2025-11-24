@@ -212,39 +212,7 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
         }
     };
 
-    // Render material based on component
-    const renderMaterial = () => {
-        if (!material) {
-            return <meshStandardMaterial color="red" wireframe />;
-        }
 
-        const { color, wireframe = false, texture: textureName, repeat, repeatCount } = material.properties;
-        const displayColor = isSelected ? "cyan" : color;
-        const texture = textureName ? loadedTextures[textureName] : undefined;
-
-        const finalTexture = useMemo(() => {
-            if (!texture) return undefined;
-            const t = texture.clone();
-            if (repeat) {
-                t.wrapS = t.wrapT = RepeatWrapping;
-                if (repeatCount) t.repeat.set(repeatCount[0], repeatCount[1]);
-            } else {
-                t.wrapS = t.wrapT = ClampToEdgeWrapping;
-                t.repeat.set(1, 1);
-            }
-            t.needsUpdate = true;
-            return t;
-        }, [texture, repeat, repeatCount?.[0], repeatCount?.[1]]);
-
-        return <meshStandardMaterial
-            key={finalTexture?.uuid ?? 'no-texture'}
-            color={displayColor}
-            wireframe={wireframe}
-            map={finalTexture}
-            transparent={!!finalTexture}
-            side={DoubleSide}
-        />;
-    };
 
     const renderModel = () => {
         if (!modelComp) return null;
@@ -270,7 +238,7 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
             {geometry && (
                 <mesh>
                     {renderGeometry()}
-                    {renderMaterial()}
+                    <MaterialRenderer material={material} isSelected={isSelected} loadedTextures={loadedTextures} />
                 </mesh>
             )}
             {renderModel()}
@@ -344,6 +312,44 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
             {content}
         </group>
     );
+}
+
+function MaterialRenderer({ material, isSelected, loadedTextures }: { material: any, isSelected: boolean, loadedTextures: Record<string, Texture> }) {
+    const textureName = material?.properties?.texture;
+    const repeat = material?.properties?.repeat;
+    const repeatCount = material?.properties?.repeatCount;
+
+    const texture = textureName ? loadedTextures[textureName] : undefined;
+
+    const finalTexture = useMemo(() => {
+        if (!texture) return undefined;
+        const t = texture.clone();
+        if (repeat) {
+            t.wrapS = t.wrapT = RepeatWrapping;
+            if (repeatCount) t.repeat.set(repeatCount[0], repeatCount[1]);
+        } else {
+            t.wrapS = t.wrapT = ClampToEdgeWrapping;
+            t.repeat.set(1, 1);
+        }
+        t.needsUpdate = true;
+        return t;
+    }, [texture, repeat, repeatCount?.[0], repeatCount?.[1]]);
+
+    if (!material) {
+        return <meshStandardMaterial color="red" wireframe />;
+    }
+
+    const { color, wireframe = false } = material.properties;
+    const displayColor = isSelected ? "cyan" : color;
+
+    return <meshStandardMaterial
+        key={finalTexture?.uuid ?? 'no-texture'}
+        color={displayColor}
+        wireframe={wireframe}
+        map={finalTexture}
+        transparent={!!finalTexture}
+        side={DoubleSide}
+    />;
 }
 
 export default PrefabRoot;

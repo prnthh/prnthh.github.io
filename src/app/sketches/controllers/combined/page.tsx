@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { Vector3 } from "three";
 import Controls from "@/shared/controls/ControlsProvider";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 import GameCanvas from "@/shared/GameCanvas";
 import { useControls } from 'leva'
 import { Box, OrbitControls } from "@react-three/drei";

@@ -15,7 +15,7 @@ import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import Ped from "@/shared/ped/physics/ped";
 import * as THREE from "three";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
-import DemoWorld, { DemoWorldEnvironment } from "@/shared/DemoWorld";
+import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Home() {
@@ -29,7 +29,7 @@ export default function Home() {
                         <Physics debug>
 
                             <ambientLight intensity={0} />
-                            <DemoWorldEnvironment />
+                            <DemoEnvironment />
                             <Game weapon={weapon} setWeapon={setWeapon} />
                             <Lighting />
                             <FogEnvironment />

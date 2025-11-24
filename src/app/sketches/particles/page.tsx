@@ -7,7 +7,7 @@ import { Vector3 } from "three";
 import { useRef, useState, ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import GameCanvas from "@/shared/GameCanvas";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 
 function Circular({
     radius = 5,

@@ -6,7 +6,7 @@ import { OrbitControls } from "@react-three/drei";
 import { Road as TexturedRoad } from "./Road";
 import { Car } from "./Car";
 import Controls from "@/shared/controls/ControlsProvider";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 import GameCanvas from "@/shared/GameCanvas";
 import SimpleModel from "@/shared/SimpleModel";
 

@@ -1,28 +1,28 @@
 import { RigidBody } from "@react-three/rapier"
 import { ThreeElements, ThreeEvent } from "@react-three/fiber"
 import { Environment } from "@react-three/drei"
-import DebugGround from "@/shared/debug/DebugGround"
+import DebugGround from "@/shared/ground/DebugGround"
 import { BackSide } from "three"
 
 const DemoWorld = ({ onClick, ...props }: ThreeElements['group']) => {
     return <>
         <group {...props}>
             <RigidBody>
-                <mesh castShadow position={[0, 0, -10]}>
+                <mesh castShadow position={[0, 0, -3]}>
                     <boxGeometry args={[1, 1, 1]} />
-                    <meshStandardMaterial color="orange" />
+                    <meshStandardMaterial color="#c18d40" />
                 </mesh>
             </RigidBody>
 
             <DebugGround onClick={onClick as any} />
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
-            <DemoWorldEnvironment />
+
         </group >
+        <DemoEnvironment />
+
     </>
 }
 
-export const DemoWorldEnvironment = () => {
+export const DemoEnvironment = () => {
     return <>
         <Environment>
             <mesh>
@@ -30,6 +30,12 @@ export const DemoWorldEnvironment = () => {
                 <meshBasicMaterial side={BackSide} color={"#87ceeb"} />
             </mesh>
         </Environment>
+
+        <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
+        <ambientLight intensity={0.5} />
+        <fog attach="fog" args={['#87ceeb', 35, 50]} />
+        <color attach="background" args={["#87ceeb"]} />
+
     </>
 }
 

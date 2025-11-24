@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import Ped from "@/shared/ped/physics/ped";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
-import DebugGround from "@/shared/debug/DebugGround";
+import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
 

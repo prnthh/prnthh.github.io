@@ -34,7 +34,7 @@ export default function GameCanvas({ loader = false, children, ...props }: { loa
                 return renderer
             }}
             camera={{
-                position: [0, 5, 10],
+                position: [0, 1, 5],
             }}
         >
             <Suspense>

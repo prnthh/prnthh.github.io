@@ -3,7 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 
 export default function Home() {
     return (

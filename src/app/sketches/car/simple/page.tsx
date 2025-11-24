@@ -7,7 +7,7 @@ import Vehicle from "./car/base";
 import Lightsource from "@/shared/lighting/lightsource";
 import Controls from "@/shared/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 import AnimatedModel from "@/shared/ped/HumanoidModel";
 import FollowCam from "@/shared/cameras/FollowCam";
 

@@ -8,7 +8,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { RagdollR3F } from "./RagdollR3F";
 import * as THREE from "three";
 import GameCanvas from "@/shared/GameCanvas";
-import DemoWorld from "@/shared/DemoWorld";
+import DemoWorld from "@/shared/debug/DemoWorld";
 
 export default function Home() {
 

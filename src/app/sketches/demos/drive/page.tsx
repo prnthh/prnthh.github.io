@@ -6,7 +6,7 @@ import Controls from "@/shared/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import DrivableCar from "../../car/simple/DrivableCar";
-import DemoWorld, { DemoWorldEnvironment } from "@/shared/DemoWorld";
+import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Home() {
@@ -36,7 +36,7 @@ export default function Home() {
                             <ShadowLight />
 
                             <ambientLight intensity={0.5} />
-                            <DemoWorldEnvironment />
+                            <DemoEnvironment />
                         </Physics>
                     </GameCanvas>
 
