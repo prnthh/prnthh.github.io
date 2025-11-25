@@ -14,6 +14,8 @@ interface InputState {
   sprint: boolean;
   use: boolean;
   altUse: boolean;
+  aim: boolean;
+  fire: boolean;
   
   // Tap/Swipe signals (for mobile)
   tapSignal: number;
@@ -21,7 +23,7 @@ interface InputState {
   
   // Actions to update state
   setAxis: (axis: keyof Omit<InputState, 'jump' | 'sprint' | 'use' | 'altUse' | 'tapSignal' | 'swipeSignal' | 'setAxis' | 'setButton' | 'tap' | 'swipe'>, value: number) => void;
-  setButton: (button: 'jump' | 'sprint' | 'use' | 'altUse', pressed: boolean) => void;
+  setButton: (button: 'jump' | 'sprint' | 'use' | 'altUse' | 'aim' | 'fire', pressed: boolean) => void;
   tap: () => void;
   swipe: (type: 'left' | 'right') => void;
 }
@@ -36,6 +38,8 @@ const useInputStore = create<InputState>((set) => ({
   sprint: false,
   use: false,
   altUse: false,
+  aim: false,
+  fire: false,
   tapSignal: 0,
   swipeSignal: null,
   

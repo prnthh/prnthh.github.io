@@ -13,8 +13,8 @@ import useInputStore from "@/shared/providers/InputStore";
 export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObject<RapierRigidBody | null> } = {}) {
     const { camera, scene } = useThree();
     const { rapier, world } = useRapier();
-    const tapSignal = useInputStore(state => state.tapSignal);
-    const prevTapSignalRef = useRef(0);
+    const fire = useInputStore(state => state.fire);
+    const prevFireRef = useRef(false);
 
     function addSensorBullet({ position }: { position: Vector3 }) {
         const size = 0.01;
@@ -103,12 +103,12 @@ export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObjec
     };
 
     useFrame(() => {
-        // Check if tap signal has changed (new tap occurred)
-        if (tapSignal !== prevTapSignalRef.current) {
-            prevTapSignalRef.current = tapSignal;
+        // Check if fire button pressed (edge trigger - only fire once per press)
+        if (fire && !prevFireRef.current) {
             weaponHandler();
             new Audio('/sound/pistol.mp3').play().catch(() => { /* ignore autoplay errors */ });
         }
+        prevFireRef.current = fire;
     });
 
     return null;

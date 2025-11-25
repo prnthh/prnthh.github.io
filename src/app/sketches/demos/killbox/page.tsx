@@ -2,7 +2,7 @@
 
 import { Physics, RigidBody } from "@react-three/rapier";
 import GameCanvas from "@/shared/GameCanvas";
-import ControllerJoystick from "@/shared/controls/ControllerJoystick";
+import ControllerJoystick, { ControllerButton } from "@/shared/controls/ControllerJoystick";
 import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvider";
 import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
 import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
@@ -55,8 +55,10 @@ export default function Home() {
             <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
                 <ControllerJoystick horizontalAxis='horizontal' verticalAxis='vertical' />
             </div>
-            <div className='absolute bottom-10 right-10 z-50 text-white select-none'>
-                <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' />
+            <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
+                {/* <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
+                <ControllerButton button="fire" />
+                <ControllerButton button="jump" />
             </div>
         </div>
     );

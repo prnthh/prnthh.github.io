@@ -55,7 +55,7 @@ const FirstPersonControls = ({
     const internalCameraRigRef = useRef<Group | null>(null);
     const cameraRigRef = providedCameraRigRef || internalCameraRigRef;
     const cameraPitch = useRef(0);
-    const tap = useInputStore(state => state.tap);
+    const { setButton } = useInputStore()
 
     // Shared look logic - processes movement deltas directly
     const applyLookDelta = (dx: number, dy: number) => {
@@ -107,7 +107,7 @@ const FirstPersonControls = ({
                 cameraRigRef={cameraRigRef}
                 cameraPitch={cameraPitch}
             />
-            <PointerLockControls onLook={applyLookDelta} onClick={tap} />
+            <PointerLockControls onLook={applyLookDelta} />
         </>
     );
 };

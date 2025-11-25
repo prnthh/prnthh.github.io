@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import useInputStore from "@/shared/providers/InputStore";
 
 const PointerLockControls = ({
     onLook,
@@ -15,6 +16,7 @@ const PointerLockControls = ({
     const lastTouch = useRef<{ id: number; x: number; y: number } | null>(null);
     const isPointerLocked = useRef<boolean>(false);
     const rightClickActive = useRef<boolean>(false);
+    const { setButton } = useInputStore();
 
     useEffect(() => {
         const canvas = document.querySelector('canvas');
@@ -53,9 +55,12 @@ const PointerLockControls = ({
                 return; // Exit early for right-click
             }
 
-            // Only trigger onClick for left-click when pointer is locked
-            if (e.button === 0 && onClick && isPointerLocked.current) {
-                onClick();
+            // Handle left-click (fire button)
+            if (e.button === 0 && isPointerLocked.current) {
+                setButton('fire', true);
+                if (onClick) {
+                    onClick();
+                }
             }
         };
 
@@ -66,6 +71,8 @@ const PointerLockControls = ({
                 setTimeout(() => {
                     rightClickActive.current = false;
                 }, 10);
+            } else if (e.button === 0) {
+                setButton('fire', false);
             }
         };
 

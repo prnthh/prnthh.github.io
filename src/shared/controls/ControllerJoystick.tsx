@@ -48,6 +48,7 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [knob, setKnob] = useState({ x: 0, y: 0 });
+    const [isActive, setIsActive] = useState(false);
     const dragging = useRef(false);
     const activeTouchId = useRef<number | null>(null);
     const setAxis = useInputStore(state => state.setAxis);
@@ -83,6 +84,7 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
 
     // Only start joystick drag if touch starts on joystick area and not already dragging
     const handleStart = (e: React.TouchEvent | React.MouseEvent) => {
+        setIsActive(true);
         if ('touches' in e) {
             if (e.touches.length === 0) return;
             // Only start if not already dragging
@@ -138,6 +140,7 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
             );
             if (!ended) return;
         }
+        setIsActive(false);
         dragging.current = false;
         activeTouchId.current = null;
         setKnob({ x: 0, y: 0 });
@@ -149,12 +152,13 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
             style={{
                 width: size,
                 height: size,
-                background: 'rgba(255,255,255,0.2)',
+                background: isActive ? 'rgba(100, 150, 255, 0.4)' : 'rgba(255,255,255,0.2)',
                 borderRadius: '50%',
                 border: '2px solid white',
                 touchAction: 'none',
                 position: 'relative',
                 userSelect: 'none',
+                transition: 'background 0.15s ease',
             }}
             onTouchStart={handleStart}
             onTouchMove={handleMove}
@@ -194,3 +198,71 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
 };
 
 export default ControllerJoystick;
+
+export const ControllerButton = ({
+    button,
+}: {
+    button: 'jump' | 'sprint' | 'action' | 'fire';
+}) => {
+    const setButton = useInputStore(state => state.setButton);
+    const pressing = useRef(false);
+    const [isPressed, setIsPressed] = useState(false);
+
+    type PublicButton = 'jump' | 'sprint' | 'action' | 'fire';
+    type StoreButton = 'jump' | 'sprint' | 'use' | 'altUse' | 'fire';
+
+    const mapToStoreButton = (b: PublicButton): StoreButton => {
+        // Map public "action" to the store's "use" button
+        if (b === 'action') return 'use';
+        return b;
+    };
+
+    return (
+        <div
+            style={{
+                width: 80,
+                height: 80,
+                background: isPressed ? 'rgba(100, 150, 255, 0.5)' : 'rgba(255,255,255,0.2)',
+                borderRadius: '50%',
+                border: '2px solid white',
+                touchAction: 'none',
+                userSelect: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 24,
+                color: 'white',
+                transition: 'background 0.15s ease',
+            }}
+            onTouchStart={e => {
+                e.preventDefault();
+                pressing.current = true;
+                setIsPressed(true);
+                setButton(mapToStoreButton(button), true);
+            }}
+            onTouchEnd={e => {
+                e.preventDefault();
+                pressing.current = false;
+                setIsPressed(false);
+                setButton(mapToStoreButton(button), false);
+            }}
+            onMouseDown={e => {
+                e.preventDefault();
+                pressing.current = true;
+                setIsPressed(true);
+                setButton(mapToStoreButton(button), true);
+                const upListener = () => {
+                    if (pressing.current) {
+                        pressing.current = false;
+                        setIsPressed(false);
+                        setButton(mapToStoreButton(button), false);
+                    }
+                    document.removeEventListener('mouseup', upListener);
+                };
+                document.addEventListener('mouseup', upListener, { once: true });
+            }}
+        >
+            {button.charAt(0).toUpperCase() + button.slice(1)}
+        </div>
+    );
+}
