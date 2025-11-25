@@ -12,6 +12,7 @@ import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import Balloon from "@/shared/physics/Balloon";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
+import { Csm } from "@/shared/Csm";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -21,8 +22,7 @@ export default function Home() {
                 <Controls>
                     <GameCanvas>
                         {/* <Perf /> */}
-                        <ShadowLight intensity={4} debug camOffset={new Vector3(2, 10, 2)} />
-
+                        <Csm />
                         <Physics>
                             <ThirdPersonController lookTarget={ballRef} />
 
@@ -32,7 +32,7 @@ export default function Home() {
                             <GoalFollowingPed ballRef={ballRef} />
 
                             <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" />
-                            <ambientLight intensity={0.5} />
+                            <ambientLight intensity={0.8} />
                             {/* <pointLight position={[10, 10, 10]} /> */}
                         </Physics>
                     </GameCanvas>

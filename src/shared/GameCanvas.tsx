@@ -26,6 +26,7 @@ export default function GameCanvas({ loader = false, children, ...props }: { loa
                     canvas: canvas as HTMLCanvasElement,
                     // @ts-expect-error futuristic
                     shadowMap: true,
+                    antialias: true,
                     ...props,
                 });
                 await renderer.init().then(() => {

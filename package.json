@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --experimental-https",
+    "prebuild": "next telemetry disable",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -25,7 +26,6 @@
     "react-dom": "^19.2.0",
     "recast-navigation": "^0.43.0",
     "three": "^0.181.0",
-    "three-csm": "^4.2.1",
     "trystero": "^0.22.0",
     "tunnel-rat": "^0.1.2",
     "wiggle": "^0.0.17",

@@ -1,22 +1,21 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { useRef, useState } from "react";
-import { Vector3 } from "three";
+import { useState } from "react";
 import Controls from "@/shared/controls/ControlsProvider";
-import { ShadowLight } from "@/shared/lighting/ShadowLight";
-import DemoWorld from "@/shared/debug/DemoWorld";
 import GameCanvas from "@/shared/GameCanvas";
 import { useControls } from 'leva'
 import { Box, OrbitControls } from "@react-three/drei";
 import CombinedController from "./CombinedController";
+import { Csm } from "@/shared/Csm";
+import DebugGround from "@/shared/ground/DebugGround";
 
 
 export default function Home() {
     const { mode } = useControls({
         mode: { value: 'click', options: ['click', 'wawa', 'tap', 'third-person'] }
     });
-    const [target, setTarget] = useState<[number, number, number]>([0, 5, 0]);
+    const [target, setTarget] = useState<[number, number, number]>([0, 0, 2]);
 
     return (
         <div className="items-center justify-items-center min-h-screen">
@@ -24,16 +23,17 @@ export default function Home() {
                 <Controls>
                     <GameCanvas>
                         <Physics>
-                            <DemoWorld onClick={mode === 'click' ? (e) => { setTarget([e.point.x, e.point.y, e.point.z]) } : undefined} />
+                            <Csm>
+                                <DebugGround onClick={mode === 'click' ? (e) => { setTarget([e.point.x, e.point.y, e.point.z]) } : undefined} />
+                                <ambientLight intensity={0.5} />
 
-                            <ShadowLight debug camOffset={new Vector3(2, 10, 2)} />
+                                {target && mode === 'click' && (
+                                    <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />
+                                )}
+                                {mode === 'click' && <OrbitControls />}
 
-                            {target && mode === 'click' && (
-                                <Box position={target} args={[0.1, 0.1, 0.1]} castShadow />
-                            )}
-                            {mode === 'click' && <OrbitControls />}
-
-                            <CombinedController mode={mode} target={target} />
+                                <CombinedController mode={mode} target={target} />
+                            </Csm>
                         </Physics>
                     </GameCanvas>
                 </Controls>
