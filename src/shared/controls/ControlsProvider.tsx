@@ -8,7 +8,7 @@
 import React, { useMemo, createContext, useState, useContext, useEffect } from 'react';
 import { KeyboardControls, KeyboardControlsEntry } from '@react-three/drei';
 import Joystick from './Joystick';
-import ControllerJoystick from './ControllerJoystick';
+import ControllerJoystick, { ControllerButton } from './ControllerJoystick';
 
 export enum WalkControls {
     forward = 'forward',
@@ -119,8 +119,10 @@ function Controls({ children }: { children: React.ReactNode }) {
                         <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
                             <ControllerJoystick horizontalAxis='horizontal' verticalAxis='vertical' />
                         </div>
-                        <div className='absolute bottom-10 right-10 z-50 text-white select-none'>
-                            <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' />
+                        <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
+                            {/* <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
+                            <ControllerButton button="fire" />
+                            <ControllerButton button="jump" />
                         </div>
                     </>
                 )}
