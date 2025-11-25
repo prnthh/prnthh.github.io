@@ -11,7 +11,12 @@ import Controls from "@/shared/controls/ControlsProvider";
 import { Html } from "@react-three/drei";
 import { useTimeRNGNumber } from "./TimeRNG";
 import Balloon from "@/shared/physics/Balloon";
-
+import PrefabRoot from "../../tools/prefabeditor/PrefabRoot";
+import killbox from "../../tools/prefabeditor/samples/killbox.json";
+import { Prefab } from "../../tools/prefabeditor/types";
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
+import { RapierRigidBody } from "@react-three/rapier";
 
 export default function Home() {
     const handleTap = () => {
@@ -33,7 +38,7 @@ export default function Home() {
                 <MultiplayerProvider roomId="lobby" debug={false}>
                     <GameCanvas>
                         <Physics>
-                            <DemoWorld />
+                            <PrefabRoot data={killbox as Prefab} />
                             <Train />
                             <RandomNumberExample />
 
@@ -57,8 +62,34 @@ export default function Home() {
     );
 }
 
-const Train = ({ position = [10, 0.2, -10] }: { position?: [number, number, number] }) => {
-    return <RigidBody type='kinematicVelocity' position={position} linearVelocity={[0, 0, 1]}>
+const Train = ({ position = [10, 0, -10] }: { position?: [number, number, number] }) => {
+    const rbRef = useRef<RapierRigidBody>(null);
+    const goingUp = useRef(false);
+    const waitTime = useRef(0);
+
+    useFrame((_, delta) => {
+        if (!rbRef.current) return;
+
+        const currentY = rbRef.current.translation().y;
+
+        // Check if we've reached an end
+        if ((currentY >= 9 && goingUp.current) || (currentY <= 0 && !goingUp.current)) {
+            // Stop and wait
+            rbRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+            waitTime.current += delta;
+
+            // After 5 seconds, switch direction
+            if (waitTime.current >= 5) {
+                goingUp.current = !goingUp.current;
+                waitTime.current = 0;
+            }
+        } else if (waitTime.current === 0) {
+            // Moving
+            rbRef.current.setLinvel({ x: 0, y: goingUp.current ? 10 : -10, z: 0 }, true);
+        }
+    });
+
+    return <RigidBody ref={rbRef} type='kinematicVelocity' position={position}>
         <mesh castShadow>
             <boxGeometry args={[4, 0.1, 8]} />
             <meshStandardMaterial color="red" />

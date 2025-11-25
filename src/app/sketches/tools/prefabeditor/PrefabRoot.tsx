@@ -26,10 +26,10 @@ export const PrefabRoot = forwardRef<Group, {
     editMode?: boolean;
     data: Prefab;
     onPrefabChange?: (data: Prefab) => void;
-    selectedId: string | null;
-    onSelect: (id: string | null) => void;
-    transformMode: "translate" | "rotate" | "scale";
-    setTransformMode: (mode: "translate" | "rotate" | "scale") => void;
+    selectedId?: string | null;
+    onSelect?: (id: string | null) => void;
+    transformMode?: "translate" | "rotate" | "scale";
+    setTransformMode?: (mode: "translate" | "rotate" | "scale") => void;
 }>(({ editMode, data, onPrefabChange, selectedId, onSelect, transformMode, setTransformMode }, ref) => {
     const [loadedModels, setLoadedModels] = useState<Record<string, Object3D>>({});
     const [loadedTextures, setLoadedTextures] = useState<Record<string, Texture>>({});
@@ -158,7 +158,7 @@ export const PrefabRoot = forwardRef<Group, {
 
 interface GameObjectRendererProps {
     gameObject: GameObjectType;
-    selectedId: string | null;
+    selectedId?: string | null;
     onSelect?: (id: string) => void;
     registerRef: (id: string, obj: Object3D | null) => void;
     loadedModels: Record<string, Object3D>;
