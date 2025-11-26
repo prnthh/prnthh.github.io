@@ -42,17 +42,18 @@ type GameInstanceContextType = {
 };
 const GameInstanceContext = createContext<GameInstanceContextType | null>(null);
 
-// --- Provider ---
 export function GameInstanceProvider({
     children,
     models
+    , onSelect, registerRef
 }: {
     children: React.ReactNode,
-    models: { [filename: string]: THREE.Object3D }
+    models: { [filename: string]: THREE.Object3D },
+    onSelect?: (id: string | null) => void,
+    registerRef?: (id: string, obj: THREE.Object3D | null) => void,
 }) {
     const [instances, setInstances] = useState<InstanceData[]>([]);
 
-    // Add or update an instance by id
     const addInstance = useCallback((instance: InstanceData) => {
         setInstances(prev => {
             const idx = prev.findIndex(i => i.id === instance.id);
@@ -68,7 +69,6 @@ export function GameInstanceProvider({
         });
     }, []);
 
-    // Remove an instance by id
     const removeInstance = useCallback((id: string) => {
         setInstances(prev => {
             if (!prev.find(i => i.id === id)) return prev;
@@ -76,10 +76,10 @@ export function GameInstanceProvider({
         });
     }, []);
 
-    // Memoize mesh extraction (without merging)
+    // Flatten all model meshes once
     const { flatMeshes, modelParts } = useMemo(() => {
         const flatMeshes: Record<string, THREE.Mesh> = {};
-        const modelParts: Record<string, number> = {}; // Stores count of parts for each model
+        const modelParts: Record<string, number> = {};
 
         Object.entries(models).forEach(([modelKey, model]) => {
             const root = model;
@@ -92,11 +92,9 @@ export function GameInstanceProvider({
                 if (obj.isMesh) {
                     const geom = obj.geometry.clone();
 
-                    // Bake local transform into geometry
                     const relativeTransform = obj.matrixWorld.clone().premultiply(rootInverse);
                     geom.applyMatrix4(relativeTransform);
 
-                    // Create a mesh for this part
                     const partKey = `${modelKey}__${partIndex}`;
                     flatMeshes[partKey] = new THREE.Mesh(geom, obj.material);
                     partIndex++;
@@ -108,7 +106,7 @@ export function GameInstanceProvider({
         return { flatMeshes, modelParts };
     }, [models]);
 
-    // Group instances by meshPath and physics type
+    // Group instances by meshPath + physics type
     const grouped = useMemo(() => {
         const groups: Record<string, { physicsType: string, instances: InstanceData[] }> = {};
         for (const inst of instances) {
@@ -121,40 +119,76 @@ export function GameInstanceProvider({
     }, [instances]);
 
     return (
-        <Merged meshes={flatMeshes} castShadow receiveShadow>
-            {(instancesMap: any) => (
-                <GameInstanceContext.Provider value={{
-                    addInstance,
-                    removeInstance,
-                    instances,
-                    meshes: flatMeshes,
-                    instancesMap,
-                    modelParts // Expose part counts
-                }}>
-                    {/* Render instanced rigid bodies for groups with physics */}
-                    {Object.entries(grouped).map(([key, group]) => {
-                        if (group.physicsType === 'none') return null;
-                        const modelKey = group.instances[0].meshPath;
-                        const partCount = modelParts[modelKey] || 0;
-                        if (partCount === 0) return null;
+        <GameInstanceContext.Provider
+            value={{
+                addInstance,
+                removeInstance,
+                instances,
+                meshes: flatMeshes,
+                modelParts
+            }}
+        >
+            {/* 1) Normal prefab hierarchy: NOT inside any <Merged> */}
+            {children}
 
-                        return <InstancedRigidGroup
-                            key={key}
-                            group={group}
-                            modelKey={modelKey}
-                            partCount={partCount}
-                            flatMeshes={flatMeshes}
-                        />;
-                    })}
-                    {/* Render children (non-physics instances handled by GameInstance) */}
-                    {children}
-                </GameInstanceContext.Provider>
-            )}
-        </Merged>
+            {/* 2) Physics instanced groups: no <Merged>, just InstancedRigidBodies */}
+            {Object.entries(grouped).map(([key, group]) => {
+                if (group.physicsType === 'none') return null;
+                const modelKey = group.instances[0].meshPath;
+                const partCount = modelParts[modelKey] || 0;
+                if (partCount === 0) return null;
+
+                return (
+                    <InstancedRigidGroup
+                        key={key}
+                        group={group}
+                        modelKey={modelKey}
+                        partCount={partCount}
+                        flatMeshes={flatMeshes}
+                    />
+                );
+            })}
+
+            {/* 3) Non-physics instanced visuals: own <Merged> per model */}
+            {Object.entries(grouped).map(([key, group]) => {
+                if (group.physicsType !== 'none') return null;
+
+                const modelKey = group.instances[0].meshPath;
+                const partCount = modelParts[modelKey] || 0;
+                if (partCount === 0) return null;
+
+                // Restrict meshes to just this model's parts for this Merged
+                const meshesForModel: Record<string, THREE.Mesh> = {};
+                for (let i = 0; i < partCount; i++) {
+                    const partKey = `${modelKey}__${i}`;
+                    meshesForModel[partKey] = flatMeshes[partKey];
+                }
+
+                return (
+                    <Merged
+                        key={key}
+                        meshes={meshesForModel}
+                        castShadow
+                        receiveShadow
+                    >
+                        {(instancesMap: any) => (
+                            <NonPhysicsInstancedGroup
+                                modelKey={modelKey}
+                                group={group}
+                                partCount={partCount}
+                                instancesMap={instancesMap}
+                                onSelect={onSelect}
+                                registerRef={registerRef}
+                            />
+                        )}
+                    </Merged>
+                );
+            })}
+        </GameInstanceContext.Provider>
     );
 }
 
-// --- InstancedRigidGroup: Handles instanced rigidbodies for a group ---
+// Physics instancing stays the same
 function InstancedRigidGroup({
     group,
     modelKey,
@@ -166,12 +200,15 @@ function InstancedRigidGroup({
     partCount: number,
     flatMeshes: Record<string, THREE.Mesh>
 }) {
-    const instances = useMemo(() => group.instances.map(inst => ({
-        key: inst.id,
-        position: inst.position,
-        rotation: inst.rotation,
-        scale: inst.scale,
-    })), [group.instances]);
+    const instances = useMemo(
+        () => group.instances.map(inst => ({
+            key: inst.id,
+            position: inst.position,
+            rotation: inst.rotation,
+            scale: inst.scale,
+        })),
+        [group.instances]
+    );
 
     return (
         <InstancedRigidBodies
@@ -195,7 +232,58 @@ function InstancedRigidGroup({
     );
 }
 
-// --- GameInstance: Registers an instance and renders it if non-physics ---
+// Non-physics instanced visuals: per-instance group using Merged's Instance components
+function NonPhysicsInstancedGroup({
+    modelKey,
+    group,
+    partCount,
+    instancesMap
+    , onSelect, registerRef
+}: {
+    modelKey: string;
+    group: { physicsType: string, instances: InstanceData[] };
+    partCount: number;
+    instancesMap: Record<string, React.ComponentType<any>>;
+    onSelect?: (id: string | null) => void;
+    registerRef?: (id: string, obj: THREE.Object3D | null) => void;
+}) {
+    const clickValid = useRef(false);
+    const handlePointerDown = (e: any) => { e.stopPropagation(); clickValid.current = true; };
+    const handlePointerMove = () => { if (clickValid.current) clickValid.current = false; };
+    const handlePointerUp = (e: any, id: string) => {
+        if (clickValid.current) {
+            e.stopPropagation();
+            onSelect?.(id);
+        }
+        clickValid.current = false;
+    };
+
+    return (
+        <>
+            {group.instances.map(inst => (
+                <group
+                    key={inst.id}
+                    ref={(el) => { registerRef?.(inst.id, el as unknown as THREE.Object3D | null); }}
+                    position={inst.position}
+                    rotation={inst.rotation}
+                    scale={inst.scale}
+                    onPointerDown={handlePointerDown}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={(e) => handlePointerUp(e, inst.id)}
+                >
+                    {Array.from({ length: partCount }).map((_, i) => {
+                        const Instance = instancesMap[`${modelKey}__${i}`];
+                        if (!Instance) return null;
+                        return <Instance key={i} />;
+                    })}
+                </group>
+            ))}
+        </>
+    );
+}
+
+
+// --- GameInstance: just registers an instance, renders nothing ---
 export const GameInstance = React.forwardRef<THREE.Group, {
     id: string;
     modelUrl: string;
@@ -203,10 +291,6 @@ export const GameInstance = React.forwardRef<THREE.Group, {
     rotation: [number, number, number];
     scale: [number, number, number];
     physics?: { type: 'dynamic' | 'fixed' };
-    children?: React.ReactNode;
-    onPointerDown?: (e: any) => void;
-    onPointerUp?: (e: any) => void;
-    onPointerMove?: (e: any) => void;
 }>(({
     id,
     modelUrl,
@@ -214,10 +298,6 @@ export const GameInstance = React.forwardRef<THREE.Group, {
     rotation,
     scale,
     physics = undefined,
-    children,
-    onPointerDown,
-    onPointerUp,
-    onPointerMove
 }, ref) => {
     const ctx = useContext(GameInstanceContext);
     const addInstance = ctx?.addInstance;
@@ -239,32 +319,6 @@ export const GameInstance = React.forwardRef<THREE.Group, {
         };
     }, [addInstance, removeInstance, id, modelUrl, position, rotation, scale, physics]);
 
-    if (!ctx || !ctx.instancesMap) return null;
-
-    // If physics is enabled, it's handled by InstancedRigidGroup in the provider
-    if (physics) return null;
-
-    // Otherwise, render using Merged instances
-    // We need to render all parts of the model
-    const partCount = ctx.modelParts?.[modelUrl] || 0;
-    if (partCount === 0) return null;
-
-    return (
-        <group
-            ref={ref}
-            position={position}
-            rotation={rotation}
-            scale={scale}
-            onPointerDown={onPointerDown}
-            onPointerUp={onPointerUp}
-            onPointerMove={onPointerMove}
-        >
-            {Array.from({ length: partCount }).map((_, i) => {
-                const Instance = ctx.instancesMap![`${modelUrl}__${i}`];
-                if (!Instance) return null;
-                return <Instance key={i} />;
-            })}
-            {children}
-        </group>
-    );
+    // No visual here – provider will render visuals for all instances
+    return null;
 });

@@ -41,9 +41,9 @@ function VertexVisualizer({ geometry }: { geometry: THREE.PlaneGeometry }) {
     );
 }
 
-function ColliderTerrain({ position = [0, 0, 0], onClick, children }: { position?: [number, number, number], onClick?: (coords: number[]) => void, children?: React.ReactNode }) {
-    const width = 16;
-    const height = 32;
+function ColliderTerrain({ size = [32, 32], position = [0, 0, 0], onClick, children }: { size?: [number, number], position?: [number, number, number], onClick?: (coords: number[]) => void, children?: React.ReactNode }) {
+    const width = size[0];
+    const height = size[1];
     const tileSize = 4; // New tile size
     const widthSegments = Math.floor(width / tileSize);
     const heightSegments = Math.floor(height / tileSize);

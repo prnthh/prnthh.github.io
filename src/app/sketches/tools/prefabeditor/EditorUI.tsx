@@ -39,7 +39,7 @@ function EditorUI({ prefabData, setPrefabData, selectedId, setSelectedId, transf
 
     if (!selectedNode) return null;
     return <>
-        <div className='absolute top-2 right-2 z-20 bg-black/70 backdrop-blur-sm text-white border border-cyan-500/30 max-h-[95vh] overflow-y-auto overflow-x-hidden' style={{ width: isInspectorCollapsed ? 'auto' : '16rem' }}>
+        <div className='absolute top-2 right-2 z-20 bg-black/70 backdrop-blur-sm text-white border border-cyan-500/30 ' >
             <div
                 className="px-1.5 py-1 font-mono text-[10px] bg-cyan-500/10 border-b border-cyan-500/30 sticky top-0 uppercase tracking-wider text-cyan-400/80 cursor-pointer hover:bg-cyan-500/20 flex items-center justify-between"
                 onClick={() => setIsInspectorCollapsed(!isInspectorCollapsed)}
@@ -85,7 +85,7 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
         }
     }, [componentKeys, addComponentType, node.components]);
 
-    return <div className="flex flex-col gap-1 text-[11px]">
+    return <div className="flex flex-col gap-1 text-[11px] max-w-[250px] max-h-[80vh] overflow-y-auto">
         <div className="border-b border-cyan-500/20 pb-1 px-1.5 pt-1">
             <input
                 className="w-full bg-black/40 border border-cyan-500/30 px-1 py-0.5 text-[11px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50"

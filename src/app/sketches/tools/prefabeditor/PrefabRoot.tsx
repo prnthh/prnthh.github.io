@@ -2,7 +2,7 @@
 
 import { MapControls, TransformControls } from "@react-three/drei";
 import { useState, useRef, useEffect, forwardRef, useMemo, useCallback } from "react";
-import { ClampToEdgeWrapping, DoubleSide, Group, Object3D, RepeatWrapping, SRGBColorSpace, Texture, TextureLoader } from "three";
+import { Vector3, Euler, Quaternion, ClampToEdgeWrapping, DoubleSide, Group, Object3D, RepeatWrapping, SRGBColorSpace, Texture, TextureLoader, Matrix4 } from "three";
 import { Prefab, GameObject as GameObjectType } from "./types";
 import { ThreeEvent } from "@react-three/fiber";
 import { loadModel } from "../dragdrop/modelLoader";
@@ -129,7 +129,7 @@ export const PrefabRoot = forwardRef<Group, {
 
 
     return <group ref={ref}>
-        <GameInstanceProvider models={loadedModels}>
+        <GameInstanceProvider models={loadedModels} onSelect={editMode ? onSelect : undefined} registerRef={registerRef}>
             <GameObjectRenderer
                 gameObject={data.root}
                 selectedId={selectedId}
@@ -138,8 +138,10 @@ export const PrefabRoot = forwardRef<Group, {
                 loadedModels={loadedModels}
                 loadedTextures={loadedTextures}
                 editMode={editMode}
+                parentMatrix={new Matrix4()}   // 👈 identity = world root
             />
         </GameInstanceProvider>
+
 
         {editMode && <>
             <MapControls makeDefault />
@@ -164,15 +166,45 @@ interface GameObjectRendererProps {
     loadedModels: Record<string, Object3D>;
     loadedTextures: Record<string, Texture>;
     editMode?: boolean;
+    parentMatrix?: Matrix4;          // 👈 new
 }
 
-function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loadedModels, loadedTextures, editMode }: GameObjectRendererProps) {
+
+function GameObjectRenderer({
+    gameObject,
+    selectedId,
+    onSelect,
+    registerRef,
+    loadedModels,
+    loadedTextures,
+    editMode,
+    parentMatrix = new Matrix4(),   // 👈 default identity
+}: GameObjectRendererProps) {
+
     const transform = gameObject.components?.transform;
     const geometry = gameObject.components?.geometry;
     const material = gameObject.components?.material;
     const modelComp = gameObject.components?.model;
     const physics = gameObject.components?.physics;
     const isSelected = selectedId === gameObject.id;
+
+    // --- build local & world matrices ---
+    const localPosArr = transform?.properties.position ?? [0, 0, 0];
+    const localRotArr = transform?.properties.rotation ?? [0, 0, 0];
+    const localScaleArr = transform?.properties.scale ?? [1, 1, 1];
+
+    const localPos = new Vector3(...localPosArr);
+    const localRot = new Euler(...localRotArr);
+    const localScale = new Vector3(...localScaleArr);
+
+    const localMatrix = new Matrix4().compose(
+        localPos,
+        new Quaternion().setFromEuler(localRot),
+        localScale
+    );
+
+    const worldMatrix = parentMatrix.clone().multiply(localMatrix);
+
 
     const clickValid = useRef(false);
     const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
@@ -194,7 +226,6 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
         return null;
     }
 
-    // Render geometry based on component
     const renderGeometry = () => {
         if (!geometry) return null;
 
@@ -212,12 +243,10 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
         }
     };
 
-
-
     const renderModel = () => {
         if (!modelComp) return null;
         const filename = modelComp.properties.filename;
-        if (modelComp.properties.instanced) return null; // Handled by GameInstance wrapper
+        if (modelComp.properties.instanced) return null; // handled by GameInstance
 
         const model = loadedModels[filename];
         if (!model) return null;
@@ -233,48 +262,58 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
 
     const isInstanced = modelComp?.properties?.instanced;
 
-    const content = (
+    // --- INSTANCED: terminal but inherits full parent hierarchy ---
+    if (isInstanced) {
+        const wp = new Vector3();
+        const wq = new Quaternion();
+        const ws = new Vector3();
+        worldMatrix.decompose(wp, wq, ws);
+        const we = new Euler().setFromQuaternion(wq);
+
+        return (
+            <GameInstance
+                id={gameObject.id}
+                modelUrl={modelComp!.properties.filename}
+                position={[wp.x, wp.y, wp.z]}
+                rotation={[we.x, we.y, we.z]}
+                scale={[ws.x, ws.y, ws.z]}
+                physics={editMode ? undefined : (physics?.properties as any)}
+            />
+        );
+    }
+
+    // --- NON-INSTANCED: children are nested, so transforms are relative ---
+
+    const childrenNodes = gameObject.children?.map((child) => (
+        <GameObjectRenderer
+            key={child.id}
+            gameObject={child}
+            selectedId={selectedId}
+            onSelect={onSelect}
+            registerRef={registerRef}
+            loadedModels={loadedModels}
+            loadedTextures={loadedTextures}
+            editMode={editMode}
+            parentMatrix={worldMatrix}    // 👈 propagate
+        />
+    ));
+
+    const baseContent = (
         <>
             {geometry && (
                 <mesh>
                     {renderGeometry()}
-                    <MaterialRenderer material={material} isSelected={isSelected} loadedTextures={loadedTextures} />
+                    <MaterialRenderer
+                        material={material}
+                        isSelected={isSelected}
+                        loadedTextures={loadedTextures}
+                    />
                 </mesh>
             )}
             {renderModel()}
             {renderSpotLight()}
-
-            {gameObject.children?.map((child) => (
-                <GameObjectRenderer
-                    key={child.id}
-                    gameObject={child}
-                    selectedId={selectedId}
-                    onSelect={onSelect}
-                    registerRef={registerRef}
-                    loadedModels={loadedModels}
-                    loadedTextures={loadedTextures}
-                    editMode={editMode}
-                />
-            ))}
         </>
     );
-
-    if (isInstanced) {
-        return <GameInstance
-            ref={(el) => { registerRef(gameObject.id, el); }}
-            id={gameObject.id}
-            modelUrl={modelComp!.properties.filename}
-            position={transform?.properties.position || [0, 0, 0]}
-            rotation={transform?.properties.rotation || [0, 0, 0]}
-            scale={transform?.properties.scale || [1, 1, 1]}
-            physics={editMode ? undefined : (physics?.properties as any)}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-        >
-            {content}
-        </GameInstance>;
-    }
 
     if (!editMode && physics) {
         return (
@@ -291,7 +330,8 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
                 >
-                    {content}
+                    {baseContent}
+                    {childrenNodes}
                 </group>
             </RigidBody>
         );
@@ -309,10 +349,14 @@ function GameObjectRenderer({ gameObject, selectedId, onSelect, registerRef, loa
             rotation={transform?.properties.rotation}
             scale={transform?.properties.scale}
         >
-            {content}
+            {baseContent}
+            {childrenNodes}
         </group>
     );
+
 }
+
+
 
 function MaterialRenderer({ material, isSelected, loadedTextures }: { material: any, isSelected: boolean, loadedTextures: Record<string, Texture> }) {
     const textureName = material?.properties?.texture;
