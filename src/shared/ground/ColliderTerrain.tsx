@@ -41,8 +41,8 @@ function VertexVisualizer({ geometry }: { geometry: THREE.PlaneGeometry }) {
     );
 }
 
-function ColliderTerrain({ position = [0, 0, 0], onClick }: { position?: [number, number, number], onClick?: (coords: number[]) => void }) {
-    const width = 32;
+function ColliderTerrain({ position = [0, 0, 0], onClick, children }: { position?: [number, number, number], onClick?: (coords: number[]) => void, children?: React.ReactNode }) {
+    const width = 16;
     const height = 32;
     const tileSize = 4; // New tile size
     const widthSegments = Math.floor(width / tileSize);
@@ -67,22 +67,17 @@ function ColliderTerrain({ position = [0, 0, 0], onClick }: { position?: [number
         heightField.forEach((v, index) => {
             (geometry.attributes.position.array as THREE.TypedArray)[index * 3 + 2] = v; // height offset of collider from mesh
         });
-        geometry.scale(-1, 1, 1);
-        geometry.rotateX(Math.PI / 2);
-        geometry.rotateY(Math.PI / 2);
-        geometry.rotateZ(-Math.PI);
         geometry.computeVertexNormals();
 
         return geometry;
     }, [heightField]);
 
-    const geometry2 = new THREE.PlaneGeometry(100, 100);
-    geometry2.rotateX(-Math.PI / 2);
-
     return (
         <>
             <RigidBody colliders={false} >
                 <mesh
+                    rotation={[-Math.PI / 2, 0, 0]}
+                    scale={[-1, 1, 1]}
                     position={position}
                     geometry={geometry}
                     castShadow
@@ -95,14 +90,13 @@ function ColliderTerrain({ position = [0, 0, 0], onClick }: { position?: [number
                         }
                     }}
                 >
-                    <meshStandardMaterial
+                    {children || <meshStandardMaterial
                         color="limegreen"
-                        side={THREE.DoubleSide}
-                        shadowSide={THREE.DoubleSide}
-                    />
+                    />}
                 </mesh>
 
                 <HeightfieldCollider
+                    rotation={[0, -Math.PI / 2, 0]}
                     position={position}
                     args={[
                         widthSegments,

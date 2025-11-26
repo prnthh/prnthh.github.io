@@ -10,7 +10,7 @@ import SplatGround from "@/shared/ground/SplatGround";
 import ShadedGround from "@/shared/ground/ShadedGround";
 import ColliderTerrain from "@/shared/ground/ColliderTerrain";
 import Playground from "@/shared/ground/Playground";
-import ImageGround from "@/shared/ground/ImageGround";
+import ImageMaterial from "@/shared/ground/ImageGround";
 import { WaterMaterial } from "@/shared/shaders/Water";
 
 export default function Home() {
@@ -21,12 +21,19 @@ export default function Home() {
                     <Physics debug>
 
                         {/* <ShadedGround position={[-32, 0, 0]} /> */}
-                        <ColliderTerrain position={[-48, 0, -16]} />
+                        <ColliderTerrain position={[-48, 0, -16]}>
+                            <ImageMaterial />
+                        </ColliderTerrain>
+
                         <SplatGround position={[-16, 0, -16]} />
                         <DSGround position={[16, 0, -16]} />
                         <Playground position={[48, 0, -16]} />
 
-                        <ImageGround position={[-48, 0, 16]} />
+                        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-48, 0, 16]} receiveShadow>
+                            <planeGeometry args={[32, 32]} />
+                            <ImageMaterial />
+                        </mesh>
+
                         <TerrainTile position={[-16, 0, 16]} />
                         <TerrainTile
                             position={[16, 0, 16]}
@@ -35,7 +42,10 @@ export default function Home() {
                             normalMap='/textures/floor/rocks/gray_rocks_nor_gl_1k.jpg'
                             roughnessMap='/textures/floor/rocks/gray_rocks_rough_1k.jpg'
                         />
-                        <ImageGround image="/textures/floor/terrain/dirt-512.jpg" position={[48, 0, 16]} />
+                        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[48, 0, 16]} receiveShadow>
+                            <planeGeometry args={[32, 32]} />
+                            <ImageMaterial image="/textures/floor/terrain/dirt-512.jpg" />
+                        </mesh>
 
                         <mesh position={[-16, 0, -48]}>
                             <boxGeometry args={[32, 1, 32]} />
