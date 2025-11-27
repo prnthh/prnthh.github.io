@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, useState, useEffect } from 'react';
 import { Prefab, GameObject as GameObjectType, COMPONENT_DEFS } from "./types";
 import ComponentEditors from './components';
 import EditorTree from './EditorTree';
+import { getAllComponents } from './components/ComponentRegistry';
 
 
 function EditorUI({ prefabData, setPrefabData, selectedId, setSelectedId, transformMode, setTransformMode }: {
@@ -76,6 +77,7 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
     setTransformMode: (m: "translate" | "rotate" | "scale") => void;
 }) {
     const [addComponentType, setAddComponentType] = useState(Object.keys(COMPONENT_DEFS)[0]);
+    const ALL_COMPONENTS = getAllComponents();
 
     const componentKeys = Object.keys(node.components || {}).join(',');
     useEffect(() => {
@@ -176,6 +178,49 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
                 </button>
             </div>
         </div>
+
+
+        {node.components && Object.entries(node.components).map(([key, comp]: [string, any]) => {
+            if (!comp) return null;
+            const componentDef = ALL_COMPONENTS[comp.type];
+            if (!componentDef) return null;
+            const EditorComp = componentDef.Editor;
+            return (
+                <div key={key} className='px-1'>
+                    <div className="flex justify-between items-center py-0.5 border-b border-cyan-500/20 bg-cyan-500/5">
+                        <span className="font-mono text-[10px] text-cyan-300 uppercase">{key}</span>
+                        <button
+                            onClick={() => updateNode(n => {
+                                const components = { ...n.components };
+                                delete components[key as keyof typeof components];
+                                return { ...n, components };
+                            })}
+                            className="text-[9px] text-red-400/60 hover:text-red-400"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    {EditorComp ? (
+                        <EditorComp
+                            component={comp}
+                            onUpdate={(newProps: any) => updateNode(n => ({
+                                ...n,
+                                components: {
+                                    ...n.components,
+                                    [key]: {
+                                        ...comp,
+                                        properties: { ...comp.properties, ...newProps }
+                                    }
+                                }
+                            }))}
+                        />
+                    ) : null}
+                </div>
+            );
+        })}
+
+        {JSON.stringify(ALL_COMPONENTS)}
+
     </div>
 }
 

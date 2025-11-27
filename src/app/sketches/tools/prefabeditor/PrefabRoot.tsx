@@ -63,28 +63,49 @@ export const PrefabRoot = forwardRef<Group, {
     };
 
     const onTransformChange = () => {
-        if (!selectedId) return;
+        if (!selectedId || !onPrefabChange) return;
         const obj = objectRefs.current[selectedId];
         if (!obj) return;
 
-        updateNode(node => ({
+        // 1. Get world matrix from the actual Three object
+        const worldMatrix = obj.matrixWorld.clone();
+
+        // 2. Compute parent world matrix from the prefab tree
+        const parentWorld = computeParentWorldMatrix(data.root, selectedId);
+        const parentInv = parentWorld.clone().invert();
+
+        // 3. Convert world -> local
+        const localMatrix = new Matrix4().multiplyMatrices(parentInv, worldMatrix);
+
+        const lp = new Vector3();
+        const lq = new Quaternion();
+        const ls = new Vector3();
+        localMatrix.decompose(lp, lq, ls);
+
+        const le = new Euler().setFromQuaternion(lq);
+
+        // 4. Write back LOCAL transform into the prefab node
+        const newRoot = updatePrefabNode(data.root, selectedId, (node) => ({
             ...node,
             components: {
                 ...node.components,
                 transform: {
                     type: "Transform",
                     properties: {
-                        position: [obj.position.x, obj.position.y, obj.position.z],
-                        rotation: [obj.rotation.x, obj.rotation.y, obj.rotation.z],
-                        scale: [obj.scale.x, obj.scale.y, obj.scale.z],
+                        position: [lp.x, lp.y, lp.z] as [number, number, number],
+                        rotation: [le.x, le.y, le.z] as [number, number, number],
+                        scale: [ls.x, ls.y, ls.z] as [number, number, number],
                     },
                 },
                 geometry: node.components?.geometry,
                 material: node.components?.material,
                 model: node.components?.model,
-            }
+            },
         }));
+
+        onPrefabChange({ ...data, root: newRoot });
     };
+
 
     useEffect(() => {
         const loadAssets = async () => {
@@ -397,3 +418,48 @@ function MaterialRenderer({ material, isSelected, loadedTextures }: { material: 
 }
 
 export default PrefabRoot;
+
+function getNodeTransformProps(node: GameObjectType) {
+    const t = node.components?.transform?.properties;
+    return {
+        position: t?.position ?? [0, 0, 0],
+        rotation: t?.rotation ?? [0, 0, 0],
+        scale: t?.scale ?? [1, 1, 1],
+    };
+}
+
+function computeParentWorldMatrix(root: GameObjectType, targetId: string): Matrix4 {
+    const identity = new Matrix4();
+
+    function traverse(node: GameObjectType, parentWorld: Matrix4): Matrix4 | null {
+        if (node.id === targetId) {
+            // parentWorld is what we want
+            return parentWorld.clone();
+        }
+
+        const { position, rotation, scale } = getNodeTransformProps(node);
+
+        const localPos = new Vector3(...position);
+        const localRot = new Euler(...rotation);
+        const localScale = new Vector3(...scale);
+
+        const localMat = new Matrix4().compose(
+            localPos,
+            new Quaternion().setFromEuler(localRot),
+            localScale
+        );
+
+        const worldMat = parentWorld.clone().multiply(localMat);
+
+        if (node.children) {
+            for (const child of node.children) {
+                const res = traverse(child, worldMat);
+                if (res) return res;
+            }
+        }
+
+        return null;
+    }
+
+    return traverse(root, identity) ?? identity;
+}

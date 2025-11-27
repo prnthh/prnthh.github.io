@@ -303,21 +303,23 @@ export const GameInstance = React.forwardRef<THREE.Group, {
     const addInstance = ctx?.addInstance;
     const removeInstance = ctx?.removeInstance;
 
+    const instance = useMemo<InstanceData>(() => ({
+        id,
+        meshPath: modelUrl,
+        position,
+        rotation,
+        scale,
+        physics,
+    }), [id, modelUrl, position, rotation, scale, physics]);
+
     useEffect(() => {
         if (!addInstance || !removeInstance) return;
-        const instance: InstanceData = {
-            id,
-            meshPath: modelUrl,
-            position,
-            rotation,
-            scale,
-            physics,
-        };
         addInstance(instance);
         return () => {
             removeInstance(instance.id);
         };
-    }, [addInstance, removeInstance, id, modelUrl, position, rotation, scale, physics]);
+    }, [addInstance, removeInstance, instance]);
+
 
     // No visual here – provider will render visuals for all instances
     return null;
