@@ -1,7 +1,8 @@
 import { TextureListViewer } from '../../assetviewer/page';
 import { useEffect, useState } from 'react';
+import { Component } from './ComponentRegistry';
 
-export default function MaterialComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
+function MaterialComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
     const [textureFiles, setTextureFiles] = useState<string[]>([]);
 
     useEffect(() => {
@@ -93,3 +94,58 @@ export default function MaterialComponentEditor({ component, onUpdate }: { compo
         </div>
     );
 };
+
+
+import { useMemo } from 'react';
+import { DoubleSide, RepeatWrapping, ClampToEdgeWrapping, SRGBColorSpace, Texture } from 'three';
+
+// View for Material component
+function MaterialComponentView({ properties, loadedTextures, isSelected }: { properties: any, loadedTextures?: Record<string, Texture>, isSelected?: boolean }) {
+    const textureName = properties?.texture;
+    const repeat = properties?.repeat;
+    const repeatCount = properties?.repeatCount;
+    const texture = textureName && loadedTextures ? loadedTextures[textureName] : undefined;
+
+    const finalTexture = useMemo(() => {
+        if (!texture) return undefined;
+        const t = texture.clone();
+        if (repeat) {
+            t.wrapS = t.wrapT = RepeatWrapping;
+            if (repeatCount) t.repeat.set(repeatCount[0], repeatCount[1]);
+        } else {
+            t.wrapS = t.wrapT = ClampToEdgeWrapping;
+            t.repeat.set(1, 1);
+        }
+        t.colorSpace = SRGBColorSpace;
+        t.needsUpdate = true;
+        return t;
+    }, [texture, repeat, repeatCount?.[0], repeatCount?.[1]]);
+
+    if (!properties) {
+        return <meshStandardMaterial color="red" wireframe />;
+    }
+
+    const { color, wireframe = false } = properties;
+    const displayColor = isSelected ? "cyan" : color;
+
+    return <meshStandardMaterial
+        key={finalTexture?.uuid ?? 'no-texture'}
+        color={displayColor}
+        wireframe={wireframe}
+        map={finalTexture}
+        transparent={!!finalTexture}
+        side={DoubleSide}
+    />;
+}
+
+const MaterialComponent: Component = {
+    name: 'Material',
+    Editor: MaterialComponentEditor,
+    View: MaterialComponentView,
+    defaultProperties: {
+        color: '#ffffff',
+        wireframe: false
+    }
+};
+
+export default MaterialComponent;

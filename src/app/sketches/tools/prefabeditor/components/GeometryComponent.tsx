@@ -1,5 +1,6 @@
-export default function GeometryComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
+import { Component } from "./ComponentRegistry";
 
+function GeometryComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
     return <div>
         <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">Type</label>
         <select
@@ -12,4 +13,31 @@ export default function GeometryComponentEditor({ component, onUpdate }: { compo
             <option value="plane">Plane</option>
         </select>
     </div>;
+}
+
+// View for Geometry component
+function GeometryComponentView({ properties, children }: { properties: any, children?: React.ReactNode }) {
+    const { geometryType, args = [] } = properties;
+    // Only return the geometry node, do not wrap in mesh or group
+    switch (geometryType) {
+        case "box":
+            return <boxGeometry args={args as [number, number, number]} />;
+        case "sphere":
+            return <sphereGeometry args={args as [number, number?, number?]} />;
+        case "plane":
+            return <planeGeometry args={args as [number, number]} />;
+        default:
+            return <boxGeometry args={[1, 1, 1]} />;
+    }
+}
+
+const GeometryComponent: Component = {
+    name: 'Geometry',
+    Editor: GeometryComponentEditor,
+    View: GeometryComponentView,
+    defaultProperties: {
+        geometryType: 'box'
+    }
 };
+
+export default GeometryComponent;

@@ -1,5 +1,7 @@
-export default function SpotLightComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
 
+import { Component } from "./ComponentRegistry";
+
+function SpotLightComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
     return <div className="flex flex-col">
         <div className="mb-1">
             <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">Color</label>
@@ -30,3 +32,22 @@ export default function SpotLightComponentEditor({ component, onUpdate }: { comp
         </div>
     </div>;
 }
+
+
+// The view component for SpotLight
+function SpotLightView({ properties }: { properties: any }) {
+    // You can expand this with more spotlight properties as needed
+    return <spotLight color={properties.color} intensity={properties.intensity} />;
+}
+
+const SpotLightComponent: Component = {
+    name: 'SpotLight',
+    Editor: SpotLightComponentEditor,
+    View: SpotLightView,
+    defaultProperties: {
+        color: '#ffffff',
+        intensity: 1.0
+    }
+};
+
+export default SpotLightComponent;

@@ -1,5 +1,6 @@
-export default function PhysicsComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
+import { Component } from "./ComponentRegistry";
 
+function PhysicsComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
     return <div>
         <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">Type</label>
         <select
@@ -10,6 +11,37 @@ export default function PhysicsComponentEditor({ component, onUpdate }: { compon
             <option value="dynamic">Dynamic</option>
             <option value="fixed">Fixed</option>
         </select>
-    </div>
-        ;
+    </div>;
 }
+
+
+import { RigidBody } from "@react-three/rapier";
+import { Object3D } from "three";
+import { useRef } from "react";
+
+function PhysicsComponentView({ properties, children, registerRef, transform, editMode }: any) {
+    if (editMode) return children;
+    return (
+        <RigidBody
+            ref={el => registerRef && registerRef(properties.id, el as unknown as Object3D)}
+            position={transform?.position}
+            rotation={transform?.rotation}
+            scale={transform?.scale}
+            type={properties.type}
+            colliders="cuboid"
+        >
+            {children}
+        </RigidBody>
+    );
+}
+
+const PhysicsComponent: Component = {
+    name: 'Physics',
+    Editor: PhysicsComponentEditor,
+    View: PhysicsComponentView,
+    defaultProperties: {
+        type: 'dynamic'
+    }
+};
+
+export default PhysicsComponent;

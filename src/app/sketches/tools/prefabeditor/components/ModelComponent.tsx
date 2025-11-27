@@ -1,7 +1,8 @@
 import { ModelListViewer } from '../../assetviewer/page';
 import { useEffect, useState } from 'react';
+import { Component } from './ComponentRegistry';
 
-export default function ModelComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
+function ModelComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
     const [modelFiles, setModelFiles] = useState<string[]>([]);
 
     useEffect(() => {
@@ -40,3 +41,26 @@ export default function ModelComponentEditor({ component, onUpdate }: { componen
         </div>
     </div>;
 }
+
+// View for Model component
+function ModelComponentView({ properties, loadedModels, children }: { properties: any, loadedModels?: Record<string, any>, children?: React.ReactNode }) {
+    // Instanced models are handled elsewhere (GameInstance), so only render non-instanced here
+    if (!properties.filename || properties.instanced) return children || null;
+    if (loadedModels && loadedModels[properties.filename]) {
+        return <>{<primitive object={loadedModels[properties.filename].clone()} />}{children}</>;
+    }
+    // Optionally, render a placeholder if model is not loaded
+    return children || null;
+}
+
+const ModelComponent: Component = {
+    name: 'Model',
+    Editor: ModelComponentEditor,
+    View: ModelComponentView,
+    defaultProperties: {
+        filename: '',
+        instanced: false
+    }
+};
+
+export default ModelComponent;

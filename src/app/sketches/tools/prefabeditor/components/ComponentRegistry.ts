@@ -4,6 +4,8 @@ export interface Component {
     name: string;
     Editor: FC<{ component: any; onUpdate: (newComp: any) => void }>;
     defaultProperties: any;
+    // Allow View to accept extra props for special cases (like material)
+    View?: FC<any>;
 }
 
 const REGISTRY: Record<string, Component> = {};

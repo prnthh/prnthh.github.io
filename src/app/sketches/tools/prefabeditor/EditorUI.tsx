@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction, useState, useEffect } from 'react';
-import { Prefab, GameObject as GameObjectType, COMPONENT_DEFS } from "./types";
-import ComponentEditors from './components';
+import { Prefab, GameObject as GameObjectType } from "./types";
 import EditorTree from './EditorTree';
 import { getAllComponents } from './components/ComponentRegistry';
 
@@ -76,16 +75,17 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
     transformMode: "translate" | "rotate" | "scale";
     setTransformMode: (m: "translate" | "rotate" | "scale") => void;
 }) {
-    const [addComponentType, setAddComponentType] = useState(Object.keys(COMPONENT_DEFS)[0]);
     const ALL_COMPONENTS = getAllComponents();
+    const allComponentKeys = Object.keys(ALL_COMPONENTS);
+    const [addComponentType, setAddComponentType] = useState(allComponentKeys[0]);
 
     const componentKeys = Object.keys(node.components || {}).join(',');
     useEffect(() => {
-        const available = Object.keys(COMPONENT_DEFS).filter(k => !node.components?.[k]);
+        const available = allComponentKeys.filter(k => !node.components?.[k]);
         if (!available.includes(addComponentType)) {
             setAddComponentType(available[0] || "");
         }
-    }, [componentKeys, addComponentType, node.components]);
+    }, [componentKeys, addComponentType, node.components, allComponentKeys]);
 
     return <div className="flex flex-col gap-1 text-[11px] max-w-[250px] max-h-[80vh] overflow-y-auto">
         <div className="border-b border-cyan-500/20 pb-1 px-1.5 pt-1">
@@ -117,7 +117,7 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
         </div>
 
         {/* Components */}
-        {node.components && Object.entries(node.components).map(([key, comp]: [string, any]) => {
+        {/* {node.components && Object.entries(node.components).map(([key, comp]: [string, any]) => {
             if (!comp) return null;
             return (
                 <div key={key} className="border border-cyan-500/20 mx-1 my-0.5 bg-black/20">
@@ -142,48 +142,15 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
                     </div>
                 </div>
             );
-        })}
-
-        {/* Add Component */}
-        <div className="px-1.5 py-1 border-t border-cyan-500/20">
-            <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">Add Component</label>
-            <div className="flex gap-0.5">
-                <select
-                    className="bg-black/40 border border-cyan-500/30 px-1 py-0.5 flex-1 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50"
-                    value={addComponentType}
-                    onChange={e => setAddComponentType(e.target.value)}
-                >
-                    {Object.keys(COMPONENT_DEFS).filter(k => !node.components?.[k]).map(k => (
-                        <option key={k} value={k}>{k}</option>
-                    ))}
-                </select>
-                <button
-                    className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 px-2 py-0.5 text-[10px] text-cyan-300 font-mono disabled:opacity-30"
-                    disabled={!addComponentType}
-                    onClick={() => {
-                        if (!addComponentType) return;
-                        const def = COMPONENT_DEFS[addComponentType];
-                        if (def && !node.components?.[addComponentType]) {
-                            updateNode(n => ({
-                                ...n,
-                                components: {
-                                    ...n.components,
-                                    [addComponentType]: { type: def.type, properties: def.defaultProps }
-                                }
-                            }));
-                        }
-                    }}
-                >
-                    +
-                </button>
-            </div>
-        </div>
-
+        })} */}
 
         {node.components && Object.entries(node.components).map(([key, comp]: [string, any]) => {
             if (!comp) return null;
             const componentDef = ALL_COMPONENTS[comp.type];
-            if (!componentDef) return null;
+            if (!componentDef) return <div key={key} className="px-1 py-0.5 text-red-400 text-[10px]">Unknown component type: {comp.type}
+                <textarea defaultValue={JSON.stringify(comp)} />
+            </div>;
+
             const EditorComp = componentDef.Editor;
             return (
                 <div key={key} className='px-1'>
@@ -219,56 +186,42 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
             );
         })}
 
-        {JSON.stringify(ALL_COMPONENTS)}
-
-    </div>
-}
-
-function ComponentEditor({ component, onChange }: { component: any, onChange: (c: any) => void }) {
-    if (!component) return null;
-
-    const updateComponent = (newProps: any) => {
-        onChange({
-            ...component,
-            properties: { ...component.properties, ...newProps }
-        });
-    }
-
-    const componentEditorMap = {
-        'Transform': <ComponentEditors.TransformComponentEditor component={component} onUpdate={updateComponent} />,
-        'Geometry': <ComponentEditors.GeometryComponentEditor component={component} onUpdate={updateComponent} />,
-        'Material': <ComponentEditors.MaterialComponentEditor component={component} onUpdate={updateComponent} />,
-        'Model': <ComponentEditors.ModelComponentEditor component={component} onUpdate={updateComponent} />,
-        'Physics': <ComponentEditors.PhysicsComponentEditor component={component} onUpdate={updateComponent} />,
-        'SpotLight': <ComponentEditors.SpotLightComponentEditor component={component} onUpdate={updateComponent} />,
-    };
-
-    return componentEditorMap[component.type as keyof typeof componentEditorMap] ?? <div className="text-xs text-gray-500">Unknown component type</div>;
-}
-
-export function Vector3Input({ label, value, onChange }: { label: string, value: [number, number, number], onChange: (v: [number, number, number]) => void }) {
-    const handleChange = (index: number, val: string) => {
-        const newValue = [...value] as [number, number, number];
-        newValue[index] = parseFloat(val) || 0;
-        onChange(newValue);
-    };
-
-    return <div className="mb-1">
-        <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">{label}</label>
-        <div className="flex gap-0.5">
-            <div className="relative flex-1">
-                <span className="absolute left-0.5 top-0 text-[8px] text-red-400/80 font-mono">X</span>
-                <input className="w-full bg-black/40 border border-cyan-500/30 pl-3 pr-0.5 py-0.5 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50" type="number" step="0.1" value={value[0]} onChange={e => handleChange(0, e.target.value)} />
-            </div>
-            <div className="relative flex-1">
-                <span className="absolute left-0.5 top-0 text-[8px] text-green-400/80 font-mono">Y</span>
-                <input className="w-full bg-black/40 border border-cyan-500/30 pl-3 pr-0.5 py-0.5 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50" type="number" step="0.1" value={value[1]} onChange={e => handleChange(1, e.target.value)} />
-            </div>
-            <div className="relative flex-1">
-                <span className="absolute left-0.5 top-0 text-[8px] text-blue-400/80 font-mono">Z</span>
-                <input className="w-full bg-black/40 border border-cyan-500/30 pl-3 pr-0.5 py-0.5 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50" type="number" step="0.1" value={value[2]} onChange={e => handleChange(2, e.target.value)} />
+        {/* Add Component */}
+        <div className="px-1.5 py-1 border-t border-cyan-500/20">
+            <label className="block text-[9px] text-cyan-400/60 uppercase tracking-wider mb-0.5">Add Component</label>
+            <div className="flex gap-0.5">
+                <select
+                    className="bg-black/40 border border-cyan-500/30 px-1 py-0.5 flex-1 text-[10px] text-cyan-300 font-mono focus:outline-none focus:border-cyan-400/50"
+                    value={addComponentType}
+                    onChange={e => setAddComponentType(e.target.value)}
+                >
+                    {allComponentKeys.filter(k => !node.components?.[k]).map(k => (
+                        <option key={k} value={k}>{k}</option>
+                    ))}
+                </select>
+                <button
+                    className="bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 px-2 py-0.5 text-[10px] text-cyan-300 font-mono disabled:opacity-30"
+                    disabled={!addComponentType}
+                    onClick={() => {
+                        if (!addComponentType) return;
+                        const def = ALL_COMPONENTS[addComponentType];
+                        if (def && !node.components?.[addComponentType]) {
+                            updateNode(n => ({
+                                ...n,
+                                components: {
+                                    ...n.components,
+                                    [addComponentType]: { type: def.name, properties: def.defaultProperties }
+                                }
+                            }));
+                        }
+                    }}
+                >
+                    +
+                </button>
             </div>
         </div>
+
+
     </div>
 }
 

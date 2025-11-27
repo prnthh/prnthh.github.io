@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState, MouseEvent } from 'react';
-import { Prefab, GameObject, COMPONENT_DEFS } from "./types";
+import { Prefab, GameObject } from "./types";
 
 interface EditorTreeProps {
     prefabData?: Prefab;
@@ -43,7 +43,7 @@ export default function EditorTree({ prefabData, setPrefabData, selectedId, setS
             components: {
                 transform: {
                     type: "Transform",
-                    properties: { ...COMPONENT_DEFS.transform.defaultProps }
+                    properties: { ...require('./components/ComponentRegistry').getComponent('Transform')?.defaultProperties }
                 }
             }
         };

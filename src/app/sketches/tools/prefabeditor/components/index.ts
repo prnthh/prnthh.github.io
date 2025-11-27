@@ -1,16 +1,16 @@
-import GeometryComponentEditor from './GeometryComponent';
-import TransformComponentEditor from './TransformComponent';
-import MaterialComponentEditor from './MaterialComponent';
-import PhysicsComponentEditor from './PhysicsComponent';
-import SpotLightComponentEditor from './SpotLightComponent';
-import ModelComponentEditor from './ModelComponent';
+import GeometryComponent from './GeometryComponent';
+import TransformComponent from './TransformComponent';
+import MaterialComponent from './MaterialComponent';
+import PhysicsComponent from './PhysicsComponent';
+import SpotLightComponent from './SpotLightComponent';
+import ModelComponent from './ModelComponent';
 
-export default{
-    GeometryComponentEditor,
-    TransformComponentEditor,
-    MaterialComponentEditor,
-    PhysicsComponentEditor,
-    SpotLightComponentEditor,
-    ModelComponentEditor
-};
+export default [
+    GeometryComponent,
+    TransformComponent,
+    MaterialComponent,
+    PhysicsComponent,
+    SpotLightComponent,
+    ModelComponent
+];
 

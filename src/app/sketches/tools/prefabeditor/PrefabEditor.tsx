@@ -9,6 +9,11 @@ import { Physics } from "@react-three/rapier";
 import testPrefab from "./samples/test.json";
 import EditorUI from "./EditorUI";
 
+// register all components
+import { registerComponent } from './components/ComponentRegistry';
+import components from './components/';
+components.forEach(registerComponent);
+
 const PrefabEditor = ({ children }: { children?: React.ReactNode }) => {
     const [editMode, setEditMode] = useState(true);
     const [loadedPrefab, setLoadedPrefab] = useState<Prefab>(testPrefab as unknown as Prefab);

@@ -4,6 +4,7 @@ import { MapControls, TransformControls } from "@react-three/drei";
 import { useState, useRef, useEffect, forwardRef, useMemo, useCallback } from "react";
 import { Vector3, Euler, Quaternion, ClampToEdgeWrapping, DoubleSide, Group, Object3D, RepeatWrapping, SRGBColorSpace, Texture, TextureLoader, Matrix4 } from "three";
 import { Prefab, GameObject as GameObjectType } from "./types";
+import { getComponent } from "./components/ComponentRegistry";
 import { ThreeEvent } from "@react-three/fiber";
 import { loadModel } from "../dragdrop/modelLoader";
 import { RigidBody } from "@react-three/rapier";
@@ -247,38 +248,14 @@ function GameObjectRenderer({
         return null;
     }
 
-    const renderGeometry = () => {
-        if (!geometry) return null;
-
-        const { geometryType, args = [] } = geometry.properties;
-
-        switch (geometryType) {
-            case "box":
-                return <boxGeometry args={args as [number, number, number]} />;
-            case "sphere":
-                return <sphereGeometry args={args as [number, number?, number?]} />;
-            case "plane":
-                return <planeGeometry args={args as [number, number]} />;
-            default:
-                return <boxGeometry args={[1, 1, 1]} />;
-        }
-    };
-
-    const renderModel = () => {
-        if (!modelComp) return null;
-        const filename = modelComp.properties.filename;
-        if (modelComp.properties.instanced) return null; // handled by GameInstance
-
-        const model = loadedModels[filename];
-        if (!model) return null;
-        return <primitive object={model.clone()} />;
-    };
-
-    const renderSpotLight = () => {
-        const light = gameObject.components?.spotLight;
-        if (!light) return null;
-        const { color, intensity } = light.properties;
-        return <spotLight color={color} intensity={intensity} />;
+    // Render component views from registry
+    const renderComponentViews = () => {
+        if (!gameObject.components) return null;
+        return Object.entries(gameObject.components).map(([key, comp]) => {
+            const componentDef = getComponent(key);
+            if (!componentDef || !componentDef.View || !comp) return null;
+            return <componentDef.View key={key} properties={comp.properties} />;
+        });
     };
 
     const isInstanced = modelComp?.properties?.instanced;
@@ -319,45 +296,144 @@ function GameObjectRenderer({
         />
     ));
 
-    const baseContent = (
-        <>
-            {geometry && (
-                <mesh>
-                    {renderGeometry()}
-                    <MaterialRenderer
-                        material={material}
-                        isSelected={isSelected}
-                        loadedTextures={loadedTextures}
-                    />
-                </mesh>
-            )}
-            {renderModel()}
-            {renderSpotLight()}
-        </>
-    );
+    // Prepare context props and component defs
+    const geometryDef = geometry ? getComponent('Geometry') : undefined;
+    const materialDef = material ? getComponent('Material') : undefined;
+    const contextProps = {
+        loadedModels,
+        loadedTextures,
+        isSelected,
+        editMode,
+        parentMatrix,
+        registerRef,
+    };
 
-    if (!editMode && physics) {
+    // All components except geometry, material, and model, rendered with generic props
+    const allComponentViews = gameObject.components
+        ? Object.entries(gameObject.components)
+            .filter(([key]) => key !== 'geometry' && key !== 'material' && key !== 'model')
+            .map(([key, comp]) => {
+                const def = getComponent(key);
+                if (!def || !def.View || !comp) return null;
+                return <def.View key={key} properties={comp.properties} {...contextProps} />;
+            })
+        : null;
+
+    // --- NESTING LOGIC ---
+    // 1. Instanced: render as GameInstance, no children
+    if (isInstanced) {
+        const wp = new Vector3();
+        const wq = new Quaternion();
+        const ws = new Vector3();
+        worldMatrix.decompose(wp, wq, ws);
+        const we = new Euler().setFromQuaternion(wq);
         return (
-            <RigidBody
-                ref={(el) => { registerRef(gameObject.id, el as unknown as Object3D); }}
-                position={transform?.properties.position}
-                rotation={transform?.properties.rotation}
-                scale={transform?.properties.scale}
-                type={physics.properties.type}
-                colliders="cuboid"
-            >
-                <group
-                    onPointerDown={handlePointerDown}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                >
-                    {baseContent}
-                    {childrenNodes}
-                </group>
-            </RigidBody>
+            <GameInstance
+                id={gameObject.id}
+                modelUrl={modelComp!.properties.filename}
+                position={[wp.x, wp.y, wp.z]}
+                rotation={[we.x, we.y, we.z]}
+                scale={[ws.x, ws.y, ws.z]}
+                physics={editMode ? undefined : (physics?.properties as any)}
+            />
         );
     }
 
+
+    // Unified branch for model and geometry: both support children and material overrides
+    if ((modelComp && modelComp.properties && !modelComp.properties.instanced && modelComp.properties.filename && loadedModels[modelComp.properties.filename]) || (geometry && geometryDef && geometryDef.View)) {
+        let content: React.ReactNode = null;
+        if (modelComp && modelComp.properties && !modelComp.properties.instanced && modelComp.properties.filename && loadedModels[modelComp.properties.filename]) {
+            const modelObj = loadedModels[modelComp.properties.filename].clone();
+            content = (
+                <primitive object={modelObj}>
+                    {material && materialDef && materialDef.View && (
+                        <materialDef.View
+                            key="material"
+                            properties={material.properties}
+                            loadedTextures={loadedTextures}
+                            isSelected={isSelected}
+                            editMode={editMode}
+                            parentMatrix={parentMatrix}
+                            registerRef={registerRef}
+                        />
+                    )}
+                    {allComponentViews}
+                    {childrenNodes}
+                </primitive>
+            );
+        } else if (geometry && geometryDef && geometryDef.View) {
+            content = (
+                <mesh>
+                    <geometryDef.View key="geometry" properties={geometry.properties} {...contextProps} />
+                    {material && materialDef && materialDef.View && (
+                        <materialDef.View
+                            key="material"
+                            properties={material.properties}
+                            loadedTextures={loadedTextures}
+                            isSelected={isSelected}
+                            editMode={editMode}
+                            parentMatrix={parentMatrix}
+                            registerRef={registerRef}
+                        />
+                    )}
+                    {allComponentViews}
+                    {childrenNodes}
+                </mesh>
+            );
+        }
+        // Always apply transform to the group, not the mesh, so physics and edit mode both preserve transform
+        let groupContent = content;
+        if (physics && !editMode) {
+            const physicsDef = getComponent('Physics');
+            if (physicsDef && physicsDef.View) {
+                groupContent = (
+                    <physicsDef.View
+                        properties={{ ...physics.properties, id: gameObject.id }}
+                        registerRef={registerRef}
+                        editMode={editMode}
+                    >
+                        {content}
+                    </physicsDef.View>
+                );
+            }
+        }
+        // Always apply transform to the group, never to the physics component
+        return (
+            <group
+                ref={el => registerRef(gameObject.id, el)}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                position={transform?.properties.position}
+                rotation={transform?.properties.rotation}
+                scale={transform?.properties.scale}
+            >
+                {groupContent}
+            </group>
+        );
+    }
+
+    // 4. Default: just a group, all components and children inside
+    let groupContent = <>
+        {allComponentViews}
+        {childrenNodes}
+    </>;
+    if (physics) {
+        const physicsDef = getComponent('Physics');
+        if (physicsDef && physicsDef.View) {
+            groupContent = (
+                <physicsDef.View
+                    properties={{ ...physics.properties, id: gameObject.id }}
+                    registerRef={registerRef}
+                    editMode={editMode}
+                >
+                    {groupContent}
+                </physicsDef.View>
+            );
+        }
+    }
+    // Always apply transform to the group, never to the physics component
     return (
         <group
             ref={(el) => {
@@ -370,8 +446,7 @@ function GameObjectRenderer({
             rotation={transform?.properties.rotation}
             scale={transform?.properties.scale}
         >
-            {baseContent}
-            {childrenNodes}
+            {groupContent}
         </group>
     );
 
@@ -379,43 +454,7 @@ function GameObjectRenderer({
 
 
 
-function MaterialRenderer({ material, isSelected, loadedTextures }: { material: any, isSelected: boolean, loadedTextures: Record<string, Texture> }) {
-    const textureName = material?.properties?.texture;
-    const repeat = material?.properties?.repeat;
-    const repeatCount = material?.properties?.repeatCount;
 
-    const texture = textureName ? loadedTextures[textureName] : undefined;
-
-    const finalTexture = useMemo(() => {
-        if (!texture) return undefined;
-        const t = texture.clone();
-        if (repeat) {
-            t.wrapS = t.wrapT = RepeatWrapping;
-            if (repeatCount) t.repeat.set(repeatCount[0], repeatCount[1]);
-        } else {
-            t.wrapS = t.wrapT = ClampToEdgeWrapping;
-            t.repeat.set(1, 1);
-        }
-        t.needsUpdate = true;
-        return t;
-    }, [texture, repeat, repeatCount?.[0], repeatCount?.[1]]);
-
-    if (!material) {
-        return <meshStandardMaterial color="red" wireframe />;
-    }
-
-    const { color, wireframe = false } = material.properties;
-    const displayColor = isSelected ? "cyan" : color;
-
-    return <meshStandardMaterial
-        key={finalTexture?.uuid ?? 'no-texture'}
-        color={displayColor}
-        wireframe={wireframe}
-        map={finalTexture}
-        transparent={!!finalTexture}
-        side={DoubleSide}
-    />;
-}
 
 export default PrefabRoot;
 
