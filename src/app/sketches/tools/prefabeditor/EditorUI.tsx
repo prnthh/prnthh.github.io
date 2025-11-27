@@ -81,7 +81,9 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
 
     const componentKeys = Object.keys(node.components || {}).join(',');
     useEffect(() => {
-        const available = allComponentKeys.filter(k => !node.components?.[k]);
+        // Components stored on nodes use lowercase keys (e.g. 'geometry'),
+        // while the registry keys are the component names (e.g. 'Geometry').
+        const available = allComponentKeys.filter(k => !node.components?.[k.toLowerCase()]);
         if (!available.includes(addComponentType)) {
             setAddComponentType(available[0] || "");
         }
@@ -195,7 +197,7 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
                     value={addComponentType}
                     onChange={e => setAddComponentType(e.target.value)}
                 >
-                    {allComponentKeys.filter(k => !node.components?.[k]).map(k => (
+                    {allComponentKeys.filter(k => !node.components?.[k.toLowerCase()]).map(k => (
                         <option key={k} value={k}>{k}</option>
                     ))}
                 </select>
@@ -205,12 +207,13 @@ function NodeInspector({ node, updateNode, deleteNode, transformMode, setTransfo
                     onClick={() => {
                         if (!addComponentType) return;
                         const def = ALL_COMPONENTS[addComponentType];
-                        if (def && !node.components?.[addComponentType]) {
+                        if (def && !node.components?.[addComponentType.toLowerCase()]) {
+                            const key = addComponentType.toLowerCase();
                             updateNode(n => ({
                                 ...n,
                                 components: {
                                     ...n.components,
-                                    [addComponentType]: { type: def.name, properties: def.defaultProperties }
+                                    [key]: { type: def.name, properties: def.defaultProperties }
                                 }
                             }));
                         }
