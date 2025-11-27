@@ -3,16 +3,14 @@
 import { Physics, RigidBody } from "@react-three/rapier";
 import MapModel from "@/shared/MapModel";
 import { useRef, useState, useEffect } from "react";
-import { Object3D, Vector3 } from "three";
+import { Object3D } from "three";
 import { forwardRef } from "react";
 import GameCanvas from "@/shared/GameCanvas";
 import Controls from "@/shared/controls/ControlsProvider";
 import Ped from "@/shared/ped/physics/ped";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
-import { ShadowLight } from "@/shared/lighting/ShadowLight";
-import Balloon from "@/shared/physics/Balloon";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
-import { Csm } from "@/shared/Csm";
+import DemoWorld from "@/shared/debug/DemoWorld";
 
 export default function Home() {
     const ballRef = useRef<Object3D | null>(null);
@@ -22,17 +20,17 @@ export default function Home() {
                 <Controls>
                     <GameCanvas>
                         {/* <Perf /> */}
-                        <Csm />
                         <Physics>
                             <ThirdPersonController lookTarget={ballRef} />
 
                             <Football ref={ballRef} position={[0, 8, 5]} />
 
-                            <PunchingBag position={[5, 2, 0]} />
                             <GoalFollowingPed ballRef={ballRef} />
 
                             <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" />
-                            <ambientLight intensity={0.8} />
+
+                            <DemoWorld />
+                            {/* <ambientLight intensity={0.8} /> */}
                             {/* <pointLight position={[10, 10, 10]} /> */}
                         </Physics>
                     </GameCanvas>
@@ -52,17 +50,6 @@ const Football = forwardRef<Object3D, { position: [number, number, number] }>(({
         </RigidBody>
     );
 });
-
-const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
-    return <>
-        <Balloon position={[5, 2, 5]}>
-            <mesh castShadow receiveShadow >
-                <capsuleGeometry args={[0.2, 0.8]} />
-                <meshStandardMaterial color="red" />
-            </mesh>
-        </Balloon>
-    </>
-};
 
 const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
     const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);

@@ -12,7 +12,7 @@ import FollowCam from "@/shared/cameras/FollowCam";
 import { Weapon } from "./Weapon";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 import useInputStore from "@/shared/providers/InputStore";
-import KeyboardInput from "../../../../shared/controls/KeyboardInput";
+import KeyboardControls from "@/shared/controls/KeyboardControls";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
 
 const tempQuat = new Quaternion();
@@ -120,7 +120,7 @@ const ThirdPersonControls = ({
                 onRightClickDown={() => setShoulderCamMode(true)}
                 onRightClickUp={() => setShoulderCamMode(false)}
             />
-            <KeyboardInput />
+            <KeyboardControls />
             {shoulderCamMode && <Weapon excludeRigidBody={modelRef.current?.rbref} />}
         </>
     );

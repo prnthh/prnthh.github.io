@@ -1,26 +1,14 @@
-import { useMemo, useRef, useState, useEffect } from "react";
-import * as THREE from "three";
-import { useThree } from "@react-three/fiber";
+import { useMemo } from "react";
 import { generateHeight, generateTexture } from "@/shared/util";
+import { PlaneGeometry } from "three";
 
-export function ShadedGround({ position = [0, 0, 0], onClick }: { position?: [number, number, number], onClick?: (coords: number[]) => void }) {
-    // Match the demo's dimensions
-    const worldWidth = 256;
-    const worldDepth = 256;
-
-    // References for raycasting
-    const terrainRef = useRef<THREE.Mesh>(null);
-    const { camera, gl, scene } = useThree();
-
-    useEffect(() => {
-        if (camera) {
-            camera.far = 100000;
-            camera.updateProjectionMatrix();
-        }
-    }, [scene, camera]);
+export function ShadedGround({ size = [256, 256], position = [0, 0, 0], onClick }: { size?: [number, number], position?: [number, number, number], onClick?: (coords: number[]) => void }) {
+    const worldWidth = size[0];
+    const worldDepth = size[1];
+    const tileSize = 1;
 
     const heightData = useMemo(() => {
-        return generateHeight(worldWidth, worldDepth);
+        return generateHeight(worldWidth, worldDepth, 1);
     }, []);
 
     const terrainTexture = useMemo(() => {
@@ -29,12 +17,12 @@ export function ShadedGround({ position = [0, 0, 0], onClick }: { position?: [nu
 
     const geometry = useMemo(() => {
         // Create terrain geometry with dimensions matching the demo
-        const geometry = new THREE.PlaneGeometry(7500, 7500, worldWidth - 1, worldDepth - 1);
+        const geometry = new PlaneGeometry(worldWidth / tileSize, worldDepth / tileSize, worldWidth - 1, worldDepth - 1);
         geometry.rotateX(-Math.PI / 2);
 
         const vertices = geometry.attributes.position.array;
         for (let i = 0, j = 0, l = vertices.length; i < l; i++, j += 3) {
-            vertices[j + 1] = heightData[i] * 10; // Elevate Y position based on height data
+            vertices[j + 1] = heightData[i]; // Elevate Y position based on height data
         }
 
         geometry.computeVertexNormals();
@@ -45,7 +33,6 @@ export function ShadedGround({ position = [0, 0, 0], onClick }: { position?: [nu
         <>
             <mesh
                 position={position}
-                ref={terrainRef}
                 geometry={geometry}
                 onClick={e => {
                     if (onClick) {
@@ -55,15 +42,10 @@ export function ShadedGround({ position = [0, 0, 0], onClick }: { position?: [nu
                     }
                 }}
             >
-                {terrainTexture ? (
-                    <meshBasicMaterial
-                        map={terrainTexture}
-                    />
-                ) : (
-                    <meshBasicMaterial
-                        color="green"
-                    />
-                )}
+                <meshBasicMaterial
+                    map={terrainTexture}
+                />
+
             </mesh>
         </>
     );

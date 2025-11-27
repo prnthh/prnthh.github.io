@@ -61,15 +61,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
     const { world, rapier } = useRapier()
     const threeControls = useThree((s) => s.controls)
     const [, getKeyboardControls] = useKeyboardControls()
-    const { scheme, setScheme } = useControlScheme();
 
-    useEffect(() => {
-        if (driving) {
-            setScheme("drive");
-        } else {
-            setScheme("simple");
-        }
-    }, [driving, setScheme]);
 
     const chasisMeshRef = useRef<THREE.Mesh>(null!)
     const chasisBodyRef = useRef<RapierRigidBody>(null!)

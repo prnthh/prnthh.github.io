@@ -1,5 +1,5 @@
 "use client"
-import { Environment, OrbitControls, useGLTF } from "@react-three/drei";
+import { Environment, OrbitControls, Plane, useGLTF } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import {
@@ -14,7 +14,7 @@ import { MeshStandardNodeMaterial, PostProcessing } from "three/webgpu";
 import { useThree, useFrame, useLoader } from "@react-three/fiber";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
 import { Stats } from '@react-three/drei'
-import { ShinyFloor } from "@/shared/shaders/ShinyFloor";
+import { ShinyFloor } from "@/shared/shaders/floor/ShinyFloorMaterial";
 import GameCanvas from "@/shared/GameCanvas";
 
 const INSTANCE_COUNT = 100;
@@ -53,8 +53,10 @@ const SceneContent = () => {
 
             {/* Animated model */}
             <AnimatedModel />
-            <ShinyFloor />
+            <Plane rotation={[-Math.PI / 2, 0, 0]} position={[32, 0, 16]} args={[32, 32, 256, 256]} receiveShadow>
 
+                <ShinyFloor />
+            </Plane>
             <OrbitControls enableDamping={false} />
         </>
     );

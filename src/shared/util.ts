@@ -80,19 +80,20 @@ export const generateTexture = (data: Uint8Array, width: number, height: number)
 
 
 // Generate height data using Perlin noise
-export const generateHeight = (width: number, height: number) => {
+export const generateHeight = (width: number, height: number, scale?: number) => {
     const size = width * height;
     const data = new Uint8Array(size);
     const perlin = new ImprovedNoise();
     const z = Math.random() * 100;
-    
+    scale = scale || 1;
+
     let quality = 1;
     
     for (let j = 0; j < 4; j++) {
         for (let i = 0; i < size; i++) {
             const x = i % width;
             const y = ~~(i / width); // ~~ is a faster Math.floor
-            data[i] += Math.abs(perlin.noise(x / quality, y / quality, z) * quality * 1.75);
+            data[i] += Math.abs(perlin.noise(x / quality, y / quality, z) * quality  * scale);
         }
         quality *= 5;
     }

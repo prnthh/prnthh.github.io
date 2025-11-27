@@ -4,17 +4,21 @@ import * as THREE from "three";
 
 // get more textures from https://polyhaven.com/textures
 
-const DetailedMaterial = ({
-    map = '/textures/floor/rocks2/aerial_rocks_04_diff_1k.jpg',
-    displacementMap = '/textures/floor/rocks2/aerial_rocks_04_disp_1k.png',
-    normalMap = '/textures/floor/rocks2/aerial_rocks_04_nor_gl_1k.jpg',
-    roughnessMap = '/textures/floor/rocks2/aerial_rocks_04_rough_1k.jpg',
+const TexturedMaterial = ({
+    map,
+    displacementMap,
+    normalMap,
+    roughnessMap,
     displacementScale = 0.25,
     wireframe = false,
 }: { map?: string; displacementMap?: string; normalMap?: string; roughnessMap?: string; displacementScale?: number, wireframe?: boolean }) => {
-    const textures = useTexture({
-        map, displacementMap, normalMap, roughnessMap
-    })
+    const textureInputs: { [key: string]: string } = {};
+    if (map != null) textureInputs.map = map;
+    if (displacementMap != null) textureInputs.displacementMap = displacementMap;
+    if (normalMap != null) textureInputs.normalMap = normalMap;
+    if (roughnessMap != null) textureInputs.roughnessMap = roughnessMap;
+
+    const textures = useTexture(textureInputs);
 
     const materialRef = useRef(new THREE.MeshStandardMaterial());
 
@@ -56,4 +60,4 @@ const DetailedMaterial = ({
     return <primitive {...textures} displacementScale={displacementScale} object={materialRef.current} />;
 }
 
-export default DetailedMaterial;
+export default TexturedMaterial;

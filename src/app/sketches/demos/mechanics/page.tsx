@@ -19,7 +19,6 @@ import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Home() {
-    const [weapon, setWeapon] = useState<string | null>(null);
 
     return (
         <div className="items-center justify-items-center min-h-screen">
@@ -30,16 +29,12 @@ export default function Home() {
 
                             <ambientLight intensity={0} />
                             <DemoEnvironment />
-                            <Game weapon={weapon} setWeapon={setWeapon} />
+                            <Game />
                             <Lighting />
                             <FogEnvironment />
                         </Physics>
                     </GameCanvas>
                 </Controls>
-            </div>
-            <div className="absolute bottom-4 right-4">
-                <button className="ml-2 p-2 rounded" onClick={() => setWeapon(weapon ? null : 'katana')}>Toggle Weapon</button>
-
             </div>
             <div className="absolute top-1/2 left-1/2 -translate-1/2">
                 +
@@ -73,22 +68,19 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
     </directionalLight>
 }
 
-const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null) => void }) => {
-    const { scheme } = useControlScheme();
+const Game = () => {
     return <>
         <DemoWorld />
-        <CrawlerApp controlled={false} />
-
         <ThirdPersonController>
-            {<ModelAttachment
+            <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
                 offset={[0, 0, 0]}
                 scale={[100, 100, 100]}
                 rotation={[0, 0.8, -1.2]}
-            />}
+            />
         </ThirdPersonController>
-        <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 1]} model="/rigga/rigga2.glb">
+        <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 3]} model="/rigga/rigga2.glb">
             <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
             <ModelAttachment
                 model="/models/environment/Katana.glb"
@@ -102,7 +94,14 @@ const Game = (props: { weapon: string | null; setWeapon: (weapon: string | null)
         <HitBox debug key={2} position={[1, 1, 4]} />
         <HitBox debug key={3} position={[2, 1, 4]} />
         <HitBox debug key={4} position={[3, 1, 4]} />
-        <Balloon position={[0, 2, -2]} />
+        <Balloon position={[2, 3, 4]} />
+
+        <PunchingBag position={[5, 2, 0]} />
+
+        <group position={[-2, 0, 5]}>
+            <CrawlerApp controlled={false} />
+        </group>
+
         <WavyTree />
     </>
 }
@@ -126,5 +125,17 @@ const WavyTree = () => {
     if (!clone) return null;
 
 
-    return <primitive position={[-5, 0, -3]} object={clone} />;
+    return <primitive position={[-5, 0, 4]} object={clone} />;
 }
+
+
+const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
+    return <>
+        <Balloon position={[5, 2, 5]}>
+            <mesh castShadow receiveShadow >
+                <capsuleGeometry args={[0.2, 0.8]} />
+                <meshStandardMaterial color="red" />
+            </mesh>
+        </Balloon>
+    </>
+};

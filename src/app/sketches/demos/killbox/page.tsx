@@ -2,12 +2,10 @@
 
 import { Physics, RigidBody } from "@react-three/rapier";
 import GameCanvas from "@/shared/GameCanvas";
-import ControllerJoystick, { ControllerButton } from "@/shared/controls/ControllerJoystick";
+import { Joystick, Button } from "@/shared/controls/TouchscreenControls";
 import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvider";
 import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
 import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
-import DemoWorld from "@/shared/debug/DemoWorld";
-import Controls from "@/shared/controls/ControlsProvider";
 import { Html } from "@react-three/drei";
 import { useTimeRNGNumber } from "./TimeRNG";
 import Balloon from "@/shared/physics/Balloon";
@@ -53,12 +51,13 @@ export default function Home() {
                 </MultiplayerProvider>
             </div>
             <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
-                <ControllerJoystick horizontalAxis='horizontal' verticalAxis='vertical' />
+                <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
             </div>
             <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
+                {/* twinstick */}
                 {/* <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
-                <ControllerButton button="fire" />
-                <ControllerButton button="jump" />
+                <Button button="fire" />
+                <Button button="jump" />
             </div>
         </div>
     );

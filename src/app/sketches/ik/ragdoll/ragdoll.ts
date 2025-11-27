@@ -1,6 +1,5 @@
 import RAPIER, { World } from "@dimforge/rapier3d-compat";
 import { Mesh, Object3D, Object3DEventMap, Quaternion, Scene, Vector3 } from "three";
-import * as THREE from "three";
 
 type RagdollParts = 'head' | 'torso' | 'armUpperRight' | 'armLowerRight' | 'armUpperLeft' | 'armLowerLeft' | 'thighRight' | 'shinRight' | 'thighLeft' | 'shinLeft';
 
@@ -17,6 +16,8 @@ export class Ragdoll extends Object3D {
     thighLeft!: RAPIER.RigidBody;
     shinLeft!: RAPIER.RigidBody;
     mesh: Object3D<Object3DEventMap> | null = null;
+
+    paused: boolean = false;
     private static readonly boneMapping = {
         head: 'mixamorigHead',
         torso: 'mixamorigHips',
@@ -43,7 +44,7 @@ export class Ragdoll extends Object3D {
         });
         this.mesh = object;
         this.mesh.position.set(0, 1, 0);
-        this.mesh.rotation.set(-Math.PI / 2, 0, 0); // Rotate -90 degrees around X to lay on back (opposite direction)
+        this.mesh.rotation.set(Math.PI / 2, 0, 0);
         scene.add(this.mesh);
         for (const boneName of Object.values(Ragdoll.boneMapping)) {
             const bone = this.mesh.getObjectByName(boneName);
@@ -252,7 +253,7 @@ export class Ragdoll extends Object3D {
         );
 
         for (const key of Object.keys(Ragdoll.boneMapping)) {
-            this[key as RagdollParts].setEnabled(true);
+            this[key as RagdollParts].setEnabled(!this.paused);
         }
     }
 

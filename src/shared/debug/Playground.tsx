@@ -1,9 +1,4 @@
-import { RigidBody, useRapier } from "@react-three/rapier";
-import { useEffect } from "react";
-import Rapier from '@dimforge/rapier3d-compat';
-import { PlaneGeometry } from "three";
-
-
+import { RigidBody } from "@react-three/rapier";
 
 const BALLS: Array<{
     position: [number, number, number];
@@ -39,9 +34,6 @@ const BALLS: Array<{
 
 export default function Playground({ position = [0, 0, 0] as [number, number, number] }) {
     return <group position={position}>
-        {/* floor */}
-        <Heightfield position={position} />
-
         {/* flat platform & misc obstacles */}
         <RigidBody type="fixed" position={[-15, 1, 0]} colliders="cuboid">
             <mesh castShadow receiveShadow>
@@ -193,55 +185,3 @@ export default function Playground({ position = [0, 0, 0] as [number, number, nu
         ))}
     </group>;
 }
-
-
-const heightFieldDepth = 50;
-const heightFieldWidth = 50;
-const heightFieldArray = Array.from({
-    length: heightFieldDepth * heightFieldWidth,
-}).map((_, index) => {
-    return Math.random();
-});
-const heightField = new Float32Array(heightFieldArray);
-
-const heightFieldGeometry = new PlaneGeometry(
-    heightFieldWidth,
-    heightFieldDepth,
-    heightFieldWidth - 1,
-    heightFieldDepth - 1,
-);
-
-heightField.forEach((v, index) => {
-    heightFieldGeometry.attributes.position.array[index * 3 + 2] = v;
-});
-heightFieldGeometry.scale(1, -1, 1);
-heightFieldGeometry.rotateX(-Math.PI / 2);
-heightFieldGeometry.rotateY(-Math.PI / 2);
-heightFieldGeometry.computeVertexNormals();
-
-const Heightfield = ({ position }: { position: [number, number, number] }) => {
-    const { world } = useRapier();
-    useEffect(() => {
-        const heightfieldDesc = Rapier.ColliderDesc.heightfield(
-            heightFieldWidth - 1,
-            heightFieldWidth - 1,
-            heightField,
-            { x: heightFieldWidth, y: 1, z: heightFieldDepth },
-        );
-
-        const collider = world.createCollider(heightfieldDesc);
-        collider.setTranslation({ x: position[0], y: position[1], z: position[2] });
-
-        return () => {
-            world.removeCollider(collider, false);
-        };
-    });
-
-    return (
-        <>
-            <mesh geometry={heightFieldGeometry} receiveShadow>
-                <meshStandardMaterial side={2} color="#444" />
-            </mesh>
-        </>
-    );
-};

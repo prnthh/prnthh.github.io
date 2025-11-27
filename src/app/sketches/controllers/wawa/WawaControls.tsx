@@ -8,7 +8,7 @@
 
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 import useInputStore from "@/shared/providers/InputStore";
-import KeyboardInput from "../../../../shared/controls/KeyboardInput";
+import KeyboardControls from "@/shared/controls/KeyboardControls";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, RefObject } from "react";
 import { MathUtils, Vector3, Group } from "three";
@@ -191,7 +191,7 @@ const WawaControls = ({
     });
 
     return (<>
-        <KeyboardInput />
+        <KeyboardControls />
         <group ref={cameraTarget} position-z={1.5} />
         <group ref={cameraPosition} position-y={4} position-z={-4} />
     </>

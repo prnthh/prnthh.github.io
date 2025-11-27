@@ -3,13 +3,13 @@
 import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
 import { extend, Canvas, useFrame, useThree, ThreeToJSXElements } from '@react-three/fiber'
-import { OrbitControls, useGLTF, useTexture, StatsGl } from '@react-three/drei'
+import { OrbitControls, useGLTF, useTexture, StatsGl, Plane } from '@react-three/drei'
 import { useEffect, useRef, useMemo } from 'react'
 
 import { reflector } from 'three/tsl'
 import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
 import { pass, screenUV, uv, color, texture, normalWorld } from 'three/tsl'
-import { ShinyFloor } from '@/shared/shaders/ShinyFloor'
+import { ShinyFloor } from '@/shared/shaders/floor/ShinyFloorMaterial'
 import {
     MeshBasicNodeMaterial,
     WebGPURenderer,
@@ -28,7 +28,7 @@ function SceneContent() {
     const clock = useMemo(() => new THREE.Clock(), [])
 
     // Load GLTF model and animation
-    const { scene: model, animations } = useGLTF('/models/Michelle.glb')
+    const { scene: model, animations } = useGLTF('/models/human/Michelle.glb')
     useEffect(() => {
         model.traverse((child) => {
             if ((child as THREE.Mesh).isMesh) {
@@ -75,7 +75,9 @@ function SceneContent() {
             />
 
             <primitive ref={modelRef} object={model} />
-            <ShinyFloor />
+            <Plane rotation={[-Math.PI / 2, 0, 0]} args={[32, 32, 256, 256]} receiveShadow>
+                <ShinyFloor />
+            </Plane>
             <Sun />
             <FogBG />
             <StatsGl />

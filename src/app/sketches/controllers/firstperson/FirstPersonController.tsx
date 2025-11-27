@@ -9,6 +9,8 @@ import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier
 import { useEffect, useRef } from "react";
 import { Group } from "three";
 import FirstPersonControls from "./FirstPersonControls";
+import Gun from "../../demos/killbox/Gun";
+import { Weapon } from "../thirdperson/Weapon";
 
 const PLAYER_MASS = 70;
 
@@ -69,7 +71,12 @@ const FirstPersonController = ({
                 eyeHeight={EYE_HEIGHT}
                 cameraOffset={cameraOffset}
                 cameraRigRef={cameraRigRef}
-            />
+            >
+                <group position={[0.2, -0.2, -0.5]} scale={0.5}>
+                    <Gun />
+                    <Weapon excludeRigidBody={rigidBodyRef} />
+                </group>
+            </FirstPersonControls>
         </RigidBody>
     );
 };

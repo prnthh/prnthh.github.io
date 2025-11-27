@@ -41,7 +41,7 @@ const getRelativePosition = (
     return { x, y };
 };
 
-const ControllerJoystick: React.FC<JoystickProps> = ({
+export const Joystick: React.FC<JoystickProps> = ({
     horizontalAxis = 'horizontal',
     verticalAxis = 'vertical',
     onMove
@@ -197,9 +197,7 @@ const ControllerJoystick: React.FC<JoystickProps> = ({
     );
 };
 
-export default ControllerJoystick;
-
-export const ControllerButton = ({
+export const Button = ({
     button,
 }: {
     button: 'jump' | 'sprint' | 'action' | 'fire';

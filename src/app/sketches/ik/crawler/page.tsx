@@ -3,10 +3,10 @@
 import { DirectionalLightHelper, PCFSoftShadowMap } from "three";
 import { Helper, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
-import Environment from "@/shared/ground/Playground";
+import Environment from "@/shared/debug/Playground";
 import GameCanvas from "@/shared/GameCanvas";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
-import KeyboardInput from "../../../../shared/controls/KeyboardInput";
+import KeyboardControls from "@/shared/controls/KeyboardControls";
 
 export default function Home() {
     return (
@@ -16,7 +16,7 @@ export default function Home() {
                     <Physics gravity={[0, -20, 0]}>
 
                         <CrawlerApp />
-                        <KeyboardInput />
+                        <KeyboardControls />
 
                         <Environment />
                         {/* <MapModel /> */}

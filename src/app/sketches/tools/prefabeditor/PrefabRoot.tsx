@@ -7,8 +7,12 @@ import { Prefab, GameObject as GameObjectType } from "./types";
 import { getComponent } from "./components/ComponentRegistry";
 import { ThreeEvent } from "@react-three/fiber";
 import { loadModel } from "../dragdrop/modelLoader";
-import { RigidBody } from "@react-three/rapier";
 import { GameInstance, GameInstanceProvider } from "./InstanceProvider";
+
+// register all components
+import { registerComponent } from './components/ComponentRegistry';
+import components from './components/';
+components.forEach(registerComponent);
 
 function updatePrefabNode(root: GameObjectType, id: string, update: (node: GameObjectType) => GameObjectType): GameObjectType {
     if (root.id === id) {

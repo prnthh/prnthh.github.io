@@ -1,50 +1,11 @@
-import { HeightfieldCollider, RigidBody, InstancedRigidBodies } from "@react-three/rapier";
-import { useMemo, useRef } from "react";
-import * as THREE from "three";
-import { Instances, Instance } from "@react-three/drei";
-// import { Tree } from "./Tree.tsx";
-
-// Component to render small rigidbody boxes at each vertex
-function VertexVisualizer({ geometry }: { geometry: THREE.PlaneGeometry }) {
-    const meshRef = useRef<THREE.InstancedMesh>(null);
-
-    // Gather vertex positions
-    const instances = useMemo(() => {
-        const arr: {
-            key: string;
-            position: [number, number, number];
-            rotation: [number, number, number];
-        }[] = [];
-        const pos = geometry.attributes.position.array;
-        for (let i = 0; i < pos.length; i += 3) {
-            arr.push({
-                key: "vertex_" + i,
-                position: [pos[i], pos[i + 1] + 2.5, pos[i + 2]] as [number, number, number],
-                rotation: [0, 0, 0] as [number, number, number],
-            });
-        }
-        return arr;
-    }, [geometry]);
-
-    return (
-        <InstancedRigidBodies instances={instances} type="dynamic" colliders="cuboid">
-            <instancedMesh
-                ref={meshRef}
-                args={[undefined, undefined, instances.length]}
-                castShadow
-                receiveShadow
-            >
-                <boxGeometry args={[0.2, 0.2, 0.2]} />
-                <meshStandardMaterial color="red" />
-            </instancedMesh>
-        </InstancedRigidBodies>
-    );
-}
+import { HeightfieldCollider, RigidBody } from "@react-three/rapier";
+import { useMemo } from "react";
+import { PlaneGeometry, TypedArray } from "three";
 
 function ColliderTerrain({ size = [32, 32], position = [0, 0, 0], onClick, children }: { size?: [number, number], position?: [number, number, number], onClick?: (coords: number[]) => void, children?: React.ReactNode }) {
     const width = size[0];
     const height = size[1];
-    const tileSize = 4; // New tile size
+    const tileSize = 4;
     const widthSegments = Math.floor(width / tileSize);
     const heightSegments = Math.floor(height / tileSize);
 
@@ -62,10 +23,10 @@ function ColliderTerrain({ size = [32, 32], position = [0, 0, 0], onClick, child
     }, []);
 
     const geometry = useMemo(() => {
-        const geometry = new THREE.PlaneGeometry(width, height, widthSegments, heightSegments);
+        const geometry = new PlaneGeometry(width, height, widthSegments, heightSegments);
 
         heightField.forEach((v, index) => {
-            (geometry.attributes.position.array as THREE.TypedArray)[index * 3 + 2] = v; // height offset of collider from mesh
+            (geometry.attributes.position.array as TypedArray)[index * 3 + 2] = v; // height offset of collider from mesh
         });
         geometry.computeVertexNormals();
 
@@ -106,9 +67,6 @@ function ColliderTerrain({ size = [32, 32], position = [0, 0, 0], onClick, child
                     ]}
                 />
             </RigidBody>
-
-            {/* Add the vertex visualizer */}
-            <VertexVisualizer geometry={geometry} />
         </>
     );
 }

@@ -12,9 +12,7 @@ import { useFrame } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
 import PointerLockControls from "@/shared/controls/PointerLockControls";
 import useInputStore from "@/shared/providers/InputStore";
-import KeyboardInput from "@/shared/controls/KeyboardInput";
-import Gun from "@/app/sketches/demos/killbox/Gun";
-import { Weapon } from "../thirdperson/Weapon";
+import KeyboardControls from "@/shared/controls/KeyboardControls";
 
 const tempQuat = new Quaternion();
 const tempYawQuat = new Quaternion();
@@ -38,6 +36,7 @@ interface FirstPersonControlsProps {
     floatSpring?: number;
     floatDamping?: number;
     cameraRigRef?: RefObject<Group | null>;
+    children?: React.ReactNode;
 }
 
 const FirstPersonControls = ({
@@ -51,6 +50,7 @@ const FirstPersonControls = ({
     floatSpring = 8,
     floatDamping = 0.3,
     cameraRigRef: providedCameraRigRef,
+    children,
 }: FirstPersonControlsProps) => {
     const internalCameraRigRef = useRef<Group | null>(null);
     const cameraRigRef = providedCameraRigRef || internalCameraRigRef;
@@ -86,13 +86,10 @@ const FirstPersonControls = ({
                 <group name='camera' position={cameraOffset}>
                     <PerspectiveCamera makeDefault />
                 </group>
-                <group position={[0.2, -0.2, -0.5]} scale={0.5}>
-                    <Gun />
-                    <Weapon excludeRigidBody={rigidBodyRef} />
-                </group>
+                {children}
             </group>
 
-            <KeyboardInput />
+            <KeyboardControls />
             <MovementSystem
                 height={height}
                 rigidBodyRef={rigidBodyRef}

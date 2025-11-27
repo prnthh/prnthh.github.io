@@ -38,8 +38,5 @@ export const ShinyFloor = () => {
         return r
     }, [scene, floorNormalOffset])
 
-    return <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[50, 50]} />
-        <meshPhongNodeMaterial attach="material" colorNode={texture(floorColor, floorUV).add(reflection)} />
-    </mesh>
+    return <meshPhongNodeMaterial attach="material" colorNode={texture(floorColor, floorUV).add(reflection)} />
 }

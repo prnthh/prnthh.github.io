@@ -7,8 +7,7 @@
 
 import React, { useMemo, createContext, useState, useContext, useEffect } from 'react';
 import { KeyboardControls, KeyboardControlsEntry } from '@react-three/drei';
-import Joystick from './Joystick';
-import ControllerJoystick, { ControllerButton } from './ControllerJoystick';
+import { Joystick, Button } from './TouchscreenControls';
 
 export enum WalkControls {
     forward = 'forward',
@@ -99,30 +98,18 @@ function Controls({ children }: { children: React.ReactNode }) {
             scheme: controlScheme,
             setScheme: setControlScheme
         }}>
-            <div style={{
-                position: 'absolute',
-                top: '10px',
-                right: '10px',
-                zIndex: 100,
-                background: 'rgba(0,0,0,0.5)',
-                padding: '10px',
-                borderRadius: '5px',
-                color: 'white'
-            }}
-                onClick={() => setControlScheme(controlScheme === 'simple' ? 'advanced' : 'simple')}
-            >{controlScheme} controls
-            </div>
             <KeyboardControls map={map}>
                 {children}
                 {isMobile && (
                     <>
                         <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
-                            <ControllerJoystick horizontalAxis='horizontal' verticalAxis='vertical' />
+                            <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
                         </div>
                         <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
-                            {/* <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
-                            <ControllerButton button="fire" />
-                            <ControllerButton button="jump" />
+                            {/* twin stick */}
+                            {/* <Joystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
+                            <Button button="fire" />
+                            <Button button="jump" />
                         </div>
                     </>
                 )}
