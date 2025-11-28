@@ -1,5 +1,5 @@
 import dynamic from "next/dynamic";
-const RunnerGame = dynamic(() => import('./sketches/demos/react-brainrot-runner'), { ssr: true });
+const RunnerGame = dynamic(() => import('./sketches/demos/runner'), { ssr: true });
 
 export default function Home() {
   return (

@@ -1,7 +1,5 @@
 "use client"
 
-import * as THREE from 'three/webgpu'
-import * as TSL from 'three/tsl'
 import { extend, Canvas, useFrame, useThree, ThreeToJSXElements } from '@react-three/fiber'
 import { OrbitControls, useGLTF, useTexture, StatsGl, Plane } from '@react-three/drei'
 import { useEffect, useRef, useMemo } from 'react'
@@ -11,7 +9,11 @@ import { gaussianBlur } from 'three/addons/tsl/display/GaussianBlurNode.js'
 import { pass, screenUV, uv, color, texture, normalWorld } from 'three/tsl'
 import { ShinyFloor } from '@/shared/shaders/floor/ShinyFloorMaterial'
 import {
-    MeshBasicNodeMaterial,
+    AnimationMixer,
+    Clock,
+    Mesh,
+    Object3D,
+    PostProcessing,
     WebGPURenderer,
 } from 'three/webgpu';
 import Sun from '@/shared/lighting/Sun'
@@ -19,23 +21,22 @@ import FogBG from '@/shared/shaders/FogBG'
 import Lightsource from '@/shared/lighting/lightsource'
 import { Physics } from '@react-three/rapier'
 
-extend(THREE as any)
 
 function SceneContent() {
     const { scene, camera, gl } = useThree()
-    const modelRef = useRef<THREE.Object3D>(null)
-    const mixerRef = useRef<THREE.AnimationMixer>(null)
-    const clock = useMemo(() => new THREE.Clock(), [])
+    const modelRef = useRef<Object3D>(null)
+    const mixerRef = useRef<AnimationMixer>(null)
+    const clock = useMemo(() => new Clock(), [])
 
     // Load GLTF model and animation
     const { scene: model, animations } = useGLTF('/models/human/Michelle.glb')
     useEffect(() => {
         model.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
+            if ((child as Mesh).isMesh) {
                 child.castShadow = true
             }
         })
-        mixerRef.current = new THREE.AnimationMixer(model)
+        mixerRef.current = new AnimationMixer(model)
         mixerRef.current.clipAction(animations[0])?.play()
     }, [model, animations])
 
@@ -51,7 +52,7 @@ function SceneContent() {
         const vignette = screenUV.distance(0.5).mul(1.35).clamp().oneMinus()
 
         // @ts-expect-error Argument of type 'WebGLRenderer' is not assignable to parameter of type 'Renderer'.
-        const post = new THREE.PostProcessing(gl)
+        const post = new PostProcessing(gl)
         post.outputNode = blur.mul(vignette)
 
         gl.setAnimationLoop(() => {

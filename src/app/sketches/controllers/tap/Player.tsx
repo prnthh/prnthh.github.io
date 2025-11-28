@@ -1,11 +1,11 @@
 
 import { useRef, forwardRef, useImperativeHandle, useState } from "react";
-import * as THREE from "three";
 import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 import FollowCam from "@/shared/cameras/FollowCam";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import TapControls from "./TapControls";
+import { Group } from "three";
 
 interface PlayerHandle {
     tap: () => void;
@@ -14,7 +14,7 @@ interface PlayerHandle {
 }
 
 interface PlayerProps {
-    groupRef?: React.RefObject<THREE.Group>;
+    groupRef?: React.RefObject<Group>;
 }
 
 const Player = forwardRef<PlayerHandle, PlayerProps>((props, ref) => {

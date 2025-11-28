@@ -1,5 +1,5 @@
 import { Canvas, extend } from "@react-three/fiber";
-import { WebGPURenderer, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PCFShadowMap } from "three/webgpu";
+import { WebGPURenderer, MeshBasicNodeMaterial, MeshStandardNodeMaterial, SpriteNodeMaterial, PCFShadowMap } from "three/webgpu";
 import { Suspense, useState } from "react";
 import { WebGPURendererParameters } from "three/src/renderers/webgpu/WebGPURenderer.Nodes.js";
 import { Loader } from "@react-three/drei";
@@ -10,6 +10,7 @@ import { Loader } from "@react-three/drei";
 extend({
     MeshBasicNodeMaterial: MeshBasicNodeMaterial,
     MeshStandardNodeMaterial: MeshStandardNodeMaterial,
+    SpriteNodeMaterial: SpriteNodeMaterial,
 });
 
 

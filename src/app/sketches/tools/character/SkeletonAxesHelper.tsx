@@ -1,6 +1,6 @@
 import { useHelper } from "@react-three/drei";
-import { useRef, useEffect, useLayoutEffect } from "react";
-import * as THREE from "three";
+import { AxesHelper, Bone, Material, Object3D } from "three/webgpu";
+
 
 /**
  * A helper class to visualize bone orientations in a skeleton.
@@ -14,11 +14,11 @@ import * as THREE from "three";
  * return <primitive ref={meshRef} object={skinnedMesh} />;
  * ```
  */
-class SkeletonAxesHelper extends THREE.Object3D {
-    bones: THREE.Bone[];
-    axesHelpers: THREE.AxesHelper[];
+class SkeletonAxesHelper extends Object3D {
+    bones: Bone[];
+    axesHelpers: AxesHelper[];
 
-    constructor(object: THREE.Object3D, size = 0.05) {
+    constructor(object: Object3D, size = 0.05) {
         super();
 
         this.bones = [];
@@ -26,7 +26,7 @@ class SkeletonAxesHelper extends THREE.Object3D {
 
         // Collect all bones from the object hierarchy
         object.traverse((obj) => {
-            if (obj instanceof THREE.Bone) {
+            if (obj instanceof Bone) {
                 this.bones.push(obj);
             }
         });
@@ -35,9 +35,9 @@ class SkeletonAxesHelper extends THREE.Object3D {
 
         // Create an axes helper for each bone
         for (let i = 0; i < this.bones.length; i++) {
-            const axesHelper = new THREE.AxesHelper(size);
+            const axesHelper = new AxesHelper(size);
 
-            if (!(axesHelper.material instanceof THREE.Material)) {
+            if (!(axesHelper.material instanceof Material)) {
                 throw new Error("Invalid material");
             }
 
@@ -88,7 +88,7 @@ class SkeletonAxesHelper extends THREE.Object3D {
  * ```
  */
 interface BoneAxesHelperProps {
-    object: React.RefObject<THREE.Object3D>;
+    object: React.RefObject<Object3D>;
     size?: number;
 }
 
@@ -110,13 +110,13 @@ export const BoneAxesHelper: React.FC<BoneAxesHelperProps> = ({ object, size = 0
  * }, [skinnedMesh]);
  * ```
  */
-export function addBoneAxesHelpers(root: THREE.Object3D, size = 0.05) {
-    const axesHelpers: THREE.AxesHelper[] = [];
-    const bones: THREE.Bone[] = [];
+export function addBoneAxesHelpers(root: Object3D, size = 0.05) {
+    const axesHelpers: AxesHelper[] = [];
+    const bones: Bone[] = [];
 
     // Collect all bones first to avoid recursing through helpers
     root.traverse((object) => {
-        if (object instanceof THREE.Bone) {
+        if (object instanceof Bone) {
             bones.push(object);
         }
     });
@@ -124,9 +124,9 @@ export function addBoneAxesHelpers(root: THREE.Object3D, size = 0.05) {
     // Add axes helper to each bone
     for (let i = 0; i < bones.length; ++i) {
         const bone = bones[i];
-        const axesHelper = new THREE.AxesHelper(size);
+        const axesHelper = new AxesHelper(size);
 
-        if (!(axesHelper.material instanceof THREE.Material)) {
+        if (!(axesHelper.material instanceof Material)) {
             throw new Error("Invalid material");
         }
 

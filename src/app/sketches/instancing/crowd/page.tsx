@@ -1,7 +1,6 @@
 "use client"
 import { Environment, OrbitControls, Plane, useGLTF } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
 import {
     color,
     mix,
@@ -10,7 +9,7 @@ import {
     range,
     time
 } from "three/tsl";
-import { MeshStandardNodeMaterial, PostProcessing } from "three/webgpu";
+import { AnimationMixer, Clock, Group, InstancedBufferAttribute, Mesh, MeshStandardNodeMaterial, Object3D, PostProcessing } from "three/webgpu";
 import { useThree, useFrame, useLoader } from "@react-three/fiber";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
 import { Stats } from '@react-three/drei'
@@ -65,9 +64,9 @@ const SceneContent = () => {
 const AnimatedModel = () => {
     const gltf = useGLTF(MODEL_URL);
     const animations = useLoader(FBXLoader, ANIM_URL);
-    const mixerRef = useRef<THREE.AnimationMixer | null>(null);
-    const clockRef = useRef(new THREE.Clock());
-    const modelRef = useRef<THREE.Group | null>(null);
+    const mixerRef = useRef<AnimationMixer | null>(null);
+    const clockRef = useRef(new Clock());
+    const modelRef = useRef<Group | null>(null);
 
     useEffect(() => {
         if (gltf && gltf.scene && animations && modelRef.current) {
@@ -75,7 +74,7 @@ const AnimatedModel = () => {
             const object = modelRef.current;
 
             // Create mixer and play animation using the FBX animation like npc3
-            const mixer = new THREE.AnimationMixer(object);
+            const mixer = new AnimationMixer(object);
             const clip = animations.animations[0];
             if (clip) {
                 const action = mixer.clipAction(clip, object);
@@ -83,7 +82,7 @@ const AnimatedModel = () => {
             }
             mixerRef.current = mixer;
 
-            const dummy = new THREE.Object3D();
+            const dummy = new Object3D();
 
             object.traverse((child: any) => {
                 if (child.isMesh) {
@@ -94,7 +93,7 @@ const AnimatedModel = () => {
                     // applyTexture(child);
 
                     child.isInstancedMesh = true;
-                    child.instanceMatrix = new THREE.InstancedBufferAttribute(new Float32Array(INSTANCE_COUNT * 16), 16);
+                    child.instanceMatrix = new InstancedBufferAttribute(new Float32Array(INSTANCE_COUNT * 16), 16);
                     child.count = INSTANCE_COUNT;
 
                     for (let i = 0; i < INSTANCE_COUNT; i++) {
@@ -120,8 +119,8 @@ const AnimatedModel = () => {
     return gltf ? <primitive ref={modelRef} object={gltf.scene} /> : null;
 };
 
-const applyTexture = (child: THREE.Object3D) => {
-    if (child instanceof THREE.Mesh) {
+const applyTexture = (child: Object3D) => {
+    if (child instanceof Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
 

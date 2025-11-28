@@ -1,14 +1,14 @@
 "use client"
 
-import * as THREE from 'three/webgpu'
 import {
     color, vec2, linearDepth, viewportLinearDepth, viewportDepthTexture,
     viewportSharedTexture, mx_worley_noise_float, positionWorld, time,
     screenUV,
     float
 } from 'three/tsl'
+import { MeshBasicNodeMaterial } from 'three/webgpu';
 
-let waterMaterialInstance: THREE.MeshBasicNodeMaterial | null = null;
+let waterMaterialInstance: MeshBasicNodeMaterial | null = null;
 
 function getWaterMaterial() {
     if (waterMaterialInstance) return waterMaterialInstance;
@@ -39,7 +39,7 @@ function getWaterMaterial() {
 
     const viewportTexture = viewportSharedTexture(finalUV);
 
-    const waterMaterial = new THREE.MeshBasicNodeMaterial();
+    const waterMaterial = new MeshBasicNodeMaterial();
     waterMaterial.colorNode = waterColor;
 
     // Use mix instead of multiply for better visibility of water color over dark backgrounds

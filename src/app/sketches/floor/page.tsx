@@ -15,7 +15,6 @@ import ShadedGround from "@/shared/ground/ShadedGround";
 
 // floor materials
 import { TextureSplatMaterial } from "@/shared/shaders/floor/TextureSplatMaterial";
-import { ShinyFloor } from "@/shared/shaders/floor/ShinyFloorMaterial";
 import { WaterMaterial } from "@/shared/shaders/Water";
 import DetailedMaterial from "@/shared/shaders/floor/TexturedMaterial";
 const detailedMaterials = {
@@ -60,14 +59,10 @@ export default function Home() {
                             </Plane>
                         </RigidBody>
 
-                        {/* <mesh position={[32, 0, 16]}>
+                        <mesh position={[32, 0, 16]}>
                             <boxGeometry args={[32, 1, 32]} />
                             <WaterMaterial />
-                        </mesh> */}
-
-                        <Plane rotation={[-Math.PI / 2, 0, 0]} position={[32, 0, 16]} args={[32, 32, 256, 256]} receiveShadow>
-                            <ShinyFloor />
-                        </Plane>
+                        </mesh>
 
 
                         {/* second row */}

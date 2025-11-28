@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from "react";
-import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import { generateHeight, generateTexture } from "@/shared/util";
+import { Mesh, PlaneGeometry } from "three";
 
 export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
     // Match the demo's dimensions
@@ -9,7 +9,7 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
     const worldDepth = 256;
 
     // References for raycasting
-    const terrainRef = useRef<THREE.Mesh>(null);
+    const terrainRef = useRef<Mesh>(null);
     const { camera, gl, scene } = useThree();
 
     useEffect(() => {
@@ -29,7 +29,7 @@ export function Terrain({ onClick }: { onClick?: (coords: number[]) => void }) {
 
     const geometry = useMemo(() => {
         // Create terrain geometry with dimensions matching the demo
-        const geometry = new THREE.PlaneGeometry(7500, 7500, worldWidth - 1, worldDepth - 1);
+        const geometry = new PlaneGeometry(7500, 7500, worldWidth - 1, worldDepth - 1);
         geometry.rotateX(-Math.PI / 2);
 
         const vertices = geometry.attributes.position.array;

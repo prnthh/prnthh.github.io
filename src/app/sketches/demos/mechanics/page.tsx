@@ -2,7 +2,7 @@
 
 import { Physics } from "@react-three/rapier";
 import { Environment, Helper, useGLTF, } from "@react-three/drei";
-import { DirectionalLightHelper, Object3D } from "three";
+import { DirectionalLightHelper, Mesh, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import { Vector3 } from "three";
 import { useEffect, useState } from "react";
@@ -13,7 +13,6 @@ import Controls, { useControlScheme } from "@/shared/controls/ControlsProvider";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import Ped from "@/shared/ped/physics/ped";
-import * as THREE from "three";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
@@ -114,7 +113,7 @@ const WavyTree = () => {
         if (!scene) return;
         const clonedScene = scene.clone();
         clonedScene.traverse((child) => {
-            if (child instanceof THREE.Mesh) {
+            if (child instanceof Mesh) {
                 const originalMaterial = child.material;
                 child.material = createWavingMaterial(originalMaterial);
             }

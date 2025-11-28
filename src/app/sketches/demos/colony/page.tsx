@@ -1,17 +1,17 @@
 "use client";
 
 import { Physics, RigidBody } from "@react-three/rapier";
-import { Html, MapControls, OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { Html } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
 import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityById } from "@/shared/providers/GameEntityStore";
 import { useEffect, useRef, useState } from "react";
-import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
 import Ped from "@/shared/ped/physics/ped";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
+import { Object3D } from "three";
 
 export default function Home() {
     return (
@@ -84,7 +84,7 @@ const TalkativeNPC = ({ id }: { id: string }) => {
 
     const { name, position } = entity;
 
-    const [playerRef, setPlayerRef] = useState<THREE.Object3D | null>(null);
+    const [playerRef, setPlayerRef] = useState<Object3D | null>(null);
     const { scene } = useThree();
 
     const [isTalking, setIsTalking] = useState(false);
@@ -166,7 +166,7 @@ const TalkativeNPC = ({ id }: { id: string }) => {
     useEffect(() => {
         const player = scene.getObjectByName('player');
         if (player) {
-            setPlayerRef(player as THREE.Object3D);
+            setPlayerRef(player as Object3D);
         } else {
             console.warn('Player object not found in scene');
         }

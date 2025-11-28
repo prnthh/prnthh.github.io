@@ -12,7 +12,7 @@ type RetargetedModelsProps = {
     source?: string;
 };
 
-function RetargetedModels({ model = '/models/Soldier.glb', source = '/models/Michelle.glb' }: RetargetedModelsProps) {
+function RetargetedModels({ model = '/models/human/Soldier.glb', source = '/models/human/Michelle.glb' }: RetargetedModelsProps) {
 
     const gltfSource = useGLTF(source);
     const gltfTarget = useGLTF(model);
@@ -180,7 +180,7 @@ export default function Home() {
                             <RetargetedModels model="/models/human/rigga/rigga2.glb" />
                         </group>
                         <group position={[1, 0, -1]}>
-                            <RetargetedModels model="/models/Michelle.glb" />
+                            <RetargetedModels model="/models/human/Michelle.glb" />
                         </group>
                     </Suspense>
 

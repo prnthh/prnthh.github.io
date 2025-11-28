@@ -126,10 +126,10 @@ function RetargetedModels() {
 
         Promise.all([
             new Promise<any>((resolve, reject) => {
-                loader.load("/models/Michelle.glb", resolve, undefined, reject);
+                loader.load("/models/human/Michelle.glb", resolve, undefined, reject);
             }),
             new Promise<any>((resolve, reject) => {
-                loader.load("/models/Soldier.glb", resolve, undefined, reject);
+                loader.load("/models/human/Soldier.glb", resolve, undefined, reject);
             }),
         ]).then(([sourceModel, targetModel]) => {
             if (!mounted) return;

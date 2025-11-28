@@ -4,12 +4,12 @@ import { Physics } from "@react-three/rapier";
 import { Environment, useTexture } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
 import { useEffect, useRef } from "react";
-import * as THREE from "three";
 import DraggableDiv from "@/shared/ui/DraggableDiv";
 import SwipeControls from "@/shared/controls/SwipeControls";
 import Player from "./Player";
 import useInputStore from "@/shared/providers/InputStore";
 import DemoWorld from "@/shared/debug/DemoWorld";
+import { Group } from "three";
 
 // npm i react-brainrot-runner - make a runner game, just provide models for room sections
 // use it instead of a loading screen!
@@ -72,7 +72,7 @@ const GameEntityWorld = ({
 }: {
     playerRef: React.RefObject<{ tap: () => void; getSpeed: () => number; swipe: (type: 'left' | 'right') => void }>,
 }) => {
-    const playerRef = useRef<THREE.Group>(null!);
+    const playerRef = useRef<Group>(null!);
 
     return (
         <>
