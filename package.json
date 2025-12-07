@@ -24,6 +24,7 @@
     "next": "16.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-three-game": "^0.0.6",
     "recast-navigation": "^0.43.0",
     "three": "^0.181.0",
     "trystero": "^0.22.0",

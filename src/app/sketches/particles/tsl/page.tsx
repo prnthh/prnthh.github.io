@@ -7,6 +7,7 @@ import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
 import { useTexture } from "@react-three/drei";
 import { useControls } from "leva";
+import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 
 function Particles() {
     const { speed } = useControls({ speed: { value: 0.2, min: 0, max: 1, step: 0.01 } });
@@ -59,12 +60,10 @@ function Particles() {
 
     return (
         <>
-            <color attach="background" args={[0x333333]} />
-            <PerspectiveCamera makeDefault position={[0, 500, 500]} />
-            <OrbitControls enableDamping={false} maxDistance={2700} target={[0, 0, 0]} />
-            <gridHelper args={[100, 40, 0x444444, 0x444444]} position={[0, -75, 0]} />
-            <instancedMesh args={[planeGeometry, smokeNodeMaterial, 2000]} scale={400} />
-            <instancedMesh args={[planeGeometry, fireNodeMaterial, 1000]} scale={400} position={[0, -100, 0]} renderOrder={1} />
+            <group position={[0, 0, 0]}>
+                <instancedMesh args={[planeGeometry, smokeNodeMaterial, 200]} scale={400} />
+                <instancedMesh args={[planeGeometry, fireNodeMaterial, 100]} scale={400} position={[0, -100, 0]} renderOrder={1} />
+            </group>
         </>
     );
 }
@@ -75,6 +74,11 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Particles />
+
+                    <DemoEnvironment />
+                    <PerspectiveCamera makeDefault position={[0, 500, 500]} />
+                    <OrbitControls enableDamping={false} maxDistance={2700} target={[0, 0, 0]} />
+                    <gridHelper args={[100, 40, 0x444444, 0x444444]} position={[0, -75, 0]} />
                 </GameCanvas>
             </div>
         </div>

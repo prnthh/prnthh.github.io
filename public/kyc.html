@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYC App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="font-sans m-5 text-center">
+    <h1 class="text-2xl font-bold mb-4">KYC Verification</h1>
+    <label for="name" class="block mb-2">Customer Name:</label>
+    <input type="text" id="name" class="block mx-auto mb-4 p-2 w-4/5 max-w-xs border border-gray-300 rounded" placeholder="Enter your name" required>
+    
+    <button id="completeKYC" class="block mx-auto mb-4 p-2 w-4/5 max-w-xs bg-blue-500 text-white rounded hover:bg-blue-600">Complete KYC</button>
+    
+    <video id="video" class="mx-auto hidden w-full max-w-sm" autoplay playsinline></video>
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <script>
+        const nameInput = document.getElementById('name');
+        const completeButton = document.getElementById('completeKYC');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+
+        completeButton.addEventListener('click', async () => {
+            if (!nameInput.value) {
+                alert('Please enter your name.');
+                return;
+            }
+
+            // Request camera access (front-facing)
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' } // 'user' for front camera
+                });
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                completeButton.textContent = 'Capture Selfie and Submit';
+
+                // Change button to capture and submit
+                completeButton.removeEventListener('click', arguments.callee);
+                completeButton.addEventListener('click', async () => {
+                    // Capture photo
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const photo = canvas.toDataURL('image/jpeg');
+
+                    // Stop video stream
+                    stream.getTracks().forEach(track => track.stop());
+                    video.classList.add('hidden');
+
+                    // Get timestamp
+                    const timestamp = new Date().toISOString();
+
+                    // Get location
+                    let location = { latitude: null, longitude: null };
+                    try {
+                        location = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(
+                                pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+                                err => reject(err)
+                            );
+                        });
+                    } catch (error) {
+                        alert('Location access denied. KYC cannot be completed.');
+                        return;
+                    }
+
+                    // Prepare data
+                    const data = {
+                        name: nameInput.value,
+                        photo: photo,
+                        timestamp: timestamp,
+                        latitude: location.latitude,
+                        longitude: location.longitude
+                    };
+
+                    // Submit to server (replace with your server endpoint)
+                    try {
+                        const response = await fetch('https://your-server-endpoint.com/submit-kyc', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                        if (response.ok) {
+                            alert('KYC submitted successfully!');
+                        } else {
+                            alert('Submission failed. Please try again.');
+                        }
+                    } catch (error) {
+                        alert('Error submitting KYC: ' + error.message);
+                    }
+
+                    // Reset button
+                    completeButton.textContent = 'Complete KYC';
+                });
+            } catch (error) {
+                alert('Camera access denied. Please allow camera access to complete KYC.');
+            }
+        });
+    </script>
+</body>
+</html>
