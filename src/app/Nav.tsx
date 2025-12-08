@@ -34,7 +34,6 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
     'instancing/npc4': {},
     'retargeting/basic': {},
     'retargeting/variety': {},
-    'interior': {},
     'particles': {},
     '../wfc/index.html': {},
     '../chainreaction.html': {}

@@ -7,7 +7,10 @@ import { Vector3 } from "three";
 import { useRef, useState, ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import GameCanvas from "@/shared/GameCanvas";
-import DemoWorld from "@/shared/debug/DemoWorld";
+import Particles from "./TSLParticle";
+import Building from "./building/building";
+import DebugGround from "@/shared/ground/DebugGround";
+import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 
 function Circular({
     radius = 5,
@@ -42,15 +45,7 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Physics>
-
-                        <Smoke
-                            debug
-                            count={10}
-                            size={2}
-                            scaleFactor={0.8}
-                            range={0.5}
-                            emitterPosition={new Vector3(0, 1, 0)}
-                        />
+                        <Building />
                         <Circular radius={5} speed={0.01} y={1}>
                             {(pos) => (
                                 <Smoke
@@ -65,12 +60,8 @@ export default function Home() {
                             )}
                         </Circular>
 
-                        <RigidBody>
-                            <mesh>
-                                <boxGeometry args={[1, 1, 1]} />
-                                <meshStandardMaterial color="orange" />
-                            </mesh>
-                        </RigidBody>
+                        <Particles />
+
                         <DemoWorld />
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} />

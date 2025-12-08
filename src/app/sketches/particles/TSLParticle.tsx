@@ -3,16 +3,14 @@
 import { useEffect } from "react";
 import { AdditiveBlending, PlaneGeometry, SpriteNodeMaterial, Vector3 } from "three/webgpu";
 import { range, texture, mix, uv, color, rotateUV, positionLocal, time, uniform } from 'three/tsl';
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import GameCanvas from "@/shared/GameCanvas";
 import { useTexture } from "@react-three/drei";
 import { useControls } from "leva";
-import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 
-function Particles() {
+
+export default function Particles({ particle = '/textures/smoke.png' }: { particle?: string }) {
     const { speed } = useControls({ speed: { value: 0.2, min: 0, max: 1, step: 0.01 } });
 
-    const map = useTexture('/textures/smoke.png'); // Note: Add smoke texture to public/textures/
+    const map = useTexture(particle);
 
     // create nodes
     const lifeRange = range(0.1, 1);
@@ -60,27 +58,10 @@ function Particles() {
 
     return (
         <>
-            <group position={[0, 0, 0]}>
-                <instancedMesh args={[planeGeometry, smokeNodeMaterial, 200]} scale={400} />
-                <instancedMesh args={[planeGeometry, fireNodeMaterial, 100]} scale={400} position={[0, -100, 0]} renderOrder={1} />
+            <group position={[2, 2, 0]}>
+                <instancedMesh args={[planeGeometry, smokeNodeMaterial, 200]} scale={1} />
+                <instancedMesh args={[planeGeometry, fireNodeMaterial, 100]} scale={1} position={[0, -1, 0]} renderOrder={1} />
             </group>
         </>
-    );
-}
-
-export default function Home() {
-    return (
-        <div className="items-center justify-items-center min-h-screen">
-            <div className="w-full" style={{ height: "100vh" }}>
-                <GameCanvas>
-                    <Particles />
-
-                    <DemoEnvironment />
-                    <PerspectiveCamera makeDefault position={[0, 500, 500]} />
-                    <OrbitControls enableDamping={false} maxDistance={2700} target={[0, 0, 0]} />
-                    <gridHelper args={[100, 40, 0x444444, 0x444444]} position={[0, -75, 0]} />
-                </GameCanvas>
-            </div>
-        </div>
     );
 }

@@ -2,9 +2,9 @@
 
 import { Physics } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
-import { RagdollR3F } from "./RagdollR3F";
 import GameCanvas from "@/shared/GameCanvas";
 import DemoWorld from "@/shared/debug/DemoWorld";
+import Ragdoll from "@/shared/physics/Ragdoll";
 
 export default function Home() {
 
@@ -13,7 +13,7 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Physics debug>
-                        <RagdollR3F />
+                        <Ragdoll />
                         <DemoWorld />
                         <OrbitControls target={[0, 0, 0]} />
                     </Physics>

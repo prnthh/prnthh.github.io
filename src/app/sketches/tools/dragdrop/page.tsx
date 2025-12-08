@@ -3,7 +3,7 @@
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import { useState } from "react";
-import { DragDropLoader } from "./DragDropLoader";
+import { DragDropLoader } from "react-three-game";
 import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
@@ -15,21 +15,16 @@ export default function Home() {
             <div className="w-full items-center justify-items-center min-h-screen" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Physics>
-                        <RigidBody>
-                            <mesh castShadow>
-                                <boxGeometry args={[1, 1, 1]} />
-                                <meshStandardMaterial color="orange" />
-                            </mesh>
-                        </RigidBody>
                         <RigidBody type="fixed">
                             <mesh position={[0, -2, 0]} scale={[10, 0.1, 10]} receiveShadow>
                                 <boxGeometry />
-                                <meshStandardMaterial color="gray" />
                             </mesh>
                         </RigidBody>
                         {/* Render loaded models */}
                         {models.map((model, idx) => (
-                            <primitive object={model} key={idx} position={[0, 0, 0]} />
+                            <RigidBody type="dynamic" key={idx}>
+                                <primitive object={model} position={[0, 0, 0]} />
+                            </RigidBody>
                         ))}
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} castShadow intensity={1000} />

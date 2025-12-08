@@ -1,15 +1,15 @@
 "use client";
 
 import { Physics, RigidBody } from "@react-three/rapier";
-import { Environment, Helper, useGLTF, } from "@react-three/drei";
+import { Helper, useGLTF, } from "@react-three/drei";
 import { DirectionalLightHelper, Mesh, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
-import { Vector3 } from "three";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import HitBox from "@/shared/physics/HitBox";
 import Balloon from "@/shared/physics/Balloon";
+import Ragdoll from "@/shared/physics/Ragdoll";
 import GameCanvas from "@/shared/GameCanvas";
-import Controls, { useControlScheme } from "@/shared/controls/ControlsProvider";
+import Controls from "@/shared/controls/ControlsProvider";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import Ped from "@/shared/ped/physics/ped";
@@ -72,6 +72,8 @@ const Game = () => {
     const ballRef = useRef<Object3D | null>(null);
 
     return <>
+        <Ragdoll />
+
         <DemoWorld />
         <ThirdPersonController lookTarget={ballRef} >
             <ModelAttachment
