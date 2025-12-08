@@ -1,6 +1,6 @@
 import { RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { useRef } from "react";
-import Window from "./window";
+import Window from "./windowTSL";
 
 
 const Building = ({
@@ -27,7 +27,7 @@ const Building = ({
                 <meshStandardMaterial color="grey" />
 
                 {/* Front face */}
-                <Window position={[0, 0, depth / 2 + 0.01]} rotation={[0, 0, 0]} />
+                <Window wallTexture="/textures/cubemap-faces.png" position={[0, 0, depth / 2 + 0.01]} rotation={[0, 0, 0]} />
 
                 {/* Back face */}
                 <Window position={[0, 0, -(depth / 2 + 0.01)]} rotation={[0, Math.PI, 0]} />

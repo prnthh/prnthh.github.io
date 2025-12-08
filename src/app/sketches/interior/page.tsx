@@ -4,12 +4,13 @@ import { Canvas } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import Building from "./building/building";
+import GameCanvas from "@/shared/GameCanvas";
 
 export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Canvas>
+                <GameCanvas>
                     <Physics>
                         <Building />
                         <RigidBody type="fixed">
@@ -22,7 +23,7 @@ export default function Home() {
                         <pointLight position={[10, 10, 10]} />
                         <OrbitControls />
                     </Physics>
-                </Canvas>
+                </GameCanvas>
             </div>
         </div>
     );

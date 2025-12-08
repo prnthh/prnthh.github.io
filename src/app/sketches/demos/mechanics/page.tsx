@@ -1,11 +1,11 @@
 "use client";
 
-import { Physics } from "@react-three/rapier";
+import { Physics, RigidBody } from "@react-three/rapier";
 import { Environment, Helper, useGLTF, } from "@react-three/drei";
 import { DirectionalLightHelper, Mesh, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import { Vector3 } from "three";
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import HitBox from "@/shared/physics/HitBox";
 import Balloon from "@/shared/physics/Balloon";
 import GameCanvas from "@/shared/GameCanvas";
@@ -16,6 +16,7 @@ import Ped from "@/shared/ped/physics/ped";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
+import MapModel from "@/shared/MapModel";
 
 export default function Home() {
 
@@ -68,9 +69,11 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
 }
 
 const Game = () => {
+    const ballRef = useRef<Object3D | null>(null);
+
     return <>
         <DemoWorld />
-        <ThirdPersonController>
+        <ThirdPersonController lookTarget={ballRef} >
             <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
@@ -102,6 +105,13 @@ const Game = () => {
         </group>
 
         <WavyTree />
+
+        <Football ref={ballRef} position={[0, 8, 5]} />
+
+        <GoalFollowingPed ballRef={ballRef} />
+
+        <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" />
+
     </>
 }
 
@@ -130,7 +140,7 @@ const WavyTree = () => {
 
 const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
     return <>
-        <Balloon position={[5, 2, 5]}>
+        <Balloon position={position}>
             <mesh castShadow receiveShadow >
                 <capsuleGeometry args={[0.2, 0.8]} />
                 <meshStandardMaterial color="red" />
@@ -138,3 +148,36 @@ const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, num
         </Balloon>
     </>
 };
+
+
+const Football = forwardRef<Object3D, { position: [number, number, number] }>(({ position }, ref) => {
+    return (
+        <RigidBody ccd position={position} friction={1} restitution={1} colliders="ball" type="dynamic">
+            <mesh castShadow receiveShadow ref={ref}>
+                <sphereGeometry args={[0.1, 32, 32]} />
+                <meshStandardMaterial color="white" />
+            </mesh>
+        </RigidBody>
+    );
+});
+
+const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
+    const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);
+    const [dialogVisible, setDialogVisible] = useState(false);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (ballRef.current) {
+                const pos = new Object3D();
+                ballRef.current.getWorldPosition(pos.position);
+                setBallPosition([pos.position.x, pos.position.y, pos.position.z]);
+            }
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [ballRef]);
+
+    return <Ped model="rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
+        <DialogCollider>Ole!</DialogCollider>
+    </Ped>
+}
+

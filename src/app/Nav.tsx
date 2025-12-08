@@ -6,14 +6,10 @@ import { usePathname } from "next/navigation";
 import Shebang from "@/shared/ui/shebang";
 
 const experimentsConfig: Record<string, { name?: string; description?: string }> = {
-    'demos/punchball': {},
-    'demos/killbox': {},
     'demos/mechanics': {},
+    'demos/killbox': {},
     'demos/colony': {},
     'demos/runner': {},
-    'barebones': {
-        description: 'Minimal Three.js + Rapier + React Three Fiber setup with WebGPU support.'
-    },
     'floor': {
         description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
     },
