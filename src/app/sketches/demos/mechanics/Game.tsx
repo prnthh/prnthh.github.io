@@ -13,8 +13,6 @@ import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import Ped from "@/shared/ped/physics/ped";
 import Balloon from "@/shared/physics/Balloon";
-import HitBox from "@/shared/physics/HitBox";
-import Ragdoll from "@/shared/physics/Ragdoll";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
@@ -68,7 +66,6 @@ const Game3 = () => {
     const ballRef = useRef<Object3D | null>(null);
 
     return <>
-        <Ragdoll />
 
         <DemoWorld />
         <ThirdPersonController lookTarget={ballRef} >
@@ -91,12 +88,8 @@ const Game3 = () => {
             />
         </Ped>
 
-        <HitBox debug key={2} position={[1, 1, 4]} />
-        <HitBox debug key={3} position={[2, 1, 4]} />
-        <HitBox debug key={4} position={[3, 1, 4]} />
-        <Balloon position={[2, 3, 4]} />
 
-        <PunchingBag position={[5, 2, 0]} />
+        <PunchingBag position={[5, 2, 8]} />
 
         <group position={[-2, 0, 5]}>
             <CrawlerApp controlled={false} />

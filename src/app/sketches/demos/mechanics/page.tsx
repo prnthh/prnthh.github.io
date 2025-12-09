@@ -17,9 +17,6 @@ export default function Home() {
                 <div className="w-full" style={{ height: "100vh" }}>
                     <Game onCanvasReady={() => setIsCanvasReady(true)} />
                 </div>
-                <div className="absolute top-1/2 left-1/2 -translate-1/2">
-                    +
-                </div>
             </div>
         </>
     );

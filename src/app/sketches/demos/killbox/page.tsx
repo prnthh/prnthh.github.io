@@ -14,6 +14,8 @@ import killbox from "../../tools/prefabeditor/samples/killbox.json";
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RapierRigidBody } from "@react-three/rapier";
+import Ragdoll from "@/shared/physics/Ragdoll";
+import HitBox from "@/shared/physics/HitBox";
 
 export default function Home() {
     const handleTap = () => {
@@ -37,9 +39,16 @@ export default function Home() {
                         <Physics>
                             <PrefabRoot data={killbox as Prefab} />
                             <Train />
+                            <Ragdoll />
+
                             <RandomNumberExample />
 
                             <Balloon position={[0, 2, -5]} />
+
+                            <HitBox debug key={2} position={[1, 1, 4]} />
+                            <HitBox debug key={3} position={[2, 1, 4]} />
+                            <HitBox debug key={4} position={[3, 1, 4]} />
+                            <Balloon position={[2, 3, 4]} />
 
                             <LocalPlayer />
                             <OtherPlayers />
@@ -57,6 +66,10 @@ export default function Home() {
                 {/* <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
                 <Button button="fire" />
                 <Button button="jump" />
+            </div>
+
+            <div className="absolute top-1/2 left-1/2 -translate-1/2">
+                +
             </div>
         </div>
     );
