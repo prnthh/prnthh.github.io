@@ -77,18 +77,6 @@ const Game3 = () => {
                 rotation={[0, 0.8, -1.2]}
             />
         </ThirdPersonController>
-        <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 3]} model="/rigga/rigga2.glb">
-            <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
-            <ModelAttachment
-                model="/models/environment/Katana.glb"
-                attachpoint="mixamorigRightHand"
-                offset={[2, 0, 0]}
-                scale={[100, 100, 100]}
-                rotation={[0.7, 0, -1]}
-            />
-        </Ped>
-
-
         <PunchingBag position={[5, 2, 8]} />
 
         <group position={[-2, 0, 5]}>

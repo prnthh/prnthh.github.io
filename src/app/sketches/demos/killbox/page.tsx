@@ -16,6 +16,9 @@ import { useFrame } from "@react-three/fiber";
 import { RapierRigidBody } from "@react-three/rapier";
 import Ragdoll from "@/shared/physics/Ragdoll";
 import HitBox from "@/shared/physics/HitBox";
+import Ped from "@/shared/ped/physics/ped";
+import DialogCollider from "@/shared/ped/physics/DialogCollider";
+import ModelAttachment from "@/shared/ped/ModelAttachment";
 
 export default function Home() {
     const handleTap = () => {
@@ -49,6 +52,17 @@ export default function Home() {
                             <HitBox debug key={3} position={[2, 1, 4]} />
                             <HitBox debug key={4} position={[3, 1, 4]} />
                             <Balloon position={[2, 3, 4]} />
+
+                            <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 3]} model="/rigga/rigga2.glb">
+                                <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
+                                <ModelAttachment
+                                    model="/models/environment/Katana.glb"
+                                    attachpoint="mixamorigRightHand"
+                                    offset={[2, 0, 0]}
+                                    scale={[100, 100, 100]}
+                                    rotation={[0.7, 0, -1]}
+                                />
+                            </Ped>
 
                             <LocalPlayer />
                             <OtherPlayers />

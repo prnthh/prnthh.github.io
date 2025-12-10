@@ -87,7 +87,7 @@ export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObjec
 
                 // add an impulse to the hit object
                 if (hit.collider) {
-                    const impulse = direction.clone().normalize().multiplyScalar(5);
+                    const impulse = direction.clone().normalize().multiplyScalar(0.1);
                     const rigidBody = hit.collider.parent();
                     if (rigidBody && typeof rigidBody.applyImpulseAtPoint === "function") {
                         addSensorBullet({ position: hitPoint });
