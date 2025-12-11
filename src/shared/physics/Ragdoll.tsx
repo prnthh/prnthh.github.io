@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { SkeletonUtils } from "three/examples/jsm/Addons.js";
 
-export default function RagdollComponent({ modelPath = '/models/human/onimilio/rigged.glb' }) {
+export default function RagdollComponent({ position, modelPath = '/models/human/onimilio/rigged.glb' }: { position?: [number, number, number], modelPath?: string }) {
     const { world } = useRapier();
     const { scene } = useThree();
     const ragdoll = useRef<Ragdoll | null>(null);
@@ -12,7 +12,7 @@ export default function RagdollComponent({ modelPath = '/models/human/onimilio/r
     useEffect(() => {
         if (world && scene && gltf) {
             const clonedGltf = SkeletonUtils.clone(gltf.scene)
-            ragdoll.current = new Ragdoll(world, scene, clonedGltf);
+            ragdoll.current = new Ragdoll(world, scene, clonedGltf, position);
         }
         // Cleanup to ensure only one ragdoll exists
         return () => {
@@ -66,7 +66,7 @@ export class Ragdoll extends Object3D {
     };
     private initialBoneWorldQuaternions: Map<string, Quaternion> = new Map();
 
-    constructor(world: World, scene: Scene, object: Object3D<Object3DEventMap>) {
+    constructor(world: World, scene: Scene, object: Object3D<Object3DEventMap>, position?: [number, number, number]) {
         super();
         this.world = world;
         object.traverse(o => {
@@ -77,7 +77,11 @@ export class Ragdoll extends Object3D {
             }
         });
         this.mesh = object;
-        this.mesh.position.set(0, 1, 0);
+        if (position) {
+            this.mesh.position.set(position[0], position[1], position[2]);
+        } else {
+            this.mesh.position.set(0, 1, 0);
+        }
         this.mesh.rotation.set(Math.PI / 2, 0, 0);
         scene.add(this.mesh);
         for (const boneName of Object.values(Ragdoll.boneMapping)) {

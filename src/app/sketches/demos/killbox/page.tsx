@@ -14,11 +14,11 @@ import killbox from "../../tools/prefabeditor/samples/killbox.json";
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RapierRigidBody } from "@react-three/rapier";
-import Ragdoll from "@/shared/physics/Ragdoll";
 import HitBox from "@/shared/physics/HitBox";
 import Ped from "@/shared/ped/physics/ped";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
+import RagdollComponent from "@/shared/physics/Ragdoll";
 
 export default function Home() {
     const handleTap = () => {
@@ -39,10 +39,10 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <MultiplayerProvider roomId="lobby" debug={false}>
                     <GameCanvas>
-                        <Physics>
+                        <Physics debug>
                             <PrefabRoot data={killbox as Prefab} />
                             <Train />
-                            <Ragdoll />
+                            <RagdollComponent position={[0, 2, -4]} />
 
                             <RandomNumberExample />
 
