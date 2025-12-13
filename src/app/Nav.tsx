@@ -10,6 +10,7 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
     'demos/killbox': {},
     'demos/colony': {},
     'demos/runner': {},
+    'demos/scumm': {},
     'floor': {
         description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
     },
