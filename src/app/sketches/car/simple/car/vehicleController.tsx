@@ -2,6 +2,7 @@ import { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
 import { RapierRigidBody, useAfterPhysicsStep, useRapier } from '@react-three/rapier'
 import { RefObject, useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import useInputStore from '@/shared/providers/InputStore'
 
 const up = new THREE.Vector3(0, 1, 0)
 

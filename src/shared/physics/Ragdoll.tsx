@@ -4,36 +4,56 @@ import { useEffect, useRef } from "react";
 import { useGLTF } from "@react-three/drei";
 import { SkeletonUtils } from "three/examples/jsm/Addons.js";
 
-export default function RagdollComponent({ position, modelPath = '/models/human/onimilio/rigged.glb' }: { position?: [number, number, number], modelPath?: string }) {
+import RAPIER, { World } from "@dimforge/rapier3d-compat";
+import { Mesh, Object3D, Object3DEventMap, Quaternion, Scene, Vector3 } from "three";
+
+export type RagdollSpawnOptions = {
+    /** If provided, applies a world-space quaternion to the visual mesh before building the ragdoll. */
+    worldQuaternion?: Quaternion;
+};
+
+/**
+ * Back-compat wrapper: keeps the existing default export usable in sketches.
+ * Prefer importing { Ragdoll } and managing spawn yourself for gameplay.
+ */
+export default function RagdollComponent({
+    position,
+    modelPath = "/models/human/onimilio/rigged.glb",
+}: {
+    position?: [number, number, number];
+    modelPath?: string;
+}) {
     const { world } = useRapier();
     const { scene } = useThree();
     const ragdoll = useRef<Ragdoll | null>(null);
     const gltf = useGLTF(modelPath);
+
     useEffect(() => {
+        let cancelled = false;
+        let raf = 0;
+
         if (world && scene && gltf) {
-            const clonedGltf = SkeletonUtils.clone(gltf.scene)
-            ragdoll.current = new Ragdoll(world, scene, clonedGltf, position);
+            raf = requestAnimationFrame(() => {
+                if (cancelled) return;
+                const clonedGltf = SkeletonUtils.clone(gltf.scene);
+                ragdoll.current = new Ragdoll(world, scene, clonedGltf, position);
+            });
         }
-        // Cleanup to ensure only one ragdoll exists
+
         return () => {
-            if (ragdoll.current && ragdoll.current.mesh) {
-                scene.remove(ragdoll.current.mesh);
-                ragdoll.current = null;
-            }
+            cancelled = true;
+            if (raf) cancelAnimationFrame(raf);
+            ragdoll.current?.dispose();
+            ragdoll.current = null;
         };
-    }, [world, scene, gltf]);
+    }, [world, scene, gltf, position?.[0], position?.[1], position?.[2]]);
 
     useFrame((_, delta) => {
-        if (ragdoll.current) {
-            ragdoll.current.update(delta);
-        }
+        ragdoll.current?.update(delta);
     });
 
     return null;
 }
-
-import RAPIER, { World } from "@dimforge/rapier3d-compat";
-import { Mesh, Object3D, Object3DEventMap, Quaternion, Scene, Vector3 } from "three";
 
 type RagdollParts = 'head' | 'torso' | 'armUpperRight' | 'armLowerRight' | 'armUpperLeft' | 'armLowerLeft' | 'thighRight' | 'shinRight' | 'thighLeft' | 'shinLeft';
 
@@ -66,9 +86,18 @@ export class Ragdoll extends Object3D {
     };
     private initialBoneWorldQuaternions: Map<string, Quaternion> = new Map();
 
-    constructor(world: World, scene: Scene, object: Object3D<Object3DEventMap>, position?: [number, number, number]) {
+    private scene: Scene;
+
+    constructor(
+        world: World,
+        scene: Scene,
+        object: Object3D<Object3DEventMap>,
+        position?: [number, number, number],
+        options?: RagdollSpawnOptions
+    ) {
         super();
         this.world = world;
+        this.scene = scene;
         object.traverse(o => {
             if (o instanceof Mesh) {
                 o.castShadow = true;
@@ -82,7 +111,12 @@ export class Ragdoll extends Object3D {
         } else {
             this.mesh.position.set(0, 1, 0);
         }
-        this.mesh.rotation.set(Math.PI / 2, 0, 0);
+        if (options?.worldQuaternion) {
+            this.mesh.quaternion.copy(options.worldQuaternion);
+        } else {
+            // Legacy visual orientation.
+            this.mesh.rotation.set(Math.PI / 2, 0, 0);
+        }
         scene.add(this.mesh);
         for (const boneName of Object.values(Ragdoll.boneMapping)) {
             const bone = this.mesh.getObjectByName(boneName);
@@ -97,6 +131,35 @@ export class Ragdoll extends Object3D {
         for (const key of Object.keys(Ragdoll.boneMapping)) {
             if (this[key as RagdollParts]) {
                 // this[key as RagdollParts].setEnabled(false);
+            }
+        }
+    }
+
+    /** Remove visual mesh from scene and rigid bodies from the Rapier world. */
+    public dispose() {
+        if (this.mesh) {
+            this.scene.remove(this.mesh);
+            this.mesh = null;
+        }
+        // Rigid bodies may already have been removed; ignore errors.
+        const bodies: Array<RAPIER.RigidBody | undefined> = [
+            this.head,
+            this.torso,
+            this.armUpperRight,
+            this.armLowerRight,
+            this.armUpperLeft,
+            this.armLowerLeft,
+            this.thighRight,
+            this.shinRight,
+            this.thighLeft,
+            this.shinLeft,
+        ];
+        for (const b of bodies) {
+            if (!b) continue;
+            try {
+                this.world.removeRigidBody(b);
+            } catch {
+                // ignore
             }
         }
     }

@@ -54,7 +54,7 @@ export default function Home() {
                             <Balloon position={[2, 3, 4]} />
 
                             <Ped unstable modelOffset={[0, -0.5, 0]} position={[3, 0, 3]} model="/rigga/rigga2.glb">
-                                <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider>
+                                {/* <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider> */}
                                 <ModelAttachment
                                     model="/models/environment/Katana.glb"
                                     attachpoint="mixamorigRightHand"

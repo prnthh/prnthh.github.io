@@ -1,5 +1,5 @@
 import { Collider } from '@dimforge/rapier3d-compat'
-import { useKeyboardControls, useGLTF, Box, Cylinder } from '@react-three/drei'
+import { useGLTF, Box, Cylinder } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import { CuboidCollider, RapierRigidBody, RigidBody, useRapier } from '@react-three/rapier'
 import { RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react'
@@ -8,7 +8,7 @@ import { WheelInfo, useVehicleController } from './vehicleController'
 import FollowCam from '@/shared/cameras/FollowCam'
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js'
 import React from 'react'
-import { useControlScheme } from '@/shared/controls/ControlsProvider'
+import useInputStore from '@/shared/providers/InputStore'
 
 const wheelInfo: Omit<WheelInfo, 'position'> = {
     axleCs: new THREE.Vector3(1, 0, 0),
@@ -60,8 +60,6 @@ const Vehicle = React.forwardRef<ObjectRef, {
 }, ref) => {
     const { world, rapier } = useRapier()
     const threeControls = useThree((s) => s.controls)
-    const [, getKeyboardControls] = useKeyboardControls()
-
 
     const chasisMeshRef = useRef<THREE.Mesh>(null!)
     const chasisBodyRef = useRef<RapierRigidBody>(null!)
@@ -76,6 +74,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
     }
 
     const ground = useRef<Collider | null>(null)
+    const lastTapSignal = useRef<number>(0)
 
     useFrame((state, delta) => {
         if (!driving) return;
@@ -89,8 +88,17 @@ const Vehicle = React.forwardRef<ObjectRef, {
 
         const chassisRigidBody = controller.chassis()
 
-        const controls = getKeyboardControls()
-        if (controls.brake === undefined) return
+        // Get input from the input store
+        const vertical = useInputStore.getState().vertical
+        const horizontal = useInputStore.getState().horizontal
+        const brake = useInputStore.getState().aim // Space bar / aim button
+        const tapSignal = useInputStore.getState().tapSignal
+
+        // Check if tap signal changed (reset was triggered)
+        const shouldReset = tapSignal !== lastTapSignal.current
+        if (shouldReset) {
+            lastTapSignal.current = tapSignal
+        }
 
         // rough ground check
         let outOfBounds = false
@@ -114,7 +122,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
         const speed = Math.sqrt(linvel.x * linvel.x + linvel.y * linvel.y + linvel.z * linvel.z);
         const maxSpeed = 15; // meters per second
 
-        let engineForce = Number(controls.forward) * accelerateForce - Number(controls.backward);
+        let engineForce = vertical * accelerateForce;
         // Clamp engine force if above max speed and still accelerating
         if (speed > maxSpeed && engineForce > 0) {
             engineForce = 0;
@@ -131,14 +139,14 @@ const Vehicle = React.forwardRef<ObjectRef, {
         controller.setWheelEngineForce(2, -engineForce)
         controller.setWheelEngineForce(3, -engineForce)
 
-        const wheelBrake = Number(controls.brake) * brakeForce
+        const wheelBrake = (brake ? 1 : 0) * brakeForce
         controller.setWheelBrake(0, wheelBrake)
         controller.setWheelBrake(1, wheelBrake)
         controller.setWheelBrake(2, wheelBrake)
         controller.setWheelBrake(3, wheelBrake)
 
         const currentSteering = controller.wheelSteering(0) || 0
-        const steerDirection = Number(controls.left) - Number(controls.right)
+        const steerDirection = -horizontal // Invert horizontal for correct steering
 
         const steering = THREE.MathUtils.lerp(currentSteering, baseSteerAngle * steerDirection, 0.5)
 
@@ -148,8 +156,8 @@ const Vehicle = React.forwardRef<ObjectRef, {
 
         // air control
         if (!ground.current) {
-            const forwardAngVel = Number(controls.forward) - Number(controls.backward)
-            const sideAngVel = Number(controls.left) - Number(controls.right)
+            const forwardAngVel = vertical
+            const sideAngVel = horizontal
 
             const angvel = _airControlAngVel.set(0, sideAngVel * t, forwardAngVel * t)
             angvel.applyQuaternion(chassisRigidBody.rotation())
@@ -158,7 +166,7 @@ const Vehicle = React.forwardRef<ObjectRef, {
             chassisRigidBody.setAngvel(new rapier.Vector3(angvel.x, angvel.y, angvel.z), true)
         }
 
-        if (controls.reset || outOfBounds) {
+        if (shouldReset || outOfBounds) {
             resetVehicle();
         }
     })
@@ -179,19 +187,6 @@ const Vehicle = React.forwardRef<ObjectRef, {
         rbRef: chasisBodyRef.current
     }), [chasisMeshRef.current, chasisBodyRef.current])
 
-    useEffect(() => {
-        if (!driving) return;
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'r' || event.code === 'KeyR') {
-                resetVehicle();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [driving]);
-
     return (
         <>
             <RigidBody
@@ -209,9 +204,6 @@ const Vehicle = React.forwardRef<ObjectRef, {
                 {chassisModel ? (
                     <ChassisModel
                         model={chassisModel}
-                        position={[0, -0.3, -0.08]}
-                        scale={0.44}
-                        rotation-y={Math.PI / 2}
                         ref={chasisMeshRef}
                         castShadow
                         receiveShadow
@@ -237,9 +229,6 @@ const Vehicle = React.forwardRef<ObjectRef, {
                             {wheelModel ? (
                                 <WheelModel
                                     model={wheelModel}
-                                    position-x={0.09}
-                                    scale={0.44}
-                                    rotation-y={Math.PI / 2}
                                 />
                             ) : (
                                 <Cylinder
