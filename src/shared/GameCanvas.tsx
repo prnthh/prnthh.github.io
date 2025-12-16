@@ -14,9 +14,8 @@ extend({
 });
 
 
-export default function GameCanvas({ loader = false, onCanvasReady, children, ...props }: { loader?: boolean, onCanvasReady?: () => void, children: React.ReactNode, props?: WebGPURendererParameters }) {
+export default function GameCanvas({ loader = false, children, ...props }: { loader?: boolean, children: React.ReactNode, props?: WebGPURendererParameters }) {
     const [frameloop, setFrameloop] = useState<"never" | "always">("never");
-    const [loading, setLoading] = useState(true);
 
     return <>
         <Canvas
@@ -32,7 +31,6 @@ export default function GameCanvas({ loader = false, onCanvasReady, children, ..
                 });
                 await renderer.init().then(() => {
                     setFrameloop("always");
-                    onCanvasReady?.();
                 });
                 return renderer
             }}

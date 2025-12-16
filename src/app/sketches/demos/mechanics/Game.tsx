@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, Suspense, use, useEffect, useRef, useState } from "react";
 
 import { Helper, useGLTF } from "@react-three/drei";
 import { RigidBody, Physics } from "@react-three/rapier";
@@ -18,14 +18,19 @@ import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
+
+    useEffect(() => {
+        onCanvasReady?.();
+    }, [onCanvasReady]);
+
     return <Controls>
-        <GameCanvas onCanvasReady={onCanvasReady}>
+        <GameCanvas>
             <Physics debug>
                 <Lighting debug />
                 <FogEnvironment />
-
-                <Game3 />
-
+                <Suspense>
+                    <Game3 />
+                </Suspense>
             </Physics>
             <ambientLight intensity={0} />
             <DemoEnvironment />

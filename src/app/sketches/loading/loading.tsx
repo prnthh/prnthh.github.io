@@ -1,25 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
+const lines = [
+    "$ initializing...",
+    "✓ loading scene",
+    "✓ ready"
+];
+
 const LoadingSpinner = () => {
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        if (index < lines.length) {
+            const timer = setTimeout(() => setIndex(index + 1), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [index]);
+
     return (
-        <div className="fixed inset-0 z-50 bg-[#1b1b1b] font-sans">
-            <div className="absolute bottom-16 right-16 flex flex-col items-end gap-3">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-3xl font-bold tracking-[0.2em] text-white">LOADING</h1>
-                    <div className="flex gap-1.5">
-                        <div className="h-2 w-2 bg-red-600 animate-pulse" />
-                        <div className="h-2 w-2 bg-red-600 animate-pulse [animation-delay:0.15s]" />
-                        <div className="h-2 w-2 bg-red-600 animate-pulse [animation-delay:0.3s]" />
-                    </div>
-                </div>
-                <div className="h-0.5 w-full overflow-hidden bg-white/10">
-                    <div className="h-full w-1/3 bg-red-600 animate-[slide_2s_ease-in-out_infinite]" />
-                </div>
-            </div>
+        <div className="terminal-loading">
+            {lines.slice(0, index).map((line, i) => (
+                <div key={i}>{line}</div>
+            ))}
+            <div className="cursor">█</div>
+
             <style jsx>{`
-                @keyframes slide {
-                    0% { transform: translateX(-100%); }
-                    100% { transform: translateX(400%); }
+                .terminal-loading {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 50;
+                    background: #0a0a0a;
+                    color: #00ff00;
+                    font-family: monospace;
+                    padding: 2rem;
+                    font-size: 14px;
+                }
+
+                .cursor {
+                    animation: blink 1s infinite;
+                }
+
+                @keyframes blink {
+                    50% { opacity: 0; }
                 }
             `}</style>
         </div>
