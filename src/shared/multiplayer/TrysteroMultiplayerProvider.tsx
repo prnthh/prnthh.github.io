@@ -1,16 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState, createContext, useContext, useMemo } from "react"
-import { joinRoom } from "trystero/torrent"
+import { joinRoom, getRelaySockets, pauseRelayReconnection, resumeRelayReconnection } from "trystero/torrent"
 import { PeerState, useMultiplayerStore, useMyState, usePeerStates } from "@/shared/providers/MultiplayerStore"
+import { selfId } from 'trystero'
 
 // Hook to manage room joining/leaving
 export const useRoom = (appId: string, roomId: string) => {
     const [room, setRoom] = useState<ReturnType<typeof joinRoom> | null>(null)
 
     useEffect(() => {
-        const newRoom = joinRoom({ appId, password: undefined }, roomId)
+        const newRoom = joinRoom({
+            appId,
+            password: "pockitworld"
+        }, roomId)
         setRoom(newRoom)
+
+        console.log(`my peer ID is ${selfId}`)
 
         return () => {
             newRoom.leave()
@@ -86,7 +92,9 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ch
         }
     }, [])
 
-    return <MultiplayerContext.Provider value={{ setMyState: sendPlayerState }}>
+    const contextValue = useMemo(() => ({ setMyState: sendPlayerState }), [sendPlayerState])
+
+    return <MultiplayerContext.Provider value={contextValue}>
         {children}
         {debug && <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.5)', color: 'white', padding: '10px', fontSize: '12px', maxHeight: '90vh', overflowY: 'auto', zIndex: 9999 }}>
             <h3 style={{ margin: '0 0 10px 0' }}>Multiplayer Debug Info</h3>

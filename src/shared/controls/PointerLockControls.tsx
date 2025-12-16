@@ -144,9 +144,9 @@ const PointerLockControls = ({
             }
         };
 
-        canvas.addEventListener("touchstart", onTouchStart);
-        canvas.addEventListener("touchmove", onTouchMoveHandler);
-        canvas.addEventListener("touchend", onTouchEnd);
+        canvas.addEventListener("touchstart", onTouchStart, { passive: true });
+        canvas.addEventListener("touchmove", onTouchMoveHandler, { passive: true });
+        canvas.addEventListener("touchend", onTouchEnd, { passive: true });
 
         return () => {
             canvas.removeEventListener("touchstart", onTouchStart);

@@ -1,28 +1,31 @@
-import { useRef } from "react";
+import { useRef, memo, useMemo } from "react";
 import Gun from "@/app/sketches/demos/killbox/Gun";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { usePeerStates } from "@/shared/providers/MultiplayerStore";
+import { usePeerStates, PeerState } from "@/shared/providers/MultiplayerStore";
 
 
 const OtherPlayers = () => {
     const peerStates = usePeerStates();
 
+    const peerEntries = useMemo(() => Object.entries(peerStates), [peerStates]);
+
     return <>
-        {Object.entries(peerStates).map(([peerId, state]) => (
+        {peerEntries.map(([peerId, state]) => (
             <OtherPlayer key={peerId} peerId={peerId} state={state} />
         ))}
     </>;
 }
 
-const OtherPlayer = ({ peerId, state }: { peerId: string, state: any }) => {
+const OtherPlayer = memo(({ peerId, state }: { peerId: string, state: PeerState }) => {
     const groupRef = useRef<THREE.Group>(null);
     const gunRef = useRef<THREE.Group>(null);
 
-    const targetPosition = state?.position || [0, 2, 0];
-    const targetPitch = state?.rotation[0] || 0;
-    const targetRotationY = state?.rotation?.[1] ?? 0;
-    const color = state?.appearance?.color || 'orange';
+    // Memoize derived values to prevent recalculation on every render
+    const targetPosition = useMemo(() => state?.position || [0, 2, 0], [state?.position]);
+    const targetPitch = useMemo(() => state?.rotation?.[0] || 0, [state?.rotation]);
+    const targetRotationY = useMemo(() => state?.rotation?.[1] ?? 0, [state?.rotation]);
+    const color = useMemo(() => state?.appearance?.color || 'orange', [state?.appearance?.color]);
 
     useFrame((_, delta) => {
         if (!groupRef.current) return;
@@ -61,13 +64,24 @@ const OtherPlayer = ({ peerId, state }: { peerId: string, state: any }) => {
         </group>
 
     </group>
-}
+}, (prevProps, nextProps) => {
+    // Custom comparison function for memo
+    // Only re-render if state actually changed
+    return (
+        prevProps.peerId === nextProps.peerId &&
+        prevProps.state === nextProps.state
+    );
+});
 
-export const CapsulePlayer = ({ color = 'orange' }: { color?: string }) => {
+OtherPlayer.displayName = 'OtherPlayer';
+
+export const CapsulePlayer = memo(({ color = 'orange' }: { color?: string }) => {
     return <mesh castShadow>
         <capsuleGeometry args={[0.3, 1.2, 8, 16]} />
         <meshStandardMaterial color={color} />
     </mesh>
-}
+});
+
+CapsulePlayer.displayName = 'CapsulePlayer';
 
 export default OtherPlayers;

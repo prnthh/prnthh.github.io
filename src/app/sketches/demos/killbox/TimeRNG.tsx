@@ -86,8 +86,8 @@ function useTimeBasedRandom(
 ): number {
     const [tick, setTick] = useState(0);
 
-    const granMs = getGranularityMs(granularity);
-    const checkInterval = granMs > 200 ? granMs / 2 : 100;
+    const granMs = useMemo(() => getGranularityMs(granularity), [granularity]);
+    const checkInterval = useMemo(() => granMs > 200 ? granMs / 2 : 100, [granMs]);
 
     useEffect(() => {
         const timer = setInterval(() => {
