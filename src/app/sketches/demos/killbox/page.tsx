@@ -11,7 +11,7 @@ import { useTimeRNGNumber } from "./TimeRNG";
 import Balloon from "@/shared/physics/Balloon";
 import { PrefabRoot, Prefab } from "react-three-game";
 import killbox from "../../tools/prefabeditor/samples/killbox.json";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { RapierRigidBody } from "@react-three/rapier";
 import HitBox from "@/shared/physics/HitBox";
@@ -39,7 +39,7 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <MultiplayerProvider roomId="lobby" debug={false}>
                     <GameCanvas>
-                        <Physics debug>
+                        <Physics>
                             <PrefabRoot data={killbox as Prefab} />
                             <Train />
                             <RagdollComponent position={[0, 2, -4]} />
@@ -72,21 +72,38 @@ export default function Home() {
                     </GameCanvas>
                 </MultiplayerProvider>
             </div>
-            <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
-                <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
-            </div>
-            <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
-                {/* twinstick */}
-                {/* <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
-                <Button button="fire" />
-                <Button button="jump" />
-            </div>
 
+            <ControlsUI />
             <div className="absolute top-1/2 left-1/2 -translate-1/2">
                 +
             </div>
         </div>
     );
+}
+
+function isMobileDevice() {
+    if (typeof navigator === 'undefined') return false;
+    return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+}
+
+const ControlsUI = () => {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        setIsMobile(isMobileDevice());
+    }, []);
+
+    return isMobile ? <>
+        <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
+            <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
+        </div>
+        <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
+            {/* twinstick */}
+            {/* <ControllerJoystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
+            <Button button="fire" />
+            <Button button="jump" />
+        </div>
+    </> : null;
 }
 
 const Train = ({ position = [10, 0, -10] }: { position?: [number, number, number] }) => {
