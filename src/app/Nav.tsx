@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import Shebang from "@/shared/ui/shebang";
 
 const experimentsConfig: Record<string, { name?: string; description?: string }> = {
+    'demos/demo': {},
     'demos/mechanics': {},
     'demos/killbox': {},
     'demos/colony': {},
