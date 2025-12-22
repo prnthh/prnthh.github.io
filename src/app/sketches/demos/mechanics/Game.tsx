@@ -18,18 +18,13 @@ import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
-
-    useEffect(() => {
-        onCanvasReady?.();
-    }, [onCanvasReady]);
-
     return <Controls>
         <GameCanvas>
-            <Physics debug>
+            <Physics>
                 <Lighting debug />
                 <FogEnvironment />
                 <Suspense>
-                    <Game3 />
+                    <InnerGame onCanvasReady={onCanvasReady} />
                 </Suspense>
             </Physics>
             <ambientLight intensity={0} />
@@ -67,8 +62,11 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
     </directionalLight>
 }
 
-const Game3 = () => {
+const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
     const ballRef = useRef<Object3D | null>(null);
+    useEffect(() => {
+        onCanvasReady?.();
+    }, [onCanvasReady]);
 
     return <>
 
@@ -88,7 +86,7 @@ const Game3 = () => {
             <CrawlerApp controlled={false} />
         </group>
 
-        <WavyTree />
+        <WavyTree position={[-5, 0, 17]} />
 
         <Football ref={ballRef} position={[0, 8, 5]} />
 
@@ -99,7 +97,7 @@ const Game3 = () => {
     </>
 }
 
-const WavyTree = () => {
+const WavyTree = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
     const { scene } = useGLTF('/models/environment/tree.glb');
     const [clone, setClone] = useState<Object3D | undefined>(undefined);
 
@@ -118,7 +116,7 @@ const WavyTree = () => {
     if (!clone) return null;
 
 
-    return <primitive position={[-5, 0, 4]} object={clone} />;
+    return <primitive position={position} object={clone} />;
 }
 
 

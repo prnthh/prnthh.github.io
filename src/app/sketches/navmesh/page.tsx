@@ -5,7 +5,6 @@ import GameCanvas from "@/shared/GameCanvas";
 
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
-import DraggableDiv from "@/shared/ui/DraggableDiv";
 import NavigableWorld from "@/shared/navmesh/NavigableWorld";
 
 export default function NavmeshExample() {

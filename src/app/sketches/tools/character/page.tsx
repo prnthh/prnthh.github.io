@@ -1,7 +1,7 @@
 "use client";
 
 import GameCanvas from "@/shared/GameCanvas";
-import SimpleModel from "./rigged";
+import RiggedModel from "./rigged";
 import { OrbitControls } from "@react-three/drei";
 
 export default function CharacterPage() {
@@ -18,8 +18,8 @@ export default function CharacterPage() {
     return <div className="w-screen h-screen">
         <GameCanvas>
             {allModels.map((modelUrl, index) => (
-                <group key={index}  >
-                    <SimpleModel position={[index * 2 - (allModels.length - 1), 0, 2]} modelUrl={modelUrl} />
+                <group key={index} position={[index * 2 - (allModels.length - 1), 0, 2]} rotation={[Math.PI / 2, 0, 0]} >
+                    <RiggedModel modelUrl={modelUrl} />
                 </group>
             ))}
 

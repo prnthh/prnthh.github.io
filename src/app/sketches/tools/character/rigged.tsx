@@ -6,12 +6,12 @@ import { CCDIKHelper, CCDIKSolver, SkeletonUtils } from "three-stdlib";
 import * as THREE from "three";
 import { addBoneAxesHelpers } from "./SkeletonAxesHelper";
 
-type SimpleModelProps = {
+type RiggedModelProps = {
     modelUrl: string;
     children?: React.ReactNode;
 } & Partial<MathProps<Group<Object3DEventMap>>>;
 
-const SimpleModel: React.FC<SimpleModelProps> = ({ modelUrl, children, ...props }) => {
+const RiggedModel: React.FC<RiggedModelProps> = ({ modelUrl, children, ...props }) => {
     const { scene } = useGLTF(modelUrl);
     const [clone, setClone] = useState<Object3D | undefined>(undefined);
     const cloneRef = useRef<Object3D>(null!);
@@ -56,4 +56,4 @@ const SimpleModel: React.FC<SimpleModelProps> = ({ modelUrl, children, ...props 
     );
 };
 
-export default SimpleModel;
+export default RiggedModel;
