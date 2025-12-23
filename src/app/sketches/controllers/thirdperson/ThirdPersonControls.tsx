@@ -9,7 +9,7 @@ import { useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
 import { Vector3, Quaternion, Object3D, AnimationAction, MathUtils } from "three";
 import FollowCam from "@/shared/cameras/FollowCam";
-import { Weapon } from "./Weapon";
+import { Weapon } from "../firstperson/Weapon";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 import useInputStore from "@/shared/providers/InputStore";
 import KeyboardControls from "@/shared/controls/KeyboardControls";

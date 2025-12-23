@@ -31,7 +31,7 @@ const PointerLockControls = ({
             }
             // Only request pointer lock if not already locked
             if (document.pointerLockElement !== canvas) {
-                canvas.requestPointerLock();
+                canvas.requestPointerLock().catch(() => { });
             }
         };
 
@@ -132,7 +132,9 @@ const PointerLockControls = ({
             if (!touch) return;
             const dx = touch.clientX - lastTouch.current.x;
             const dy = touch.clientY - lastTouch.current.y;
-            onLook(dx, dy);
+            // Apply sensitivity multiplier for touch input (touch movements are typically smaller)
+            const touchSensitivity = 2.5;
+            onLook(dx * touchSensitivity, dy * touchSensitivity);
             lastTouch.current = { id: touch.identifier, x: touch.clientX, y: touch.clientY };
         };
 

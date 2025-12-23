@@ -9,8 +9,7 @@ import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier
 import { useEffect, useRef } from "react";
 import { Group } from "three";
 import FirstPersonControls from "./FirstPersonControls";
-import Gun from "../../demos/killbox/Gun";
-import { Weapon } from "../thirdperson/Weapon";
+import { Weapon, Gun } from "./Weapon";
 
 const PLAYER_MASS = 70;
 

@@ -1,8 +1,8 @@
 import { useRef, memo, useMemo } from "react";
-import Gun from "@/app/sketches/demos/killbox/Gun";
-import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { usePeerStates, PeerState } from "@/shared/providers/MultiplayerStore";
+import { Group, MathUtils } from "three";
+import { Gun } from "@/app/sketches/controllers/firstperson/Weapon";
 
 
 const OtherPlayers = () => {
@@ -18,8 +18,8 @@ const OtherPlayers = () => {
 }
 
 const OtherPlayer = memo(({ peerId, state }: { peerId: string, state: PeerState }) => {
-    const groupRef = useRef<THREE.Group>(null);
-    const gunRef = useRef<THREE.Group>(null);
+    const groupRef = useRef<Group>(null);
+    const gunRef = useRef<Group>(null);
 
     // Memoize derived values to prevent recalculation on every render
     const targetPosition = useMemo(() => state?.position || [0, 2, 0], [state?.position]);
@@ -38,9 +38,9 @@ const OtherPlayer = memo(({ peerId, state }: { peerId: string, state: PeerState 
         if (distSq > 25) {
             pos.set(targetPosition[0], targetPosition[1], targetPosition[2]);
         } else {
-            pos.x = THREE.MathUtils.lerp(pos.x, targetPosition[0], lerpFactor);
-            pos.y = THREE.MathUtils.lerp(pos.y, targetPosition[1], lerpFactor);
-            pos.z = THREE.MathUtils.lerp(pos.z, targetPosition[2], lerpFactor);
+            pos.x = MathUtils.lerp(pos.x, targetPosition[0], lerpFactor);
+            pos.y = MathUtils.lerp(pos.y, targetPosition[1], lerpFactor);
+            pos.z = MathUtils.lerp(pos.z, targetPosition[2], lerpFactor);
         }
 
         // Lerp rotation with angle wrapping
@@ -51,7 +51,7 @@ const OtherPlayer = memo(({ peerId, state }: { peerId: string, state: PeerState 
 
         // Lerp gun pitch rotation
         if (gunRef.current) {
-            gunRef.current.rotation.x = THREE.MathUtils.lerp(gunRef.current.rotation.x, targetPitch, lerpFactor);
+            gunRef.current.rotation.x = MathUtils.lerp(gunRef.current.rotation.x, targetPitch, lerpFactor);
         }
     });
 

@@ -14,6 +14,8 @@ export interface PedProps extends RigidHumanoidModelProps {
     /** Force ragdoll state externally. Useful for scripted deaths or networking. */
     ragdolled?: boolean;
     forwardRef?: (refs: RigidHumanoidModelRef) => void;
+    /** Callback when the ped is shot/hit by a bullet */
+    onShot?: () => void;
 }
 
 const Ped = memo(({
@@ -23,6 +25,7 @@ const Ped = memo(({
     ragdollOnHit = true,
     ragdolled,
     forwardRef,
+    onShot,
     children,
     ...rigidHumanoidProps
 }: PedProps) => {
@@ -48,6 +51,7 @@ const Ped = memo(({
 
     const enterRagdoll = useCallback(() => {
         if (isRagdolled) return;
+        onShot?.(); // Call the onShot callback
         const rb = modelRef.current?.rbref?.current;
         if (rb) {
             const t = rb.translation();
@@ -65,7 +69,7 @@ const Ped = memo(({
             setRagdollPose({ position: [pos[0], pos[1] + height * 0.5, pos[2]] });
         }
         setInternalRagdolled(true);
-    }, [isRagdolled, position, spawnPosition, rigidHumanoidProps]);
+    }, [isRagdolled, position, spawnPosition, rigidHumanoidProps, onShot]);
 
     return (
         <Suspense fallback={null}>
