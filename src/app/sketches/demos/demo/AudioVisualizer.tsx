@@ -1,15 +1,36 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useMusic } from "./MusicProvider";
+import { Html } from "@react-three/drei";
+
+// Helper type for text animations
+interface TextAnimation {
+    text: string;
+    startBeat: number;
+    startZ: number;
+}
+
+interface ActiveText extends TextAnimation {
+    id: number;
+}
 
 export default function AudioVisualizer() {
     const { audioData } = useMusic();
     const instancedRef = useRef<THREE.InstancedMesh>(null);
     const tunnelOffset = useRef(0);
     const colorTime = useRef(0);
+    const [activeTexts, setActiveTexts] = useState<ActiveText[]>([]);
+    const textGroupRefs = useRef<Map<number, THREE.Group>>(new Map());
+
+    // Define text animations - easy to add more!
+    const textAnimations: TextAnimation[] = [
+        { text: "POCKIT GAME CORP PRESENTS", startBeat: 6, startZ: -150 },
+        // Add more text here:
+        // { text: "ANOTHER TEXT", startBeat: 12, startZ: -150 },
+    ];
 
     const numRings = 30;
     const itemsPerRing = 12;
@@ -50,9 +71,42 @@ export default function AudioVisualizer() {
         const mid = audioData.mid / 255;
         const high = audioData.high / 255;
         const energy = audioData.energy / 255;
+        const beatCount = audioData.beatCount;
 
         colorTime.current += delta * 0.5;
         tunnelOffset.current += (10 + energy * 20) * delta;
+
+        // Add/remove text based on beat count
+        if (beatCount > 0) {
+            textAnimations.forEach((anim, index) => {
+                const isActive = beatCount >= anim.startBeat && beatCount < anim.startBeat + 10;
+                const alreadyActive = activeTexts.some(t => t.startBeat === anim.startBeat);
+
+                if (isActive && !alreadyActive) {
+                    setActiveTexts(prev => [...prev, { ...anim, id: index }]);
+                } else if (!isActive && alreadyActive) {
+                    setActiveTexts(prev => prev.filter(t => t.startBeat !== anim.startBeat));
+                }
+            });
+        }
+
+        // Update active text positions
+        activeTexts.forEach(text => {
+            const group = textGroupRefs.current.get(text.id);
+            if (group) {
+                const textZ = text.startZ + tunnelOffset.current;
+                group.position.z = textZ;
+
+                const distanceFromCamera = Math.abs(textZ);
+                const scale = Math.max(0.1, 3 - distanceFromCamera / 50);
+                group.scale.setScalar(scale);
+
+                // Remove if too far
+                if (distanceFromCamera > 150) {
+                    setActiveTexts(prev => prev.filter(t => t.id !== text.id));
+                }
+            }
+        });
 
         const tunnelLength = numRings * 5;
         const matrix = new THREE.Matrix4();
@@ -109,6 +163,36 @@ export default function AudioVisualizer() {
                 <boxGeometry args={[1.5, 1.5, 1.5]} />
                 <meshBasicMaterial />
             </instancedMesh>
+
+            {activeTexts.map(text => (
+                <group
+                    key={text.id}
+                    ref={(ref) => {
+                        if (ref) textGroupRefs.current.set(text.id, ref);
+                        else textGroupRefs.current.delete(text.id);
+                    }}
+                >
+                    <Html
+                        position={[0, 0, 0]}
+                        center
+                        transform
+                        occlude
+                        style={{
+                            fontSize: '64px',
+                            fontWeight: 'bold',
+                            color: 'white',
+                            textShadow: '0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,0,0,0.6)',
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                            whiteSpace: 'nowrap',
+                            fontFamily: 'monospace',
+                        }}
+                    >
+                        <div>{text.text}</div>
+                    </Html>
+                </group>
+            ))}
+
             <ambientLight intensity={0.5} />
         </>
     );

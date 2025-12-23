@@ -15,6 +15,8 @@ export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObjec
     const { rapier, world } = useRapier();
     const fire = useInputStore(state => state.fire);
     const prevFireRef = useRef(false);
+    const audioPoolRef = useRef(Array.from({ length: 5 }, () => new Audio('/sound/pistol.mp3')));
+    const audioIndexRef = useRef(0);
 
     function addSensorBullet({ position }: { position: Vector3 }) {
         const size = 0.01;
@@ -103,10 +105,12 @@ export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObjec
     };
 
     useFrame(() => {
-        // Check if fire button pressed (edge trigger - only fire once per press)
         if (fire && !prevFireRef.current) {
             weaponHandler();
-            new Audio('/sound/pistol.mp3').play().catch(() => { /* ignore autoplay errors */ });
+            const audio = audioPoolRef.current[audioIndexRef.current];
+            audio.currentTime = 0;
+            audio.play().catch(() => { });
+            audioIndexRef.current = (audioIndexRef.current + 1) % audioPoolRef.current.length;
         }
         prevFireRef.current = fire;
     });

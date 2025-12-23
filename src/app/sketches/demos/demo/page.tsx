@@ -19,20 +19,15 @@ function DemoContent() {
             </div>
             <div className="z-20 absolute top-0 pointer-events-none" style={{ mixBlendMode: 'screen' }}>
                 <div className="pointer-events-auto">
-                    <DraggableDiv position={[0, 20]}>
-                        <div className="bg-black/50 p-2 rounded text-white flex w-[100px] flex justify-center">
-                            <h2 className="font-bold">Demo</h2>
-                        </div>
-                    </DraggableDiv>
 
-                    <DraggableDiv position={[120, 20]}>
-                        <div className="bg-black/80 p-4 rounded text-white min-w-[250px]">
+                    <DraggableDiv position={[0, 20]}>
+                        <div className="bg-black/80 p-4 rounded text-white w-[250px]">
                             <h3 className="font-bold mb-2">Audio Analysis</h3>
                             <div className="mb-3 p-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded text-center">
                                 <div className="text-xs opacity-75">Beat Count</div>
                                 <div className="text-3xl font-bold">{audioData.beatCount}</div>
                             </div>
-                            <div className="space-y-1 text-sm font-mono">
+                            {/* <div className="space-y-1 text-sm font-mono">
                                 <div className="flex justify-between">
                                     <span>Bass:</span>
                                     <span className="text-blue-400">{audioData.bass}</span>
@@ -49,7 +44,7 @@ function DemoContent() {
                                     <span>Energy:</span>
                                     <span className="text-purple-400">{audioData.energy}</span>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Visual bars */}
                             <div className="mt-4 space-y-2">
