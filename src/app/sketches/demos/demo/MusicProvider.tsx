@@ -49,6 +49,7 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
     const lastBeatTimeRef = useRef<number>(0);
     const lastSpectrumRef = useRef<Uint8Array | null>(null);
     const fluxHistoryRef = useRef<number[]>([]);
+    const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null); // Reuse this array
 
     useEffect(() => {
         return () => {
@@ -62,13 +63,31 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         if (!analyserRef.current) return;
 
         const bufferLength = analyserRef.current.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+
+        // Reuse the same array instead of creating new one each frame
+        if (!dataArrayRef.current || dataArrayRef.current.length !== bufferLength) {
+            dataArrayRef.current = new Uint8Array(bufferLength);
+        }
+        const dataArray = dataArrayRef.current;
         analyserRef.current.getByteFrequencyData(dataArray);
 
-        const bass = dataArray.slice(0, bufferLength / 8).reduce((a, b) => a + b, 0) / (bufferLength / 8);
-        const mid = dataArray.slice(bufferLength / 8, bufferLength / 2).reduce((a, b) => a + b, 0) / (bufferLength * 3 / 8);
-        const high = dataArray.slice(bufferLength / 2).reduce((a, b) => a + b, 0) / (bufferLength / 2);
-        const energy = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+        // Manual sum instead of slice + reduce (avoid array allocation)
+        let bassSum = 0, midSum = 0, highSum = 0, energySum = 0;
+        const bassEnd = Math.floor(bufferLength / 8);
+        const midEnd = Math.floor(bufferLength / 2);
+
+        for (let i = 0; i < bufferLength; i++) {
+            const val = dataArray[i];
+            energySum += val;
+            if (i < bassEnd) bassSum += val;
+            else if (i < midEnd) midSum += val;
+            else highSum += val;
+        }
+
+        const bass = bassSum / bassEnd;
+        const mid = midSum / (midEnd - bassEnd);
+        const high = highSum / (bufferLength - midEnd);
+        const energy = energySum / bufferLength;
         const now = Date.now();
 
         // Spectral flux for onset detection
@@ -79,16 +98,23 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
                 const diff = dataArray[i] - lastSpectrumRef.current[i];
                 if (diff > 0) flux += diff;
             }
+            // Copy data into existing array instead of creating new one
+            lastSpectrumRef.current.set(dataArray);
+        } else {
+            lastSpectrumRef.current = new Uint8Array(dataArray);
         }
-        lastSpectrumRef.current = new Uint8Array(dataArray);
 
         // Adaptive flux threshold
         const fluxHistory = fluxHistoryRef.current;
         fluxHistory.push(flux);
         if (fluxHistory.length > 43) fluxHistory.shift();
 
-        const avgFlux = fluxHistory.reduce((a, b) => a + b, 0) / fluxHistory.length;
-        const fluxThreshold = avgFlux * 2.5; // Increased to 2.5 for even less sensitivity
+        let avgFlux = 0;
+        for (let i = 0; i < fluxHistory.length; i++) {
+            avgFlux += fluxHistory[i];
+        }
+        avgFlux /= fluxHistory.length;
+        const fluxThreshold = avgFlux * 2.5;
 
         // Beat detection: onset with cooldown
         if (flux > fluxThreshold && flux > 20 && now - lastBeatTimeRef.current > 200 && fluxHistory.length > 20) {
@@ -130,7 +156,7 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
 
     return (
         <MusicContext.Provider value={{ audioData, play, beatCountRef }}>
-            <audio ref={audioRef} src={song} />
+            <audio ref={audioRef} src={song} loop />
             {children}
         </MusicContext.Provider>
     );
