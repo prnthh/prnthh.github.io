@@ -168,7 +168,13 @@ export class Ragdoll extends Object3D {
         desc: RAPIER.ColliderDesc,
         bodyDesc: RAPIER.RigidBodyDesc
     ): RAPIER.RigidBody {
+        // Add very high damping to stabilize the ragdoll
+        bodyDesc.setLinearDamping(2.0); // Increased from 0.5
+        bodyDesc.setAngularDamping(3.0); // Increased from 0.8
         const body = this.world.createRigidBody(bodyDesc);
+        // Set friction and restitution for more stable ragdoll behavior
+        desc.setFriction(0.5);
+        desc.setRestitution(0.1); // Low bounce
         this.world.createCollider(desc, body);
         return body;
     }
@@ -179,10 +185,10 @@ export class Ragdoll extends Object3D {
         parent1: RAPIER.RigidBody,
         parent2: RAPIER.RigidBody,
         type: 'spherical' | 'revolute' = 'spherical',
-        axis?: RAPIER.Vector
+        axis?: RAPIER.Vector,
+        maxAngle: number = Math.PI / 4 // Default 45 degrees, more restrictive
     ) {
         let joint;
-        const maxAngle = Math.PI / 2;
         const defaultLimits = [-maxAngle, maxAngle];
         if (type === 'revolute' && axis) {
             joint = RAPIER.JointData.revolute(anchor1, anchor2, axis);
@@ -190,6 +196,7 @@ export class Ragdoll extends Object3D {
             joint = RAPIER.JointData.spherical(anchor1, anchor2);
         }
         joint.limits = defaultLimits;
+        // Create the joint - the wakeUp parameter helps prevent sleeping bodies from causing issues
         this.world.createImpulseJoint(joint, parent1, parent2, true);
     }
 
@@ -249,8 +256,9 @@ export class Ragdoll extends Object3D {
         const computedArmLowerLength = Math.max(lowerArmRightLength, lowerArmLeftLength);
         const computedLegSegmentHeight = Math.max(thighRightLength, thighLeftLength);
         const computedLegLowerSegmentHeight = Math.max(shinRightLength, shinLeftLength);
-        const armThickness = computedArmLength * 0.25;
-        const legThickness = computedLegSegmentHeight * 0.25;
+        // Reduce thickness to add spacing between limbs and prevent interpenetration
+        const armThickness = computedArmLength * 0.2; // Reduced from 0.25
+        const legThickness = computedLegSegmentHeight * 0.2; // Reduced from 0.25
         // Use bone positions for all parts (no fallback)
         const armUpperRightT = getTransform('armUpperRight');
         const armLowerRightT = getTransform('armLowerRight');
@@ -262,12 +270,13 @@ export class Ragdoll extends Object3D {
         // Modular creation of each body part
         // For arms, rotate collider 90 deg around Z to align X axis (bone) to Y axis (collider)
         const armAlignQuat = new Quaternion().setFromAxisAngle(new Vector3(0, 0, 1), Math.PI / 2);
+        // Reduce torso height slightly, keep head normal size
         this.torso = this.createRigidBodyWithCollider(
-            RAPIER.ColliderDesc.cuboid(torsoWidth / 2, torsoHeight / 2, 0.1),
+            RAPIER.ColliderDesc.cuboid(torsoWidth / 2, torsoHeight / 2.2, 0.1), // Slightly reduced height
             RAPIER.RigidBodyDesc.dynamic().setTranslation(torsoT.pos.x, torsoT.pos.y, torsoT.pos.z).setRotation({ x: torsoT.quat.x, y: torsoT.quat.y, z: torsoT.quat.z, w: torsoT.quat.w })
         );
         this.head = this.createRigidBodyWithCollider(
-            RAPIER.ColliderDesc.cuboid(headSize / 2, headSize / 2, headSize / 2),
+            RAPIER.ColliderDesc.cuboid(headSize / 2.2, headSize / 2.2, headSize / 2.2), // Slightly smaller
             RAPIER.RigidBodyDesc.dynamic().setTranslation(headT.pos.x, headT.pos.y, headT.pos.z).setRotation({ x: headT.quat.x, y: headT.quat.y, z: headT.quat.z, w: headT.quat.w })
         );
         this.armUpperRight = this.createRigidBodyWithCollider(
@@ -304,10 +313,11 @@ export class Ragdoll extends Object3D {
         );
 
         // Modular creation of joints
-        const stiffness = 0.05;
+        const stiffness = 0.1; // Increased from 0.05 for more spacing
+        // Head-torso joint with more separation
         this.createRagdollJoint(
-            { x: 0, y: -headSize / 2 - stiffness, z: 0 },
-            { x: 0, y: torsoHeight / 2, z: 0 },
+            { x: 0, y: -headSize / 2.2 - stiffness * 1.5, z: 0 }, // Adjust for smaller head
+            { x: 0, y: torsoHeight / 2.2 + stiffness, z: 0 }, // Adjust for smaller torso
             this.head, this.torso, 'spherical'
         );
         // SWAP LEFT/RIGHT ARM JOINTS
@@ -360,6 +370,33 @@ export class Ragdoll extends Object3D {
 
     public update(_delta: number) {
         if (!this.mesh) return;
+
+        // Clamp velocities to prevent infinite spinning/acceleration
+        const maxLinVel = 10.0;
+        const maxAngVel = 5.0;
+
+        for (const key of Object.keys(Ragdoll.boneMapping)) {
+            const body = this[key as RagdollParts];
+            if (body) {
+                const linVel = body.linvel();
+                const angVel = body.angvel();
+
+                // Clamp linear velocity
+                const linSpeed = Math.sqrt(linVel.x * linVel.x + linVel.y * linVel.y + linVel.z * linVel.z);
+                if (linSpeed > maxLinVel) {
+                    const scale = maxLinVel / linSpeed;
+                    body.setLinvel({ x: linVel.x * scale, y: linVel.y * scale, z: linVel.z * scale }, true);
+                }
+
+                // Clamp angular velocity
+                const angSpeed = Math.sqrt(angVel.x * angVel.x + angVel.y * angVel.y + angVel.z * angVel.z);
+                if (angSpeed > maxAngVel) {
+                    const scale = maxAngVel / angSpeed;
+                    body.setAngvel({ x: angVel.x * scale, y: angVel.y * scale, z: angVel.z * scale }, true);
+                }
+            }
+        }
+
         this.updateRagdoll();
     }
 

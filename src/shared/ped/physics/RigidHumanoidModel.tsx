@@ -19,7 +19,6 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
             scale,
             modelOffset,
             roundHeight = 0.25,
-            unstable = false,
             animation = "idle",
             animationOverrides = {},
             children,

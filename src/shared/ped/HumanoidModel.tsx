@@ -118,10 +118,12 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
                     }
                 }}
             >
-                <mesh position={[0, height / 2, 0]} >
-                    <boxGeometry args={[0.6, 2, 0.6]} />
-                    <meshBasicMaterial color={debug ? "red" : undefined} transparent={!debug} opacity={debug ? 1 : 0} wireframe={debug} />
-                </mesh>
+                {debug && (
+                    <mesh position={[0, height / 2, 0]} >
+                        <boxGeometry args={[0.6, 2, 0.6]} />
+                        <meshBasicMaterial color="red" wireframe />
+                    </mesh>
+                )}
                 {clonedScene && <primitive position={modelOffset} name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
                 {children}
             </group>

@@ -39,9 +39,11 @@ const Ped = memo(({
 
     const modelPath = useMemo(() => {
         // RigidHumanoidModelProps extends AnimatedModelProps where `model` is the glb path.
-        // Default matches the existing ragdoll default.
+        // We need to prepend basePath to get the full path for the ragdoll.
         const m = (rigidHumanoidProps as { model?: string }).model;
-        return m ?? "/models/human/onimilio/rigged.glb";
+        const basePath = (rigidHumanoidProps as { basePath?: string }).basePath ?? "/models/human/";
+        const modelRelPath = m ?? "onimilio/rigged.glb";
+        return basePath + modelRelPath;
     }, [rigidHumanoidProps]);
 
     const enterRagdoll = useCallback(() => {
@@ -50,15 +52,20 @@ const Ped = memo(({
         if (rb) {
             const t = rb.translation();
             const r = rb.rotation();
+            // Get height from props, default to 0.95
+            const height = (rigidHumanoidProps as { height?: number }).height ?? 0.95;
+            // Offset the ragdoll spawn position to the torso/hips level (approximately half the height)
             setRagdollPose({
-                position: [t.x, t.y, t.z],
+                position: [t.x, t.y + height * 0.5, t.z],
                 rotation: [r.x, r.y, r.z, r.w],
             });
         } else {
-            setRagdollPose({ position: position || spawnPosition });
+            const height = (rigidHumanoidProps as { height?: number }).height ?? 0.95;
+            const pos = position || spawnPosition;
+            setRagdollPose({ position: [pos[0], pos[1] + height * 0.5, pos[2]] });
         }
         setInternalRagdolled(true);
-    }, [isRagdolled, position, spawnPosition]);
+    }, [isRagdolled, position, spawnPosition, rigidHumanoidProps]);
 
     return (
         <Suspense fallback={null}>

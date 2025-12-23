@@ -5,116 +5,47 @@
  * file in the root directory of this source tree.
  */
 
-import React, { useMemo, createContext, useState, useContext, useEffect } from 'react';
-import { KeyboardControls, KeyboardControlsEntry } from '@react-three/drei';
+import React, { useState, useEffect } from 'react';
 import { Joystick, Button } from './TouchscreenControls';
-
-export enum WalkControls {
-    forward = 'forward',
-    backward = 'backward',
-    left = 'left',
-    right = 'right',
-    jump = 'jump',
-    run = 'run',
-    use = 'use',
-    altUse = 'altUse',
-    reset = 'reset',
-}
-
-const walkControlKeys = [
-    { name: WalkControls.forward, keys: ['ArrowUp', 'KeyW'] },
-    { name: WalkControls.backward, keys: ['ArrowDown', 'KeyS'] },
-    { name: WalkControls.left, keys: ['ArrowLeft', 'KeyA'] },
-    { name: WalkControls.right, keys: ['ArrowRight', 'KeyD'] },
-    { name: WalkControls.run, keys: ['Shift'] },
-    { name: WalkControls.jump, keys: ['Space'] },
-    { name: WalkControls.use, keys: ['KeyE'] },
-    { name: WalkControls.altUse, keys: ['KeyQ'] },
-    { name: WalkControls.reset, keys: ['KeyR'] },
-]
-
-
-export enum DriveControls {
-    forward = 'forward',
-    backward = 'backward',
-    left = 'left',
-    right = 'right',
-    use = 'use',
-    run = 'run',
-    altUse = 'altUse',
-    brake = 'brake',
-    reset = 'reset',
-}
-
-const driveControlKeys = [
-    { name: DriveControls.forward, keys: ['ArrowUp', 'KeyW'] },
-    { name: DriveControls.backward, keys: ['ArrowDown', 'KeyS'] },
-    { name: DriveControls.left, keys: ['ArrowLeft', 'KeyA'] },
-    { name: DriveControls.right, keys: ['ArrowRight', 'KeyD'] },
-    { name: DriveControls.run, keys: ['Shift'] },
-    { name: DriveControls.use, keys: ['KeyE'] },
-    { name: DriveControls.altUse, keys: ['KeyQ'] },
-    { name: DriveControls.brake, keys: ['Space'] },
-    { name: DriveControls.reset, keys: ['KeyR'] },
-]
-
-
-const controlSchemes = {
-    simple: walkControlKeys,
-    advanced: walkControlKeys,
-    drive: driveControlKeys,
-    none: [],
-}
-
-export type ControlName = WalkControls | DriveControls;
-
-const ControlSchemeContext = createContext<{
-    scheme: keyof typeof controlSchemes;
-    setScheme: React.Dispatch<React.SetStateAction<keyof typeof controlSchemes>>
-}>({
-    scheme: 'simple',
-    setScheme: () => { },
-});
-
-export const useControlScheme = () => useContext(ControlSchemeContext);
+import useInputStore from '@/shared/providers/InputStore';
 
 function isMobileDevice() {
     if (typeof navigator === 'undefined') return false;
-    return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+
+    // Check for touch support
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // Check user agent
+    const isMobileUA = /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+
+    // Return true if either touch is supported OR it's a mobile user agent
+    return hasTouch || isMobileUA;
 }
 
 function Controls({ children }: { children: React.ReactNode }) {
-    const [controlScheme, setControlScheme] = useState<keyof typeof controlSchemes>('simple');
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         setIsMobile(isMobileDevice());
     }, []);
 
-    const map = useMemo<KeyboardControlsEntry<ControlName>[]>(() => (controlSchemes[controlScheme]), [controlScheme])
-
     return (
-        <ControlSchemeContext.Provider value={{
-            scheme: controlScheme,
-            setScheme: setControlScheme
-        }}>
-            <KeyboardControls map={map}>
-                {children}
-                {isMobile && (
-                    <>
-                        <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
-                            <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
-                        </div>
-                        <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
-                            {/* twin stick */}
-                            {/* <Joystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
-                            <Button button="fire" />
-                            <Button button="jump" />
-                        </div>
-                    </>
-                )}
-            </KeyboardControls>
-        </ControlSchemeContext.Provider>
+        < >
+            {children}
+            {isMobile && (
+                <>
+                    <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
+                        <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
+                    </div>
+                    <div className='absolute bottom-10 right-10 z-50 text-white select-none flex gap-x-4'>
+                        {/* twin stick */}
+                        {/* <Joystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
+                        <Button button="fire" />
+                        <Button button="jump" />
+                    </div>
+                </>
+            )}
+        </>
     );
 }
 

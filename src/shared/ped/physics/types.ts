@@ -9,6 +9,5 @@ export interface RigidHumanoidModelRef extends AnimatedModelRef {
 export interface RigidHumanoidModelProps extends AnimatedModelProps {
     position?: [number, number, number];
     roundHeight?: number;
-    unstable?: boolean;
     rbChildren?: React.ReactNode;
 }

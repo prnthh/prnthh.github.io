@@ -13,7 +13,7 @@ const POSITION_THRESHOLD = 0.05; // 5cm
 const ROTATION_THRESHOLD = 0.05; // ~3 degrees
 const UPDATE_RATE = 0.1; // Send updates at most every 100ms
 
-const LocalPlayer = () => {
+const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D | null> }) => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
     const bodyMeshRef = useRef<THREE.Group | null>(null);
     const cameraRigRef = useRef<THREE.Group | null>(null);
@@ -87,6 +87,9 @@ const LocalPlayer = () => {
             rigidBodyRef.current = refs.rbref.current;
             bodyMeshRef.current = refs.meshref.current;
             cameraRigRef.current = refs.cameraRigRef.current;
+            if (playerRef && refs.meshref.current) {
+                playerRef.current = refs.meshref.current;
+            }
         }}
     />;
 
@@ -95,6 +98,9 @@ const LocalPlayer = () => {
             rigidBodyRef.current = refs.rbref.current;
             bodyMeshRef.current = refs.meshref.current;
             cameraRigRef.current = refs.cameraRigRef.current;
+            if (playerRef && refs.meshref.current) {
+                playerRef.current = refs.meshref.current;
+            }
         }}
     />
 }
