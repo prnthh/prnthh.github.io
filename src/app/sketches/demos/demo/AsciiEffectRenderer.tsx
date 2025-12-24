@@ -7,13 +7,13 @@ import { AsciiEffect } from "three/examples/jsm/effects/AsciiEffect.js";
 export default function AsciiEffectRenderer() {
     const { gl, scene, camera, size } = useThree();
     const effectRef = useRef<AsciiEffect | null>(null);
+    const frameCountRef = useRef(0);
 
     useEffect(() => {
-        // Create ASCII effect with more dense characters for brighter appearance
-        // Skip space, start with visible characters
-        const effect = new AsciiEffect(gl, '·:-=!*#@▒█', {
+        // Create ASCII effect with lower resolution for better performance
+        const effect = new AsciiEffect(gl, ' .:-=+*#%@', {
             invert: false,
-            resolution: 0.13, // Slightly higher resolution for smoother appearance
+            resolution: 0.08, // Lower resolution = better performance (was 0.13)
             color: true // Enable color support
         });
         effect.setSize(size.width, size.height);
@@ -23,8 +23,7 @@ export default function AsciiEffectRenderer() {
         effect.domElement.style.pointerEvents = 'none';
         effect.domElement.style.backgroundColor = 'black';
 
-        // Enhance color saturation, contrast, and brightness
-        effect.domElement.style.filter = 'saturate(2.2) contrast(1.4) brightness(1.4)';
+        // No filters for maximum performance
         effect.domElement.style.imageRendering = 'crisp-edges';
 
         effectRef.current = effect;
@@ -54,7 +53,11 @@ export default function AsciiEffectRenderer() {
 
     useFrame(() => {
         if (effectRef.current) {
-            effectRef.current.render(scene, camera);
+            // Skip frames to improve performance - render every other frame
+            frameCountRef.current++;
+            if (frameCountRef.current % 2 === 0) {
+                effectRef.current.render(scene, camera);
+            }
         }
     }, 1); // Priority 1 to render after everything else
 

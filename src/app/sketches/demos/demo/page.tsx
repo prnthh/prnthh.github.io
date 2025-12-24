@@ -14,7 +14,7 @@ function DemoContent() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas >
                     <AudioVisualizer />
-                    <AsciiEffectRenderer />
+                    {/* <AsciiEffectRenderer /> */}
                 </GameCanvas>
             </div>
             <div className="z-20 absolute top-0 pointer-events-none" style={{ mixBlendMode: 'screen' }}>

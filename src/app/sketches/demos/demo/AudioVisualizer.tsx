@@ -27,9 +27,9 @@ export default function AudioVisualizer() {
 
     // Define text animations - easy to add more!
     const textAnimations: TextAnimation[] = [
-        { text: "POCKIT GAME CORP PRESENTS", startBeat: 6, startZ: -150 },
+        { text: "POCKIT GAME CORP PRESENTS", startBeat: 6, startZ: -100 },
         // Add more text here:
-        // { text: "ANOTHER TEXT", startBeat: 12, startZ: -150 },
+        // { text: "ANOTHER TEXT", startBeat: 12, startZ: -20 },
     ];
 
     const numRings = 30;
@@ -83,6 +83,7 @@ export default function AudioVisualizer() {
                 const alreadyActive = activeTexts.some(t => t.startBeat === anim.startBeat);
 
                 if (isActive && !alreadyActive) {
+                    console.log(`Activating text at beat ${beatCount}:`, anim.text);
                     setActiveTexts(prev => [...prev, { ...anim, id: index }]);
                 } else if (!isActive && alreadyActive) {
                     setActiveTexts(prev => prev.filter(t => t.startBeat !== anim.startBeat));
@@ -100,6 +101,8 @@ export default function AudioVisualizer() {
                 const distanceFromCamera = Math.abs(textZ);
                 const scale = Math.max(0.1, 3 - distanceFromCamera / 50);
                 group.scale.setScalar(scale);
+
+                console.log(`Text "${text.text}" at z: ${textZ.toFixed(2)}, scale: ${scale.toFixed(2)}`);
 
                 // Remove if too far
                 if (distanceFromCamera > 150) {
