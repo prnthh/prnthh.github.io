@@ -1,14 +1,20 @@
 import dynamic from "next/dynamic";
+import { GameCanvas } from "react-three-game";
+import AudioVisualizer from "./sketches/demos/demo/AudioVisualizer";
+import AsciiEffectRenderer from "./sketches/demos/demo/AsciiEffectRenderer";
+import MusicProvider, { useMusic } from "./sketches/demos/demo/MusicProvider";
+import { MusicDemo } from "./sketches/demos/demo/page";
 
 export default function Home() {
+
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
       <main className="w-full min-h-screen">
+        <MusicProvider song="/sound/demo1.mp3">
+          <MusicDemo />
+        </MusicProvider>
 
-        <div className="absolute top-0 left-0 w-screen h-screen flex items-center justify-center pointer-events-none select-none z-0">
-          oh wow its prnth.com!
-        </div>
-        <header className="fixed top-8 right-12 underline underline-offset-4 text-lg flex items-center justify-center gap-6 z-30 dark:text-white">
+        <header className="fixed top-8 right-12 underline underline-offset-4 text-lg flex items-center justify-center gap-6 z-100 dark:text-white">
           <a
             className="flex items-center gap-2 hover:underline-offset-5"
             href="https://x.com/prnth_"

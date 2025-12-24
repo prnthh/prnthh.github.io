@@ -1,5 +1,5 @@
 
-import { useRef, useState } from "react";
+import { useRef, useState, forwardRef, useImperativeHandle } from "react";
 import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior, { SteeringType } from "@/shared/ped/physics/SelfSteeringBehavior";
@@ -10,9 +10,12 @@ import TapControls from "../tap/TapControls";
 import FollowCam from "@/shared/cameras/FollowCam";
 import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
 
-export default function CombinedController({ mode, target = [0, 0, 0] }: { mode: string, target?: [number, number, number] }) {
+const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number] }>(({ mode, target = [0, 0, 0] }, ref) => {
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "third-person">("idle");
     const modelRef = useRef<RigidHumanoidModelRef>(null);
+
+    // Forward the internal ref to the parent
+    useImperativeHandle(ref, () => modelRef.current as RigidHumanoidModelRef, []);
 
     const modelProps = {
         basePath: "/models/human/onimilio/",
@@ -77,4 +80,8 @@ export default function CombinedController({ mode, target = [0, 0, 0] }: { mode:
 
         </>
     );
-}
+});
+
+CombinedController.displayName = "CombinedController";
+
+export default CombinedController;

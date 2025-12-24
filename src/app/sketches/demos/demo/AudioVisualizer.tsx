@@ -27,14 +27,15 @@ export default function AudioVisualizer() {
 
     // Define text animations - easy to add more!
     const textAnimations: TextAnimation[] = [
-        { text: "POCKIT GAME CORP PRESENTS", startBeat: 6, startZ: -100 },
+        { text: "POCKIT GAME CORP PRESENTS", startBeat: 6, startZ: -50 },
         // Add more text here:
-        // { text: "ANOTHER TEXT", startBeat: 12, startZ: -20 },
+        { text: "NOBODY MAKES GAMES ANYMORE", startBeat: 18, startZ: -50 },
     ];
 
-    const numRings = 30;
-    const itemsPerRing = 12;
+    const numRings = 8; // Reduced for clearer ASCII visibility
+    const itemsPerRing = 10; // Slightly reduced for cleaner look
     const totalInstances = numRings * itemsPerRing;
+    const lastBeatCountRef = useRef(0);
 
     // Create matrices for instances
     const { matrices, colors } = useMemo(() => {
@@ -43,8 +44,8 @@ export default function AudioVisualizer() {
         const matrix = new THREE.Matrix4();
 
         for (let ring = 0; ring < numRings; ring++) {
-            const z = -ring * 5;
-            const radius = 5;
+            const z = -ring * 8; // Increased spacing for better depth perception
+            const radius = 6; // Slightly larger radius
 
             for (let item = 0; item < itemsPerRing; item++) {
                 const angle = (item / itemsPerRing) * Math.PI * 2;
@@ -76,18 +77,34 @@ export default function AudioVisualizer() {
         colorTime.current += delta * 0.5;
         tunnelOffset.current += (10 + energy * 20) * delta;
 
-        // Add/remove text based on beat count
-        if (beatCount > 0) {
-            textAnimations.forEach((anim, index) => {
-                const isActive = beatCount >= anim.startBeat && beatCount < anim.startBeat + 10;
-                const alreadyActive = activeTexts.some(t => t.startBeat === anim.startBeat);
+        // Add/remove text based on beat count - only check when beat changes
+        if (beatCount > 0 && beatCount !== lastBeatCountRef.current) {
+            lastBeatCountRef.current = beatCount;
 
-                if (isActive && !alreadyActive) {
-                    console.log(`Activating text at beat ${beatCount}:`, anim.text);
-                    setActiveTexts(prev => [...prev, { ...anim, id: index }]);
-                } else if (!isActive && alreadyActive) {
-                    setActiveTexts(prev => prev.filter(t => t.startBeat !== anim.startBeat));
-                }
+            setActiveTexts(prev => {
+                const newActiveTexts = [...prev];
+                let hasChanges = false;
+
+                textAnimations.forEach((anim, index) => {
+                    const isActive = beatCount >= anim.startBeat && beatCount < anim.startBeat + 10;
+                    const alreadyActive = newActiveTexts.some(t => t.startBeat === anim.startBeat);
+
+                    if (isActive && !alreadyActive) {
+                        console.log(`✓ Activating text at beat ${beatCount}:`, anim.text);
+                        newActiveTexts.push({ ...anim, id: index });
+                        hasChanges = true;
+                    } else if (!isActive && alreadyActive) {
+                        const filteredTexts = newActiveTexts.filter(t => t.startBeat !== anim.startBeat);
+                        if (filteredTexts.length !== newActiveTexts.length) {
+                            console.log(`✗ Deactivating text at beat ${beatCount}:`, anim.text);
+                            newActiveTexts.length = 0;
+                            newActiveTexts.push(...filteredTexts);
+                            hasChanges = true;
+                        }
+                    }
+                });
+
+                return hasChanges ? newActiveTexts : prev;
             });
         }
 
@@ -95,39 +112,29 @@ export default function AudioVisualizer() {
         activeTexts.forEach(text => {
             const group = textGroupRefs.current.get(text.id);
             if (group) {
-                const textZ = text.startZ + tunnelOffset.current;
-                group.position.z = textZ;
-
-                const distanceFromCamera = Math.abs(textZ);
-                const scale = Math.max(0.1, 3 - distanceFromCamera / 50);
-                group.scale.setScalar(scale);
-
-                console.log(`Text "${text.text}" at z: ${textZ.toFixed(2)}, scale: ${scale.toFixed(2)}`);
-
-                // Remove if too far
-                if (distanceFromCamera > 150) {
-                    setActiveTexts(prev => prev.filter(t => t.id !== text.id));
-                }
+                // Keep text at fixed position
+                group.position.z = text.startZ;
+                group.scale.setScalar(1);
             }
         });
 
-        const tunnelLength = numRings * 5;
+        const tunnelLength = numRings * 8; // Match the spacing
         const matrix = new THREE.Matrix4();
         const color = new THREE.Color();
         const time = state.clock.elapsedTime;
 
         for (let ring = 0; ring < numRings; ring++) {
             // Move ring forward, wrap when it passes camera
-            let z = -ring * 5 + tunnelOffset.current;
+            let z = -ring * 8 + tunnelOffset.current; // Match the spacing
             while (z > 10) z -= tunnelLength;
 
-            // Morph radius with bass and wave motion
-            const baseRadius = 5 + bass * 3 + Math.sin(time * 2 + ring * 0.5) * 2;
-            const radiusMorph = mid * 2 * Math.cos(time * 3 + ring * 0.3);
+            // Morph radius with bass and wave motion - more pronounced
+            const baseRadius = 6 + bass * 4 + Math.sin(time * 2 + ring * 0.5) * 2.5;
+            const radiusMorph = mid * 3 * Math.cos(time * 3 + ring * 0.3);
             const radius = baseRadius + radiusMorph;
 
-            // Bigger cubes
-            const scale = 0.8 + high * 0.5 + Math.sin(time * 4 + ring) * 0.2;
+            // Bigger cubes for better ASCII visibility
+            const scale = 1.2 + high * 0.8 + Math.sin(time * 4 + ring) * 0.3;
 
             for (let item = 0; item < itemsPerRing; item++) {
                 const angleOffset = colorTime.current + bass * Math.PI * 2;
@@ -163,7 +170,7 @@ export default function AudioVisualizer() {
     return (
         <>
             <instancedMesh ref={instancedRef} args={[undefined, undefined, totalInstances]}>
-                <boxGeometry args={[1.5, 1.5, 1.5]} />
+                <boxGeometry args={[1, 1, 1]} />
                 <meshBasicMaterial />
             </instancedMesh>
 
@@ -177,7 +184,6 @@ export default function AudioVisualizer() {
                 >
                     <Html
                         position={[0, 0, 0]}
-                        center
                         transform
                         occlude
                         style={{

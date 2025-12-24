@@ -2,64 +2,106 @@
 
 import { useEffect, useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
-import { AsciiEffect } from "three/examples/jsm/effects/AsciiEffect.js";
 
 export default function AsciiEffectRenderer() {
     const { gl, scene, camera, size } = useThree();
-    const effectRef = useRef<AsciiEffect | null>(null);
-    const frameCountRef = useRef(0);
+    const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
+    const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+    const chars = ' .:-=+*#%@';
+    const resolution = 0.15;
 
     useEffect(() => {
-        // Create ASCII effect with lower resolution for better performance
-        const effect = new AsciiEffect(gl, ' .:-=+*#%@', {
-            invert: false,
-            resolution: 0.08, // Lower resolution = better performance (was 0.13)
-            color: true // Enable color support
-        });
-        effect.setSize(size.width, size.height);
-        effect.domElement.style.position = 'absolute';
-        effect.domElement.style.top = '0';
-        effect.domElement.style.left = '0';
-        effect.domElement.style.pointerEvents = 'none';
-        effect.domElement.style.backgroundColor = 'black';
+        // Create offscreen canvas for capturing WebGL render
+        const offscreen = document.createElement('canvas');
+        offscreenCanvasRef.current = offscreen;
 
-        // No filters for maximum performance
-        effect.domElement.style.imageRendering = 'crisp-edges';
+        // Create display canvas for ASCII
+        const canvas = document.createElement('canvas');
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.imageRendering = 'pixelated';
+        displayCanvasRef.current = canvas;
 
-        effectRef.current = effect;
-
-        // Hide the original canvas since we're only using ASCII
-        gl.domElement.style.display = 'none';
-
-        // Append to the canvas parent
-        const container = gl.domElement.parentElement;
-        if (container) {
-            container.appendChild(effect.domElement);
+        const parent = gl.domElement.parentElement;
+        if (parent) {
+            gl.domElement.style.display = 'none';
+            parent.appendChild(canvas);
         }
 
         return () => {
             gl.domElement.style.display = 'block';
-            if (effect.domElement.parentElement) {
-                effect.domElement.parentElement.removeChild(effect.domElement);
+            if (canvas.parentElement) {
+                canvas.parentElement.removeChild(canvas);
             }
         };
-    }, [gl, size]);
-
-    useEffect(() => {
-        if (effectRef.current) {
-            effectRef.current.setSize(size.width, size.height);
-        }
-    }, [size]);
+    }, [gl]);
 
     useFrame(() => {
-        if (effectRef.current) {
-            // Skip frames to improve performance - render every other frame
-            frameCountRef.current++;
-            if (frameCountRef.current % 2 === 0) {
-                effectRef.current.render(scene, camera);
+        if (!offscreenCanvasRef.current || !displayCanvasRef.current) return;
+
+        // Render scene to WebGL
+        gl.render(scene, camera);
+
+        // Get rendered image
+        const offscreen = offscreenCanvasRef.current;
+        const width = Math.floor(size.width * resolution);
+        const height = Math.floor(size.height * resolution);
+
+        offscreen.width = width;
+        offscreen.height = height;
+
+        const ctx = offscreen.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+
+        // Copy from WebGL canvas
+        ctx.drawImage(gl.domElement, 0, 0, width, height);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const pixels = imageData.data;
+
+        // Setup display canvas
+        const displayCanvas = displayCanvasRef.current;
+        displayCanvas.width = size.width;
+        displayCanvas.height = size.height;
+        const displayCtx = displayCanvas.getContext('2d');
+        if (!displayCtx) return;
+
+        // Calculate character size
+        const charWidth = size.width / width;
+        const charHeight = size.height / height;
+        const fontSize = charWidth / 0.6;
+
+        // Get background color from the scene
+        const bgColor = scene.background;
+        if (bgColor && 'r' in bgColor) {
+            const r = Math.floor(bgColor.r * 255);
+            const g = Math.floor(bgColor.g * 255);
+            const b = Math.floor(bgColor.b * 255);
+            displayCtx.fillStyle = `rgb(${r},${g},${b})`;
+        } else {
+            displayCtx.fillStyle = 'white';
+        }
+        displayCtx.fillRect(0, 0, size.width, size.height);
+        displayCtx.font = `${fontSize}px monospace`;
+        displayCtx.textBaseline = 'top';
+
+        // Draw ASCII with colors
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const i = (y * width + x) * 4;
+                const r = pixels[i];
+                const g = pixels[i + 1];
+                const b = pixels[i + 2];
+                const brightness = (r + g + b) / 3;
+                const charIndex = Math.floor((brightness / 255) * (chars.length - 1));
+                const char = chars[charIndex];
+
+                displayCtx.fillStyle = `rgb(${r},${g},${b})`;
+                displayCtx.fillText(char, x * charWidth, y * charHeight);
             }
         }
-    }, 1); // Priority 1 to render after everything else
+    }, 1);
 
     return null;
 }

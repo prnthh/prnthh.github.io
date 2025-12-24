@@ -6,6 +6,20 @@ import AudioVisualizer from "./AudioVisualizer";
 import AsciiEffectRenderer from "./AsciiEffectRenderer";
 import { GameCanvas } from "react-three-game";
 
+export function MusicDemo() {
+    const { audioData, play } = useMusic();
+
+    return (
+        <div className="absolute top-0 left-0 w-screen h-screen flex items-center justify-center pointer-events-none select-none z-0" onClick={play}>
+            <GameCanvas >
+                <AudioVisualizer />
+                <AsciiEffectRenderer />
+            </GameCanvas>
+        </div>
+
+    );
+}
+
 function DemoContent() {
     const { audioData, play } = useMusic();
 
@@ -14,7 +28,7 @@ function DemoContent() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas >
                     <AudioVisualizer />
-                    {/* <AsciiEffectRenderer /> */}
+                    <AsciiEffectRenderer />
                 </GameCanvas>
             </div>
             <div className="z-20 absolute top-0 pointer-events-none" style={{ mixBlendMode: 'screen' }}>
