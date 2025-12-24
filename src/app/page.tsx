@@ -1,8 +1,4 @@
-import dynamic from "next/dynamic";
-import { GameCanvas } from "react-three-game";
-import AudioVisualizer from "./sketches/demos/demo/AudioVisualizer";
-import AsciiEffectRenderer from "./sketches/demos/demo/AsciiEffectRenderer";
-import MusicProvider, { useMusic } from "./sketches/demos/demo/MusicProvider";
+import MusicProvider from "./sketches/demos/demo/MusicProvider";
 import { MusicDemo } from "./sketches/demos/demo/page";
 
 export default function Home() {

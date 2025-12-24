@@ -29,7 +29,7 @@ export default function AudioVisualizer() {
     const textAnimations: TextAnimation[] = [
         { text: "POCKIT GAME CORP PRESENTS", startBeat: 6, startZ: -50 },
         // Add more text here:
-        { text: "NOBODY MAKES GAMES ANYMORE", startBeat: 18, startZ: -50 },
+        { text: "THE SCENE IS DEAD", startBeat: 18, startZ: -50 },
     ];
 
     const numRings = 8; // Reduced for clearer ASCII visibility
