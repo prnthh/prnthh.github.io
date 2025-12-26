@@ -15,28 +15,30 @@ import { Object3D } from "three";
 
 
 
-export default function Game({ loadedMap }: { loadedMap: Prefab, onCanvasReady?: () => void }) {
+export default function Game({ loadedMap, isMultiplayer }: { loadedMap: Prefab, isMultiplayer: boolean, onCanvasReady?: () => void }) {
     const playerRef = useRef<Object3D>(null);
 
-    return <Physics>
-        <PrefabRoot data={loadedMap} />
-        <Train />
+    return <>
+        <Physics>
+            <PrefabRoot data={loadedMap} />
+            <LocalPlayer playerRef={playerRef} />
 
-        <group position={[-2, 0, -15]}>
-            <RandomNumberExample />
+            <Train />
 
-            <Balloon position={[0, 1, 0]} />
-            <HitBox debug key={2} position={[1, 1, 0]} />
-            <HitBox debug key={3} position={[2, 1, 0]} />
-            <HitBox debug key={4} position={[3, 1, 0]} />
-            <Balloon position={[4, 1, 0]} />
-        </group>
+            <group position={[-2, 0, -15]}>
+                <RandomNumberExample />
 
+                <Balloon position={[0, 1, 0]} />
+                <HitBox debug key={2} position={[1, 1, 0]} />
+                <HitBox debug key={3} position={[2, 1, 0]} />
+                <HitBox debug key={4} position={[3, 1, 0]} />
+                <Balloon position={[4, 1, 0]} />
+            </group>
 
-        <PedSpawner playerRef={playerRef} position={[0, 0, -10]} />
-        <LocalPlayer playerRef={playerRef} />
-        <OtherPlayers />
-    </Physics>
+            {!isMultiplayer && <PedSpawner playerRef={playerRef} position={[0, 0, -10]} />}
+            {isMultiplayer && <OtherPlayers />}
+        </Physics>
+    </>
 }
 
 

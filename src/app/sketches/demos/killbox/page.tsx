@@ -16,6 +16,7 @@ const maps = {
 
 export default function Home() {
     const [selectedMap, setSelectedMap] = useState<keyof typeof maps>("killbox");
+    const [isMultiplayer, setIsMultiplayer] = useState(false);
 
     const handleTap = () => {
         // Check if we're on mobile and not already in fullscreen
@@ -46,14 +47,33 @@ export default function Home() {
                         <option value="test">Test</option>
                     </select>
                 </div>
+
+                <div
+                    className="absolute top-12 left-1/2 -translate-x-1/2 z-50 text-white bg-gray-800 px-4 py-2 rounded cursor-pointer hover:bg-gray-700"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMultiplayer(!isMultiplayer);
+                    }}
+                >
+                    Mode: {isMultiplayer ? "Multiplayer" : "Single Player"}
+                </div>
+
                 <div className="w-full" style={{ height: "100vh" }}>
-                    <MultiplayerProvider roomId="lobby" debug >
+                    {isMultiplayer ? (
+                        <MultiplayerProvider roomId="lobby" debug>
+                            <GameCanvas>
+                                <Game loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={() => { }} />
+                                <ambientLight intensity={1} />
+                                <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
+                            </GameCanvas>
+                        </MultiplayerProvider>
+                    ) : (
                         <GameCanvas>
-                            <Game loadedMap={maps[selectedMap]} onCanvasReady={() => { }} />
+                            <Game loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={() => { }} />
                             <ambientLight intensity={1} />
                             <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
                         </GameCanvas>
-                    </MultiplayerProvider>
+                    )}
                 </div>
 
                 <div className="absolute top-1/2 left-1/2 -translate-1/2">

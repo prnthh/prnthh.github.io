@@ -14,16 +14,7 @@ import PointerLockControls from "@/shared/controls/PointerLockControls";
 import useInputStore from "@/shared/providers/InputStore";
 import KeyboardControls from "@/shared/controls/KeyboardControls";
 
-const tempQuat = new Quaternion();
-const tempYawQuat = new Quaternion();
-const tempForward = new Vector3();
-const tempRight = new Vector3();
-const tempDirection = new Vector3();
-const tempRayOrigin = new Vector3();
-
-const PITCH_LIMIT = Math.PI / 2;
-const MOUSE_SENSITIVITY = 0.002;
-const JOYSTICK_SENSITIVITY = 2.5;
+const q = new Quaternion(), yq = new Quaternion(), fwd = new Vector3(), rt = new Vector3(), dir = new Vector3(), ray = new Vector3();
 
 interface FirstPersonControlsProps {
     rigidBodyRef: RefObject<RapierRigidBody | null>;
@@ -44,9 +35,9 @@ const FirstPersonControls = ({
     height,
     eyeHeight,
     cameraOffset = [0, 0, 0],
-    walkSpeed = 5,
-    sprintSpeed = 12,
-    jumpVelocity = 5,
+    walkSpeed = 3.5,
+    sprintSpeed = 6.5,
+    jumpVelocity = 4.5,
     floatSpring = 8,
     floatDamping = 0.3,
     cameraRigRef: providedCameraRigRef,
@@ -55,29 +46,16 @@ const FirstPersonControls = ({
     const internalCameraRigRef = useRef<Group | null>(null);
     const cameraRigRef = providedCameraRigRef || internalCameraRigRef;
     const cameraPitch = useRef(0);
-    const { setButton } = useInputStore()
 
-    // Shared look logic - processes movement deltas directly
     const applyLookDelta = (dx: number, dy: number) => {
         const rb = rigidBodyRef.current;
         if (!rb) return;
-
-        const yawDelta = -dx * MOUSE_SENSITIVITY;
         const rot = rb.rotation();
-        tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-        tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
-        tempQuat.premultiply(tempYawQuat);
-        rb.setRotation(tempQuat, true);
-
-        cameraPitch.current = MathUtils.clamp(
-            cameraPitch.current - dy * MOUSE_SENSITIVITY,
-            -PITCH_LIMIT,
-            PITCH_LIMIT
-        );
-
-        if (cameraRigRef.current) {
-            cameraRigRef.current.rotation.x = cameraPitch.current;
-        }
+        q.set(rot.x, rot.y, rot.z, rot.w);
+        yq.setFromAxisAngle({ x: 0, y: 1, z: 0 }, -dx * 0.002);
+        rb.setRotation(q.premultiply(yq), true);
+        cameraPitch.current = MathUtils.clamp(cameraPitch.current - dy * 0.002, -Math.PI / 2, Math.PI / 2);
+        if (cameraRigRef.current) cameraRigRef.current.rotation.x = cameraPitch.current;
     };
 
     return (
@@ -88,22 +66,10 @@ const FirstPersonControls = ({
                 </group>
                 {children}
             </group>
-
             <KeyboardControls />
-            <MovementSystem
-                height={height}
-                rigidBodyRef={rigidBodyRef}
-                walkSpeed={walkSpeed}
-                sprintSpeed={sprintSpeed}
-                jumpVelocity={jumpVelocity}
-                floatSpring={floatSpring}
-                floatDamping={floatDamping}
-            />
-            <LookSystem
-                rigidBodyRef={rigidBodyRef}
-                cameraRigRef={cameraRigRef}
-                cameraPitch={cameraPitch}
-            />
+            <MovementSystem height={height} rigidBodyRef={rigidBodyRef} walkSpeed={walkSpeed}
+                sprintSpeed={sprintSpeed} jumpVelocity={jumpVelocity} floatSpring={floatSpring} floatDamping={floatDamping} />
+            <LookSystem rigidBodyRef={rigidBodyRef} cameraRigRef={cameraRigRef} cameraPitch={cameraPitch} />
             <PointerLockControls onLook={applyLookDelta} />
         </>
     );
@@ -114,9 +80,9 @@ export default FirstPersonControls;
 export const MovementSystem = ({
     height = 0.5,
     rigidBodyRef,
-    walkSpeed = 5,
-    sprintSpeed = 12,
-    jumpVelocity = 5,
+    walkSpeed = 3.5,
+    sprintSpeed = 6.5,
+    jumpVelocity = 4.5,
     floatSpring = 8,
     floatDamping = 0.3,
 }: {
@@ -134,54 +100,60 @@ export const MovementSystem = ({
     const jump = useInputStore(state => state.jump);
     const rapier = useRapier();
 
-    useFrame(() => {
+    useFrame((_, dt) => {
         const rb = rigidBodyRef.current;
         if (!rb) return;
 
-        const pos = rb.translation();
-        const vel = rb.linvel();
-        const rot = rb.rotation();
-        const speed = sprint ? sprintSpeed : walkSpeed;
+        const pos = rb.translation(), vel = rb.linvel(), rot = rb.rotation();
+        const spd = sprint ? sprintSpeed : walkSpeed;
 
         // Ground check
-        tempRayOrigin.set(pos.x, pos.y - height, pos.z);
-        const ray = new rapier.rapier.Ray(tempRayOrigin, { x: 0, y: -1, z: 0 });
-        const hit = rapier.world.castRay(ray, 10, true, rapier.rapier.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, rb);
-        const isGrounded = hit && hit.timeOfImpact < height;
+        ray.set(pos.x, pos.y - height, pos.z);
+        const hit = rapier.world.castRay(new rapier.rapier.Ray(ray, { x: 0, y: -1, z: 0 }), 10, true,
+            rapier.rapier.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, rb);
+        const grounded = hit && hit.timeOfImpact < height;
 
-        // Movement direction from input
-        tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-        tempForward.set(0, 0, -1).applyQuaternion(tempQuat).setY(0).normalize();
-        tempRight.set(1, 0, 0).applyQuaternion(tempQuat).setY(0).normalize();
-        tempDirection.set(0, 0, 0).addScaledVector(tempForward, vertical).addScaledVector(tempRight, horizontal);
+        // Input direction
+        q.set(rot.x, rot.y, rot.z, rot.w);
+        fwd.set(0, 0, -1).applyQuaternion(q).setY(0).normalize();
+        rt.set(1, 0, 0).applyQuaternion(q).setY(0).normalize();
+        dir.set(0, 0, 0).addScaledVector(fwd, vertical).addScaledVector(rt, horizontal);
 
-        const hasInput = tempDirection.lengthSq() > 0;
-        if (hasInput) tempDirection.normalize().multiplyScalar(speed);
+        const hasInput = dir.lengthSq() > 1e-4;
+        if (hasInput) dir.normalize();
 
-        // Horizontal velocity: input when moving, zero when grounded idle, preserve when airborne
-        let vx = hasInput ? tempDirection.x : (isGrounded ? 0 : vel.x);
-        let vz = hasInput ? tempDirection.z : (isGrounded ? 0 : vel.z);
+        // Horizontal velocity
+        let vx = vel.x, vz = vel.z;
 
-        // Add ground velocity if standing on a moving platform
-        if (isGrounded) {
-            const groundRigidBody = hit.collider.parent();
-            if (groundRigidBody && !groundRigidBody.isFixed()) {
-                const groundVel = groundRigidBody.linvel();
-                vx += groundVel.x;
-                vz += groundVel.z;
+        if (grounded) {
+            if (hasInput) {
+                vx += (dir.x * spd - vx) * Math.min(1, 100 * dt);
+                vz += (dir.z * spd - vz) * Math.min(1, 100 * dt);
+            } else {
+                vx = vz = 0;
             }
+            // Moving platform
+            const ground = hit.collider.parent();
+            if (ground && !ground.isFixed()) {
+                const gv = ground.linvel();
+                vx += gv.x; vz += gv.z;
+            }
+        } else if (hasInput) {
+            vx += (dir.x * spd - vx) * Math.min(1, 10 * dt);
+            vz += (dir.z * spd - vz) * Math.min(1, 10 * dt);
         }
 
-        // Vertical velocity: float spring when grounded, gravity when airborne
+        // Clamp tiny velocities
+        if (Math.abs(vx) < 0.01) vx = 0;
+        if (Math.abs(vz) < 0.01) vz = 0;
+
+        // Vertical velocity
         let vy = vel.y;
-        if (isGrounded) {
-            const heightError = height - hit.timeOfImpact;
-            vy = vy * (1 - floatDamping) + heightError * floatSpring * floatDamping;
-            rb.setGravityScale(0, true);
-            if (jump) {
-                vy = jumpVelocity;
-                rb.setGravityScale(1, true);
-            }
+        if (grounded) {
+            vy = vy * (1 - floatDamping) + (height - hit.timeOfImpact) * floatSpring * floatDamping;
+            if (Math.abs(vy) < 0.01) vy = 0;
+            rb.setGravityScale(jump ? 1 : 0, true);
+            if (jump) vy = jumpVelocity;
         } else {
             rb.setGravityScale(1, true);
         }
@@ -204,29 +176,19 @@ export const LookSystem = ({
     const lookHorizontal = useInputStore(state => state.lookHorizontal);
     const lookVertical = useInputStore(state => state.lookVertical);
 
-    useFrame((_, delta) => {
-        const rb = rigidBodyRef.current;
-        const rig = cameraRigRef.current;
+    useFrame((_, dt) => {
+        const rb = rigidBodyRef.current, rig = cameraRigRef.current;
         if (!rb || !rig) return;
 
-        const absHorizontal = Math.abs(lookHorizontal);
-        const absVertical = Math.abs(lookVertical);
-
-        if (absHorizontal > 0.01) {
-            const yawDelta = -lookHorizontal * JOYSTICK_SENSITIVITY * delta;
+        if (Math.abs(lookHorizontal) > 0.01) {
             const rot = rb.rotation();
-            tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-            tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
-            tempQuat.premultiply(tempYawQuat);
-            rb.setRotation(tempQuat, true);
+            q.set(rot.x, rot.y, rot.z, rot.w);
+            yq.setFromAxisAngle({ x: 0, y: 1, z: 0 }, -lookHorizontal * 2.5 * dt);
+            rb.setRotation(q.premultiply(yq), true);
         }
 
-        if (absVertical > 0.01) {
-            cameraPitch.current = MathUtils.clamp(
-                cameraPitch.current + lookVertical * JOYSTICK_SENSITIVITY * delta,
-                -PITCH_LIMIT,
-                PITCH_LIMIT
-            );
+        if (Math.abs(lookVertical) > 0.01) {
+            cameraPitch.current = MathUtils.clamp(cameraPitch.current + lookVertical * 2.5 * dt, -Math.PI / 2, Math.PI / 2);
             rig.rotation.x = cameraPitch.current;
         }
     });

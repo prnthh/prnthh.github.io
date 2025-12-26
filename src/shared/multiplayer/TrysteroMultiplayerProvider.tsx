@@ -42,7 +42,7 @@ const MultiplayerContext = createContext<{
 export const useMultiplayerProvider = () => {
     const context = useContext(MultiplayerContext)
     if (context === null) {
-        throw new Error('useMultiplayerProvider must be used within MultiplayerProvider')
+        return null
     }
     return context.setMyState
 }
@@ -50,7 +50,7 @@ export const useMultiplayerProvider = () => {
 export const useHitEvents = () => {
     const context = useContext(MultiplayerContext)
     if (context === null) {
-        throw new Error('useHitEvents must be used within MultiplayerProvider')
+        return { sendAction: null, onAction: null }
     }
     return { sendAction: context.sendAction, onAction: context.onAction }
 }
@@ -136,18 +136,47 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ch
     </MultiplayerContext.Provider>
 }
 
+// Generic recursive JSON renderer - renders values as inline tabs
+const renderJson = (value: any, depth = 0, keyPath = ''): React.ReactNode => {
+    if (value === null || value === undefined) return null
+
+    if (Array.isArray(value)) {
+        return <span style={{ display: 'inline-block', background: '#444', margin: '1px', fontSize: '9px' }}>
+            [{value.map((v, i) => typeof v === 'number' ? v.toFixed(2) : JSON.stringify(v)).join(', ')}]
+        </span>
+    }
+
+    if (typeof value === 'object') {
+        return <>{Object.entries(value).map(([k, v], i) => (
+            <span key={keyPath + k} style={{ display: 'inline-block', background: '#333', margin: '1px', fontSize: '9px' }}>
+                {k}: {renderJson(v, depth + 1, keyPath + k)}
+            </span>
+        ))}</>
+    }
+
+    return <span>{typeof value === 'number' ? value.toFixed(2) : String(value)}</span>
+}
+
 // Separate component for debug UI to avoid re-rendering the provider
 const DebugPanel = () => {
     const myState = useMyState()
     const peerStates = usePeerStates()
 
     return (
-        <div style={{ position: 'absolute', top: 10, right: 10, background: 'rgba(0,0,0,0.5)', color: 'white', padding: '10px', fontSize: '12px', maxHeight: '90vh', overflowY: 'auto', zIndex: 9999 }}>
-            <h3 style={{ margin: '0 0 10px 0' }}>Multiplayer Debug Info</h3>
-            <div><strong>My State:</strong></div>
-            <pre style={{ whiteSpace: 'pre-wrap', margin: '5px 0 10px 0' }}>{JSON.stringify(myState, null, 2)}</pre>
-            <div><strong>Peers ({Object.keys(peerStates).length}):</strong></div>
-            <pre style={{ whiteSpace: 'pre-wrap', margin: '5px 0' }}>{JSON.stringify(peerStates, null, 2)}</pre>
+        <div style={{ position: 'absolute', top: 10, right: 10, background: '#000c', color: '#fff', padding: '8px', fontSize: '9px', maxHeight: '90vh', overflowY: 'auto', zIndex: 9999, maxWidth: '300px' }}>
+            <div style={{ marginBottom: '4px', opacity: 0.6 }}>Local</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>{renderJson(myState)}</div>
+            {Object.keys(peerStates).length > 0 && (
+                <>
+                    <div style={{ marginTop: '8px', marginBottom: '4px', opacity: 0.6 }}>Peers ({Object.keys(peerStates).length})</div>
+                    {Object.entries(peerStates).map(([peerId, state]) => (
+                        <div key={peerId} style={{ marginTop: '6px' }}>
+                            <div style={{ fontSize: '8px', opacity: 0.5, marginBottom: '2px' }}>{peerId.slice(0, 8)}</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap' }}>{renderJson(state, 0, peerId)}</div>
+                        </div>
+                    ))}
+                </>
+            )}
         </div>
     )
 }
