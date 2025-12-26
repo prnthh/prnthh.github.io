@@ -1,23 +1,14 @@
-"use client";
-import dynamic from "next/dynamic";
-import { useState } from "react";
-import LoadingSpinner from "../../sketches/loading/loading";
-
-const Game = dynamic(() => import("./Game"), {
-    ssr: false,
-});
+import GameWithLoader from "@/app/sketches/loading/GameWithLoader";
+import Game from "./Game";
 
 export default function Home() {
-    const [isCanvasReady, setIsCanvasReady] = useState(false);
-
     return (
-        <>
-            {!isCanvasReady && <LoadingSpinner />}
-            <div className="items-center justify-items-center min-h-screen">
-                <div className="w-full" style={{ height: "100vh" }}>
-                    <Game onCanvasReady={() => setIsCanvasReady(true)} />
-                </div>
+        <div className="items-center justify-items-center min-h-screen">
+            <div className="w-full" style={{ height: "100vh" }}>
+                <GameWithLoader>
+                    <Game />
+                </GameWithLoader>
             </div>
-        </>
+        </div>
     );
 }

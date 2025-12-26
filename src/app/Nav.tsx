@@ -21,10 +21,10 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
     'demos/scumm': {
         description: 'A simple point-and-click adventure game demo inspired by classic SCUMM games.'
     },
-    'floor': {
+    'sketches/floor': {
         description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
     },
-    'lighting': {
+    'sketches/lighting': {
         description: 'Lighting and reflections.'
     },
     'sketches/controllers/combined': {},

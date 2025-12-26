@@ -1,7 +1,9 @@
-import { forwardRef, Suspense, use, useEffect, useRef, useState } from "react";
+"use client";
+
+import { useEffect, useRef, useState } from "react";
 
 import { Helper, useGLTF } from "@react-three/drei";
-import { RigidBody, Physics } from "@react-three/rapier";
+import { Physics } from "@react-three/rapier";
 import { DirectionalLightHelper, Mesh, Object3D } from "three";
 import { GameCanvas } from "react-three-game";
 
@@ -10,24 +12,22 @@ import { ThirdPersonController } from "@/app/sketches/controllers/thirdperson/Th
 
 import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
-import MapModel from "@/shared/MapModel";
+import Balloon from "@/shared/physics/Balloon";
+import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 
 import Ped from "@/shared/ped/physics/ped";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
-import Balloon from "@/shared/physics/Balloon";
-import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
+import FootballGame from "./FootballGame";
 
 
 export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
     return <Controls>
         <GameCanvas>
             <Physics>
-                <Lighting debug />
+                <Lighting />
                 <FogEnvironment />
-                <Suspense>
-                    <InnerGame onCanvasReady={onCanvasReady} />
-                </Suspense>
+                <InnerGame onCanvasReady={onCanvasReady} />
             </Physics>
             <ambientLight intensity={0} />
             <DemoEnvironment />
@@ -66,9 +66,12 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
 
 const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
     const ballRef = useRef<Object3D | null>(null);
+
     useEffect(() => {
         onCanvasReady?.();
     }, [onCanvasReady]);
+
+
 
     return <>
 
@@ -90,11 +93,8 @@ const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
 
         <WavyTree position={[-5, 0, 17]} />
 
-        <Football ref={ballRef} position={[0, 8, 5]} />
-
+        <FootballGame ref={ballRef} />
         <GoalFollowingPed ballRef={ballRef} />
-
-        <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" />
 
     </>
 }
@@ -134,16 +134,6 @@ const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, num
 };
 
 
-const Football = forwardRef<Object3D, { position: [number, number, number] }>(({ position }, ref) => {
-    return (
-        <RigidBody ccd position={position} friction={1} restitution={1} colliders="ball" type="dynamic">
-            <mesh castShadow receiveShadow ref={ref}>
-                <sphereGeometry args={[0.1, 32, 32]} />
-                <meshStandardMaterial color="white" />
-            </mesh>
-        </RigidBody>
-    );
-});
 
 const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
     const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);

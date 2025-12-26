@@ -22,9 +22,9 @@ export const ThirdPersonController = ({
     lookTarget?: RefObject<Object3D | null>
     name?: string,
     children?: React.ReactNode,
-    forwardRef?: (refs: { rbref: RefObject<RapierRigidBody | null>, meshref: RefObject<Group | null>, cameraRigRef: RefObject<Group | null> }) => void
+    forwardRef?: (refs: { rigidBodyRef: RefObject<RapierRigidBody | null>, meshref: RefObject<Group | null>, cameraRigRef: RefObject<Group | null> }) => void
 }) => {
-    const height = 1.2, roundHeight = 0.25;
+    const height = 1.2, capsuleRadius = 0.25;
     const modelRef = useRef<RigidHumanoidModelRef>(null);
 
     return (
@@ -35,7 +35,7 @@ export const ThirdPersonController = ({
             basePath="/models/human/onimilio/"
             model="rigged.glb"
             height={height}
-            roundHeight={roundHeight}
+            capsuleRadius={capsuleRadius}
             lookTarget={lookTarget}
             animationOverrides={{
                 walk: 'anim/walk.fbx',
@@ -50,7 +50,7 @@ export const ThirdPersonController = ({
             <ThirdPersonControls
                 modelRef={modelRef}
                 height={height}
-                roundHeight={roundHeight}
+                capsuleRadius={capsuleRadius}
                 lookTarget={lookTarget}
             />
         </RigidHumanoidModel>

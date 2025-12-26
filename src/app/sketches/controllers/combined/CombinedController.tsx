@@ -2,13 +2,13 @@
 import { useRef, useState, forwardRef, useImperativeHandle } from "react";
 import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
-import SteeringBehavior, { SteeringType } from "@/shared/ped/physics/SelfSteeringBehavior";
-import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
+import SteeringBehavior from "@/shared/ped/physics/SelfSteeringBehavior";
 import SwipeControls from "../controls/SwipeControls";
 import useInputStore from "../controls/InputStore";
 import TapControls from "../tap/TapControls";
 import FollowCam from "@/shared/cameras/FollowCam";
 import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
+import { RigidHumanoidModelRef } from "@/shared/ped/types";
 
 const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number] }>(({ mode, target = [0, 0, 0] }, ref) => {
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "third-person">("idle");
@@ -53,7 +53,6 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
 
                 {mode === 'click' && (
                     <SteeringBehavior
-                        type={SteeringType.WALK}
                         rigidBodyRef={modelRef}
                         setAnimation={setAnimation}
                         position={target}
@@ -77,7 +76,7 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                 {mode === 'third-person' && <ThirdPersonControls
                     modelRef={modelRef}
                     height={1.2}
-                    roundHeight={0.25}
+                    capsuleRadius={0.25}
                 />}
 
             </RigidHumanoidModel>

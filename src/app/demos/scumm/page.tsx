@@ -10,6 +10,7 @@ import CombinedController from "@/app/sketches/controllers/combined/CombinedCont
 import { PrefabRoot } from "react-three-game";
 import DebugGround from "@/shared/ground/DebugGround";
 import { useFrame } from "@react-three/fiber";
+import Ped from "@/shared/ped/physics/ped";
 
 
 export default function Home() {
@@ -83,6 +84,8 @@ export default function Home() {
 
                                 <CombinedController ref={characterRef} mode={"click"} target={target} />
                                 {<SidewaysFollowCamera characterRef={characterRef} />}
+
+                                <Ped modelOffset={[0, -0.82, 0]} height={0.6} position={[2, 0, 2]} model="rigga/rigga2.glb" />
                             </Csm>
                         </Physics>
                     </GameCanvas>
@@ -98,8 +101,8 @@ const SidewaysFollowCamera = ({ characterRef }: { characterRef: React.RefObject<
     const tolerance = 1;
 
     useFrame(({ camera }) => {
-        if (orbitRef.current && characterRef.current?.rbref?.current) {
-            const characterPos = characterRef.current.rbref.current.translation();
+        if (orbitRef.current && characterRef.current?.rigidBodyRef?.current) {
+            const characterPos = characterRef.current.rigidBodyRef.current.translation();
 
             // Calculate the offset between character and camera target
             const offset = characterPos.x - targetCameraX.current;

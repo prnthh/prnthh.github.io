@@ -28,7 +28,7 @@ const PITCH_LIMIT = Math.PI / 2; // 90 degrees up/down
 interface ThirdPersonControlsProps {
     modelRef: RefObject<RigidHumanoidModelRef | null>;
     height: number;
-    roundHeight: number;
+    capsuleRadius: number;
     walkSpeed?: number;
     runSpeed?: number;
     jumpForce?: number;
@@ -38,7 +38,7 @@ interface ThirdPersonControlsProps {
 const ThirdPersonControls = ({
     modelRef,
     height,
-    roundHeight,
+    capsuleRadius,
     walkSpeed = 1.2,
     runSpeed = 3,
     jumpForce = 1,
@@ -55,9 +55,9 @@ const ThirdPersonControls = ({
 
     // Shared look logic - processes movement deltas directly
     const applyLookDelta = useCallback((dx: number, dy: number) => {
-        if (!modelRef.current?.rbref.current) return;
+        if (!modelRef.current?.rigidBodyRef.current) return;
 
-        const rb = modelRef.current.rbref.current;
+        const rb = modelRef.current.rigidBodyRef.current;
         const yawDelta = -dx * MOUSE_SENSITIVITY;
         const rot = rb.rotation();
         tempQuat.set(rot.x, rot.y, rot.z, rot.w);
@@ -84,7 +84,7 @@ const ThirdPersonControls = ({
             <MovementSystem
                 modelRef={modelRef}
                 height={height}
-                roundHeight={roundHeight}
+                capsuleRadius={capsuleRadius}
                 animation={animation}
                 setAnimation={setAnimation}
                 walkActionRef={walkActionRef}
@@ -121,7 +121,7 @@ const ThirdPersonControls = ({
                 onRightClickUp={() => setShoulderCamMode(false)}
             />
             <KeyboardControls />
-            {shoulderCamMode && <Weapon excludeRigidBody={modelRef.current?.rbref} />}
+            {shoulderCamMode && <Weapon excludeRigidBody={modelRef.current?.rigidBodyRef} />}
         </>
     );
 };
@@ -132,7 +132,7 @@ export default ThirdPersonControls;
 export const MovementSystem = ({
     modelRef,
     height,
-    roundHeight,
+    capsuleRadius,
     animation,
     setAnimation,
     walkActionRef,
@@ -144,7 +144,7 @@ export const MovementSystem = ({
 }: {
     modelRef: RefObject<RigidHumanoidModelRef | null>;
     height: number;
-    roundHeight: number;
+    capsuleRadius: number;
     animation: "idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[];
     setAnimation: (anim: "idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]) => void;
     walkActionRef: RefObject<AnimationAction | null>;
@@ -167,7 +167,7 @@ export const MovementSystem = ({
     const jumpReleased = useRef(true);
 
     const checkGrounded = useCallback(() => {
-        const rb = modelRef.current?.rbref.current;
+        const rb = modelRef.current?.rigidBodyRef.current;
         if (!rb || !rapier) return false;
 
         const origin = rb.translation();
@@ -216,7 +216,7 @@ export const MovementSystem = ({
     }, [modelRef, rapier, world]);
 
     useFrame(() => {
-        const rb = modelRef.current?.rbref.current;
+        const rb = modelRef.current?.rigidBodyRef.current;
         if (!rb) return;
 
         const moveX = horizontal;
@@ -302,7 +302,7 @@ export const LookSystem = ({
     const lookVertical = useInputStore(state => state.lookVertical);
 
     useFrame((_, delta) => {
-        const rb = modelRef.current?.rbref.current;
+        const rb = modelRef.current?.rigidBodyRef.current;
         if (!rb) return;
 
         const absHorizontal = Math.abs(lookHorizontal);

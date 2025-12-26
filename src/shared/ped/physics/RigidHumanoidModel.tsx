@@ -1,40 +1,30 @@
 import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
-import React, { forwardRef, RefObject, useImperativeHandle, useRef } from "react";
+import { forwardRef, useImperativeHandle, useRef } from "react";
 import AnimatedModel from "../HumanoidModel";
-import { AnimatedModelRef, } from "../types";
-import { RigidHumanoidModelProps, RigidHumanoidModelRef } from "./types";
-
-
+import { AnimatedModelRef, RigidHumanoidModelProps, RigidHumanoidModelRef } from "../types";
 
 const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelProps>(
     (
         {
-            name = "ped",
-            debug = false,
-            basePath,
-            model: modelUrl,
             position,
-            lookTarget,
-            height = 0.95,
-            scale,
-            modelOffset,
-            roundHeight = 0.25,
-            animation = "idle",
-            animationOverrides = {},
-            children,
-            rbChildren,
+            capsuleRadius = 0.25,
+            onCollisionEnter,
+            ...animatedModelProps
         },
         ref
     ) => {
         const rigidBodyRef = useRef<RapierRigidBody>(null);
         const animatedModelRef = useRef<AnimatedModelRef>(null);
 
+        // Extract height for collider calculation, default to 0.95
+        const height = animatedModelProps.height ?? 0.95;
+
         useImperativeHandle(
             ref,
             () => {
                 const meshMethods = animatedModelRef.current as AnimatedModelRef;
                 return Object.assign(meshMethods, {
-                    rbref: rigidBodyRef,
+                    rigidBodyRef,
                 }) as RigidHumanoidModelRef;
             },
             []
@@ -42,7 +32,7 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
 
         return (
             <RigidBody
-                name={name}
+                name={animatedModelProps.name ?? "ped"}
                 ref={rigidBodyRef}
                 type="dynamic"
                 position={position}
@@ -52,32 +42,29 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
                 lockRotations={true}
             >
                 <CapsuleCollider
-                    args={[(height - roundHeight * 1.9) / 2, roundHeight]}
+                    args={[(height - capsuleRadius * 1.9) / 2, capsuleRadius]}
                     position={[0, height / 2, 0]}
                 />
-                {rbChildren}
+                {onCollisionEnter && (
+                    <CapsuleCollider
+                        args={[(height - capsuleRadius * 1.9) / 2, capsuleRadius]}
+                        position={[0, height / 2, 0]}
+                        sensor
+                        onIntersectionEnter={onCollisionEnter}
+                    />
+                )}
                 <AnimatedModel
                     ref={animatedModelRef}
-                    basePath={basePath}
-                    model={modelUrl}
-                    animation={animation}
-                    name={name}
-                    debug={debug}
-                    scale={scale}
-                    height={height}
-                    modelOffset={modelOffset}
-                    lookTarget={lookTarget}
+                    {...animatedModelProps}
                     animationOverrides={{
                         walk: "anim/walk.fbx",
                         run: "anim/run.fbx",
-                        ...animationOverrides,
+                        ...animatedModelProps.animationOverrides,
                     }}
                     onClick={() => {
                         // Handling click
                     }}
-                >
-                    {children}
-                </AnimatedModel>
+                />
             </RigidBody>
         );
     }

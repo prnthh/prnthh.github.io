@@ -28,8 +28,21 @@ function Controls({ children }: { children: React.ReactNode }) {
         setIsMobile(isMobileDevice());
     }, []);
 
+    const handleTap = () => {
+        // Check if we're on mobile and not already in fullscreen
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            const elem = document.documentElement;
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen?.() ||
+                    (elem as any).webkitRequestFullscreen?.() ||
+                    (elem as any).mozRequestFullScreen?.() ||
+                    (elem as any).msRequestFullscreen?.();
+            }
+        }
+    };
+
     return (
-        < >
+        <div className='contents' onClick={handleTap}>
             {children}
             {isMobile && (
                 <>
@@ -44,7 +57,7 @@ function Controls({ children }: { children: React.ReactNode }) {
                     </div>
                 </>
             )}
-        </>
+        </div>
     );
 }
 

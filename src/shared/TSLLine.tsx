@@ -1,37 +1,45 @@
-import { useThree } from "@react-three/fiber";
-import { useEffect, useRef, useState, useMemo, useCallback, RefObject } from "react";
-import { MathUtils, Vector3, Group, PerspectiveCamera, Euler, Quaternion } from "three";
-
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useRef, RefObject } from "react";
+import { Vector3, Group } from "three";
 import * as THREE from "three";
 import { LineBasicNodeMaterial } from "three/webgpu";
 
+interface AimLineProps {
+    length?: number;
+    container: RefObject<Group | null>;
+    hit?: boolean;
+    offset?: number;
+}
 
+const GREEN = 0x00ff00;
+const RED = 0xff0000;
 
-export default function AimLine({ length = 5, container }: { length?: number, container: RefObject<Group | null> }) {
-
-    const { scene } = useThree();
+export default function AimLine({ length = 1.5, container, hit = false, offset = 0 }: AimLineProps) {
+    const materialRef = useRef<LineBasicNodeMaterial | null>(null);
 
     useEffect(() => {
-        const material = new LineBasicNodeMaterial({
-            color: 0x0000ff
-        });
-        const points = [];
-        points.push(new THREE.Vector3(-0.2, 0.5, 0));
-        points.push(new THREE.Vector3(-0.2, 1, 2));
-        points.push(new THREE.Vector3(-0.2, 0, 4));
+        if (!container.current) return;
 
+        const material = new LineBasicNodeMaterial({ color: GREEN });
+        materialRef.current = material;
+
+        const points = [new THREE.Vector3(0, 0.5, offset), new THREE.Vector3(0, 0.5, offset + length)];
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.Line(geometry, material);
-        if (container.current) {
-            container.current?.add(line);
-        }
+        container.current.add(line);
 
         return () => {
-            if (container.current) {
-                container.current.remove(line);
-            }
+            container.current?.remove(line);
+            geometry.dispose();
+            material.dispose();
         };
-    }, [container]);
+    }, [container, length, offset]);
+
+    useFrame(() => {
+        if (materialRef.current) {
+            materialRef.current.color.setHex(hit ? RED : GREEN);
+        }
+    });
 
     return null;
 }

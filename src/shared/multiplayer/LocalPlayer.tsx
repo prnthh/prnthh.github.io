@@ -120,7 +120,7 @@ const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D
     return (
         <FirstPersonController
             forwardRef={(refs) => {
-                rigidBodyRef.current = refs.rbref.current;
+                rigidBodyRef.current = refs.rigidBodyRef.current;
                 bodyMeshRef.current = refs.meshref.current;
                 cameraRigRef.current = refs.cameraRigRef.current;
                 if (playerRef) playerRef.current = refs.meshref.current;

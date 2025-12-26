@@ -80,7 +80,7 @@ const WawaControls = ({
 
     useEffect(() => {
         // Reset rigidbody rotation on mount
-        const rb = modelRef.current?.rbref.current;
+        const rb = modelRef.current?.rigidBodyRef.current;
         if (rb) {
             rb.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true);
         }
@@ -99,7 +99,7 @@ const WawaControls = ({
     }, [modelRef]);
 
     useFrame(({ camera, mouse }) => {
-        const rb = modelRef.current?.rbref.current;
+        const rb = modelRef.current?.rigidBodyRef.current;
         const character = modelRef.current?.modelRef.current;
         const container = modelRef.current?.groupRef.current;
 

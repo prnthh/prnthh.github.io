@@ -27,7 +27,7 @@ const FirstPersonController = ({
     cameraOffset?: [number, number, number],
     spawnPosition?: [number, number, number],
     children?: React.ReactNode,
-    forwardRef?: (refs: { rbref: React.RefObject<RapierRigidBody | null>, meshref: React.RefObject<Group | null>, cameraRigRef: React.RefObject<Group | null> }) => void,
+    forwardRef?: (refs: { rigidBodyRef: React.RefObject<RapierRigidBody | null>, meshref: React.RefObject<Group | null>, cameraRigRef: React.RefObject<Group | null> }) => void,
     onFire?: () => void
 }) => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
@@ -47,7 +47,7 @@ const FirstPersonController = ({
 
     useEffect(() => {
         if (typeof forwardRef === 'function') {
-            forwardRef({ rbref: rigidBodyRef, meshref: bodyMeshRef, cameraRigRef });
+            forwardRef({ rigidBodyRef, meshref: bodyMeshRef, cameraRigRef });
         }
     }, [forwardRef]);
 

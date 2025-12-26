@@ -1,31 +1,16 @@
 import { memo, useCallback, useRef, useState, Suspense, useMemo } from "react";
 import RigidHumanoidModel from "./RigidHumanoidModel";
-import SteeringBehavior, { SteeringType } from "./SelfSteeringBehavior";
-import { RigidHumanoidModelProps, RigidHumanoidModelRef } from "./types";
+import SteeringBehavior from "./SelfSteeringBehavior";
+import { PedProps, RigidHumanoidModelRef } from "../types";
 import PedRagdoll from "./PedRagdoll";
-import { CuboidCollider } from "@react-three/rapier";
-
-export interface PedProps extends RigidHumanoidModelProps {
-    position?: [number, number, number];
-    steeringType?: SteeringType;
-    onDestinationReached?: () => void;
-    /** If true, Ped will render a bullet-detecting hitbox and ragdoll on the first hit. */
-    ragdollOnHit?: boolean;
-    /** Force ragdoll state externally. Useful for scripted deaths or networking. */
-    ragdolled?: boolean;
-    forwardRef?: (refs: RigidHumanoidModelRef) => void;
-    /** Callback when the ped is shot/hit by a bullet */
-    onShot?: () => void;
-}
 
 const Ped = memo(({
     position,
-    steeringType = SteeringType.RUN,
     onDestinationReached,
-    ragdollOnHit = true,
-    ragdolled,
+    enableRagdollOnHit = true,
+    forceRagdoll,
     forwardRef,
-    onShot,
+    onBulletHit,
     children,
     ...rigidHumanoidProps
 }: PedProps) => {
@@ -33,7 +18,7 @@ const Ped = memo(({
     const [animation, setAnimation] = useState<"idle" | "walk" | "run">("idle");
     const [spawnPosition,] = useState<[number, number, number]>(position || [0, 0, 0]);
     const [internalRagdolled, setInternalRagdolled] = useState(false);
-    const isRagdolled = ragdolled ?? internalRagdolled;
+    const isRagdolled = forceRagdoll ?? internalRagdolled;
 
     const [ragdollPose, setRagdollPose] = useState<{
         position: [number, number, number];
@@ -51,8 +36,8 @@ const Ped = memo(({
 
     const enterRagdoll = useCallback(() => {
         if (isRagdolled) return;
-        onShot?.(); // Call the onShot callback
-        const rb = modelRef.current?.rbref?.current;
+        onBulletHit?.(); // Call the bullet hit callback
+        const rb = modelRef.current?.rigidBodyRef?.current;
         if (rb) {
             const t = rb.translation();
             const r = rb.rotation();
@@ -69,7 +54,7 @@ const Ped = memo(({
             setRagdollPose({ position: [pos[0], pos[1] + height * 0.5, pos[2]] });
         }
         setInternalRagdolled(true);
-    }, [isRagdolled, position, spawnPosition, rigidHumanoidProps, onShot]);
+    }, [isRagdolled, position, spawnPosition, rigidHumanoidProps, onBulletHit]);
 
     return (
         <Suspense fallback={null}>
@@ -81,27 +66,22 @@ const Ped = memo(({
                     }}
                     position={spawnPosition}
                     animation={animation}
-                    rbChildren={
-                        ragdollOnHit ? (
-                            <CuboidCollider
-                                sensor
-                                // Rough torso-sized sensor; tweak as needed per model
-                                args={[0.25, 0.6, 0.25]}
-                                position={[0, 0.9, 0]}
-                                onIntersectionEnter={(e) => {
-                                    // @ts-expect-error bullet userData is custom
-                                    if (e.other.rigidBody?.userData?.type === "bullet") {
-                                        enterRagdoll();
-                                    }
-                                }}
-                            />
-                        ) : undefined
+                    onCollisionEnter={
+                        enableRagdollOnHit
+                            ? (e) => {
+                                // @ts-expect-error bullet userData is custom
+                                if (e.other.rigidBody?.userData?.type === "bullet") {
+                                    enterRagdoll();
+                                }
+                            }
+                            : undefined
                     }
                     {...rigidHumanoidProps}
                 >
                     {children}
+
                     <SteeringBehavior
-                        type={steeringType}
+                        debug={rigidHumanoidProps.debug}
                         rigidBodyRef={modelRef}
                         setAnimation={setAnimation}
                         position={position || spawnPosition}

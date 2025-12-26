@@ -10,15 +10,15 @@ import Ped from "@/shared/ped/physics/ped";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
-import DraggableDiv from "@/shared/ui/DraggableDiv";
 import { Object3D } from "three";
+import Playground from "@/shared/debug/Playground";
 
 export default function Home() {
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas>
-                    <Physics debug>
+                    <Physics>
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
                         <GameEntityWorld />
@@ -26,13 +26,6 @@ export default function Home() {
                         <DebugCamera />
                     </Physics>
                 </GameCanvas>
-            </div>
-            <div className="z-20 absolute top-0">
-                <DraggableDiv position={[0, 20]}>
-                    <div className="bg-black/50 p-2 rounded text-white flex w-[100px] flex justify-center">
-                        <h2 className="font-bold">Demo</h2>
-                    </div>
-                </DraggableDiv>
             </div>
         </div>
     );
@@ -71,6 +64,7 @@ const GameEntityWorld = () => {
             addEntity(randomPickupable([e.point.x, e.point.z]));
             setSelectedEntityID(undefined);
         }} />
+        <Playground position={[0, -2, -15]} />
         {allEntityIDsByType('NPC').map((id) => <TalkativeNPC key={id} id={id} />)}
         {allEntityIDsByType('pickupable').map((id) => <Pickupable key={id} id={id} />)}
     </>;
@@ -178,6 +172,7 @@ const TalkativeNPC = ({ id }: { id: string }) => {
     if (!scene) return null;
 
     return <><Ped
+        debug
         key={name}
         basePath={entity.basePath || "/models/human/onimilio/"}
         model={entity.modelUrl || "rigged.glb"}
@@ -186,8 +181,9 @@ const TalkativeNPC = ({ id }: { id: string }) => {
         onDestinationReached={reachedDestinationHandler.current}
     >
         <Html center position={[0, 3, 0]} zIndexRange={[5, 10]}>
-            <pre className="noscrollbar text-xs text-white bg-gray-800/70 w-[300px] rounded overflow-auto text-wrap">
-                {Object.entries(entity).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join("\n")}
+            <pre className="noscrollbar text-xs text-white bg-gray-800/70  rounded overflow-auto text-wrap">
+                {/* {Object.entries(entity).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join("\n")} */}
+                {entity.goal}
             </pre>
         </Html>
         <DialogCollider onExit={() => { setIsTalking(false) }}>

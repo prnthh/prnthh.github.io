@@ -1,11 +1,15 @@
+"use client";
+
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Object3D } from "three";
 
 import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { Physics, RigidBody, RapierRigidBody } from "@react-three/rapier";
-import { PrefabRoot, Prefab } from "react-three-game";
+import { PrefabRoot, Prefab, GameCanvas } from "react-three-game";
 
+import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
+import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvider";
 import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
 import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
 import { useGameEvents, useSyncedClock } from "@/shared/multiplayer/TrysteroMultiplayerProvider";
@@ -16,10 +20,73 @@ import HitBox from "@/shared/physics/HitBox";
 import Ped from "@/shared/ped/physics/ped";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 
+import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
+import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
 
+const maps = {
+    killbox: killbox as Prefab,
+    test: test as Prefab
+};
 
-export default function Game({ loadedMap, isMultiplayer }: { loadedMap: Prefab, isMultiplayer: boolean, onCanvasReady?: () => void }) {
+export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
+    const [selectedMap, setSelectedMap] = useState<keyof typeof maps>("killbox");
+    const [isMultiplayer, setIsMultiplayer] = useState(false);
+
+    return (
+        <Controls>
+            <div className="items-center justify-items-center min-h-screen select-none">
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 text-white">
+                    <select
+                        value={selectedMap}
+                        onChange={(e) => {
+                            const map = e.target.value as keyof typeof maps;
+                            setSelectedMap(map);
+                        }}
+                        className="px-2 py-1 bg-gray-800 rounded"
+                    >
+                        <option value="killbox">Killbox</option>
+                        <option value="test">Test</option>
+                    </select>
+                </div>
+
+                <div
+                    className="absolute top-2 right-2 z-30 text-white bg-gray-800 px-4 py-2 rounded cursor-pointer hover:bg-gray-700"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMultiplayer(!isMultiplayer);
+                    }}
+                >
+                    {isMultiplayer ? "Online" : "Offline"}
+                </div>
+
+                <div className="w-full" style={{ height: "100vh" }}>
+                    {isMultiplayer ? (
+                        <MultiplayerProvider roomId="lobby" debug>
+                            <GameCanvas>
+                                <InnerGame loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={onCanvasReady} />
+                            </GameCanvas>
+                        </MultiplayerProvider>
+                    ) : (
+                        <GameCanvas>
+                            <InnerGame loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={onCanvasReady} />
+                        </GameCanvas>
+                    )}
+                </div>
+
+                <div className="absolute top-1/2 left-1/2 -translate-1/2">
+                    +
+                </div>
+            </div>
+        </Controls>
+    );
+}
+
+function InnerGame({ loadedMap, isMultiplayer, onCanvasReady }: { loadedMap: Prefab, isMultiplayer: boolean, onCanvasReady?: () => void }) {
     const playerRef = useRef<Object3D>(null);
+
+    useEffect(() => {
+        onCanvasReady?.();
+    }, [onCanvasReady]);
 
     return <>
         <Physics>
@@ -41,6 +108,7 @@ export default function Game({ loadedMap, isMultiplayer }: { loadedMap: Prefab, 
             {<PedSpawner playerRef={playerRef} position={[0, 0, -10]} />}
             {isMultiplayer && <OtherPlayers />}
         </Physics>
+        <ambientLight intensity={1} />
     </>
 }
 
@@ -96,7 +164,7 @@ const PedSpawner = ({ position = [0, 0, 0], playerRef }: { position?: [number, n
         modelOffset={[0, -0.5, 0]}
         position={ped.position}
         model="rigga/rigga2.glb"
-        onShot={() => handlePedShot(ped.id)}
+        onBulletHit={() => handlePedShot(ped.id)}
     >
         {/* <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider> */}
         <ModelAttachment
