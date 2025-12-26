@@ -7,7 +7,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Joystick, Button } from './TouchscreenControls';
-import useInputStore from '@/shared/providers/InputStore';
 
 function isMobileDevice() {
     if (typeof navigator === 'undefined') return false;

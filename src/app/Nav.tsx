@@ -6,50 +6,63 @@ import { usePathname } from "next/navigation";
 import Shebang from "@/shared/ui/shebang";
 
 const experimentsConfig: Record<string, { name?: string; description?: string }> = {
-    'demos/demo': {},
-    'demos/mechanics': {},
-    'demos/killbox': {},
-    'demos/colony': {},
-    'demos/runner': {},
-    'demos/scumm': {},
+    'demos/mechanics': {
+        description: 'Basic game mechanics with a third-person character controller.'
+    },
+    'demos/killbox': {
+        description: 'First-person multiplayer shooting gallery with physics-based ragdolls.'
+    },
+    'demos/colony': {
+        description: 'A top-down world with autonomous NPCs and basic AI behaviors.'
+    },
+    'demos/runner': {
+        description: 'Endless runner game demo with procedural level generation.'
+    },
+    'demos/scumm': {
+        description: 'A simple point-and-click adventure game demo inspired by classic SCUMM games.'
+    },
     'floor': {
         description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
     },
     'lighting': {
         description: 'Lighting and reflections.'
     },
-    'controllers/combined': {},
-    'controllers/firstperson': {},
-    'tools/prefabeditor': {},
-    'tools/assetviewer': {},
-    'tools/character': {},
-    'tools/dragdrop': {},
-    'car/simple': {},
-    'car/road': {},
-    'navmesh': {},
-    'ik/ragdoll': {},
-    'ik/crawler': {},
-    'instancing/simple': {},
-    'instancing/merged': {},
-    'instancing/InstanceProvider': {},
-    'instancing/crowd': {},
-    'instancing/npc4': {},
-    'retargeting/basic': {},
-    'retargeting/variety': {},
-    'particles': {},
+    'sketches/controllers/combined': {},
+    'sketches/controllers/firstperson': {},
+    'sketches/tools/prefabeditor': {},
+    'sketches/tools/assetviewer': {},
+    'sketches/tools/character': {},
+    'sketches/tools/dragdrop': {},
+    'sketches/car/simple': {},
+    'sketches/car/road': {},
+    'sketches/navmesh': {},
+    'sketches/ik/ragdoll': {},
+    'sketches/ik/crawler': {},
+    'sketches/instancing/simple': {},
+    'sketches/instancing/merged': {},
+    'sketches/instancing/InstanceProvider': {},
+    'sketches/instancing/crowd': {},
+    'sketches/instancing/npc4': {},
+    'sketches/retargeting/basic': {},
+    'sketches/retargeting/variety': {},
+    'sketches/particles': {},
     '../wfc/index.html': {},
     '../chainreaction.html': {}
 };
 
-const allExperiments = Object.keys(experimentsConfig).map(e => `sketches/${e}`); // Prefix all with 'sketches/'
+// Use the paths as provided in `experimentsConfig` (demos were moved out of `/sketches`).
+// Keep any existing entries that already include a folder prefix (e.g. '../chainreaction.html').
+const allExperiments = Object.keys(experimentsConfig);
 
 // Separate demos and others
-const demos = allExperiments.filter(e => e.startsWith("sketches/demos/"));
-const others = allExperiments.filter(e => !e.startsWith("sketches/demos/"));
+// Demos are now referenced directly under `demos/` (not `sketches/demos/`).
+const demos = allExperiments.filter(e => e.startsWith("demos/"));
+const others = allExperiments.filter(e => !e.startsWith("demos/"));
 
 // For demos, strip 'sketches/demos/' prefix for a flat tree, but keep original path for links
 const demoEntries = demos.map(e => ({
-    display: e.replace(/^sketches\/demos\//, ""),
+    // Strip the `demos/` prefix for display but keep full path for links
+    display: e.replace(/^demos\//, ""),
     full: e
 }));
 // Build a tree using display names, but store full path for links
@@ -196,7 +209,8 @@ export default function Nav() {
                     <div className="my-1 font-bold text-lg ">Demos</div>
                     {clicked && <>
                         {/* Render Demos and Other as top-level categories */}
-                        <DemoTree node={demoTreeObj.demos || demoTreeObj} search={search} currentPath={pathname} />
+                        {/* demoTreeObj already contains the demos (no longer nested under a 'sketches' root) */}
+                        <DemoTree node={demoTreeObj} search={search} currentPath={pathname} />
                         <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
                     </>}
                 </div>

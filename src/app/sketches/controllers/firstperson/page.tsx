@@ -3,7 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import { useRef, } from "react";
 import { Object3D, Vector3 } from "three";
-import Controls from "@/shared/controls/ControlsProvider";
+import Controls from "../controls/ControlsProvider";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import DemoWorld from "@/shared/debug/DemoWorld";
 import GameCanvas from "@/shared/GameCanvas";

@@ -3,19 +3,21 @@ import { forwardRef, Suspense, use, useEffect, useRef, useState } from "react";
 import { Helper, useGLTF } from "@react-three/drei";
 import { RigidBody, Physics } from "@react-three/rapier";
 import { DirectionalLightHelper, Mesh, Object3D } from "three";
+import { GameCanvas } from "react-three-game";
 
-import Controls from "@/shared/controls/ControlsProvider";
+import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
+import { ThirdPersonController } from "@/app/sketches/controllers/thirdperson/ThirdPersonController";
+
 import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
-import GameCanvas from "@/shared/GameCanvas";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import MapModel from "@/shared/MapModel";
+
+import Ped from "@/shared/ped/physics/ped";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import DialogCollider from "@/shared/ped/physics/DialogCollider";
-import Ped from "@/shared/ped/physics/ped";
 import Balloon from "@/shared/physics/Balloon";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 
-import { ThirdPersonController } from "../../controllers/thirdperson/ThirdPersonController";
 
 export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
     return <Controls>

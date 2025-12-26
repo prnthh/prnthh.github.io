@@ -1,5 +1,5 @@
-import MusicProvider from "./sketches/demos/demo/MusicProvider";
-import { MusicDemo } from "./sketches/demos/demo/page";
+import MusicProvider from "./demos/demo/MusicProvider";
+import { MusicDemo } from "./demos/demo/demo";
 
 export default function Home() {
 

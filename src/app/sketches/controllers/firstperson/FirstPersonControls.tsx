@@ -10,9 +10,9 @@ import { useRef, RefObject } from "react";
 import { Vector3, Quaternion, MathUtils, Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
-import PointerLockControls from "@/shared/controls/PointerLockControls";
-import useInputStore from "@/shared/providers/InputStore";
-import KeyboardControls from "@/shared/controls/KeyboardControls";
+import PointerLockControls from "../controls/PointerLockControls";
+import useInputStore from "../controls/InputStore";
+import KeyboardControls from "../controls/KeyboardControls";
 
 const q = new Quaternion(), yq = new Quaternion(), fwd = new Vector3(), rt = new Vector3(), dir = new Vector3(), ray = new Vector3();
 

@@ -2,12 +2,12 @@
 
 import { Physics } from "@react-three/rapier";
 import { useState, useRef, useEffect } from "react";
-import Controls from "@/shared/controls/ControlsProvider";
+import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
 import GameCanvas from "@/shared/GameCanvas";
 import { useControls } from 'leva'
 import { Box, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Csm } from "@/shared/Csm";
-import CombinedController from "../../controllers/combined/CombinedController";
+import CombinedController from "@/app/sketches/controllers/combined/CombinedController";
 import { PrefabRoot } from "react-three-game";
 import DebugGround from "@/shared/ground/DebugGround";
 import { useFrame } from "@react-three/fiber";

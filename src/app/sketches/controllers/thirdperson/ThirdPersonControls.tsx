@@ -11,9 +11,9 @@ import { Vector3, Quaternion, Object3D, AnimationAction, MathUtils } from "three
 import FollowCam from "@/shared/cameras/FollowCam";
 import { Weapon } from "../firstperson/Weapon";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
-import useInputStore from "@/shared/providers/InputStore";
-import KeyboardControls from "@/shared/controls/KeyboardControls";
-import PointerLockControls from "@/shared/controls/PointerLockControls";
+import useInputStore from "../controls/InputStore";
+import KeyboardControls from "../controls/KeyboardControls";
+import PointerLockControls from "../controls/PointerLockControls";
 
 const tempQuat = new Quaternion();
 const tempYawQuat = new Quaternion();

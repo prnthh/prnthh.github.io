@@ -1,26 +1,25 @@
 import { DynamicRayCastVehicleController } from '@dimforge/rapier3d-compat'
 import { RapierRigidBody, useAfterPhysicsStep, useRapier } from '@react-three/rapier'
 import { RefObject, useEffect, useRef } from 'react'
-import * as THREE from 'three'
-import useInputStore from '@/shared/providers/InputStore'
+import { Object3D, Quaternion, Vector3 } from 'three'
 
-const up = new THREE.Vector3(0, 1, 0)
+const up = new Vector3(0, 1, 0)
 
-const _wheelSteeringQuat = new THREE.Quaternion()
-const _wheelRotationQuat = new THREE.Quaternion()
+const _wheelSteeringQuat = new Quaternion()
+const _wheelRotationQuat = new Quaternion()
 
 export type WheelInfo = {
-    axleCs: THREE.Vector3
+    axleCs: Vector3
     suspensionRestLength: number
     suspensionStiffness: number
     maxSuspensionTravel: number
-    position: THREE.Vector3
+    position: Vector3
     radius: number
 }
 
 export const useVehicleController = (
     chassisRef: RefObject<RapierRigidBody | null>,
-    wheelsRef: RefObject<(THREE.Object3D | null)[]>,
+    wheelsRef: RefObject<(Object3D | null)[]>,
     wheelsInfo: WheelInfo[],
 ) => {
     const { world } = useRapier()
@@ -37,7 +36,7 @@ export const useVehicleController = (
         const vehicle = world.createVehicleController(chassis)
         vehicle.setIndexForwardAxis = 2
 
-        const suspensionDirection = new THREE.Vector3(0, -1, 0)
+        const suspensionDirection = new Vector3(0, -1, 0)
 
         wheelsInfo.forEach((wheel) => {
             vehicle.addWheel(wheel.position, suspensionDirection, wheel.axleCs, wheel.suspensionRestLength, wheel.radius)

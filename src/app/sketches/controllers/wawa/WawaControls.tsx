@@ -7,8 +7,8 @@
  */
 
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
-import useInputStore from "@/shared/providers/InputStore";
-import KeyboardControls from "@/shared/controls/KeyboardControls";
+import useInputStore from "../controls/InputStore";
+import KeyboardControls from "../controls/KeyboardControls";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, RefObject } from "react";
 import { MathUtils, Vector3, Group } from "three";

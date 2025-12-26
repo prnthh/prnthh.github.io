@@ -1,12 +1,12 @@
 "use client";
 
 import GameCanvas from "@/shared/GameCanvas";
-import Controls from "@/shared/controls/ControlsProvider";
+import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
 import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvider";
 import Game from "./Game";
 import { useState } from "react";
-import killbox from "../../tools/prefabeditor/samples/killbox.json";
-import test from "../../tools/prefabeditor/samples/killbox2.json";
+import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
+import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
 import { Prefab } from "react-three-game";
 
 const maps = {

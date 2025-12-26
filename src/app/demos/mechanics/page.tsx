@@ -1,7 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useState } from "react";
-import LoadingSpinner from "../../loading/loading";
+import LoadingSpinner from "../../sketches/loading/loading";
 
 const Game = dynamic(() => import("./Game"), {
     ssr: false,

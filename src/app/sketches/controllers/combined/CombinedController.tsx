@@ -4,8 +4,8 @@ import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior, { SteeringType } from "@/shared/ped/physics/SelfSteeringBehavior";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
-import SwipeControls from "@/shared/controls/SwipeControls";
-import useInputStore from "@/shared/providers/InputStore";
+import SwipeControls from "../controls/SwipeControls";
+import useInputStore from "../controls/InputStore";
 import TapControls from "../tap/TapControls";
 import FollowCam from "@/shared/cameras/FollowCam";
 import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
@@ -26,6 +26,10 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
             idle: 'anim/idle.fbx',
             walk: 'anim/walk.fbx',
             run: 'anim/run.fbx',
+            jump: 'anim/jump.fbx',
+            walkLeft: "/anim/walkLeft.fbx",
+            lpunch: "/anim/lpunch.fbx",
+            rpunch: "/anim/rpunch.fbx",
         }
     };
 

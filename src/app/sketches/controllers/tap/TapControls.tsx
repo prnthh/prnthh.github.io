@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useBeforePhysicsStep } from "@react-three/rapier";
-import useInputStore from "@/shared/providers/InputStore";
+import useInputStore from "../controls/InputStore";
 import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
 
 interface TapControlsProps {

@@ -4,12 +4,12 @@ import { Suspense, useEffect, useRef } from "react";
 import { Group } from "three";
 import { Environment, useTexture } from "@react-three/drei";
 import GameCanvas from "@/shared/GameCanvas";
-import useInputStore from "@/shared/providers/InputStore";
+import useInputStore from "@/app/sketches/controllers/controls/InputStore";
 import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameEntityStore";
-import SwipeControls from "@/shared/controls/SwipeControls";
+import SwipeControls from "@/app/sketches/controllers/controls/SwipeControls";
 import Player from "./Player";
 import Room from "./rooms/BaseRoom";
-import { getTimeRNGNumber } from "../killbox/TimeRNG";
+import { getTimeRNGNumber } from "@/shared/etc/TimeRNG";
 
 // npm i react-brainrot-runner - make a runner game, just provide models for room sections
 // use it instead of a loading screen!
