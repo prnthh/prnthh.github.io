@@ -6,7 +6,7 @@ import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvide
 import Game from "./Game";
 import { useState } from "react";
 import killbox from "../../tools/prefabeditor/samples/killbox.json";
-import test from "../../tools/prefabeditor/samples/test.json";
+import test from "../../tools/prefabeditor/samples/killbox2.json";
 import { Prefab } from "react-three-game";
 
 const maps = {
@@ -64,14 +64,12 @@ export default function Home() {
                             <GameCanvas>
                                 <Game loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={() => { }} />
                                 <ambientLight intensity={1} />
-                                <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
                             </GameCanvas>
                         </MultiplayerProvider>
                     ) : (
                         <GameCanvas>
                             <Game loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={() => { }} />
                             <ambientLight intensity={1} />
-                            <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
                         </GameCanvas>
                     )}
                 </div>
