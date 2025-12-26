@@ -2,7 +2,7 @@ import { RapierRigidBody } from "@react-three/rapier";
 import { useRef, useEffect, useCallback, useMemo } from "react";
 import * as THREE from "three";
 import { useMultiplayerStore, PeerState, getMyState } from "@/shared/providers/MultiplayerStore";
-import { useMultiplayerProvider, useHitEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
+import { useMultiplayerProvider, useGameEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
 import FirstPersonController from "@/app/sketches/controllers/firstperson/FirstPersonController";
 import { useFrame } from "@react-three/fiber";
 import { selfId } from 'trystero';
@@ -44,7 +44,7 @@ const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D
 
     // Check for multiplayer context (null = singleplayer mode)
     const setMyState = useMultiplayerProvider();
-    const { onAction, sendAction } = useHitEvents();
+    const { onGameEvent, sendGameEvent } = useGameEvents();
     const isMultiplayer = setMyState !== null;
 
     const { setData, updateData } = useMultiplayerStore.getState();
@@ -68,9 +68,9 @@ const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D
 
     // Multiplayer: Handle incoming hit events
     useEffect(() => {
-        if (!isMultiplayer || !onAction) return;
+        if (!isMultiplayer || !onGameEvent) return;
 
-        return onAction((action: PlayerAction) => {
+        return onGameEvent((action: PlayerAction) => {
             if (action.type === 'hit' && action.targetPeerId === selfId && rigidBodyRef.current) {
                 const newHealth = updateData('health', (h = MAX_HEALTH) => Math.max(0, h - HIT_DAMAGE));
                 timeSinceLastUpdate.current = UPDATE_RATE; // Force immediate broadcast
@@ -83,7 +83,7 @@ const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D
                 }
             }
         });
-    }, [isMultiplayer, onAction, setData, updateData]);
+    }, [isMultiplayer, onGameEvent, setData, updateData]);
 
     // Multiplayer: Broadcast state updates
     useFrame((_, delta) => {
@@ -113,9 +113,9 @@ const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D
 
     const handleFire = useCallback(() => {
         if (isMultiplayer) {
-            sendAction?.({ type: 'shoot' });
+            sendGameEvent?.({ type: 'shoot' });
         }
-    }, [isMultiplayer, sendAction]);
+    }, [isMultiplayer, sendGameEvent]);
 
     return (
         <FirstPersonController

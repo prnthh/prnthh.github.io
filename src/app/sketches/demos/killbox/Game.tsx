@@ -12,6 +12,7 @@ import HitBox from "@/shared/physics/HitBox";
 import Ped from "@/shared/ped/physics/ped";
 import ModelAttachment from "@/shared/ped/ModelAttachment";
 import { Object3D } from "three";
+import { useGameEvents, useSyncedClock } from "@/shared/multiplayer/TrysteroMultiplayerProvider";
 
 
 
@@ -23,7 +24,7 @@ export default function Game({ loadedMap, isMultiplayer }: { loadedMap: Prefab, 
             <PrefabRoot data={loadedMap} />
             <LocalPlayer playerRef={playerRef} />
 
-            <Train />
+            <Train id="lift-main" />
 
             <group position={[-2, 0, -15]}>
                 <RandomNumberExample />
@@ -35,7 +36,7 @@ export default function Game({ loadedMap, isMultiplayer }: { loadedMap: Prefab, 
                 <Balloon position={[4, 1, 0]} />
             </group>
 
-            {!isMultiplayer && <PedSpawner playerRef={playerRef} position={[0, 0, -10]} />}
+            {<PedSpawner playerRef={playerRef} position={[0, 0, -10]} />}
             {isMultiplayer && <OtherPlayers />}
         </Physics>
     </>
@@ -106,38 +107,22 @@ const PedSpawner = ({ position = [0, 0, 0], playerRef }: { position?: [number, n
     </Ped>)}</>
 }
 
-const Train = ({ position = [10, 0, -10] }: { position?: [number, number, number] }) => {
+const Train = ({ position = [10, 0, -10], id = "lift-main" }: { position?: [number, number, number], id?: string }) => {
     const rbRef = useRef<RapierRigidBody>(null);
-    const goingUp = useRef(false);
-    const waitTime = useRef(0);
+    const { getSyncedClock, initSyncedClock } = useSyncedClock();
+    const fallback = useRef(Date.now());
 
-    useFrame((_, delta) => {
-        if (!rbRef.current) return;
+    useEffect(() => { initSyncedClock?.(id) }, [id, initSyncedClock]);
 
-        const currentY = rbRef.current.translation().y;
-
-        // Check if we've reached an end
-        if ((currentY >= 9 && goingUp.current) || (currentY <= 0 && !goingUp.current)) {
-            // Stop and wait
-            rbRef.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
-            waitTime.current += delta;
-
-            // After 5 seconds, switch direction
-            if (waitTime.current >= 5) {
-                goingUp.current = !goingUp.current;
-                waitTime.current = 0;
-            }
-        } else if (waitTime.current === 0) {
-            // Moving
-            rbRef.current.setLinvel({ x: 0, y: goingUp.current ? 10 : -10, z: 0 }, true);
-        }
+    useFrame(() => {
+        const t = getSyncedClock?.(id) ?? (initSyncedClock ? null : fallback.current);
+        if (!rbRef.current || t === null) return;
+        const c = ((Date.now() - t) / 1000) % 10;
+        rbRef.current.setNextKinematicTranslation({ x: position[0], y: (c < 5 ? c : 10 - c) / 5 * 9, z: position[2] });
     });
 
-    return <RigidBody ref={rbRef} type='kinematicVelocity' position={position}>
-        <mesh castShadow>
-            <boxGeometry args={[4, 0.1, 8]} />
-            <meshStandardMaterial color="red" />
-        </mesh>
+    return <RigidBody ref={rbRef} type='kinematicPosition' position={position}>
+        <mesh castShadow><boxGeometry args={[4, 0.1, 8]} /><meshStandardMaterial color="red" /></mesh>
     </RigidBody>
 }
 

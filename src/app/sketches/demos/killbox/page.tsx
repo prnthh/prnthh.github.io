@@ -49,13 +49,13 @@ export default function Home() {
                 </div>
 
                 <div
-                    className="absolute top-12 left-1/2 -translate-x-1/2 z-50 text-white bg-gray-800 px-4 py-2 rounded cursor-pointer hover:bg-gray-700"
+                    className="absolute top-2 right-2 z-30 text-white bg-gray-800 px-4 py-2 rounded cursor-pointer hover:bg-gray-700"
                     onClick={(e) => {
                         e.stopPropagation();
                         setIsMultiplayer(!isMultiplayer);
                     }}
                 >
-                    Mode: {isMultiplayer ? "Multiplayer" : "Single Player"}
+                    {isMultiplayer ? "Online" : "Offline"}
                 </div>
 
                 <div className="w-full" style={{ height: "100vh" }}>

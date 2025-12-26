@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { usePeerStates, PeerState } from "@/shared/providers/MultiplayerStore";
 import { Group, MathUtils } from "three";
 import { CapsuleCollider, RigidBody, RapierRigidBody, useRapier } from "@react-three/rapier";
-import { useHitEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
+import { useGameEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
 import { Gun } from "@/app/sketches/controllers/firstperson/Weapon";
 import { Billboard } from "@react-three/drei";
 
@@ -28,7 +28,7 @@ const OtherPlayer = memo(({ peerId, state }: { peerId: string, state: PeerState 
     const rigidBodyRef = useRef<RapierRigidBody>(null);
     const innerGroupRef = useRef<Group>(null);
     const gunRef = useRef<Group>(null);
-    const { sendAction, onAction } = useHitEvents();
+    const { sendGameEvent, onGameEvent } = useGameEvents();
     const [isFlashing, setIsFlashing] = useState(false);
     const { rapier } = useRapier();
 
@@ -54,16 +54,16 @@ const OtherPlayer = memo(({ peerId, state }: { peerId: string, state: PeerState 
     const health = state.data.health ?? MAX_HEALTH;
 
     const handleHit = useMemo(() => () => {
-        if (sendAction) {
-            sendAction({ type: 'hit', targetPeerId: peerId });
+        if (sendGameEvent) {
+            sendGameEvent({ type: 'hit', targetPeerId: peerId });
         }
-    }, [sendAction, peerId]);
+    }, [sendGameEvent, peerId]);
 
     // Listen for shoot actions from this peer to flash the gun
     useEffect(() => {
-        if (!onAction) return;
+        if (!onGameEvent) return;
 
-        const unsubscribe = onAction((action: PlayerAction, fromPeerId: string) => {
+        const unsubscribe = onGameEvent((action: PlayerAction, fromPeerId: string) => {
             if (action.type === 'shoot' && fromPeerId === peerId) {
                 setIsFlashing(true);
                 setTimeout(() => setIsFlashing(false), 100);
@@ -71,7 +71,7 @@ const OtherPlayer = memo(({ peerId, state }: { peerId: string, state: PeerState 
         });
 
         return unsubscribe;
-    }, [onAction, peerId]);
+    }, [onGameEvent, peerId]);
 
     useFrame((_, delta) => {
         if (!rigidBodyRef.current || !innerGroupRef.current) return;

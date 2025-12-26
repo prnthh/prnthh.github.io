@@ -1,134 +1,117 @@
 "use client";
 
-import { useEffect, useRef, useState, createContext, useContext, useMemo, useCallback } from "react"
-import { joinRoom, getRelaySockets, pauseRelayReconnection, resumeRelayReconnection } from "trystero/torrent"
+import { useEffect, useRef, createContext, useContext, useMemo } from "react"
+import { joinRoom } from "trystero/torrent"
 import { PeerState, useMultiplayerStore, useMyState, usePeerStates } from "@/shared/providers/MultiplayerStore"
 import { selfId } from 'trystero'
 
-// Hook to manage room joining/leaving
-export const useRoom = (appId: string, roomId: string) => {
-    const [room, setRoom] = useState<ReturnType<typeof joinRoom> | null>(null)
-
-    useEffect(() => {
-        const newRoom = joinRoom({
-            appId,
-            password: "pockitworld"
-        }, roomId)
-        setRoom(newRoom)
-
-        console.log(`my peer ID is ${selfId}`)
-
-        return () => {
-            newRoom.leave()
-            setRoom(null)
-        }
-    }, [appId, roomId])
-
-    return room
-}
-
-// Action types for multiplayer events
 export type PlayerAction =
     | { type: 'shoot' }
-    | { type: 'hit', targetPeerId: string };
+    | { type: 'hit', targetPeerId: string }
+    | { type: 'syncClock', objectId: string, startTime: number };
 
-// Create context for setMyState function
-const MultiplayerContext = createContext<{
-    setMyState: ((data: PeerState, peerId?: string) => void) | null,
-    sendAction: ((action: PlayerAction) => void) | null,
-    onAction: ((callback: (action: PlayerAction, fromPeerId: string) => void) => () => void) | null,
-} | null>(null)
-
-export const useMultiplayerProvider = () => {
-    const context = useContext(MultiplayerContext)
-    if (context === null) {
-        return null
-    }
-    return context.setMyState
+type RoomActions = {
+    sendState: (data: PeerState, peerId?: string) => void
+    sendAction: (action: PlayerAction, peerId?: string) => void
 }
 
-export const useHitEvents = () => {
-    const context = useContext(MultiplayerContext)
-    if (context === null) {
-        return { sendAction: null, onAction: null }
-    }
-    return { sendAction: context.sendAction, onAction: context.onAction }
+const MultiplayerContext = createContext<{
+    setMyState: (data: PeerState) => void,
+    sendAction: (action: PlayerAction) => void,
+    onAction: (cb: (action: PlayerAction, peerId: string) => void) => () => void,
+    getSyncedClock: (id: string) => number | null,
+    initSyncedClock: (id: string) => void,
+} | null>(null)
+
+export const useMultiplayerProvider = () => useContext(MultiplayerContext)?.setMyState ?? null
+export const useGameEvents = () => {
+    const c = useContext(MultiplayerContext)
+    return { sendGameEvent: c?.sendAction ?? null, onGameEvent: c?.onAction ?? null }
+}
+export const useSyncedClock = () => {
+    const c = useContext(MultiplayerContext)
+    return { getSyncedClock: c?.getSyncedClock ?? null, initSyncedClock: c?.initSyncedClock ?? null }
 }
 
 export default function MultiplayerProvider({ appId = 'pockit.world', roomId, children, debug = false }: { appId?: string, roomId: string, children: React.ReactNode, debug?: boolean }) {
-    const [sendPlayerState, setSendPlayerState] = useState<((data: PeerState, peerId?: string) => void) | null>(null);
-    const [sendActionFn, setSendActionFn] = useState<((action: PlayerAction) => void) | null>(null);
-    const actionCallbacksRef = useRef<Set<(action: PlayerAction, fromPeerId: string) => void>>(new Set());
-
-    const room = useRoom(appId, roomId)
+    const actionsRef = useRef<RoomActions | null>(null)
+    const actionCallbacksRef = useRef<Set<(action: PlayerAction, peerId: string) => void>>(new Set())
+    const syncedClocksRef = useRef<Map<string, number>>(new Map())
+    const pendingClocksRef = useRef<Set<string>>(new Set())
 
     useEffect(() => {
-        if (!room) return
+        const room = joinRoom({ appId, password: "pockitworld" }, roomId)
+        const [sendState, onState] = room.makeAction('state')
+        const [sendAction, onAction] = room.makeAction('action')
+        const store = useMultiplayerStore.getState()
 
-        const [sendPlayerStateFn, getPlayerState] = room.makeAction('playerState')
-        const [sendActionRaw, getActionRaw] = room.makeAction('playerAction')
-        const { updatePeerState: handlePeerState, removePeer, setMyState } = useMultiplayerStore.getState()
+        console.log(`peer ID: ${selfId}`)
 
-        setSendPlayerState(() => (data: PeerState, peerId?: string) => {
-            setMyState(data)
-            sendPlayerStateFn(data, peerId)
-        })
+        // Store actions in ref immediately - no race condition
+        actionsRef.current = { sendState, sendAction }
 
-        // Set up generic action sender
-        setSendActionFn(() => (action: PlayerAction) => {
-            sendActionRaw(action)
-        })
+        const syncPeer = (peerId: string) => {
+            sendState(store.myState, peerId)
+            syncedClocksRef.current.forEach((startTime, objectId) =>
+                sendAction({ type: 'syncClock', objectId, startTime }, peerId)
+            )
+        }
 
-        // Listen for player action events
-        getActionRaw((data, peerId) => {
-            const action = data as PlayerAction
-            actionCallbacksRef.current.forEach(callback => callback(action, peerId))
-        })
-
-        // Listen for peer state updates with validation
-        getPlayerState((data, peerId) => {
-            if (
-                data &&
-                typeof data === 'object' &&
-                Array.isArray((data as any).position) &&
-                (data as any).position.length === 3 &&
-                (data as any).position.every((n: any) => typeof n === 'number')
-            ) {
-                handlePeerState(peerId, data as PeerState)
+        onState((data, peerId) => {
+            const d = data as any
+            if (d?.position?.length === 3 && d.position.every((n: any) => typeof n === 'number')) {
+                store.updatePeerState(peerId, d as PeerState)
             }
         })
 
-        // Handle peer joining - send them our current state immediately
-        room.onPeerJoin((peerId) => {
-            // Send current state to the new peer
-            const myState = useMultiplayerStore.getState().myState
-            sendPlayerStateFn(myState, peerId)
+        onAction((data, peerId) => {
+            const action = data as PlayerAction
+            if (action.type === 'syncClock') {
+                const { objectId, startTime } = action
+                const existing = syncedClocksRef.current.get(objectId)
+                if (!existing || startTime < existing) {
+                    syncedClocksRef.current.set(objectId, startTime)
+                    pendingClocksRef.current.delete(objectId)
+                    if (existing) sendAction({ type: 'syncClock', objectId, startTime }) // crdt convergence
+                }
+            }
+            actionCallbacksRef.current.forEach(cb => cb(action, peerId))
         })
 
-        // Handle peer leaving
-        room.onPeerLeave((peerId) => {
-            removePeer(peerId)
-        })
-    }, [room])
+        room.onPeerJoin(syncPeer)
+        room.onPeerLeave(store.removePeer)
 
-    useEffect(() => {
         return () => {
-            useMultiplayerStore.getState().reset()
+            room.leave()
+            actionsRef.current = null
+            store.reset()
         }
-    }, [])
-
-    const onAction = useCallback((callback: (action: PlayerAction, fromPeerId: string) => void) => {
-        actionCallbacksRef.current.add(callback)
-        return () => {
-            actionCallbacksRef.current.delete(callback)
-        }
-    }, [])
+    }, [appId, roomId])
 
     const contextValue = useMemo(() => ({
-        setMyState: sendPlayerState,
-        sendAction: sendActionFn,
-        onAction,
-    }), [sendPlayerState, sendActionFn, onAction])
+        setMyState: (data: PeerState) => {
+            useMultiplayerStore.getState().setMyState(data)
+            actionsRef.current?.sendState(data)
+        },
+        sendAction: (action: PlayerAction) => actionsRef.current?.sendAction(action),
+        onAction: (cb: (action: PlayerAction, peerId: string) => void) => {
+            actionCallbacksRef.current.add(cb)
+            return () => { actionCallbacksRef.current.delete(cb) }
+        },
+        getSyncedClock: (id: string) => syncedClocksRef.current.get(id) ?? null,
+        initSyncedClock: (id: string) => {
+            if (syncedClocksRef.current.has(id) || pendingClocksRef.current.has(id)) return
+            pendingClocksRef.current.add(id)
+            setTimeout(() => {
+                if (!syncedClocksRef.current.has(id)) {
+                    const startTime = Date.now()
+                    syncedClocksRef.current.set(id, startTime)
+                    actionsRef.current?.sendAction({ type: 'syncClock', objectId: id, startTime })
+                }
+                pendingClocksRef.current.delete(id)
+            }, 1000)
+        },
+    }), [])
 
     return <MultiplayerContext.Provider value={contextValue}>
         {children}
@@ -163,7 +146,7 @@ const DebugPanel = () => {
     const peerStates = usePeerStates()
 
     return (
-        <div style={{ position: 'absolute', top: 10, right: 10, background: '#000c', color: '#fff', padding: '8px', fontSize: '9px', maxHeight: '90vh', overflowY: 'auto', zIndex: 9999, maxWidth: '300px' }}>
+        <div style={{ position: 'absolute', top: 10, right: 10, background: '#000c', color: '#fff', padding: '8px', fontSize: '9px', maxHeight: '90vh', overflowY: 'auto', zIndex: 20, maxWidth: '300px' }}>
             <div style={{ marginBottom: '4px', opacity: 0.6 }}>Local</div>
             <div style={{ display: 'flex', flexWrap: 'wrap' }}>{renderJson(myState)}</div>
             {Object.keys(peerStates).length > 0 && (
