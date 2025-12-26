@@ -134,81 +134,59 @@ export const MovementSystem = ({
     const jump = useInputStore(state => state.jump);
     const rapier = useRapier();
 
-    const velocityRef = useRef({ x: 0, y: 0, z: 0 });
-    const dirtyRef = useRef(false);
-
     useFrame(() => {
         const rb = rigidBodyRef.current;
         if (!rb) return;
 
-        const vel = rb.linvel();
-        velocityRef.current.x = vel.x;
-        velocityRef.current.y = vel.y;
-        velocityRef.current.z = vel.z;
-        dirtyRef.current = false;
-        const currentSpeed = sprint ? sprintSpeed : walkSpeed;
-
         const pos = rb.translation();
+        const vel = rb.linvel();
+        const rot = rb.rotation();
+        const speed = sprint ? sprintSpeed : walkSpeed;
+
+        // Ground check
         tempRayOrigin.set(pos.x, pos.y - height, pos.z);
         const ray = new rapier.rapier.Ray(tempRayOrigin, { x: 0, y: -1, z: 0 });
         const hit = rapier.world.castRay(ray, 10, true, rapier.rapier.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, rb);
+        const isGrounded = hit && hit.timeOfImpact < height;
 
-        const isGrounded = hit && hit.timeOfImpact < height + 0.1;
+        // Movement direction from input
+        tempQuat.set(rot.x, rot.y, rot.z, rot.w);
+        tempForward.set(0, 0, -1).applyQuaternion(tempQuat).setY(0).normalize();
+        tempRight.set(1, 0, 0).applyQuaternion(tempQuat).setY(0).normalize();
+        tempDirection.set(0, 0, 0).addScaledVector(tempForward, vertical).addScaledVector(tempRight, horizontal);
 
-        if (hit && hit.timeOfImpact < height) {
+        const hasInput = tempDirection.lengthSq() > 0;
+        if (hasInput) tempDirection.normalize().multiplyScalar(speed);
+
+        // Horizontal velocity: input when moving, zero when grounded idle, preserve when airborne
+        let vx = hasInput ? tempDirection.x : (isGrounded ? 0 : vel.x);
+        let vz = hasInput ? tempDirection.z : (isGrounded ? 0 : vel.z);
+
+        // Add ground velocity if standing on a moving platform
+        if (isGrounded) {
+            const groundRigidBody = hit.collider.parent();
+            if (groundRigidBody && !groundRigidBody.isFixed()) {
+                const groundVel = groundRigidBody.linvel();
+                vx += groundVel.x;
+                vz += groundVel.z;
+            }
+        }
+
+        // Vertical velocity: float spring when grounded, gravity when airborne
+        let vy = vel.y;
+        if (isGrounded) {
             const heightError = height - hit.timeOfImpact;
-            const targetUpwardVel = heightError * floatSpring;
-            velocityRef.current.y = velocityRef.current.y * (1 - floatDamping) + targetUpwardVel * floatDamping;
+            vy = vy * (1 - floatDamping) + heightError * floatSpring * floatDamping;
             rb.setGravityScale(0, true);
-            dirtyRef.current = true;
-
-            if (jump && isGrounded) {
-                velocityRef.current.y = jumpVelocity;
+            if (jump) {
+                vy = jumpVelocity;
                 rb.setGravityScale(1, true);
             }
         } else {
             rb.setGravityScale(1, true);
         }
 
-        const rot = rb.rotation();
-        tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-        tempForward.set(0, 0, -1).applyQuaternion(tempQuat).setY(0).normalize();
-        tempRight.set(1, 0, 0).applyQuaternion(tempQuat).setY(0).normalize();
-
-        tempDirection.set(0, 0, 0)
-            .addScaledVector(tempForward, vertical)
-            .addScaledVector(tempRight, horizontal);
-
-        const inputMagnitude = tempDirection.length();
-        if (inputMagnitude > 0) {
-            tempDirection.multiplyScalar(currentSpeed / inputMagnitude);
-            velocityRef.current.x = tempDirection.x;
-            velocityRef.current.z = tempDirection.z;
-            dirtyRef.current = true;
-        } else if (isGrounded) {
-            velocityRef.current.x = 0;
-            velocityRef.current.z = 0;
-            dirtyRef.current = true;
-        }
-
-        // Add ground velocity if standing on a moving object
-        if (hit && isGrounded) {
-            const groundCollider = hit.collider;
-            const groundRigidBody = groundCollider.parent();
-            if (groundRigidBody && !groundRigidBody.isFixed()) {
-                const groundLinvel = groundRigidBody.linvel();
-                const speed = Math.sqrt(groundLinvel.x ** 2 + groundLinvel.y ** 2 + groundLinvel.z ** 2);
-                if (speed > 0.01) {
-                    velocityRef.current.x += groundLinvel.x;
-                    velocityRef.current.z += groundLinvel.z;
-                    dirtyRef.current = true;
-                }
-            }
-        }
-
-        if (dirtyRef.current) {
-            rb.setLinvel(velocityRef.current, true);
-        }
+        rb.setLinvel({ x: vx, y: vy, z: vz }, true);
     });
 
     return null;

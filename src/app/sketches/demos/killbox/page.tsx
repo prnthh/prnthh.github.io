@@ -47,7 +47,7 @@ export default function Home() {
                     </select>
                 </div>
                 <div className="w-full" style={{ height: "100vh" }}>
-                    <MultiplayerProvider roomId="lobby" debug={false}>
+                    <MultiplayerProvider roomId="lobby" debug >
                         <GameCanvas>
                             <Game loadedMap={maps[selectedMap]} onCanvasReady={() => { }} />
                             <ambientLight intensity={1} />

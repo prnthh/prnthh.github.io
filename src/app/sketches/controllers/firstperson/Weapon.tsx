@@ -5,12 +5,12 @@
  */
 
 import { useThree, useFrame } from "@react-three/fiber";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Mesh, MeshStandardMaterial, SphereGeometry, Vector3 } from "three";
 import { useRapier, RapierRigidBody } from "@react-three/rapier";
 import useInputStore from "@/shared/providers/InputStore";
 
-export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObject<RapierRigidBody | null> } = {}) {
+export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.RefObject<RapierRigidBody | null>, onFire?: () => void } = {}) {
     const { camera, scene } = useThree();
     const { rapier, world } = useRapier();
     const fire = useInputStore(state => state.fire);
@@ -37,7 +37,12 @@ export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObjec
         const rigidBody = world.createRigidBody(rigidBodyDesc);
         const colliderDesc = rapier.ColliderDesc.ball(size).setSensor(true);
         const collider = world.createCollider(colliderDesc, rigidBody);
-        collider.setActiveCollisionTypes(rapier.ActiveCollisionTypes.DEFAULT | rapier.ActiveCollisionTypes.KINEMATIC_FIXED);
+        // Enable collision detection with fixed, kinematic, and other kinematic bodies
+        collider.setActiveCollisionTypes(
+            rapier.ActiveCollisionTypes.DEFAULT |
+            rapier.ActiveCollisionTypes.KINEMATIC_FIXED |
+            rapier.ActiveCollisionTypes.KINEMATIC_KINEMATIC
+        );
         mesh.userData.rigidBody = rigidBody;
         rigidBody.userData = { mesh, type: "bullet" };
 
@@ -107,6 +112,7 @@ export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObjec
     useFrame(() => {
         if (fire && !prevFireRef.current) {
             weaponHandler();
+            onFire?.();
             const audio = audioPoolRef.current[audioIndexRef.current];
             audio.currentTime = 0;
             audio.play().catch(() => { });
@@ -118,9 +124,9 @@ export function Weapon({ excludeRigidBody }: { excludeRigidBody?: React.RefObjec
     return null;
 }
 
-export function Gun() {
+export function Gun({ isFlashing = false }: { isFlashing?: boolean }) {
     return <mesh rotation={[0, 0, 0]} castShadow>
         <boxGeometry args={[0.1, 0.1, 1]} />
-        <meshStandardMaterial color="black" />
+        <meshStandardMaterial color={isFlashing ? "red" : "black"} emissive={isFlashing ? "red" : "black"} emissiveIntensity={isFlashing ? 2 : 0} />
     </mesh>
 }

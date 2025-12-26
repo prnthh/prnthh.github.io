@@ -82,12 +82,29 @@ export default function KeyboardInput() {
             }
         };
 
+        const handleBlur = () => {
+            // Reset all inputs when window loses focus
+            pressedKeys.clear();
+            axisValues.clear();
+            const store = useInputStore.getState();
+            store.setAxis('horizontal', 0);
+            store.setAxis('vertical', 0);
+            store.setAxis('lookHorizontal', 0);
+            store.setAxis('lookVertical', 0);
+            store.setButton('jump', false);
+            store.setButton('sprint', false);
+            store.setButton('use', false);
+            store.setButton('altUse', false);
+        };
+
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('blur', handleBlur);
 
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('blur', handleBlur);
         };
     }, []);
 

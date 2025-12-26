@@ -6,7 +6,7 @@
  */
 
 import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Group } from "three";
 import FirstPersonControls from "./FirstPersonControls";
 import { Weapon, Gun } from "./Weapon";
@@ -19,22 +19,31 @@ const FirstPersonController = ({
     cameraOffset = [0, 0, 0],
     spawnPosition = [0, 2, 0],
     children,
-    forwardRef
+    forwardRef,
+    onFire
 }: {
     name?: string,
     height?: number,
     cameraOffset?: [number, number, number],
     spawnPosition?: [number, number, number],
     children?: React.ReactNode,
-    forwardRef?: (refs: { rbref: React.RefObject<RapierRigidBody | null>, meshref: React.RefObject<Group | null>, cameraRigRef: React.RefObject<Group | null> }) => void
+    forwardRef?: (refs: { rbref: React.RefObject<RapierRigidBody | null>, meshref: React.RefObject<Group | null>, cameraRigRef: React.RefObject<Group | null> }) => void,
+    onFire?: () => void
 }) => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
     const bodyMeshRef = useRef<Group | null>(null);
     const cameraRigRef = useRef<Group | null>(null);
+    const [isFlashing, setIsFlashing] = useState(false);
 
     const CAPSULE_RADIUS = height / 5;
     const CAPSULE_HEIGHT = height / 2;
     const EYE_HEIGHT = CAPSULE_HEIGHT;
+
+    const handleFire = useCallback(() => {
+        setIsFlashing(true);
+        setTimeout(() => setIsFlashing(false), 100);
+        onFire?.();
+    }, [onFire]);
 
     useEffect(() => {
         if (typeof forwardRef === 'function') {
@@ -72,8 +81,8 @@ const FirstPersonController = ({
                 cameraRigRef={cameraRigRef}
             >
                 <group position={[0.2, -0.2, -0.5]} scale={0.5}>
-                    <Gun />
-                    <Weapon excludeRigidBody={rigidBodyRef} />
+                    <Gun isFlashing={isFlashing} />
+                    <Weapon excludeRigidBody={rigidBodyRef} onFire={handleFire} />
                 </group>
             </FirstPersonControls>
         </RigidBody>

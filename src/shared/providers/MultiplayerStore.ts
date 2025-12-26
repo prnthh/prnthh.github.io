@@ -6,38 +6,54 @@ import { immer } from "zustand/middleware/immer"
 export type PeerState = {
     position: [number, number, number],
     rotation: [number, number],
-    appearance?: { [key: string]: any },
+    data: Record<string, any>,
 }
+
+const DEFAULT_STATE: PeerState = {
+    position: [0, 0, 0],
+    rotation: [0, 0],
+    data: {},
+};
 
 export const useMultiplayerStore = create(
     immer(
         combine(
             {
                 peerStates: {} as Record<string, PeerState>,
-                myState: { position: [0, 0, 0], rotation: [0, 0], appearance: {} } as PeerState,
+                myState: { ...DEFAULT_STATE, data: { ...DEFAULT_STATE.data } } as PeerState,
             },
-            (set, get) => {
-                return {
-                    updatePeerState: (peerId: string, state: PeerState) => {
-                        set((draft) => {
-                            draft.peerStates[peerId] = state
-                        })
-                    },
-                    removePeer: (peerId: string) => {
-                        set((draft) => {
-                            delete draft.peerStates[peerId]
-                        })
-                    },
-                    setMyState: (state: PeerState) => {
-                        set((draft) => {
-                            draft.myState = state
-                        })
-                    },
-                    reset: () => {
-                        set(() => ({ peerStates: {}, myState: { position: [0, 0, 0], rotation: [0, 0], appearance: {} } }))
-                    }
+            (set, get) => ({
+                updatePeerState: (peerId: string, state: PeerState) => {
+                    set((draft) => {
+                        draft.peerStates[peerId] = state
+                    })
+                },
+                removePeer: (peerId: string) => {
+                    set((draft) => {
+                        delete draft.peerStates[peerId]
+                    })
+                },
+                setMyState: (state: PeerState) => {
+                    set((draft) => {
+                        draft.myState = state
+                    })
+                },
+                setData: (key: string, value: any) => {
+                    set((draft) => {
+                        draft.myState.data[key] = value
+                    })
+                },
+                getData: (key: string) => get().myState.data[key],
+                updateData: (key: string, updater: (prev: any) => any) => {
+                    set((draft) => {
+                        draft.myState.data[key] = updater(draft.myState.data[key])
+                    })
+                    return get().myState.data[key]
+                },
+                reset: () => {
+                    set(() => ({ peerStates: {}, myState: { ...DEFAULT_STATE, data: { ...DEFAULT_STATE.data } } }))
                 }
-            },
+            }),
         )
     ),
 )
@@ -70,4 +86,3 @@ export const useMyState = () => {
 export const getMyState = () => {
     return useMultiplayerStore.getState().myState
 }
-
