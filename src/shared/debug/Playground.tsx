@@ -32,7 +32,7 @@ const BALLS: Array<{
         },
     ];
 
-export default function Playground({ position = [0, 0, 0] as [number, number, number] }) {
+export default function Playground({ dynamic = true, position = [0, 0, 0] as [number, number, number] }: { dynamic?: boolean; position?: [number, number, number]; }) {
     return <group position={position}>
         {/* flat platform & misc obstacles */}
         <RigidBody type="fixed" position={[-15, 1, 0]} colliders="cuboid">
@@ -141,47 +141,49 @@ export default function Playground({ position = [0, 0, 0] as [number, number, nu
             </mesh>
         </RigidBody>
 
-        {/* spinning boxes */}
-        <RigidBody
-            type="kinematicVelocity"
-            position={[15, 3, 12]}
-            rotation={[0, Math.PI / 2, 0]}
-            angularVelocity={[0, 0, 1]}
-            colliders="cuboid"
-        >
-            <mesh castShadow receiveShadow>
-                <boxGeometry args={[6, 3, 3]} />
-                <meshStandardMaterial color="pink" />
-            </mesh>
-        </RigidBody>
-
-        <RigidBody
-            type="kinematicVelocity"
-            position={[15, 3, 20]}
-            rotation={[0, Math.PI / 2, 0]}
-            angularVelocity={[0, 0, 1]}
-            colliders="cuboid"
-        >
-            <mesh castShadow receiveShadow>
-                <boxGeometry args={[6, 5, 5]} />
-                <meshStandardMaterial color="skyblue" />
-            </mesh>
-        </RigidBody>
-
-        {/* balls */}
-        {BALLS.map((ball, i) => (
+        {dynamic && <>
+            {/* spinning boxes */}
             <RigidBody
-                key={String(i)}
-                type="dynamic"
-                colliders="ball"
-                position={ball.position}
-                rotation={[0, Math.random() * Math.PI * 2, 0]}
+                type="kinematicVelocity"
+                position={[15, 3, 12]}
+                rotation={[0, Math.PI / 2, 0]}
+                angularVelocity={[0, 0, 1]}
+                colliders="cuboid"
             >
                 <mesh castShadow receiveShadow>
-                    <sphereGeometry args={[ball.radius, 32, 32]} />
-                    <meshStandardMaterial color={ball.color} />
+                    <boxGeometry args={[6, 3, 3]} />
+                    <meshStandardMaterial color="pink" />
                 </mesh>
             </RigidBody>
-        ))}
+
+            <RigidBody
+                type="kinematicVelocity"
+                position={[15, 3, 20]}
+                rotation={[0, Math.PI / 2, 0]}
+                angularVelocity={[0, 0, 1]}
+                colliders="cuboid"
+            >
+                <mesh castShadow receiveShadow>
+                    <boxGeometry args={[6, 5, 5]} />
+                    <meshStandardMaterial color="skyblue" />
+                </mesh>
+            </RigidBody>
+
+            {/* balls */}
+            {BALLS.map((ball, i) => (
+                <RigidBody
+                    key={String(i)}
+                    type="dynamic"
+                    colliders="ball"
+                    position={ball.position}
+                    rotation={[0, Math.random() * Math.PI * 2, 0]}
+                >
+                    <mesh castShadow receiveShadow>
+                        <sphereGeometry args={[ball.radius, 32, 32]} />
+                        <meshStandardMaterial color={ball.color} />
+                    </mesh>
+                </RigidBody>
+            ))}
+        </>}
     </group>;
 }

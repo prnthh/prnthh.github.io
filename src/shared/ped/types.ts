@@ -1,7 +1,6 @@
 import React, { RefObject } from "react";
 import { AnimationAction, Group, Object3D, Vector3 } from "three";
 import { IntersectionEnterHandler, RapierRigidBody } from "@react-three/rapier";
-import { SteeringType } from "./physics/SelfSteeringBehavior";
 
 // =============================================================================
 // BASE TYPES - Used by HumanoidModel (animated character without physics)
@@ -108,8 +107,6 @@ export interface RigidHumanoidModelProps extends AnimatedModelProps {
 export interface PedProps extends RigidHumanoidModelProps {
     /** World position of the ped [x, y, z] */
     position?: [number, number, number];
-    /** Type of steering behavior (idle, walk, run, etc.) */
-    steeringType?: SteeringType;
     /** Callback when ped reaches their navigation destination */
     onDestinationReached?: () => void;
     /** If true, ped will detect bullet collisions and ragdoll on hit */

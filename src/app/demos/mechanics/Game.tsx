@@ -2,15 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Helper, useGLTF } from "@react-three/drei";
+import { Environment, Helper, useGLTF, useTexture } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
-import { DirectionalLightHelper, Mesh, Object3D } from "three";
+import { BackSide, DirectionalLightHelper, Mesh, NearestFilter, Object3D } from "three";
 import { GameCanvas } from "react-three-game";
 
 import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
 import { ThirdPersonController } from "@/app/sketches/controllers/thirdperson/ThirdPersonController";
 
-import DemoWorld, { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import Balloon from "@/shared/physics/Balloon";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
@@ -29,8 +28,7 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
                 <FogEnvironment />
                 <InnerGame onCanvasReady={onCanvasReady} />
             </Physics>
-            <ambientLight intensity={0} />
-            <DemoEnvironment />
+            <ambientLight intensity={1} />
 
         </GameCanvas>
     </Controls >
@@ -39,9 +37,18 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
 
 
 const FogEnvironment = () => {
+    const texture = useTexture('/textures/skybox1.jpg');
+    // texture.minFilter = NearestFilter;
+    // texture.magFilter = NearestFilter;
     return <>
         <fog attach="fog" args={['#87ceeb', 10, 50]} />
         <color attach={"background"} args={['#87ceeb']} />
+        <Environment background>
+            <mesh >
+                <sphereGeometry args={[10, 64, 64]} />
+                <meshBasicMaterial map={texture} side={BackSide} />
+            </mesh>
+        </Environment>
     </>
 }
 
@@ -75,7 +82,6 @@ const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
 
     return <>
 
-        <DemoWorld />
         <ThirdPersonController lookTarget={ballRef} >
             <ModelAttachment
                 model="/models/environment/Katana.glb"
