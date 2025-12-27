@@ -483,6 +483,39 @@
               }
             },
             "name": "Node Copy"
+          },
+          {
+            "id": "5ee592e7-8993-4421-9546-2b062f96dfdb",
+            "name": "door",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -6.959354487964093,
+                    2.48284839130927,
+                    2.0587295317996688
+                  ],
+                  "rotation": [
+                    0,
+                    1.5140000000000022,
+                    0
+                  ],
+                  "scale": [
+                    2.9999999999999996,
+                    3,
+                    2.9999999999999996
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Doorway.glb",
+                  "instanced": false
+                }
+              }
+            }
           }
         ]
       }
