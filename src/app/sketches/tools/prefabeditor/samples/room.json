@@ -130,6 +130,45 @@
             }
           }
         }
+      },
+      {
+        "id": "61b59c5f-1ffb-4628-a442-7eaaef7ca515",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/Executive Desk.glb",
+              "instanced": false
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "cuboid"
+            }
+          }
+        }
       }
     ]
   }
