@@ -2,22 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { Environment, Helper, useGLTF, useTexture } from "@react-three/drei";
+import { Environment, Helper, useTexture } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
-import { BackSide, DirectionalLightHelper, Mesh, NearestFilter, Object3D } from "three";
+import { BackSide, DirectionalLightHelper, Object3D } from "three";
 import { GameCanvas } from "react-three-game";
 
 import Controls from "@/app/react-three-controller/controls/ControlsProvider";
 import { ThirdPersonController } from "@/app/react-three-controller/thirdperson/ThirdPersonController";
-
-import CrawlerApp from "@/shared/ik/CrawlerPed";
-import Balloon from "@/shared/physics/Balloon";
-import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
-
 import Ped from "@/app/react-three-controller/ped/ped";
 import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
 import DialogCollider from "@/app/react-three-controller/ped/physics/DialogCollider";
+
 import FootballGame from "./FootballGame";
+import ExperimentalStuff from "./ExperimentalStuff";
 
 
 export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
@@ -81,7 +78,6 @@ const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
 
 
     return <>
-
         <ThirdPersonController lookTarget={ballRef} >
             <ModelAttachment
                 model="/models/environment/Katana.glb"
@@ -91,53 +87,14 @@ const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
                 rotation={[0, 0.8, -1.2]}
             />
         </ThirdPersonController>
-        <PunchingBag position={[5, 2, 8]} />
 
-        <group position={[-2, 0, 5]}>
-            <CrawlerApp controlled={false} />
-        </group>
 
-        <WavyTree position={[-5, 0, 17]} />
-
+        <ExperimentalStuff />
         <FootballGame ref={ballRef} />
         <GoalFollowingPed ballRef={ballRef} />
-
     </>
 }
 
-const WavyTree = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
-    const { scene } = useGLTF('/models/environment/tree.glb');
-    const [clone, setClone] = useState<Object3D | undefined>(undefined);
-
-    useEffect(() => {
-        if (!scene) return;
-        const clonedScene = scene.clone();
-        clonedScene.traverse((child) => {
-            if (child instanceof Mesh) {
-                const originalMaterial = child.material;
-                child.material = createWavingMaterial(originalMaterial);
-            }
-        });
-        setClone(clonedScene);
-    }, [scene]);
-
-    if (!clone) return null;
-
-
-    return <primitive position={position} object={clone} />;
-}
-
-
-const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
-    return <>
-        <Balloon position={position}>
-            <mesh castShadow receiveShadow >
-                <capsuleGeometry args={[0.2, 0.8]} />
-                <meshStandardMaterial color="red" />
-            </mesh>
-        </Balloon>
-    </>
-};
 
 
 
