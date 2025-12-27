@@ -78,7 +78,8 @@
               "collider": "cuboid"
             }
           }
-        }
+        },
+        "children": []
       },
       {
         "id": "38f9751f-6ebb-478d-8266-5caf1b2abd82",
@@ -87,18 +88,18 @@
             "type": "Transform",
             "properties": {
               "position": [
-                0,
-                1.9771409688336967,
-                -1.9864660288612843
+                -1.0082052818834666,
+                3.971726702309954,
+                2.381298766994416
               ],
               "rotation": [
-                0,
+                1.5700000000000005,
                 0,
                 0
               ],
               "scale": [
+                12,
                 10,
-                4,
                 1
               ]
             }
@@ -114,11 +115,11 @@
             "properties": {
               "color": "#ffffff",
               "wireframe": false,
-              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "texture": "/textures/GreyboxTextures/greybox_teal_solid.png",
               "repeat": true,
               "repeatCount": [
                 8,
-                4
+                7
               ]
             }
           },
@@ -168,7 +169,322 @@
               "collider": "cuboid"
             }
           }
+        },
+        "children": [
+          {
+            "id": "63ad3fae-674f-4acf-b2f5-f66934c2611d",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0.7213835314973418,
+                    0.8767377098684103,
+                    -0.003309683510794581
+                  ],
+                  "rotation": [
+                    -3.141592653589793,
+                    0.9415926535897928,
+                    -3.141592653589793
+                  ],
+                  "scale": [
+                    0.006000000000000002,
+                    0.006,
+                    0.006000000000000002
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Phone.glb",
+                  "instanced": false
+                }
+              }
+            }
+          },
+          {
+            "id": "0e6c4393-7d25-4a57-a8b6-3b201dfa1835",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -0.6612834603784342,
+                    0.8767377098684103,
+                    -0.09758926225128128
+                  ],
+                  "rotation": [
+                    -1.300000000000003,
+                    0.9000000000000027,
+                    4.465111087720449e-16
+                  ],
+                  "scale": [
+                    0.9999999999999996,
+                    0.9999999999999996,
+                    0.9999999999999998
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Diamond Sword.glb",
+                  "instanced": false
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": "fb5fef53-937e-411a-b64b-8f1abc51dde2",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -7.017018065813467,
+                1.9771409688336967,
+                2.3848742527000795
+              ],
+              "rotation": [
+                0,
+                1.570000000000127,
+                0
+              ],
+              "scale": [
+                10,
+                4,
+                0.9999999999999488
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#ffffff",
+              "wireframe": false,
+              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
         }
+      },
+      {
+        "id": "1612867d-5dcc-45af-ad3a-da064cbe6226",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                4.97,
+                1.9771409688336967,
+                2.39441983839301
+              ],
+              "rotation": [
+                0,
+                1.570000000000127,
+                0
+              ],
+              "scale": [
+                10,
+                4,
+                0.999999999999968
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#ffffff",
+              "wireframe": false,
+              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
+        }
+      },
+      {
+        "id": "92f0f143-6cd2-4f2f-bd03-4012a24c932b",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -1.0082052818834666,
+                1.9771409688336967,
+                -2.593900950784758
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                12,
+                4,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#ffffff",
+              "wireframe": false,
+              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
+        }
+      },
+      {
+        "id": "lights",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                -2.475775595566237,
+                -1.9783099792406535
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "ba4366f4-695a-4fa4-b32f-7bd1b1d95515",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    1.460346518114203,
+                    5.940192645275776,
+                    3.979639900383754
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 100,
+                  "penumbra": 0.5,
+                  "angle": 1.2,
+                  "distance": 55
+                }
+              }
+            }
+          },
+          {
+            "id": "4bcbe46f-e47b-486c-aff2-a5aa6df896b2",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -3.228169789596622,
+                    5.940192645275776,
+                    3.979639900383754
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 100,
+                  "penumbra": 0.5,
+                  "angle": 1.2,
+                  "distance": 55
+                }
+              }
+            },
+            "name": "Node Copy"
+          }
+        ]
       }
     ]
   }

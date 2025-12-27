@@ -5,7 +5,6 @@ import { useState, useRef } from "react";
 import Controls from "@/app/react-three-controller/controls/ControlsProvider";
 import { GameCanvas } from "react-three-game";
 import { Box, OrbitControls } from "@react-three/drei";
-import { Csm } from "@/shared/Csm";
 import CombinedController from "@/app/react-three-controller/combined/CombinedController";
 import { PrefabRoot } from "react-three-game";
 import DebugGround from "@/shared/ground/DebugGround";
@@ -24,24 +23,22 @@ export default function Home() {
                 <Controls>
                     <GameCanvas>
                         <Physics>
-                            <Csm>
-                                <PrefabRoot
-                                    onSelect={(id) => {
-                                        console.log("selected prefab root", id);
-                                    }}
-                                    data={room} />
-                                <ambientLight intensity={0.5} />
-                                <DebugGround position={[0, -0.99, 0]} onClick={(e) => { setTarget([e.point.x, e.point.y, e.point.z]) }} />
+                            <PrefabRoot
+                                onSelect={(id) => {
+                                    console.log("selected prefab root", id);
+                                }}
+                                data={room} />
+                            <ambientLight intensity={1.5} />
+                            <DebugGround position={[0, -0.99, 0]} onClick={(e) => { setTarget([e.point.x, e.point.y, e.point.z]) }} />
 
-                                {target && (
-                                    <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />
-                                )}
+                            {target && (
+                                <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />
+                            )}
 
-                                <CombinedController ref={characterRef} mode={"click"} target={target} />
-                                {<SidewaysFollowCamera characterRef={characterRef} />}
+                            <CombinedController ref={characterRef} mode={"click"} target={target} />
+                            {<SidewaysFollowCamera characterRef={characterRef} />}
 
-                                <Ped modelOffset={[0, -0.82, 0]} height={0.6} position={[2, 0, 2]} model="rigga/rigga2.glb" />
-                            </Csm>
+                            <Ped modelOffset={[0, -0.82, 0]} height={0.6} position={[2, 0, 2]} model="rigga/rigga2.glb" />
                         </Physics>
                     </GameCanvas>
                 </Controls>
