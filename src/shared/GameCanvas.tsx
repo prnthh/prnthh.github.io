@@ -19,6 +19,7 @@ export default function GameCanvas({ loader = false, children, ...props }: { loa
 
     return <>
         <Canvas
+            flat
             shadows={{ type: PCFShadowMap, }}
             frameloop={frameloop}
             gl={async ({ canvas }) => {
