@@ -107,25 +107,20 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
         return (
             <group
                 ref={groupRef}
-                {...props}
                 position={position}
-                onPointerDown={(e) => {
-                    e.stopPropagation();
-                    if (onClick) onClick(e);
-                }}
-                onContextMenu={(e) => {
-                    if (e.nativeEvent && typeof e.nativeEvent.preventDefault === 'function') {
-                        e.nativeEvent.preventDefault();
-                    }
-                }}
+                {...props}
             >
-                {/* {debug && (
-                    <mesh position={[0, height / 2, 0]} >
-                        <boxGeometry args={[0.6, height, 0.6]} />
-                        <meshBasicMaterial color="red" wireframe />
-                    </mesh>
-                )} */}
                 {clonedScene && <primitive position={modelOffset} name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
+
+                {/* raycast mesh instead of skinned mesh for better interaction */}
+                <mesh position={[0, height / 2, 0]} onClick={(e) => {
+                    e.stopPropagation();
+                    onClick?.(e);
+                }}>
+                    <capsuleGeometry args={[0.2, height]} />
+                    <meshBasicMaterial visible={false} />
+                </mesh>
+
                 {children}
             </group>
         );

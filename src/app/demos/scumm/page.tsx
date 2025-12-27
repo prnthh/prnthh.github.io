@@ -11,37 +11,46 @@ import DebugGround from "@/shared/ground/DebugGround";
 import { useFrame } from "@react-three/fiber";
 import Ped from "@/app/react-three-controller/ped/ped";
 import room from "@/app/sketches/tools/prefabeditor/samples/room.json";
+import CutsceneCamera from "@/shared/cameras/CutsceneCamera";
 
 
 export default function Home() {
     const [target, setTarget] = useState<[number, number, number]>([0, 0, 2]);
     const characterRef = useRef<any>(null);
+    const [activeEntity, setActiveEntity] = useState<string | null>(null);
 
     return (
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
-                <Controls>
-                    <GameCanvas>
-                        <Physics>
-                            <PrefabRoot
-                                onSelect={(id) => {
-                                    console.log("selected prefab root", id);
-                                }}
-                                data={room} />
-                            <ambientLight intensity={1.5} />
-                            <DebugGround position={[0, -0.99, 0]} onClick={(e) => { setTarget([e.point.x, e.point.y, e.point.z]) }} />
+                <GameCanvas>
+                    <Physics>
+                        <PrefabRoot
+                            onSelect={(id) => {
+                                console.log("selected prefab root", id);
+                            }}
+                            data={room} />
+                        <ambientLight intensity={1.5} />
+                        <DebugGround position={[0, -0.99, 0]} onClick={(e) => {
+                            setTarget([e.point.x, e.point.y, e.point.z])
+                            setActiveEntity(null);
+                        }} />
 
-                            {target && (
-                                <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />
-                            )}
+                        {target && (
+                            <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />
+                        )}
 
-                            <CombinedController ref={characterRef} mode={"click"} target={target} />
-                            {<SidewaysFollowCamera characterRef={characterRef} />}
+                        <CombinedController ref={characterRef} mode={"click"} target={target} />
+                        {activeEntity === null && <SidewaysFollowCamera characterRef={characterRef} />}
 
-                            <Ped modelOffset={[0, -0.82, 0]} height={0.6} position={[2, 0, 2]} model="rigga/rigga2.glb" />
-                        </Physics>
-                    </GameCanvas>
-                </Controls>
+
+                        <Ped onClick={(e) => {
+                            setActiveEntity("ped");
+                            e.stopPropagation();
+                        }} modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]} model="rigga/rigga2.glb" >
+                            {activeEntity === "ped" && <CutsceneCamera position={[0, 1, 2]} />}
+                        </Ped>
+                    </Physics>
+                </GameCanvas>
             </div>
         </div>
     );

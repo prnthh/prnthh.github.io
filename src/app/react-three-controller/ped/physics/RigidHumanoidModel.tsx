@@ -61,9 +61,6 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
                         run: "anim/run.fbx",
                         ...animatedModelProps.animationOverrides,
                     }}
-                    onClick={() => {
-                        // Handling click
-                    }}
                 />
             </RigidBody>
         );

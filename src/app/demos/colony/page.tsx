@@ -1,17 +1,19 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { Object3D } from "three";
+import { useThree } from "@react-three/fiber";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Html } from "@react-three/drei";
 import { GameCanvas } from "react-three-game";
-import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityById } from "@/shared/providers/GameEntityStore";
-import { useEffect, useRef, useState } from "react";
-import { useThree } from "@react-three/fiber";
+
 import Ped from "@/app/react-three-controller/ped/ped";
 import DialogCollider from "@/app/react-three-controller/ped/physics/DialogCollider";
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
-import { Object3D } from "three";
 import Playground from "@/shared/debug/Playground";
+
+import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityById } from "@/shared/providers/GameEntityStore";
 
 export default function Home() {
     return (
