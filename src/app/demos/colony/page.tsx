@@ -2,12 +2,12 @@
 
 import { Physics, RigidBody } from "@react-three/rapier";
 import { Html } from "@react-three/drei";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityById } from "@/shared/providers/GameEntityStore";
 import { useEffect, useRef, useState } from "react";
 import { useThree } from "@react-three/fiber";
-import Ped from "@/shared/ped/physics/ped";
-import DialogCollider from "@/shared/ped/physics/DialogCollider";
+import Ped from "@/app/react-three-controller/ped/ped";
+import DialogCollider from "@/app/react-three-controller/ped/physics/DialogCollider";
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import { Object3D } from "three";

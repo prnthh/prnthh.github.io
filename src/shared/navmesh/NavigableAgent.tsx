@@ -2,8 +2,8 @@ import { useEffect, useRef, useState, ReactNode, memo } from "react";
 import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { useNavigable, AgentHandle, Vector3Tuple } from "./NavigableContext";
-import AnimatedModel from "@/shared/ped/HumanoidModel";
-import { AnimatedModelRef } from "@/shared/ped/types";
+import AnimatedModel from "@/app/react-three-controller/ped/HumanoidModel";
+import { AnimatedModelRef } from "@/app/react-three-controller/ped/types";
 
 // ============================================================================
 // Constants

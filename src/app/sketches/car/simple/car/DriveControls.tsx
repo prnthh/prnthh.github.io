@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import useInputStore from '@/app/sketches/controllers/controls/InputStore'
+import useInputStore from '@/app/react-three-controller/controls/InputStore'
 
 /**
  * Minimal drive input bridge.

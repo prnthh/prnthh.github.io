@@ -1,10 +1,11 @@
-import { useFrame, useThree } from "@react-three/fiber";
-import { useRapier } from "@react-three/rapier";
 import { useEffect, useMemo, useRef } from "react";
-import { useGLTF } from "@react-three/drei";
 import { Object3D, Quaternion, Scene } from "three";
 import { SkeletonUtils } from "three/examples/jsm/Addons.js";
-import { Ragdoll } from "@/shared/physics/Ragdoll";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+import { useRapier } from "@react-three/rapier";
+
+import { Ragdoll } from "./Ragdoll";
 
 export type PedRagdollProps = {
     /** World position to spawn the ragdoll at. */

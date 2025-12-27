@@ -201,7 +201,7 @@ export const NavigableWorld = ({
     // Update crowd simulation each frame
     useFrame((state, delta) => {
         crowdRef.current?.update(Math.min(delta, 0.1));
-        
+
         // Only update debug helper every 100ms instead of every frame
         if (debug && crowdHelperRef.current) {
             const now = state.clock.elapsedTime;

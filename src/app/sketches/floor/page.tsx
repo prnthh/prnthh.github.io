@@ -4,7 +4,7 @@ import { useMemo, useRef } from "react";
 import { InstancedMesh, PlaneGeometry } from "three";
 import { OrbitControls, PerspectiveCamera, Plane } from "@react-three/drei";
 import { InstancedRigidBodies, Physics, RigidBody } from "@react-three/rapier";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 
 // toys
 import Playground from "@/shared/debug/Playground";

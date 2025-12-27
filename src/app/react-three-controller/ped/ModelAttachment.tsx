@@ -1,7 +1,6 @@
 import { useGLTF } from "@react-three/drei";
-import { useThree } from "@react-three/fiber";
 import { useEffect, useRef, useState } from "react";
-import { Object3D, Vector3 } from "three";
+import { Object3D } from "three";
 import { SkeletonUtils } from "three/examples/jsm/Addons.js";
 
 function findBoneByName(object: Object3D, name: string): Object3D | null {

@@ -3,10 +3,10 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Group } from "three";
 import { Environment, useTexture } from "@react-three/drei";
-import GameCanvas from "@/shared/GameCanvas";
-import useInputStore from "@/app/sketches/controllers/controls/InputStore";
+import { GameCanvas } from "react-three-game";
+import useInputStore from "@/app/react-three-controller/controls/InputStore";
 import useGameStore, { allEntityIDsByType, getEntitiesByType } from "@/shared/providers/GameEntityStore";
-import SwipeControls from "@/app/sketches/controllers/controls/SwipeControls";
+import SwipeControls from "@/app/react-three-controller/controls/SwipeControls";
 import Player from "./Player";
 import Room from "./rooms/BaseRoom";
 import { getTimeRNGNumber } from "@/shared/etc/TimeRNG";

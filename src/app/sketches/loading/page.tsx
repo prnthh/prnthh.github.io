@@ -1,6 +1,6 @@
 "use client";
 
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import SimpleModel from "@/shared/SimpleModel";
 import { Suspense } from "react";
 import { Physics } from "@react-three/rapier";

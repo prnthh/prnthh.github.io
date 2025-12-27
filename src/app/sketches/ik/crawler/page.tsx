@@ -4,9 +4,9 @@ import { DirectionalLightHelper, PCFSoftShadowMap } from "three";
 import { Helper, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import Environment from "@/shared/debug/Playground";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
-import KeyboardControls from "@/app/sketches/controllers/controls/KeyboardControls";
+import KeyboardControls from "@/app/react-three-controller/controls/KeyboardControls";
 
 export default function Home() {
     return (

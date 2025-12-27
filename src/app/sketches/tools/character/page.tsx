@@ -1,6 +1,6 @@
 "use client";
 
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import RiggedModel from "./rigged";
 import { OrbitControls } from "@react-three/drei";
 

@@ -38,7 +38,7 @@ import {
     bone,
     fabrikFixedIterations,
 } from '@/shared/ik/fabrik';
-import useInputStore from '@/app/sketches/controllers/controls/InputStore';
+import useInputStore from '@/app/react-three-controller/controls/InputStore';
 
 const _footPlacementOffset = new Vector3();
 const _legOrigin = new Vector3();

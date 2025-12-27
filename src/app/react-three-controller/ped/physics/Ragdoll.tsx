@@ -1,11 +1,11 @@
-import { useRapier } from "@react-three/rapier";
-import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { useGLTF } from "@react-three/drei";
-import { SkeletonUtils } from "three/examples/jsm/Addons.js";
-
-import RAPIER, { World } from "@dimforge/rapier3d-compat";
 import { Mesh, Object3D, Object3DEventMap, Quaternion, Scene, Vector3 } from "three";
+import { SkeletonUtils } from "three/examples/jsm/Addons.js";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+
+import { useRapier } from "@react-three/rapier";
+import RAPIER, { World } from "@dimforge/rapier3d-compat";
 
 export type RagdollSpawnOptions = {
     /** If provided, applies a world-space quaternion to the visual mesh before building the ragdoll. */

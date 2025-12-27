@@ -8,12 +8,14 @@ import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
 import { Vector3, Quaternion, Object3D, AnimationAction, MathUtils } from "three";
+
 import FollowCam from "@/shared/cameras/FollowCam";
-import { Weapon } from "../firstperson/Weapon";
-import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
+
+import { Weapon } from "../Weapon";
 import useInputStore from "../controls/InputStore";
 import KeyboardControls from "../controls/KeyboardControls";
 import PointerLockControls from "../controls/PointerLockControls";
+import { RigidHumanoidModelRef } from "../ped/types";
 
 const tempQuat = new Quaternion();
 const tempYawQuat = new Quaternion();

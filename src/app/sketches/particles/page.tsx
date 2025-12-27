@@ -6,7 +6,7 @@ import Smoke from "./ParticleEmitter";
 import { Vector3 } from "three";
 import { useRef, useState, ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import Particles from "./TSLParticle";
 import Building from "./building/building";
 import DebugGround from "@/shared/ground/DebugGround";

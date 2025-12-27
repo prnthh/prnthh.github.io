@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import useInputStore from "../controls/InputStore";
+import useInputStore from "./InputStore";
 
 const PointerLockControls = ({
     onLook,

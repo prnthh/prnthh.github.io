@@ -2,15 +2,15 @@
 
 import { Physics } from "@react-three/rapier";
 import { useState, useRef } from "react";
-import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
-import GameCanvas from "@/shared/GameCanvas";
+import Controls from "@/app/react-three-controller/controls/ControlsProvider";
+import { GameCanvas } from "react-three-game";
 import { Box, OrbitControls } from "@react-three/drei";
 import { Csm } from "@/shared/Csm";
-import CombinedController from "@/app/sketches/controllers/combined/CombinedController";
+import CombinedController from "@/app/react-three-controller/combined/CombinedController";
 import { PrefabRoot } from "react-three-game";
 import DebugGround from "@/shared/ground/DebugGround";
 import { useFrame } from "@react-three/fiber";
-import Ped from "@/shared/ped/physics/ped";
+import Ped from "@/app/react-three-controller/ped/ped";
 
 
 export default function Home() {

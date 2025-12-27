@@ -1,11 +1,13 @@
 import { useRef, memo, useMemo, useState, useEffect } from "react";
-import { useFrame } from "@react-three/fiber";
-import { usePeerStates, PeerState } from "@/shared/providers/MultiplayerStore";
 import { Group, MathUtils } from "three";
-import { CapsuleCollider, RigidBody, RapierRigidBody, useRapier } from "@react-three/rapier";
-import { useGameEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
-import { Gun } from "@/app/sketches/controllers/firstperson/Weapon";
+import { useFrame } from "@react-three/fiber";
 import { Billboard } from "@react-three/drei";
+import { CapsuleCollider, RigidBody, RapierRigidBody, useRapier } from "@react-three/rapier";
+
+import { usePeerStates, PeerState } from "@/shared/providers/MultiplayerStore";
+import { useGameEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
+
+import { Gun } from "@/app/react-three-controller/Weapon";
 
 // Game-specific defaults
 const MAX_HEALTH = 100;

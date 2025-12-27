@@ -1,7 +1,7 @@
 
 import useGameStore, { allEntityIDsByType, useEntityById } from "@/shared/providers/GameEntityStore";
 import { Group, Mesh, Box3, MeshPhongNodeMaterial } from "three/webgpu";
-import AnimatedModel from "@/shared/ped/HumanoidModel";
+import AnimatedModel from "@/app/react-three-controller/ped/HumanoidModel";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useGLTF } from "@react-three/drei";
 import { color, float, reflector } from "three/tsl";

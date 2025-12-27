@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
 import { RefObject, useRef } from "react";
+
 import { Matrix4, Quaternion, Vector3 } from "three";
 import { RigidHumanoidModelRef } from "../types";
 import AimLine from "@/shared/TSLLine";

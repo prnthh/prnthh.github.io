@@ -8,7 +8,7 @@ import { WheelInfo, useVehicleController } from './vehicleController'
 import FollowCam from '@/shared/cameras/FollowCam'
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js'
 import React from 'react'
-import useInputStore from '@/app/sketches/controllers/controls/InputStore'
+import useInputStore from '@/app/react-three-controller/controls/InputStore'
 
 const wheelInfo: Omit<WheelInfo, 'position'> = {
     axleCs: new THREE.Vector3(1, 0, 0),

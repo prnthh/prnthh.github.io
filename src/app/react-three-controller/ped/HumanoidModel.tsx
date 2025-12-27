@@ -3,6 +3,7 @@ import { Group, Mesh, Object3D, } from "three";
 import { SimplifyModifier, SkeletonUtils } from "three-stdlib";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+
 import useAnimationState from "./useAnimationStateBasic";
 import useLookAtTarget from "./useLookAtTarget";
 import { AnimatedModelProps, AnimatedModelRef } from "./types";

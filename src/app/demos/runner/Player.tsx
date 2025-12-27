@@ -2,9 +2,9 @@
 import { useRef, forwardRef, useImperativeHandle, useState, useEffect, Suspense } from "react";
 import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
-import useInputStore from "@/app/sketches/controllers/controls/InputStore";
+import useInputStore from "@/app/react-three-controller/controls/InputStore";
 import { Box, Capsule } from "@react-three/drei";
-import AnimatedModel from "@/shared/ped/HumanoidModel";
+import AnimatedModel from "@/app/react-three-controller/ped/HumanoidModel";
 import FollowCam from "@/shared/cameras/FollowCam";
 
 interface PlayerHandle {

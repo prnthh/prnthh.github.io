@@ -1,8 +1,8 @@
 import { memo, useCallback, useRef, useState, Suspense, useMemo } from "react";
-import RigidHumanoidModel from "./RigidHumanoidModel";
-import SteeringBehavior from "./SelfSteeringBehavior";
-import { PedProps, RigidHumanoidModelRef } from "../types";
-import PedRagdoll from "./PedRagdoll";
+import RigidHumanoidModel from "./physics/RigidHumanoidModel";
+import SteeringBehavior from "./physics/SelfSteeringBehavior";
+import { PedProps, RigidHumanoidModelRef } from "./types";
+import PedRagdoll from "./physics/PedRagdoll";
 
 const Ped = memo(({
     position,

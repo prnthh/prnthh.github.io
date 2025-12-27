@@ -8,7 +8,7 @@ import { useThree, useFrame } from "@react-three/fiber";
 import { useRef, useState } from "react";
 import { Mesh, MeshStandardMaterial, SphereGeometry, Vector3 } from "three";
 import { useRapier, RapierRigidBody } from "@react-three/rapier";
-import useInputStore from "../controls/InputStore";
+import useInputStore from "./controls/InputStore";
 
 export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.RefObject<RapierRigidBody | null>, onFire?: () => void } = {}) {
     const { camera, scene } = useThree();

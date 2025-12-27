@@ -2,9 +2,9 @@
 
 import { Physics } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import DemoWorld from "@/shared/debug/DemoWorld";
-import Ragdoll from "@/shared/physics/Ragdoll";
+import Ragdoll from "@/app/react-three-controller/ped/physics/Ragdoll";
 
 export default function Home() {
 

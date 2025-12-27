@@ -6,12 +6,12 @@
  * No separate keys for turning or camera rotation.
  */
 
-import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
-import useInputStore from "../controls/InputStore";
-import KeyboardControls from "../controls/KeyboardControls";
-import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef, RefObject } from "react";
 import { MathUtils, Vector3, Group } from "three";
+import { useFrame } from "@react-three/fiber";
+import { RigidHumanoidModelRef } from "../ped/types";
+import useInputStore from "../controls/InputStore";
+import KeyboardControls from "../controls/KeyboardControls";
 
 const normalizeAngle = (angle: number): number => {
     while (angle > Math.PI) angle -= 2 * Math.PI;

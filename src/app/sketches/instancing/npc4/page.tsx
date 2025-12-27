@@ -15,7 +15,7 @@ import { useThree, useFrame, useLoader } from "@react-three/fiber";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
 import { Stats } from '@react-three/drei'
 import { ShinyFloor } from "@/shared/shaders/floor/ShinyFloorMaterial";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 
 const INSTANCE_COUNT = 100;
 const MODEL_URL = "/models/human/rigga/rigga2.glb";

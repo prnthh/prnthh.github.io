@@ -6,7 +6,7 @@
  */
 
 import React, { useRef, useState, useEffect } from 'react';
-import useInputStore from '../controls/InputStore';
+import useInputStore from './InputStore';
 
 type JoystickProps = {
     horizontalAxis?: 'horizontal' | 'lookHorizontal';

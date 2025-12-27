@@ -1,14 +1,14 @@
 
 import { useRef, useState, forwardRef, useImperativeHandle } from "react";
-import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
+import RigidHumanoidModel from "@/app/react-three-controller/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
-import SteeringBehavior from "@/shared/ped/physics/SelfSteeringBehavior";
+import SteeringBehavior from "@/app/react-three-controller/ped/physics/SelfSteeringBehavior";
 import SwipeControls from "../controls/SwipeControls";
 import useInputStore from "../controls/InputStore";
 import TapControls from "../tap/TapControls";
 import FollowCam from "@/shared/cameras/FollowCam";
 import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
-import { RigidHumanoidModelRef } from "@/shared/ped/types";
+import { RigidHumanoidModelRef } from "@/app/react-three-controller/ped/types";
 
 const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number] }>(({ mode, target = [0, 0, 0] }, ref) => {
     const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "third-person">("idle");

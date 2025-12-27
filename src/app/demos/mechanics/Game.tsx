@@ -7,16 +7,16 @@ import { Physics } from "@react-three/rapier";
 import { BackSide, DirectionalLightHelper, Mesh, NearestFilter, Object3D } from "three";
 import { GameCanvas } from "react-three-game";
 
-import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
-import { ThirdPersonController } from "@/app/sketches/controllers/thirdperson/ThirdPersonController";
+import Controls from "@/app/react-three-controller/controls/ControlsProvider";
+import { ThirdPersonController } from "@/app/react-three-controller/thirdperson/ThirdPersonController";
 
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import Balloon from "@/shared/physics/Balloon";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 
-import Ped from "@/shared/ped/physics/ped";
-import ModelAttachment from "@/shared/ped/ModelAttachment";
-import DialogCollider from "@/shared/ped/physics/DialogCollider";
+import Ped from "@/app/react-three-controller/ped/ped";
+import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
+import DialogCollider from "@/app/react-three-controller/ped/physics/DialogCollider";
 import FootballGame from "./FootballGame";
 
 

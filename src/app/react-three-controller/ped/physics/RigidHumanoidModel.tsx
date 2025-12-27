@@ -1,5 +1,5 @@
-import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
 import { forwardRef, useImperativeHandle, useRef } from "react";
+import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
 import AnimatedModel from "../HumanoidModel";
 import { AnimatedModelRef, RigidHumanoidModelProps, RigidHumanoidModelRef } from "../types";
 

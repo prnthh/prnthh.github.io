@@ -7,9 +7,10 @@
 import { RapierRigidBody } from "@react-three/rapier";
 import { useRef, RefObject } from "react";
 import { Group, Object3D } from "three";
-import RigidHumanoidModel from "@/shared/ped/physics/RigidHumanoidModel";
-import { RigidHumanoidModelRef } from "@/shared/ped/physics/types";
+
+import RigidHumanoidModel from "../ped/physics/RigidHumanoidModel";
 import ThirdPersonControls from "./ThirdPersonControls";
+import { RigidHumanoidModelRef } from "../ped/types";
 
 export const ThirdPersonController = ({
     position = [0, 2, 0],

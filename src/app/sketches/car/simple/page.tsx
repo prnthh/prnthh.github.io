@@ -3,9 +3,9 @@
 import { Physics } from "@react-three/rapier";
 import Vehicle from "./car/base";
 import Lightsource from "@/shared/lighting/lightsource";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import DemoWorld from "@/shared/debug/DemoWorld";
-import AnimatedModel from "@/shared/ped/HumanoidModel";
+import AnimatedModel from "@/app/react-three-controller/ped/HumanoidModel";
 import FollowCam from "@/shared/cameras/FollowCam";
 import DriveControls from "./car/DriveControls";
 

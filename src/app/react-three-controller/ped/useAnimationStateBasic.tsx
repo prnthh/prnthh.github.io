@@ -1,6 +1,6 @@
-import { useLoader } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { type AnimationAction, AnimationClip, AnimationMixer, LoopRepeat, type Object3D, Object3DEventMap } from 'three'
+import { useLoader } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/Addons.js'
 
 const filterNeckAnimations = (animation: AnimationClip): AnimationClip => {

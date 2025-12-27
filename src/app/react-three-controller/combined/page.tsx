@@ -3,7 +3,7 @@
 import { Physics } from "@react-three/rapier";
 import { useState } from "react";
 import Controls from "../controls/ControlsProvider";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import { useControls } from 'leva'
 import { Box, OrbitControls } from "@react-three/drei";
 import CombinedController from "./CombinedController";

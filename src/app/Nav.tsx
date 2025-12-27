@@ -5,7 +5,8 @@ import { Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Shebang from "@/shared/ui/shebang";
 
-const experimentsConfig: Record<string, { name?: string; description?: string }> = {
+const experimentsConfig: Record<string, { name?: string; description?: string; external?: boolean }> = {
+    'react-three-game': { external: true },
     'demos/mechanics': {
         description: 'Basic game mechanics with a third-person character controller.'
     },
@@ -27,8 +28,8 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
     'sketches/lighting': {
         description: 'Lighting and reflections.'
     },
-    'sketches/controllers/combined': {},
-    'sketches/controllers/firstperson': {},
+    'react-three-controller/combined': {},
+    'react-three-controller/firstperson': {},
     'sketches/tools/prefabeditor': {},
     'sketches/tools/assetviewer': {},
     'sketches/tools/character': {},
@@ -50,44 +51,6 @@ const experimentsConfig: Record<string, { name?: string; description?: string }>
     '../chainreaction.html': {}
 };
 
-// Use the paths as provided in `experimentsConfig` (demos were moved out of `/sketches`).
-// Keep any existing entries that already include a folder prefix (e.g. '../chainreaction.html').
-const allExperiments = Object.keys(experimentsConfig);
-
-// Separate demos and others
-// Demos are now referenced directly under `demos/` (not `sketches/demos/`).
-const demos = allExperiments.filter(e => e.startsWith("demos/"));
-const others = allExperiments.filter(e => !e.startsWith("demos/"));
-
-// For demos, strip 'sketches/demos/' prefix for a flat tree, but keep original path for links
-const demoEntries = demos.map(e => ({
-    // Strip the `demos/` prefix for display but keep full path for links
-    display: e.replace(/^demos\//, ""),
-    full: e
-}));
-// Build a tree using display names, but store full path for links
-function buildDemoTree(entries: { display: string, full: string }[]) {
-    const tree: any = {};
-    for (const { display, full } of entries) {
-        const parts = display.split("/");
-        let node = tree;
-        for (let i = 0; i < parts.length; i++) {
-            const part = parts[i];
-            if (i === parts.length - 1) {
-                node[part] = full; // store full path at leaf
-            } else {
-                if (!node[part]) node[part] = {};
-                node = node[part];
-            }
-        }
-    }
-    return tree;
-}
-const demoTreeObj = buildDemoTree(demoEntries);
-// For others, keep as before (still nested under 'sketches')
-const otherTreeObj = buildTree(others);
-
-
 // Helper to build a tree from the flat list
 function buildTree(paths: string[]) {
     const tree: any = {};
@@ -102,6 +65,9 @@ function buildTree(paths: string[]) {
     }
     return tree;
 }
+
+const allExperiments = Object.keys(experimentsConfig);
+const treeObj = buildTree(allExperiments);
 
 function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: any; prefix?: string; search?: string; currentPath?: string }) {
     const [open, setOpen] = useState<{ [k: string]: boolean }>({});
@@ -131,10 +97,24 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                     // Leaf node
                     const displayName = key;
                     const fullPath = typeof value === "string" ? value : prefix + key;
-                    // Normalize paths: remove trailing slashes, ignore query/hash
                     const normalize = (p: string) => p.replace(/[?#].*$/, '').replace(/\/$/, '');
                     const isActive = normalize(currentPath || '') === `/${normalize(fullPath)}`;
-                    return (
+                    const config = experimentsConfig[fullPath.replace(/^sketches\//, '')];
+                    const isExternal = config?.external;
+
+                    return isExternal ? (
+                        <a
+                            href={`/${fullPath}`}
+                            key={fullPath}
+                            className={`rounded px-2 py-1 transition-colors select-none
+                                ${isActive ? "font-bold dark:bg-white/10 bg-black/10 ring" : "hover:ring cursor-pointer"}`}
+                        >
+                            {displayName} <br />
+                            <span className="text-sm font-light">
+                                {config?.description}
+                            </span>
+                        </a>
+                    ) : (
                         <Link
                             href={`/${fullPath}`}
                             prefetch={false}
@@ -144,8 +124,7 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
                         >
                             {displayName} <br />
                             <span className="text-sm font-light">
-                                {experimentsConfig[fullPath.replace(/^sketches\//, '')]?.description}
-
+                                {config?.description}
                             </span>
                         </Link>
                     );
@@ -207,12 +186,7 @@ export default function Nav() {
                 </div>
                 <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : open ? 'h-[40px] border opacity-50' : 'opacity-0'}  bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar select-none flex flex-col mt-12 transition-all`}>
                     <div className="my-1 font-bold text-lg ">Demos</div>
-                    {clicked && <>
-                        {/* Render Demos and Other as top-level categories */}
-                        {/* demoTreeObj already contains the demos (no longer nested under a 'sketches' root) */}
-                        <DemoTree node={demoTreeObj} search={search} currentPath={pathname} />
-                        <DemoTree node={otherTreeObj} search={search} currentPath={pathname} />
-                    </>}
+                    {clicked && <DemoTree node={treeObj} search={search} currentPath={pathname} />}
                 </div>
 
             </div>

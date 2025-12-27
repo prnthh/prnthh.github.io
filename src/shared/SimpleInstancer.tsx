@@ -1,5 +1,5 @@
 import DebugCamera from "@/shared/cameras/DebugCamera";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 import { useEffect, useRef } from "react";
 import { Group } from "three";
 import * as THREE from "three";

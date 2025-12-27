@@ -1,11 +1,13 @@
+import { useRef, useEffect, useCallback } from "react";
+import { Euler, Group, Object3D, Quaternion } from "three";
+import { useFrame } from "@react-three/fiber";
 import { RapierRigidBody } from "@react-three/rapier";
-import { useRef, useEffect, useCallback, useMemo } from "react";
-import * as THREE from "three";
+
 import { useMultiplayerStore, PeerState, getMyState } from "@/shared/providers/MultiplayerStore";
 import { useMultiplayerProvider, useGameEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
-import FirstPersonController from "@/app/sketches/controllers/firstperson/FirstPersonController";
-import { useFrame } from "@react-three/fiber";
 import { selfId } from 'trystero';
+
+import FirstPersonController from "@/app/react-three-controller/firstperson/FirstPersonController";
 
 // Game constants
 const MAX_HEALTH = 100;
@@ -37,10 +39,10 @@ const hasStateChanged = (prev: PeerState, next: PeerState): boolean => {
     return false;
 };
 
-const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D | null> }) => {
+const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<Object3D | null> }) => {
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
-    const bodyMeshRef = useRef<THREE.Group | null>(null);
-    const cameraRigRef = useRef<THREE.Group | null>(null);
+    const bodyMeshRef = useRef<Group | null>(null);
+    const cameraRigRef = useRef<Group | null>(null);
 
     // Check for multiplayer context (null = singleplayer mode)
     const setMyState = useMultiplayerProvider();
@@ -52,8 +54,8 @@ const LocalPlayer = ({ playerRef }: { playerRef?: React.RefObject<THREE.Object3D
     // Multiplayer-only refs
     const timeSinceLastUpdate = useRef(0);
     const lastSentState = useRef<PeerState | null>(null);
-    const tempQuat = useRef(new THREE.Quaternion());
-    const tempEuler = useRef(new THREE.Euler());
+    const tempQuat = useRef(new Quaternion());
+    const tempEuler = useRef(new Euler());
 
     // Initialize player
     useEffect(() => {

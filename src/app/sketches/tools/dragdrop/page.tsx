@@ -4,7 +4,7 @@ import { Physics, RigidBody } from "@react-three/rapier";
 import { OrbitControls } from "@react-three/drei";
 import { useState } from "react";
 import { DragDropLoader } from "react-three-game";
-import GameCanvas from "@/shared/GameCanvas";
+import { GameCanvas } from "react-three-game";
 
 export default function Home() {
     const [models, setModels] = useState<any[]>([]);

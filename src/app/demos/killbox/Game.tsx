@@ -8,7 +8,7 @@ import { Html } from "@react-three/drei";
 import { Physics, RigidBody, RapierRigidBody } from "@react-three/rapier";
 import { PrefabRoot, Prefab, GameCanvas } from "react-three-game";
 
-import Controls from "@/app/sketches/controllers/controls/ControlsProvider";
+import Controls from "@/app/react-three-controller/controls/ControlsProvider";
 import MultiplayerProvider from "@/shared/multiplayer/TrysteroMultiplayerProvider";
 import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
 import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
@@ -17,8 +17,8 @@ import { useGameEvents, useSyncedClock } from "@/shared/multiplayer/TrysteroMult
 import { useTimeRNGNumber } from "@/shared/etc/TimeRNG";
 import Balloon from "@/shared/physics/Balloon";
 import HitBox from "@/shared/physics/HitBox";
-import Ped from "@/shared/ped/physics/ped";
-import ModelAttachment from "@/shared/ped/ModelAttachment";
+import Ped from "@/app/react-three-controller/ped/ped";
+import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
 
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
