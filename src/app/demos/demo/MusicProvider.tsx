@@ -8,6 +8,7 @@ interface AudioData {
     high: number;
     energy: number;
     beatCount: number;
+    currentTime: number;
 }
 
 interface MusicContextType {
@@ -42,14 +43,14 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         mid: 0,
         high: 0,
         energy: 0,
-        beatCount: 0
+        beatCount: 0,
+        currentTime: 0
     });
 
     const beatCountRef = useRef(0);
     const lastBeatTimeRef = useRef<number>(0);
-    const lastSpectrumRef = useRef<Uint8Array | null>(null);
-    const fluxHistoryRef = useRef<number[]>([]);
-    const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null); // Reuse this array
+    const energyHistoryRef = useRef<number[]>([]);
+    const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
 
     useEffect(() => {
         return () => {
@@ -64,14 +65,13 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
 
         const bufferLength = analyserRef.current.frequencyBinCount;
 
-        // Reuse the same array instead of creating new one each frame
         if (!dataArrayRef.current || dataArrayRef.current.length !== bufferLength) {
             dataArrayRef.current = new Uint8Array(bufferLength);
         }
         const dataArray = dataArrayRef.current;
         analyserRef.current.getByteFrequencyData(dataArray);
 
-        // Manual sum instead of slice + reduce (avoid array allocation)
+        // Calculate frequency bands
         let bassSum = 0, midSum = 0, highSum = 0, energySum = 0;
         const bassEnd = Math.floor(bufferLength / 8);
         const midEnd = Math.floor(bufferLength / 2);
@@ -88,38 +88,25 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         const mid = midSum / (midEnd - bassEnd);
         const high = highSum / (bufferLength - midEnd);
         const energy = energySum / bufferLength;
-        const now = Date.now();
 
-        // Spectral flux for onset detection
-        let flux = 0;
-        if (lastSpectrumRef.current) {
-            // Focus on mid-high frequencies to avoid bass rumble
-            for (let i = Math.floor(bufferLength / 4); i < bufferLength; i++) {
-                const diff = dataArray[i] - lastSpectrumRef.current[i];
-                if (diff > 0) flux += diff;
+        // Simple energy-based beat detection
+        const energyHistory = energyHistoryRef.current;
+        energyHistory.push(energy);
+        if (energyHistory.length > 43) energyHistory.shift();
+
+        if (energyHistory.length > 20) {
+            let avg = 0;
+            for (let i = 0; i < energyHistory.length; i++) avg += energyHistory[i];
+            avg /= energyHistory.length;
+
+            const now = Date.now();
+            const threshold = avg * 1.3;
+
+            // Beat: energy spike above threshold with 350ms cooldown
+            if (energy > threshold && now - lastBeatTimeRef.current > 350) {
+                beatCountRef.current += 1;
+                lastBeatTimeRef.current = now;
             }
-            // Copy data into existing array instead of creating new one
-            lastSpectrumRef.current.set(dataArray);
-        } else {
-            lastSpectrumRef.current = new Uint8Array(dataArray);
-        }
-
-        // Adaptive flux threshold
-        const fluxHistory = fluxHistoryRef.current;
-        fluxHistory.push(flux);
-        if (fluxHistory.length > 43) fluxHistory.shift();
-
-        let avgFlux = 0;
-        for (let i = 0; i < fluxHistory.length; i++) {
-            avgFlux += fluxHistory[i];
-        }
-        avgFlux /= fluxHistory.length;
-        const fluxThreshold = avgFlux * 2.5;
-
-        // Beat detection: onset with cooldown
-        if (flux > fluxThreshold && flux > 20 && now - lastBeatTimeRef.current > 200 && fluxHistory.length > 20) {
-            beatCountRef.current += 1;
-            lastBeatTimeRef.current = now;
         }
 
         setAudioData({
@@ -127,7 +114,8 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
             mid: Math.round(mid),
             high: Math.round(high),
             energy: Math.round(energy),
-            beatCount: beatCountRef.current
+            beatCount: beatCountRef.current,
+            currentTime: audioRef.current?.currentTime || 0
         });
 
         animationFrameRef.current = requestAnimationFrame(analyzeAudio);
@@ -148,8 +136,7 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
             audioRef.current.play();
             beatCountRef.current = 0;
             lastBeatTimeRef.current = 0;
-            lastSpectrumRef.current = null;
-            fluxHistoryRef.current = [];
+            energyHistoryRef.current = [];
             analyzeAudio();
         }
     };

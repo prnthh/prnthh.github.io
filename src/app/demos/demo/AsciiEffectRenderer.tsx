@@ -11,6 +11,18 @@ export default function AsciiEffectRenderer() {
     const chars = ' .:-=+*#%@';
     const resolution = 0.15;
 
+    // Character mapping based on visual density and patterns
+    // organized by: empty, sparse, horizontal, vertical, diagonal, dense
+    const patternChars = {
+        empty: ' ',
+        sparse: '.',
+        horizontal: ['-', '='],
+        vertical: ['|', 'I', '!'],
+        diagonal: ['/', '\\', 'x', 'X'],
+        corners: ['+', '*'],
+        dense: ['#', '%', '@', '█']
+    };
+
     useEffect(() => {
         // Create offscreen canvas for capturing WebGL render
         const offscreen = document.createElement('canvas');
@@ -72,31 +84,97 @@ export default function AsciiEffectRenderer() {
         const charHeight = size.height / height;
         const fontSize = charWidth / 0.6;
 
-        // Get background color from the scene
-        const bgColor = scene.background;
-        if (bgColor && 'r' in bgColor) {
-            const r = Math.floor(bgColor.r * 255);
-            const g = Math.floor(bgColor.g * 255);
-            const b = Math.floor(bgColor.b * 255);
-            displayCtx.fillStyle = `rgb(${r},${g},${b})`;
-        } else {
-            displayCtx.fillStyle = 'white';
-        }
+        // White background
+        displayCtx.fillStyle = 'white';
         displayCtx.fillRect(0, 0, size.width, size.height);
         displayCtx.font = `${fontSize}px monospace`;
         displayCtx.textBaseline = 'top';
 
-        // Draw ASCII with colors
+        // Helper to get brightness at position
+        const getBrightness = (x: number, y: number) => {
+            if (x < 0 || x >= width || y < 0 || y >= height) return 255;
+            const i = (y * width + x) * 4;
+            return (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+        };
+
+        // Helper to detect edges and patterns
+        const analyzePattern = (x: number, y: number) => {
+            const center = getBrightness(x, y);
+            const left = getBrightness(x - 1, y);
+            const right = getBrightness(x + 1, y);
+            const top = getBrightness(x, y - 1);
+            const bottom = getBrightness(x, y + 1);
+            const topLeft = getBrightness(x - 1, y - 1);
+            const topRight = getBrightness(x + 1, y - 1);
+            const bottomLeft = getBrightness(x - 1, y + 1);
+            const bottomRight = getBrightness(x + 1, y + 1);
+
+            // Calculate gradients
+            const horizontalGrad = Math.abs(right - left);
+            const verticalGrad = Math.abs(bottom - top);
+            const diagonalGrad1 = Math.abs(bottomRight - topLeft);
+            const diagonalGrad2 = Math.abs(bottomLeft - topRight);
+
+            return {
+                brightness: center,
+                horizontalGrad,
+                verticalGrad,
+                diagonalGrad1,
+                diagonalGrad2,
+                maxGrad: Math.max(horizontalGrad, verticalGrad, diagonalGrad1, diagonalGrad2)
+            };
+        };
+
+        // Draw ASCII with pattern-aware character selection
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const i = (y * width + x) * 4;
                 const r = pixels[i];
                 const g = pixels[i + 1];
                 const b = pixels[i + 2];
-                const brightness = (r + g + b) / 3;
-                const charIndex = Math.floor((brightness / 255) * (chars.length - 1));
-                const char = chars[charIndex];
 
+                const pattern = analyzePattern(x, y);
+                const invertedBrightness = 255 - pattern.brightness;
+                const densityRatio = invertedBrightness / 255;
+
+                let char: string;
+
+                // Very light/white - increased threshold to ignore anti-aliasing artifacts
+                if (densityRatio < 0.15) {
+                    char = patternChars.empty;
+                }
+                // Check for edges first (high gradient) - use directional chars regardless of density
+                else if (pattern.maxGrad > 50) {
+                    // Horizontal gradient = vertical edge, vertical gradient = horizontal edge
+                    if (pattern.horizontalGrad > pattern.verticalGrad * 1.3) {
+                        char = patternChars.vertical[Math.floor(densityRatio * 3) % 3];
+                    } else if (pattern.verticalGrad > pattern.horizontalGrad * 1.3) {
+                        char = patternChars.horizontal[Math.floor(densityRatio * 2) % 2];
+                    } else if (pattern.diagonalGrad1 > pattern.diagonalGrad2 * 1.3) {
+                        // diagonalGrad1 = bottomRight - topLeft, so use /
+                        char = '/';
+                    } else if (pattern.diagonalGrad2 > pattern.diagonalGrad1 * 1.3) {
+                        // diagonalGrad2 = bottomLeft - topRight, so use \
+                        char = '\\';
+                    } else {
+                        char = patternChars.corners[Math.floor(densityRatio * 2) % 2];
+                    }
+                }
+                // Light with some detail
+                else if (densityRatio < 0.25) {
+                    char = patternChars.sparse;
+                }
+                // Medium density - use denser characters
+                else if (densityRatio < 0.4) {
+                    char = '+';
+                }
+                // Dense/dark - most colored cubes will fall here
+                else {
+                    const denseIndex = Math.floor((densityRatio - 0.4) / 0.6 * patternChars.dense.length);
+                    char = patternChars.dense[Math.min(denseIndex, patternChars.dense.length - 1)];
+                }
+
+                // Use actual RGB color for text
                 displayCtx.fillStyle = `rgb(${r},${g},${b})`;
                 displayCtx.fillText(char, x * charWidth, y * charHeight);
             }

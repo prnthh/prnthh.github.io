@@ -13,6 +13,7 @@ export function MusicDemo() {
             <GameCanvas >
                 <AudioVisualizer />
                 <AsciiEffectRenderer />
+                <color attach="background" args={["white"]} />
             </GameCanvas>
         </div>
 

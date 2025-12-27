@@ -11,6 +11,7 @@ import { PrefabRoot } from "react-three-game";
 import DebugGround from "@/shared/ground/DebugGround";
 import { useFrame } from "@react-three/fiber";
 import Ped from "@/app/react-three-controller/ped/ped";
+import room from "@/app/sketches/tools/prefabeditor/samples/room.json";
 
 
 export default function Home() {
@@ -28,55 +29,9 @@ export default function Home() {
                                     onSelect={(id) => {
                                         console.log("selected prefab root", id);
                                     }}
-                                    data={{
-                                        id: "scene",
-                                        name: "scene",
-                                        root: {
-                                            id: "root",
-                                            components: {
-                                                transform: { type: "Transform", properties: { position: [0, 0, 0] } }
-                                            },
-                                            children: [
-                                                {
-                                                    id: "ground",
-                                                    components: {
-                                                        transform: {
-                                                            type: "Transform",
-                                                            properties: {
-                                                                position: [0, -0.7, 0],
-                                                                rotation: [-1.57, 0, 0],
-                                                                scale: [1, 1, 1]
-                                                            }
-                                                        },
-                                                        geometry: {
-                                                            type: "Geometry",
-                                                            properties: {
-                                                                geometryType: "plane",
-                                                                args: [50, 50]
-                                                            }
-                                                        },
-                                                        material: {
-                                                            type: "Material",
-                                                            properties: {
-                                                                color: "white",
-                                                                texture: "/textures/GreyboxTextures/greybox_light_grid.png",
-                                                                repeat: true,
-                                                                repeatCount: [25, 25]
-                                                            }
-                                                        },
-                                                        physics: {
-                                                            type: "Physics",
-                                                            properties: {
-                                                                type: "fixed"
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            ]
-                                        }
-                                    }} />
+                                    data={room} />
                                 <ambientLight intensity={0.5} />
-                                <DebugGround debug onClick={(e) => { setTarget([e.point.x, e.point.y, e.point.z]) }} />
+                                <DebugGround position={[0, -0.99, 0]} onClick={(e) => { setTarget([e.point.x, e.point.y, e.point.z]) }} />
 
                                 {target && (
                                     <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />

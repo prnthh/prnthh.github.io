@@ -2,7 +2,7 @@
   "id": "prefab-1",
   "name": "Test Prefab",
   "root": {
-    "id": "root", 
+    "id": "root",
     "components": {
       "transform": {
         "type": "Transform",
@@ -27,7 +27,7 @@
     },
     "children": [
       {
-        "id": "ground", 
+        "id": "ground",
         "components": {
           "transform": {
             "type": "Transform",
@@ -48,60 +48,48 @@
                 1
               ]
             }
-          }
-        },
-        "children": []
-      },
-      {
-        "id": "model-node2", 
-        "components": {
-          "transform": {
-            "type": "Transform",
+          },
+          "geometry": {
+            "type": "Geometry",
             "properties": {
-              "position": [
-                0.004030457768826046,
-                0.30760829190258887,
-                -0.0022842895693241383
-              ],
-              "rotation": [
-                0,
-                0,
-                0
-              ],
-              "scale": [
-                0.6,
-                0.6,
-                0.6
+              "geometryType": "plane",
+              "args": [
+                50,
+                50
               ]
             }
           },
-          "model": {
-            "type": "Model",
+          "material": {
+            "type": "Material",
             "properties": {
-              "filename": "models/maps/galactic_arena.glb",
-              "instanced": true
+              "color": "white",
+              "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+              "repeat": true,
+              "repeatCount": [
+                25,
+                25
+              ]
             }
           },
           "physics": {
             "type": "Physics",
             "properties": {
               "type": "fixed",
-              "collider": "trimesh"
+              "collider": "cuboid"
             }
           }
-        },
-        "children": []
+        }
       },
       {
-        "id": "light", 
+        "id": "38f9751f-6ebb-478d-8266-5caf1b2abd82",
         "components": {
           "transform": {
             "type": "Transform",
             "properties": {
               "position": [
                 0,
-                8.871986382193196,
-                0
+                1.9771409688336967,
+                -1.9864660288612843
               ],
               "rotation": [
                 0,
@@ -109,17 +97,36 @@
                 0
               ],
               "scale": [
-                1,
-                1,
+                10,
+                4,
                 1
               ]
             }
           },
-          "spotLight": {
-            "type": "SpotLight",
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
             "properties": {
               "color": "#ffffff",
-              "intensity": 100
+              "wireframe": false,
+              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
             }
           }
         }

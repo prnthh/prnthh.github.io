@@ -3,8 +3,6 @@
     "name": "Test Prefab",
     "root": {
         "id": "root",
-        "enabled": true,
-        "visible": true,
         "components": {
             "transform": {
                 "type": "Transform",
@@ -18,8 +16,6 @@
         "children": [
             {
                 "id": "ground",
-                "enabled": true,
-                "visible": true,
                 "components": {
                     "transform": {
                         "type": "Transform",
@@ -54,9 +50,7 @@
                 }
             },
             {
-                "id": "child-1",
-                "enabled": true,
-                "visible": true,
+                "id": "child-1", 
                 "components": {
                     "transform": {
                         "type": "Transform",
@@ -89,9 +83,7 @@
                 },
                 "children": [
                     {
-                        "id": "grandchild-1",
-                        "enabled": true,
-                        "visible": true,
+                        "id": "grandchild-1", 
                         "components": {
                             "transform": {
                                 "type": "Transform",
@@ -120,9 +112,7 @@
                 ]
             },
             {
-                "id": "child-2",
-                "enabled": true,
-                "visible": true,
+                "id": "child-2", 
                 "components": {
                     "transform": {
                         "type": "Transform",
@@ -156,8 +146,6 @@
             },
             {
                 "id": "model-node",
-                "enabled": true,
-                "visible": true,
                 "components": {
                     "transform": {
                         "type": "Transform",
@@ -183,9 +171,7 @@
                 }
             },
             {
-                "id": "model-node2",
-                "enabled": true,
-                "visible": true,
+                "id": "model-node2", 
                 "components": {
                     "transform": {
                         "type": "Transform",
@@ -211,9 +197,7 @@
                 }
             },
             {
-                "id": "model-node3",
-                "enabled": true,
-                "visible": true,
+                "id": "model-node3", 
                 "components": {
                     "transform": {
                         "type": "Transform",
@@ -238,9 +222,7 @@
                 }
             },
             {
-                "id": "textured-node",
-                "enabled": true,
-                "visible": true,
+                "id": "textured-node", 
                 "components": {
                     "transform": {
                         "type": "Transform",
