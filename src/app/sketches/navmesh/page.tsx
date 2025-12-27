@@ -8,8 +8,8 @@ import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityB
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import Playground from "@/shared/debug/Playground";
-import NavigableWorld from "@/shared/navmesh/NavigableContext";
-import NavigableAgent from "@/shared/navmesh/NavigableAgent";
+import NavigableWorld from "@/app/react-three-controller/navmesh/NavigableContext";
+import NavigableAgent from "@/app/react-three-controller/navmesh/NavigableAgent";
 
 export default function NavmeshExample() {
     return (
@@ -68,18 +68,6 @@ const GameEntityWorld = () => {
             addEntity(randomPickupable());
         }
     }, [addEntity, resetWorld]);
-
-    // Spawn new pickupables periodically
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const currentCount = useGameStore.getState().entities.filter(e => e.type === 'pickupable').length;
-            if (currentCount < 15) {
-                addEntity(randomPickupable());
-            }
-        }, 2000);
-
-        return () => clearInterval(interval);
-    }, [addEntity]);
 
     return (
         <>

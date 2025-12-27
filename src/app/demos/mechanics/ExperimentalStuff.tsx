@@ -35,7 +35,7 @@ const WavyTree = ({ position = [0, 0, 0] }: { position?: [number, number, number
 const PunchingBag = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
     return <>
         <Balloon position={position}>
-            <mesh castShadow receiveShadow layers={1}>
+            <mesh castShadow receiveShadow>
                 <capsuleGeometry args={[0.2, 0.8]} />
                 <meshStandardMaterial color="red" />
             </mesh>

@@ -96,11 +96,24 @@ export default function useAnimationState(
         const animationKey = typeof thisAnimation === 'string' ? thisAnimation : thisAnimation[0]
         if (!animationKey || lastKeyRef.current === animationKey) return
 
-        const next = actions[animationKey] ?? actions[animationKey.toLowerCase()] ?? actions.idle ?? actions[Object.keys(actions)[0]]
+        // Handle reversed animations (no separate animation files needed)
+        // walkRight -> walkLeft reversed, walkBack -> walk reversed, runBack -> run reversed
+        const reverseAnimationMap: Record<string, string> = {
+            walkRight: 'walkLeft',
+            walkBack: 'walk',
+            runBack: 'run'
+        }
+        const isReversed = animationKey in reverseAnimationMap
+        const lookupKey = isReversed ? reverseAnimationMap[animationKey] : animationKey
+
+        const next = actions[lookupKey] ?? actions[lookupKey.toLowerCase()] ?? actions.idle ?? actions[Object.keys(actions)[0]]
         if (!next) return
 
         const prev = prevActionRef.current
         next.clampWhenFinished = true
+
+        // Reverse animation for mapped animations, restore normal direction for others
+        next.timeScale = isReversed ? -1 : (next.timeScale < 0 ? 1 : next.timeScale)
 
         try { if (prev && prev !== next) prev.fadeOut(0.2) } catch { }
         try { next.reset().setLoop(LoopRepeat, 1000).fadeIn(0.2).play() } catch { }

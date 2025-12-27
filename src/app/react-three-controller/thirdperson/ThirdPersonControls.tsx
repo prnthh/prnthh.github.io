@@ -7,7 +7,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
-import { Vector3, Quaternion, Object3D, AnimationAction, MathUtils } from "three";
+import { Vector3, Quaternion, Object3D, MathUtils } from "three";
 
 import FollowCam from "@/shared/cameras/FollowCam";
 
@@ -47,11 +47,8 @@ const ThirdPersonControls = ({
     lookTarget,
 }: ThirdPersonControlsProps) => {
     const verticalRotation = useRef(0);
-    const walkActionRef = useRef<AnimationAction | null>(null);
-    const walkLeftActionRef = useRef<AnimationAction | null>(null);
-    const runActionRef = useRef<AnimationAction | null>(null);
 
-    const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]>("idle");
+    const [animation, setAnimation] = useState<"idle" | "walk" | "walkBack" | "run" | "runBack" | "jump" | "walkLeft" | "walkRight" | "lpunch" | "rpunch" | string[]>("idle");
     const [shoulderCamMode, setShoulderCamMode] = useState(false);
     const tap = useInputStore(state => state.tap);
 
@@ -89,9 +86,6 @@ const ThirdPersonControls = ({
                 capsuleRadius={capsuleRadius}
                 animation={animation}
                 setAnimation={setAnimation}
-                walkActionRef={walkActionRef}
-                walkLeftActionRef={walkLeftActionRef}
-                runActionRef={runActionRef}
                 walkSpeed={walkSpeed}
                 runSpeed={runSpeed}
                 jumpForce={jumpForce}
@@ -137,9 +131,6 @@ export const MovementSystem = ({
     capsuleRadius,
     animation,
     setAnimation,
-    walkActionRef,
-    walkLeftActionRef,
-    runActionRef,
     walkSpeed,
     runSpeed,
     jumpForce,
@@ -147,11 +138,8 @@ export const MovementSystem = ({
     modelRef: RefObject<RigidHumanoidModelRef | null>;
     height: number;
     capsuleRadius: number;
-    animation: "idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[];
-    setAnimation: (anim: "idle" | "walk" | "run" | "jump" | "walkLeft" | "lpunch" | "rpunch" | string[]) => void;
-    walkActionRef: RefObject<AnimationAction | null>;
-    walkLeftActionRef: RefObject<AnimationAction | null>;
-    runActionRef: RefObject<AnimationAction | null>;
+    animation: "idle" | "walk" | "walkBack" | "run" | "runBack" | "jump" | "walkLeft" | "walkRight" | "lpunch" | "rpunch" | string[];
+    setAnimation: (anim: "idle" | "walk" | "walkBack" | "run" | "runBack" | "jump" | "walkLeft" | "walkRight" | "lpunch" | "rpunch" | string[]) => void;
     walkSpeed: number;
     runSpeed: number;
     jumpForce: number;
@@ -250,12 +238,14 @@ export const MovementSystem = ({
             const absZ = Math.abs(moveZ);
 
             if (absX > 0.3 && absX > absZ * 1.5) {
-                nextAnimation = "walkLeft";
-                if (walkLeftActionRef.current) walkLeftActionRef.current.timeScale = -moveX;
+                // Use walkRight (reversed walkLeft) when moving right, walkLeft when moving left
+                nextAnimation = moveX > 0 ? "walkRight" : "walkLeft";
+            } else if (moveZ < 0) {
+                // Moving backwards - use reversed walk/run animations
+                nextAnimation = speed === runSpeed ? "runBack" : "walkBack";
             } else {
+                // Moving forwards
                 nextAnimation = speed === runSpeed ? "run" : "walk";
-                if (walkActionRef.current) walkActionRef.current.timeScale = moveZ;
-                if (runActionRef.current) runActionRef.current.timeScale = moveZ;
             }
         }
 
