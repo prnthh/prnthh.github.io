@@ -60,17 +60,11 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
                 </div>
 
                 <div className="w-full" style={{ height: "100vh" }}>
-                    {isMultiplayer ? (
-                        <MultiplayerProvider roomId="lobby" debug>
-                            <GameCanvas>
-                                <InnerGame loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={onCanvasReady} />
-                            </GameCanvas>
-                        </MultiplayerProvider>
-                    ) : (
+                    <MultiplayerWrapper isMultiplayer={isMultiplayer}>
                         <GameCanvas>
                             <InnerGame loadedMap={maps[selectedMap]} isMultiplayer={isMultiplayer} onCanvasReady={onCanvasReady} />
                         </GameCanvas>
-                    )}
+                    </MultiplayerWrapper>
                 </div>
 
                 <div className="absolute top-1/2 left-1/2 -translate-1/2">
@@ -79,6 +73,16 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
             </div>
         </Controls>
     );
+}
+
+const MultiplayerWrapper = ({ isMultiplayer, children }: { isMultiplayer: boolean, children: React.ReactNode }) => {
+    return isMultiplayer ? (
+        <MultiplayerProvider roomId="lobby" debug>
+            {children}
+        </MultiplayerProvider>
+    ) : (<>
+        {children}
+    </>);
 }
 
 function InnerGame({ loadedMap, isMultiplayer, onCanvasReady }: { loadedMap: Prefab, isMultiplayer: boolean, onCanvasReady?: () => void }) {
