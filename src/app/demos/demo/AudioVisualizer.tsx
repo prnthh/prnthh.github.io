@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState } from "react";
+import { useRef, useMemo, useState, Fragment } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { useMusic } from "./MusicProvider";
@@ -656,10 +656,10 @@ export default function AudioVisualizer() {
                         >
                             <div>
                                 {text.text.split('\n').map((line, idx, arr) => (
-                                    <>
+                                    <Fragment key={idx}>
                                         {line}
                                         {idx < arr.length - 1 && <br />}
-                                    </>
+                                    </Fragment>
                                 ))}
                             </div>
                         </Html>

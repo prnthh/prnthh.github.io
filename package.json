@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --experimental-https",
+    "dev": "concurrently \"next dev --turbopack --experimental-https\" \"npm run watch-manifests\"",
+    "watch-manifests": "chokidar public --initial --ignore '**/manifest.json' -c 'sh generate-manifests.sh'",
     "prebuild": "next telemetry disable",
     "build": "next build",
     "start": "next start",
@@ -40,6 +41,8 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.182.0",
     "@types/xml2js": "^0.4.14",
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "tailwindcss": "^4",

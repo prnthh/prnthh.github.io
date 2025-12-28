@@ -179,18 +179,18 @@
                 "properties": {
                   "position": [
                     0.7213835314973418,
-                    0.8767377098684103,
+                    0.8672621727512282,
                     -0.003309683510794581
                   ],
                   "rotation": [
                     -3.141592653589793,
-                    0.9415926535897928,
+                    -0.7492790571795859,
                     -3.141592653589793
                   ],
                   "scale": [
-                    0.006000000000000002,
+                    0.0060000000000000045,
                     0.006,
-                    0.006000000000000002
+                    0.0060000000000000045
                   ]
                 }
               },
@@ -230,6 +230,39 @@
                 "type": "Model",
                 "properties": {
                   "filename": "models/environment/Diamond Sword.glb",
+                  "instanced": false
+                }
+              }
+            }
+          },
+          {
+            "id": "f6384af0-2d7a-4af7-8a42-9c2ec386f74a",
+            "name": "desktop",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0.02251049660359347,
+                    0.8435544586572346,
+                    -0.000017925715400986947
+                  ],
+                  "rotation": [
+                    0,
+                    -1.5699999999998482,
+                    0
+                  ],
+                  "scale": [
+                    0.009999999999999997,
+                    0.01,
+                    0.009999999999999997
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Computer.glb",
                   "instanced": false
                 }
               }
@@ -447,7 +480,8 @@
                   "distance": 55
                 }
               }
-            }
+            },
+            "name": "light"
           },
           {
             "id": "4bcbe46f-e47b-486c-aff2-a5aa6df896b2",
@@ -482,42 +516,122 @@
                 }
               }
             },
-            "name": "Node Copy"
-          },
-          {
-            "id": "5ee592e7-8993-4421-9546-2b062f96dfdb",
-            "name": "door",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    -6.959354487964093,
-                    2.48284839130927,
-                    2.0587295317996688
-                  ],
-                  "rotation": [
-                    0,
-                    1.5140000000000022,
-                    0
-                  ],
-                  "scale": [
-                    2.9999999999999996,
-                    3,
-                    2.9999999999999996
-                  ]
-                }
-              },
-              "model": {
-                "type": "Model",
-                "properties": {
-                  "filename": "models/environment/Doorway.glb",
-                  "instanced": false
-                }
-              }
-            }
+            "name": "light2"
           }
         ]
+      },
+      {
+        "id": "5ee592e7-8993-4421-9546-2b062f96dfdb",
+        "name": "door",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -6.954705556028707,
+                -0.05410899740291253,
+                -0.1882433240406809
+              ],
+              "rotation": [
+                0,
+                1.5140000000000022,
+                0
+              ],
+              "scale": [
+                2.9999999999999996,
+                3,
+                2.9999999999999996
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/Doorway.glb",
+              "instanced": false
+            }
+          }
+        }
+      },
+      {
+        "id": "5c1e3515-6680-46ac-8687-0d5766d1b771",
+        "name": "chair",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -0.5004276146322764,
+                0.3906912048655975,
+                0.9545406493935422
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                0.2,
+                0.2,
+                0.2
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/Stool.glb",
+              "instanced": false
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "cuboid"
+            }
+          }
+        }
+      },
+      {
+        "id": "a6686e33-4aee-4d90-82cb-71fbbe633582",
+        "name": "coatrack",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -6.0436315497286515,
+                0,
+                -0.7526581182671574
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                3,
+                3,
+                3
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/Coat Rack Standing.glb",
+              "instanced": false
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "cuboid"
+            }
+          }
+        }
       }
     ]
   }
