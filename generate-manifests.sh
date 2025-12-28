@@ -2,7 +2,7 @@
 
 # Script to generate manifest.json files for models, textures, and sound folders
 
-PUBLIC_DIR="/Users/prnth/Documents/GitHub/prnthh.github.io/public"
+PUBLIC_DIR="./public"
 
 # Generate models manifest
 echo "Generating models manifest..."

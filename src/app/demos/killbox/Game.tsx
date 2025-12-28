@@ -22,6 +22,7 @@ import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
 
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
+import ButtonBox from "./Button";
 
 const maps = {
     killbox: killbox as Prefab,
@@ -108,6 +109,8 @@ function InnerGame({ loadedMap, isMultiplayer, onCanvasReady }: { loadedMap: Pre
                 <HitBox debug key={4} position={[3, 1, 0]} />
                 <Balloon position={[4, 1, 0]} />
             </group>
+
+            <ButtonBox position={[5, 1, -10]} onActivate={() => console.log("Button activated!")} />
 
             {<PedSpawner playerRef={playerRef} position={[0, 0, -10]} />}
             {isMultiplayer && <OtherPlayers />}

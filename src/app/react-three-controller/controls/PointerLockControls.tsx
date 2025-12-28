@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import useInputStore from "./InputStore";
+import useInputStore, { InteractionPriority } from "./InputStore";
 
 const PointerLockControls = ({
     onLook,
@@ -57,7 +57,7 @@ const PointerLockControls = ({
 
             // Handle left-click (fire button)
             if (e.button === 0 && isPointerLocked.current) {
-                setButton('fire', true);
+                setButton('fire', true, InteractionPriority.WEAPONS);
                 if (onClick) {
                     onClick();
                 }

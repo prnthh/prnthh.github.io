@@ -1,0 +1,44 @@
+{
+  "name": "react-three-controller",
+  "version": "0.1.0",
+  "description": "A comprehensive input and interaction system for React Three Fiber with Unity-style priorities",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "react",
+    "three",
+    "react-three-fiber",
+    "r3f",
+    "controls",
+    "input",
+    "interaction",
+    "first-person",
+    "third-person",
+    "game",
+    "3d"
+  ],
+  "author": "prnth",
+  "license": "MIT",
+  "peerDependencies": {
+    "@react-three/fiber": "^8.0.0",
+    "@react-three/drei": "^9.0.0",
+    "@react-three/rapier": "^1.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "three": "^0.150.0",
+    "zustand": "^4.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/three": "^0.150.0",
+    "typescript": "^5.0.0"
+  }
+}
