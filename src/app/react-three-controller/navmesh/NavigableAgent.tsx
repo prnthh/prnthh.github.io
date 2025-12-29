@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, ReactNode, memo } from "react";
 import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
-import { useNavigable, AgentHandle, Vector3Tuple } from "./NavigableContext";
-import AnimatedModel from "@/app/react-three-controller/ped/HumanoidModel";
-import { AnimatedModelRef } from "@/app/react-three-controller/ped/types";
+import { AgentHandle, useNavigableContext, Vector3Tuple } from "./NavigableContext";
+import { AnimatedModelRef } from "../ped/types";
+import AnimatedModel from "../ped/HumanoidModel";
 
 // ============================================================================
 // Constants
@@ -66,7 +66,7 @@ export const NavigableAgent = memo(({
     height = 1.5,
     children,
 }: NavigableAgentProps) => {
-    const { isReady, registerAgent, unregisterAgent } = useNavigable();
+    const { isReady, registerAgent, unregisterAgent } = useNavigableContext();
 
     // Refs
     const agentRef = useRef<AgentHandle | null>(null);
