@@ -36,10 +36,10 @@ type NavigableContextValue = {
 
 const NavigableContext = createContext<NavigableContextValue | null>(null);
 
-export const useNavigable = () => {
+export const useNavigableContext = () => {
     const context = useContext(NavigableContext);
     if (!context) {
-        throw new Error("useNavigable must be used within a NavigableWorld");
+        throw new Error("useNavigableContext must be used within a NavigableWorld");
     }
     return context;
 };
@@ -221,4 +221,5 @@ export const NavigableWorld = ({
     );
 };
 
+export const NavigableContextProvider = NavigableWorld;
 export default NavigableWorld;

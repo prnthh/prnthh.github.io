@@ -264,3 +264,5 @@ export const Button = ({
         </div>
     );
 }
+
+export default { Joystick, Button };
