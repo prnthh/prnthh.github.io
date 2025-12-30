@@ -14,7 +14,10 @@ interface AudioData {
 interface MusicContextType {
     audioData: AudioData;
     play: () => void;
+    pause: () => void;
+    audioRef: React.RefObject<HTMLAudioElement | null>;
     beatCountRef: React.RefObject<number>;
+    elementColor: number;
 }
 
 const MusicContext = createContext<MusicContextType | null>(null);
@@ -47,6 +50,8 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         currentTime: 0
     });
 
+    const [elementColor, setElementColor] = useState<number>(0x000000); // Start with black
+
     const beatCountRef = useRef(0);
     const lastBeatTimeRef = useRef<number>(0);
     const energyHistoryRef = useRef<number[]>([]);
@@ -71,42 +76,96 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         const dataArray = dataArrayRef.current;
         analyserRef.current.getByteFrequencyData(dataArray);
 
-        // Calculate frequency bands
-        let bassSum = 0, midSum = 0, highSum = 0, energySum = 0;
-        const bassEnd = Math.floor(bufferLength / 8);
-        const midEnd = Math.floor(bufferLength / 2);
+        // Frequency band ranges (demoscene standard approach)
+        // Bass: 20-140 Hz (bins 0-11 at 44.1kHz, FFT 256)
+        // Mid: 140-2500 Hz (bins 11-200)
+        // High: 2500-20000 Hz (bins 200+)
 
-        for (let i = 0; i < bufferLength; i++) {
+        const bassEnd = Math.floor(bufferLength * 0.1);  // ~10% for bass
+        const midEnd = Math.floor(bufferLength * 0.5);    // ~50% for mid
+
+        // Noise floor threshold - ignore very low values (silence)
+        const NOISE_FLOOR = 5;
+
+        let bassSum = 0, bassCount = 0;
+        let midSum = 0, midCount = 0;
+        let highSum = 0, highCount = 0;
+        let energySum = 0;
+
+        // Bass (20-140 Hz) - heavily weighted for kick drums
+        for (let i = 0; i < bassEnd; i++) {
             const val = dataArray[i];
+            if (val > NOISE_FLOOR) {
+                bassSum += val * val; // Square for better peak response
+                bassCount++;
+            }
             energySum += val;
-            if (i < bassEnd) bassSum += val;
-            else if (i < midEnd) midSum += val;
-            else highSum += val;
         }
 
-        const bass = bassSum / bassEnd;
-        const mid = midSum / (midEnd - bassEnd);
-        const high = highSum / (bufferLength - midEnd);
+        // Mid (140-2500 Hz) - most musical content
+        for (let i = bassEnd; i < midEnd; i++) {
+            const val = dataArray[i];
+            if (val > NOISE_FLOOR) {
+                midSum += val * val;
+                midCount++;
+            }
+            energySum += val;
+        }
+
+        // High (2500-20000 Hz) - cymbals, hi-hats
+        for (let i = midEnd; i < bufferLength; i++) {
+            const val = dataArray[i];
+            if (val > NOISE_FLOOR) {
+                highSum += val * val;
+                highCount++;
+            }
+            energySum += val;
+        }
+
+        // RMS (root mean square) for each band - standard demoscene approach
+        // Use max(1, bassCount) to avoid division by zero during silence
+        const bass = bassCount > 0 ? Math.sqrt(bassSum / bassCount) : 0;
+        const mid = midCount > 0 ? Math.sqrt(midSum / midCount) : 0;
+        const high = highCount > 0 ? Math.sqrt(highSum / highCount) : 0;
         const energy = energySum / bufferLength;
 
-        // Simple energy-based beat detection
+        // Beat detection using bass energy with adaptive threshold
         const energyHistory = energyHistoryRef.current;
-        energyHistory.push(energy);
+        energyHistory.push(bass); // Use bass for beat detection
         if (energyHistory.length > 43) energyHistory.shift();
 
         if (energyHistory.length > 20) {
+            // Compute average and variance for adaptive threshold
             let avg = 0;
             for (let i = 0; i < energyHistory.length; i++) avg += energyHistory[i];
             avg /= energyHistory.length;
 
-            const now = Date.now();
-            const threshold = avg * 1.3;
+            let variance = 0;
+            for (let i = 0; i < energyHistory.length; i++) {
+                variance += (energyHistory[i] - avg) * (energyHistory[i] - avg);
+            }
+            const stdDev = Math.sqrt(variance / energyHistory.length);
 
-            // Beat: energy spike above threshold with 350ms cooldown
-            if (energy > threshold && now - lastBeatTimeRef.current > 350) {
+            const now = Date.now();
+            const threshold = avg + stdDev * 1.3; // Adaptive threshold (lowered for better sensitivity)
+
+            // Beat detection: bass spike above threshold with 150ms cooldown (up to 400 BPM)
+            // Reduced cooldown to detect quicker beats and double-time patterns
+            if (bass > threshold && now - lastBeatTimeRef.current > 150) {
                 beatCountRef.current += 1;
                 lastBeatTimeRef.current = now;
             }
+        }
+
+        const currentTime = audioRef.current?.currentTime || 0;
+        const cycleLength = 30;
+        const timeInCycle = currentTime % cycleLength;
+
+        // Update element color based on background (inverse)
+        // Background is black after 30s, so elements should be white
+        const newColor = currentTime >= 30 ? 0xffffff : 0x000000;
+        if (newColor !== elementColor) {
+            setElementColor(newColor);
         }
 
         setAudioData({
@@ -115,7 +174,7 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
             high: Math.round(high),
             energy: Math.round(energy),
             beatCount: beatCountRef.current,
-            currentTime: audioRef.current?.currentTime || 0
+            currentTime
         });
 
         animationFrameRef.current = requestAnimationFrame(analyzeAudio);
@@ -141,8 +200,14 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         }
     };
 
+    const pause = () => {
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+    };
+
     return (
-        <MusicContext.Provider value={{ audioData, play, beatCountRef }}>
+        <MusicContext.Provider value={{ audioData, play, pause, audioRef, beatCountRef, elementColor }}>
             <audio ref={audioRef} src={song} loop />
             {children}
         </MusicContext.Provider>

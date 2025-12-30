@@ -34,19 +34,19 @@ export default function AsciiEffectRenderer() {
         if (!dc) return;
         const cw = size.width / w, cy = size.height / h;
 
-        // Background - very washed out version, but white stays white
+        // Background - subtle for dark areas, preserve bright areas (terminal-like)
         const bg = document.createElement('canvas');
         bg.width = w; bg.height = h;
         const bc = bg.getContext('2d');
         if (bc) {
             const bd = bc.createImageData(w, h);
             for (let i = 0; i < px.length; i += 4) {
-                const br = (px[i] + px[i + 1] + px[i + 2]) / 3;
-                // Lighten dark areas significantly, keep light areas light
-                const tint = Math.min(1, (255 - br) / 200);
-                bd.data[i] = ~~(px[i] * tint * 0.4 + 255 * (1 - tint * 0.6));
-                bd.data[i + 1] = ~~(px[i + 1] * tint * 0.4 + 255 * (1 - tint * 0.6));
-                bd.data[i + 2] = ~~(px[i + 2] * tint * 0.4 + 255 * (1 - tint * 0.6));
+                const brightness = (px[i] + px[i + 1] + px[i + 2]) / 3;
+                // Keep bright areas bright (>200), darken everything else
+                const factor = brightness > 200 ? 0.95 : 0.08;
+                bd.data[i] = ~~(px[i] * factor);
+                bd.data[i + 1] = ~~(px[i + 1] * factor);
+                bd.data[i + 2] = ~~(px[i + 2] * factor);
                 bd.data[i + 3] = 255;
             }
             bc.putImageData(bd, 0, 0);

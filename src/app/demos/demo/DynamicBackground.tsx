@@ -21,7 +21,7 @@ export default function DynamicBackground() {
     useFrame(() => {
         const currentTime = audioData.currentTime;
 
-        // Determine background color based on stage
+        // Determine background color: white before 30s, black after
         const targetColor = currentTime < 30 ? "white" : "black";
 
         // Only update if color changed
