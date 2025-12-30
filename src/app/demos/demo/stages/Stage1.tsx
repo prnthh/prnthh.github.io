@@ -58,7 +58,6 @@ export default function Stage1() {
                 // Subtle hint animation when stopped
                 const hintPulse = Math.sin(Date.now() * 0.001) * 0.1 + 1;
                 centerRef.current.scale.set(hintPulse, hintPulse, 1);
-                centerRef.current.rotation.z += 0.005;
             }
 
             // Update color

@@ -6,7 +6,14 @@ export default function AsciiEffectRenderer() {
     const { gl, scene, camera, size } = useThree();
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const offRef = useRef<HTMLCanvasElement | null>(null);
-    const P = { h: ['-', '='], v: ['|', 'I', '!'], d: ['#', '%', '@', '█'] };
+    // Character sets by fill percentage and orientation
+    const chars = {
+        empty: ' ',
+        light: ['·', ':', '.'],
+        medium: ['-', '=', '|', 'I', '/', '\\', '+'],
+        heavy: ['#', '%', '@', '▓'],
+        full: '█'
+    };
 
     useEffect(() => {
         const off = document.createElement('canvas');
@@ -32,27 +39,12 @@ export default function AsciiEffectRenderer() {
         c.width = size.width; c.height = size.height;
         const dc = c.getContext('2d');
         if (!dc) return;
-        const cw = size.width / w, cy = size.height / h;
 
-        // Background - subtle for dark areas, preserve bright areas (terminal-like)
-        const bg = document.createElement('canvas');
-        bg.width = w; bg.height = h;
-        const bc = bg.getContext('2d');
-        if (bc) {
-            const bd = bc.createImageData(w, h);
-            for (let i = 0; i < px.length; i += 4) {
-                const brightness = (px[i] + px[i + 1] + px[i + 2]) / 3;
-                // Keep bright areas bright (>200), darken everything else
-                const factor = brightness > 200 ? 0.95 : 0.08;
-                bd.data[i] = ~~(px[i] * factor);
-                bd.data[i + 1] = ~~(px[i + 1] * factor);
-                bd.data[i + 2] = ~~(px[i + 2] * factor);
-                bd.data[i + 3] = 255;
-            }
-            bc.putImageData(bd, 0, 0);
-            dc.imageSmoothingEnabled = false;
-            dc.drawImage(bg, 0, 0, size.width, size.height);
-        }
+        // Clear to white background
+        dc.fillStyle = 'white';
+        dc.fillRect(0, 0, size.width, size.height);
+
+        const cw = size.width / w, cy = size.height / h;
 
         dc.font = `${cw / 0.6}px monospace`;
         dc.textBaseline = 'top';
@@ -60,14 +52,91 @@ export default function AsciiEffectRenderer() {
 
         for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
             const i = (y * w + x) * 4, r = px[i], g = px[i + 1], b = px[i + 2];
-            const br = B(x, y), d = (255 - br) / 255;
-            const hg = Math.abs(B(x + 1, y) - B(x - 1, y)), vg = Math.abs(B(x, y + 1) - B(x, y - 1));
-            const d1 = Math.abs(B(x + 1, y + 1) - B(x - 1, y - 1)), d2 = Math.abs(B(x - 1, y + 1) - B(x + 1, y - 1));
-            const mg = Math.max(hg, vg, d1, d2);
+            const br = B(x, y);
 
-            let ch = d < .15 ? ' ' : mg > 50 ? (hg > vg * 1.3 ? P.v[~~(d * 3) % 3] : vg > hg * 1.3 ? P.h[~~(d * 2) % 2] : d1 > d2 * 1.3 ? '/' : d2 > d1 * 1.3 ? '\\' : '+*'[~~(d * 2) % 2]) : d < .25 ? '.' : d < .4 ? '+' : P.d[Math.min(~~((d - .4) / .6 * 4), 3)];
-            dc.fillStyle = `rgb(${r},${g},${b})`;
-            dc.fillText(ch, ~~(x * cw), ~~(y * cy));
+            // Calculate fill: bright pixels (white) = empty, dark pixels (black) = full
+            // Invert the logic so black objects show as filled
+            const fill = br / 255; // 0 = black (full), 1 = white (empty)
+            const darkness = 1 - fill; // 0 = white (empty), 1 = black (full)
+
+            // Sample surrounding pixels for edge detection (looking at actual brightness values)
+            const left = B(x - 1, y);
+            const right = B(x + 1, y);
+            const top = B(x, y - 1);
+            const bottom = B(x, y + 1);
+            const topLeft = B(x - 1, y - 1);
+            const topRight = B(x + 1, y - 1);
+            const bottomLeft = B(x - 1, y + 1);
+            const bottomRight = B(x + 1, y + 1);
+
+            // Sobel-like edge detection for better gradient calculation
+            // Horizontal (Gx): detects vertical edges
+            const Gx = (-topLeft - 2 * left - bottomLeft + topRight + 2 * right + bottomRight) / 8;
+            // Vertical (Gy): detects horizontal edges
+            const Gy = (-topLeft - 2 * top - topRight + bottomLeft + 2 * bottom + bottomRight) / 8;
+            // Diagonal gradients with proper weighting
+            const Gd1 = (-2 * topLeft - top - left + right + bottom + 2 * bottomRight) / 8; // \ diagonal
+            const Gd2 = (-top - 2 * topRight - right + left + 2 * bottomLeft + bottom) / 8; // / diagonal
+
+            // Calculate gradient magnitude
+            const gradMagnitude = Math.sqrt(Gx * Gx + Gy * Gy);
+
+            // Higher threshold to reduce noise, and require stronger gradients
+            const edgeThreshold = 60;
+            const isEdge = gradMagnitude > edgeThreshold;
+
+            // Determine character based on edge detection and darkness
+            // Use sparse characters - mostly show edges and light fills
+            let ch: string;
+            if (darkness < 0.15) {
+                ch = chars.empty;
+            } else if (isEdge) {
+                // At an edge - determine orientation using gradient magnitudes
+                // Gx points in direction of intensity increase horizontally
+                // Gy points in direction of intensity increase vertically
+                const absGx = Math.abs(Gx);
+                const absGy = Math.abs(Gy);
+                const absGd1 = Math.abs(Gd1);
+                const absGd2 = Math.abs(Gd2);
+
+                // Find dominant gradient direction
+                if (absGx > absGy * 1.5 && absGx > absGd1 && absGx > absGd2) {
+                    // Strong horizontal gradient -> vertical edge
+                    ch = '|';
+                } else if (absGy > absGx * 1.5 && absGy > absGd1 && absGy > absGd2) {
+                    // Strong vertical gradient -> horizontal edge
+                    ch = '-';
+                } else if (absGd1 > absGd2) {
+                    // Diagonal \ gradient stronger
+                    ch = '/';
+                } else {
+                    // Diagonal / gradient stronger
+                    ch = '\\';
+                }
+            } else if (darkness < 0.4) {
+                // Light areas - sparse dots
+                ch = darkness < 0.25 ? chars.empty : '·';
+            } else if (darkness < 0.7) {
+                // Medium darkness - light fill pattern
+                ch = (x + y) % 2 === 0 ? '·' : chars.empty; // checkerboard pattern
+            } else if (darkness < 0.9) {
+                // Dark areas - denser fill
+                ch = (x + y) % 2 === 0 ? '#' : '·';
+            } else {
+                // Very dark - full block
+                ch = chars.full;
+            }
+
+            // Only draw if there's significant content (not pure white)
+            if (darkness > 0.05 && ch !== chars.empty) {
+                // Draw background glow (transparent color)
+                dc.fillStyle = `rgba(${r},${g},${b},0.3)`;
+                dc.fillRect(~~(x * cw), ~~(y * cy), Math.ceil(cw), Math.ceil(cy));
+
+                // Draw character in true color
+                dc.fillStyle = `rgb(${r},${g},${b})`;
+                dc.fillText(ch, ~~(x * cw), ~~(y * cy));
+            }
         }
     }, 1);
 
