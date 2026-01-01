@@ -1,8 +1,12 @@
-import MusicProvider from "./demos/demo/MusicProvider";
-import { MusicDemo } from "./demos/demo/demo";
+"use client";
+
+import dynamic from 'next/dynamic';
+
+// Dynamically import client components with no SSR
+const MusicProvider = dynamic(() => import("./demos/demo/MusicProvider"), { ssr: false });
+const MusicDemo = dynamic(() => import("./demos/demo/demo").then(mod => ({ default: mod.MusicDemo })), { ssr: false });
 
 export default function Home() {
-
   return (
     <div className="font-[family-name:var(--font-geist-sans)]">
       <main className="w-full min-h-screen">
@@ -29,7 +33,6 @@ export default function Home() {
           </a>
         </header>
       </main>
-
-    </div >
+    </div>
   );
 }

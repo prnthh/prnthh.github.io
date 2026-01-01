@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { Geist_Mono } from "next/font/google";
 import { usePathname } from "next/navigation";
 import Shebang from "@/shared/ui/shebang";
 
