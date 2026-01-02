@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import Shebang from "@/shared/ui/shebang";
 
 const experimentsConfig: Record<string, { name?: string; description?: string; external?: boolean }> = {
-    'react-three-game': { external: true },
     'demos/mechanics': {
         description: 'Basic game mechanics with a third-person character controller.'
     },
@@ -28,6 +27,7 @@ const experimentsConfig: Record<string, { name?: string; description?: string; e
     'sketches/lighting': {
         description: 'Lighting and reflections.'
     },
+    'react-three-game': { external: true },
     'react-three-terrain': {},
     'react-three-controller/combined': {},
     'react-three-controller/firstperson': {},

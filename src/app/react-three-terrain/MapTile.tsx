@@ -8,7 +8,7 @@ import { useMap } from "./MapProvider";
 
 export interface MapTilesRef {
     updateHeightData: (tileKey: string, heightData: Float32Array | null) => void;
-    updateImageData: (tileKey: string, colorTexture: THREE.Texture | null, mode?: "height" | "color") => void;
+    updateImageData: (tileKey: string, colorTexture: THREE.Texture | null) => void;
 }
 
 const setMapEntry = <T,>(setter: React.Dispatch<React.SetStateAction<Map<string, T>>>, tileKey: string, value: T) => {
@@ -42,6 +42,7 @@ interface TileProps {
     physics?: boolean;
     heightData?: Float32Array | null;
     colorTexture?: THREE.Texture | null;
+    showWireframe?: boolean;
     onClick?: (e: ThreeEvent<MouseEvent>) => void;
     onPointerMove?: (e: ThreeEvent<PointerEvent>) => void;
     onPointerDown?: (e: ThreeEvent<PointerEvent>) => void;
@@ -57,6 +58,7 @@ const Tile = memo(function Tile({
     physics,
     heightData: externalHeightData,
     colorTexture: externalColorTexture,
+    showWireframe,
     onClick,
     onPointerMove,
     onPointerDown,
@@ -86,7 +88,7 @@ const Tile = memo(function Tile({
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
         >
-            <meshStandardMaterial map={colormap ?? undefined} />
+            <meshStandardMaterial map={colormap ?? undefined} wireframe={showWireframe} />
         </mesh>
     );
 
@@ -156,7 +158,6 @@ export const MapTiles = forwardRef<MapTilesRef, MapTilesProps>(function MapTiles
     // Local state for dynamic tile updates
     const [heightDataMap, setHeightDataMap] = useState<Map<string, Float32Array | null>>(new Map());
     const [colorTextureMap, setColorTextureMap] = useState<Map<string, THREE.Texture | null>>(new Map());
-    const [heightTextureMap, setHeightTextureMap] = useState<Map<string, THREE.Texture | null>>(new Map());
 
     const updateHeightData = useCallback((tileKey: string, heightData: Float32Array | null) => {
         setMapEntry(setHeightDataMap, tileKey, heightData);
@@ -166,21 +167,13 @@ export const MapTiles = forwardRef<MapTilesRef, MapTilesProps>(function MapTiles
         setMapEntry(setColorTextureMap, tileKey, texture);
     }, [setColorTextureMap]);
 
-    const updateHeightTexture = useCallback((tileKey: string, texture: THREE.Texture | null) => {
-        setMapEntry(setHeightTextureMap, tileKey, texture);
-    }, [setHeightTextureMap]);
-
     useImperativeHandle(ref, () => ({
         updateHeightData,
-        updateImageData: (tileKey: string, texture: THREE.Texture | null, mode?: "height" | "color") => {
-            const targetMode = mode || paintMode || "color";
-            if (targetMode === "height") {
-                updateHeightTexture(tileKey, texture);
-            } else {
-                updateColorTexture(tileKey, texture);
-            }
+        updateImageData: (tileKey: string, texture: THREE.Texture | null) => {
+            // Always update color texture
+            updateColorTexture(tileKey, texture);
         }
-    }), [updateHeightData, updateColorTexture, updateHeightTexture, paintMode]);
+    }), [updateHeightData, updateColorTexture]);
 
     if (!isLoaded) return null;
 
@@ -189,20 +182,19 @@ export const MapTiles = forwardRef<MapTilesRef, MapTilesProps>(function MapTiles
     for (let x = startX; x <= endX; x++) {
         for (let z = startZ; z <= endZ; z++) {
             const tileKey = `${x},${z}`;
-            // Show height texture when in height mode, otherwise show color texture
-            const colorTexture = paintMode === "height"
-                ? (heightTextureMap.get(tileKey) || colorTextureMap.get(tileKey))
-                : colorTextureMap.get(tileKey);
+            // Always show color texture
+            const colorTexture = colorTextureMap.get(tileKey);
 
             tiles.push(
                 <Tile
-                    key={tileKey}
+                    key={`${tileKey}-${paintMode}`}
                     tileX={x}
                     tileZ={z}
                     tileSize={tileSize}
                     physics={physics}
                     heightData={heightDataMap.get(tileKey)}
                     colorTexture={colorTexture}
+                    showWireframe={paintMode === "height"}
                     onClick={onClick}
                     onPointerMove={onPointerMove}
                     onPointerDown={onPointerDown}

@@ -1,3 +1,4 @@
+[![Tip in Crypto](https://tip.md/badge.svg)](https://tip.md/prnthh)
 
 ## 👉 Get Started
 Install dependencies
