@@ -27,6 +27,7 @@ const experimentsConfig: Record<string, { name?: string; description?: string; e
     'sketches/lighting': {
         description: 'Lighting and reflections.'
     },
+    'react-three-terrain': {},
     'react-three-controller/combined': {},
     'react-three-controller/firstperson': {},
     'sketches/tools/prefabeditor': {},
