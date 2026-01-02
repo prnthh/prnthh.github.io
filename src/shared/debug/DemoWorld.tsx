@@ -26,7 +26,7 @@ export const DemoEnvironment = () => {
         <Csm />
 
         <ambientLight intensity={0.5} />
-        <fog attach="fog" args={['#87ceeb', 35, 50]} />
+        <fog attach="fog" args={['#87ceeb', 35, 100]} />
         <color attach="background" args={["#87ceeb"]} />
 
     </>

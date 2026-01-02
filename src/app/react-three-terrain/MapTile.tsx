@@ -119,10 +119,18 @@ const Tile = memo(function Tile({
 export function MapTiles({
     tileSize = 100,
     viewRadius = 2,
+    startX = 0,
+    startZ = 0,
+    endX = 0,
+    endZ = 0,
     physics,
 }: {
     tileSize?: number;
     viewRadius?: number;
+    startX?: number;
+    startZ?: number;
+    endX?: number;
+    endZ?: number;
     physics?: boolean;
 }) {
     const { isLoaded } = useMap();
@@ -131,8 +139,8 @@ export function MapTiles({
 
     const tiles = [];
 
-    for (let x = -1; x <= 1; x++) {
-        for (let z = -1; z <= 1; z++) {
+    for (let x = startX; x <= endX; x++) {
+        for (let z = startZ; z <= endZ; z++) {
             tiles.push(
                 <Tile
                     key={`${x},${z}`}
