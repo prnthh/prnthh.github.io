@@ -4,7 +4,7 @@ import { MapProvider, useMap } from "./MapProvider";
 import { MapEditorProvider, useMapEditor } from "./MapEditorProvider";
 import { MapTiles, MapTilesRef } from "./MapTile";
 import { Map2DCanvas } from "./Map2DCanvas";
-import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { MapControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { FirstPersonController } from "../react-three-controller";
@@ -80,8 +80,8 @@ function SceneContent({
 
             {mode !== "play" ? (
                 <>
-                    <PerspectiveCamera makeDefault position={[0, 40, 0]}>
-                        <OrbitControls target={[20, 0, 20]} enableRotate={mode === "move"} />
+                    <PerspectiveCamera makeDefault position={[-100, 100, 0]}>
+                        <MapControls target={[0, 0, 0]} enableRotate={mode === "move"} />
                     </PerspectiveCamera>
                     {isBrushMode && <SynchronizedPointer />}
                 </>

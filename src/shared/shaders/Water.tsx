@@ -1,69 +1,50 @@
 "use client"
 
-import {
-    color, vec2, linearDepth, viewportLinearDepth, viewportDepthTexture,
-    viewportSharedTexture, mx_worley_noise_float, positionWorld, time,
-    screenUV,
-    float
-} from 'three/tsl'
-import { MeshBasicNodeMaterial } from 'three/webgpu';
+import { useMemo } from 'react';
+import { useFrame, useLoader } from '@react-three/fiber';
+import { WaterMesh } from 'three/examples/jsm/objects/WaterMesh.js';
+import { TextureLoader, RepeatWrapping, Vector3, PlaneGeometry, MathUtils } from 'three';
 
-let waterMaterialInstance: MeshBasicNodeMaterial | null = null;
+export default function Ocean({ distortionScale = 3.7, size = 1.0, alpha = 1.0 }: { distortionScale?: number, size?: number, alpha?: number }) {
+    const waterNormals = useLoader(TextureLoader, '/textures/waternormals.jpg');
 
-function getWaterMaterial() {
-    if (waterMaterialInstance) return waterMaterialInstance;
+    const water = useMemo(() => {
+        const waterGeometry = new PlaneGeometry(10000, 10000);
 
-    // water
-    const timer = time.mul(0.8);
-    const floorUV = positionWorld.xzy;
+        waterNormals.wrapS = waterNormals.wrapT = RepeatWrapping;
 
-    const waterLayer0 = mx_worley_noise_float(floorUV.mul(4).add(timer));
-    const waterLayer1 = mx_worley_noise_float(floorUV.mul(2).add(timer));
+        const waterMesh = new WaterMesh(
+            waterGeometry,
+            {
+                waterNormals: waterNormals,
+                sunDirection: new Vector3(),
+                sunColor: 0xffffff,
+                waterColor: 0x001e0f,
+                distortionScale: distortionScale,
+                size: size,
+                alpha: 1.0
+            }
+        );
 
-    const waterIntensity = waterLayer0.mul(waterLayer1);
-    const waterColor = waterIntensity.mul(1.4).mix(color(0x0487e2), color(0x74ccf4));
+        waterMesh.rotation.x = -Math.PI / 2;
 
-    // linearDepth() returns the linear depth of the mesh
-    const depth = linearDepth();
-    const depthWater = viewportLinearDepth.sub(depth);
-    const depthEffect = depthWater.remapClamp(0, 0.1);
+        return waterMesh;
+    }, [waterNormals, size, distortionScale, alpha]);
 
-    const refractionUV = screenUV.add(vec2(0, waterIntensity.mul(0.1)));
+    useFrame(() => {
+        if (water) {
+            // Update sun direction to match the sky
+            const sun = new Vector3();
+            const phi = MathUtils.degToRad(90 - 2);
+            const theta = MathUtils.degToRad(180);
+            sun.setFromSphericalCoords(1, phi, theta);
+            water.sunDirection.value.copy(sun).normalize();
+        }
+    });
 
-    // linearDepth( viewportDepthTexture( uv ) ) return the linear depth of the scene
-    const depthTestForRefraction = linearDepth(viewportDepthTexture(refractionUV)).sub(depth);
-
-    const depthRefraction = depthTestForRefraction.remapClamp(0, 0.5);
-
-    const finalUV = depthTestForRefraction.lessThan(0).select(screenUV, refractionUV);
-
-    const viewportTexture = viewportSharedTexture(finalUV);
-
-    const waterMaterial = new MeshBasicNodeMaterial();
-    waterMaterial.colorNode = waterColor;
-
-    // Use mix instead of multiply for better visibility of water color over dark backgrounds
-    const deepWaterColor = viewportTexture.mix(waterColor, depthRefraction.mul(0.8));
-
-    waterMaterial.backdropNode = depthEffect.mix(viewportSharedTexture(), deepWaterColor);
-    waterMaterial.backdropAlphaNode = float(1); // Ensure opaque alpha
-    waterMaterial.transparent = true;
-
-    waterMaterialInstance = waterMaterial;
-    return waterMaterialInstance;
-}
-
-export function WaterMaterial() {
-    const material = getWaterMaterial();
-    return <primitive object={material} attach="material" />;
-}
-
-export default function Ocean() {
     return (
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[256, 1, 256]}>
-            <planeGeometry args={[1024, 1024]} />
-            <WaterMaterial />
-        </mesh>
+        <>
+            <primitive object={water} />
+        </>
     );
 }
-

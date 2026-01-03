@@ -5,6 +5,8 @@ import { GameCanvas } from "react-three-game"
 import { Box, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { WorldProvider, useQuery, useTrait, useTarget, useActions } from "koota/react";
 import { actions, Position, Rocket, Station, Targeting, world } from "./ecs/world";
+import { Physics } from "@react-three/rapier";
+import DebugGround from "@/shared/ground/DebugGround";
 
 
 /* ======================================================
@@ -30,7 +32,13 @@ function Bootstrap() {
         };
     }, []);
 
-    return null;
+    return <DebugGround onClick={(e) => {
+        console.log("Clicked at", e.button);
+        if (e.button === 0)
+            spawnStation(e.point.x, e.point.z);
+        else if (e.button === 2)
+            spawnRocket(e.point.x, e.point.z);
+    }} />
 }
 
 /* ======================================================
@@ -83,16 +91,18 @@ export default function Page() {
             <WorldProvider world={world}>
 
                 <GameCanvas>
-                    <ambientLight intensity={1} />
+                    <Physics>
+                        <ambientLight intensity={2} />
 
-                    <Bootstrap />
-                    <StationRenderer />
-                    <RocketRenderer />
+                        <Bootstrap />
+                        <StationRenderer />
+                        <RocketRenderer />
 
 
-                    <PerspectiveCamera makeDefault position={[0, 10, 0]}>
-                        <OrbitControls target={[10, 0, 10]} />
-                    </PerspectiveCamera>
+                        <PerspectiveCamera makeDefault position={[0, 10, 0]}>
+                            <OrbitControls target={[10, 0, 10]} />
+                        </PerspectiveCamera>
+                    </Physics>
                 </GameCanvas>
 
             </WorldProvider>

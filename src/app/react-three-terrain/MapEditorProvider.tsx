@@ -138,7 +138,7 @@ export function MapEditorProvider({ children }: { children: ReactNode }) {
         return { height, color };
     }, [getTile, tileSize, blankHeight, blankColor]);
 
-    const [paintMode, setPaintMode] = useState<PaintMode>("height");
+    const [paintMode, setPaintMode] = useState<PaintMode>("color");
     const [brushSize, setBrushSize] = useState(10);
     const [brushShape, setBrushShape] = useState<BrushShape>("circle");
     const [brushColor, setBrushColor] = useState("#ffffff");

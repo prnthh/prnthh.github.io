@@ -23,7 +23,7 @@ const DebugGround = ({
         pointerDownPos.current = { x: e.clientX, y: e.clientY };
     };
 
-    const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
         if (!pointerDownPos.current) return;
 
         const dx = e.clientX - pointerDownPos.current.x;
@@ -31,7 +31,7 @@ const DebugGround = ({
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < DRAG_THRESHOLD) {
-            onClick?.(e);
+            onClick?.(e as any);
         }
     };
 
@@ -44,7 +44,7 @@ const DebugGround = ({
                         receiveShadow
                         rotation={[-Math.PI / 2, 0, 0]}
                         onPointerDown={handlePointerDown}
-                        onClick={handleClick}
+                        onPointerUp={handlePointerUp}
                     >
                         <planeGeometry args={[size, size]} />
                         <meshStandardMaterial color="gray" />
