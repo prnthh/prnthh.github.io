@@ -120,12 +120,24 @@ export function MapProvider({
 
     // Create blank colormap texture once
     const blankColormap = useMemo(() => {
-        const d = new Uint8Array(64 * 64 * 4);
-        for (let i = 0; i < d.length; i += 4) d.set([200, 200, 200, 255], i);
-        const tex = new DataTexture(d, 64, 64, RGBAFormat);
-        tex.needsUpdate = true;
-        tex.wrapS = tex.wrapT = RepeatWrapping;
+        if (typeof ImageData === 'undefined') return null;
+        const data = new Uint8ClampedArray(64 * 64 * 4);
+        for (let i = 0; i < data.length; i += 4) {
+            data.set([200, 200, 200, 255], i);
+        }
+        const imageData = new ImageData(data, 64, 64);
+        const tex = createTextureFromImageData(imageData);
         return tex;
+    }, []);
+
+    // Create blank heightImage once (flat plane)
+    const blankHeightImage = useMemo(() => {
+        if (typeof ImageData === 'undefined') return null;
+        const data = new Uint8ClampedArray(64 * 64 * 4);
+        for (let i = 0; i < data.length; i += 4) {
+            data.set([0, 0, 0, 255], i); // black for zero height
+        }
+        return new ImageData(data, 64, 64);
     }, []);
 
     const gridConfig = useMemo<GridConfig>(() => {
@@ -145,8 +157,22 @@ export function MapProvider({
         let pending = coords.length * 2;
         const done = () => {
             if (--pending === 0) {
-                loaded.forEach(t => { if (t.heightImage) { t.heightField = buildHeightField(t.heightImage, TILE_RESOLUTION, HEIGHT_SCALE); t.resolution = TILE_RESOLUTION; } });
-                setTiles(new Map(loaded)); setIsLoaded(true);
+                // Build heightFields for all tiles, using blank fallback if needed
+                loaded.forEach(t => {
+                    if (t.heightImage) {
+                        t.heightField = buildHeightField(t.heightImage, TILE_RESOLUTION, HEIGHT_SCALE);
+                        t.resolution = TILE_RESOLUTION;
+                    } else if (blankHeightImage) {
+                        // Create fallback heightImage from blank ImageData
+                        createImageBitmap(blankHeightImage).then(bmp => {
+                            t.heightImage = bmp;
+                            t.heightField = buildHeightField(bmp, TILE_RESOLUTION, HEIGHT_SCALE);
+                            t.resolution = TILE_RESOLUTION;
+                        });
+                    }
+                });
+                setTiles(new Map(loaded));
+                setIsLoaded(true);
             }
         };
         for (const [x, y] of coords) {
@@ -164,12 +190,22 @@ export function MapProvider({
                 .then(bmp => { tile.heightImage = bmp; done(); })
                 .catch(() => { tile.heightImage = null; done(); });
         }
-    }, [basepath, blankColormap]);
+    }, [basepath, blankColormap, blankHeightImage]);
 
     const getTile = useCallback((tileX: number, tileZ: number): MapData => {
         const key = tileKey(tileX, tileZ);
-        return tiles.get(key) ?? { colormap: null, heightImage: null };
-    }, [tiles]);
+        const tile = tiles.get(key);
+        if (!tile) {
+            // Return fallback data for missing tiles
+            return {
+                colormap: blankColormap,
+                heightImage: null,
+                heightField: new Float32Array((TILE_RESOLUTION + 1) * (TILE_RESOLUTION + 1)).fill(0),
+                resolution: TILE_RESOLUTION
+            };
+        }
+        return tile;
+    }, [tiles, blankColormap]);
 
     const sampleHeight = useCallback((x: number, z: number): number => {
         const tx = Math.floor(x / TILE_SIZE), tz = Math.floor(z / TILE_SIZE), t = tiles.get(tileKey(tx, tz));

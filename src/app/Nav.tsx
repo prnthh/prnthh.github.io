@@ -27,10 +27,11 @@ const experimentsConfig: Record<string, { name?: string; description?: string; e
     'sketches/lighting': {
         description: 'Lighting and reflections.'
     },
-    'react-three-game': { external: true },
     'react-three-terrain': {},
     'react-three-controller/combined': {},
     'react-three-controller/firstperson': {},
+    'react-three-game': { external: true },
+    'Pockit-Challenge-Protocol': { external: true },
     'sketches/tools/prefabeditor': {},
     'sketches/tools/assetviewer': {},
     'sketches/tools/character': {},
