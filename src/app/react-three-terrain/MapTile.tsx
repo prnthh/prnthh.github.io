@@ -19,7 +19,11 @@ const setMapEntry = <T,>(setter: React.Dispatch<React.SetStateAction<Map<string,
     });
 };
 
-const buildTileGeometry = (heightField: Float32Array | null | undefined, resolution: number, tileSize: number) => {
+const buildTileGeometry = (
+    heightField: Float32Array | null | undefined,
+    resolution: number,
+    tileSize: number
+) => {
     const geo = new THREE.PlaneGeometry(tileSize, tileSize, resolution, resolution);
     geo.rotateX(-Math.PI / 2);
     const pos = geo.attributes.position as THREE.BufferAttribute;
@@ -73,14 +77,71 @@ const Tile = memo(function Tile({
     const colormap = externalColorTexture ?? tile.colormap;
     const resolution = tile.resolution ?? 32;
 
-    const geometry = useMemo(() => buildTileGeometry(heightField, resolution, tileSize), [heightField, resolution, tileSize]);
+    // Get neighbor heightfields for edge stitching
+    // Only rebuild geometry when THIS tile's heightfield changes, not neighbors
+    // This prevents jittering but means edges are stitched to the neighbor's state at initial load
+    const neighborHeights = useMemo(() => {
+        if (!heightField) return undefined;
+        return {
+            left: getTile(tileX - 1, tileZ).heightField,
+            right: getTile(tileX + 1, tileZ).heightField,
+            top: getTile(tileX, tileZ - 1).heightField,
+            bottom: getTile(tileX, tileZ + 1).heightField,
+        };
+    }, [getTile, tileX, tileZ, heightField]);
+
+    // Create stitched heightfield for both rendering and physics
+    const stitchedHeightField = useMemo(() => {
+        if (!heightField) return null;
+        const gridSize = resolution + 1;
+        const stitched = new Float32Array(heightField.length);
+        stitched.set(heightField);
+
+        // Apply edge stitching to the heightfield
+        if (neighborHeights) {
+            for (let z = 0; z < gridSize; z++) {
+                for (let x = 0; x < gridSize; x++) {
+                    const i = z * gridSize + x;
+
+                    // Left edge: defer to left neighbor
+                    if (x === 0 && neighborHeights.left) {
+                        const neighborIdx = z * gridSize + resolution;
+                        stitched[i] = neighborHeights.left[neighborIdx] ?? stitched[i];
+                    }
+
+                    // Top edge: defer to top neighbor
+                    if (z === 0 && neighborHeights.top) {
+                        const neighborIdx = resolution * gridSize + x;
+                        stitched[i] = neighborHeights.top[neighborIdx] ?? stitched[i];
+                    }
+                }
+            }
+        }
+
+        return stitched;
+    }, [heightField, resolution, neighborHeights]);
+
+    const geometry = useMemo(
+        () => buildTileGeometry(stitchedHeightField, resolution, tileSize),
+        [stitchedHeightField, resolution, tileSize]
+    );
 
     const worldX = tileX * tileSize;
     const worldZ = tileZ * tileSize;
-    const mesh = (
+    const position = useMemo<[number, number, number]>(
+        () => [worldX + tileSize / 2, 0, worldZ + tileSize / 2],
+        [worldX, worldZ, tileSize]
+    );
+
+    const rapierHeightField = useMemo(() => {
+        const res = resolution || 32;
+        return stitchedHeightField ? buildRapierHeightfield(stitchedHeightField, res) : buildFlatHeightfield(res);
+    }, [stitchedHeightField, resolution]);
+
+    const meshElement = (
         <mesh
             geometry={geometry}
-            position={[worldX + tileSize / 2, 0, worldZ + tileSize / 2]}
+            position={position}
             onClick={onClick}
             onPointerMove={onPointerMove}
             onPointerDown={onPointerDown}
@@ -92,19 +153,13 @@ const Tile = memo(function Tile({
         </mesh>
     );
 
-    const rapierHeightField = useMemo(() => {
-        const res = resolution || 32;
-        return heightField ? buildRapierHeightfield(heightField, res) : buildFlatHeightfield(res);
-    }, [heightField, resolution]);
-
-
     if (!physics) {
-        return mesh;
+        return meshElement;
     }
 
     return (
         <RigidBody type="fixed" colliders={false}>
-            {mesh}
+            {meshElement}
             <HeightfieldCollider
                 args={[
                     resolution || 32,
@@ -112,7 +167,7 @@ const Tile = memo(function Tile({
                     rapierHeightField as unknown as number[],
                     { x: tileSize, y: 1, z: tileSize },
                 ]}
-                position={[worldX + tileSize / 2, 0, worldZ + tileSize / 2]}
+                position={position}
             />
         </RigidBody>
     );

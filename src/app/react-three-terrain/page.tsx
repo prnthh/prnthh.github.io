@@ -30,6 +30,7 @@ function SceneContent({
     }, [setMapTilesRef]);
 
     const handlePointerMove = useCallback((e: any) => {
+        e.stopPropagation();
         const worldPos: [number, number, number] = [e.point.x, e.point.y, e.point.z];
 
         // Update pointer ref without triggering re-renders
@@ -42,6 +43,7 @@ function SceneContent({
 
     const handlePointerDown = useCallback((e: any) => {
         if (e.button !== 0) return;
+        e.stopPropagation();
         setIsDrawing(true);
 
         // Paint immediately on click
@@ -49,7 +51,8 @@ function SceneContent({
         paintAt(px, py, true);
     }, [setIsDrawing, gridConfig, paintAt]);
 
-    const handlePointerUp = useCallback(() => {
+    const handlePointerUp = useCallback((e: any) => {
+        e.stopPropagation();
         setIsDrawing(false);
     }, [setIsDrawing]);
 
@@ -81,7 +84,7 @@ function SceneContent({
             {mode !== "play" ? (
                 <>
                     <PerspectiveCamera makeDefault position={[-100, 100, 0]}>
-                        <MapControls target={[0, 0, 0]} enableRotate={mode === "move"} />
+                        <MapControls makeDefault target={[0, 0, 0]} enableRotate={mode === "move"} enabled={!isDrawing} />
                     </PerspectiveCamera>
                     {isBrushMode && <SynchronizedPointer />}
                 </>

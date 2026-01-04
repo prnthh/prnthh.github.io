@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, useCallback, ReactNode } from "react";
-import { Texture, TextureLoader, RepeatWrapping, DataTexture, RGBAFormat } from "three";
+import { Texture, TextureLoader, ClampToEdgeWrapping, LinearFilter, LinearMipMapLinearFilter } from "three";
 
 /**
  * MapProvider handles terrain map loading and tile management.
@@ -72,7 +72,10 @@ export const createTextureFromImageData = (data: ImageData) => {
     ctx.putImageData(data, 0, 0);
     const tex = new Texture(ctx.canvas);
     tex.needsUpdate = true;
-    tex.wrapS = tex.wrapT = RepeatWrapping;
+    tex.wrapS = tex.wrapT = ClampToEdgeWrapping;
+    tex.minFilter = LinearMipMapLinearFilter;
+    tex.magFilter = LinearFilter;
+    tex.generateMipmaps = true;
     return tex;
 };
 
@@ -180,7 +183,14 @@ export function MapProvider({
             loaded.set(key, tile);
             loader.load(
                 `${bp}/${x}_${y}_color.png`,
-                tex => { tex.wrapS = tex.wrapT = RepeatWrapping; tile.colormap = tex; done(); },
+                tex => {
+                    tex.wrapS = tex.wrapT = ClampToEdgeWrapping;
+                    tex.minFilter = LinearMipMapLinearFilter;
+                    tex.magFilter = LinearFilter;
+                    tex.generateMipmaps = true;
+                    tile.colormap = tex;
+                    done();
+                },
                 undefined,
                 () => { tile.colormap = blankColormap; done(); }
             );

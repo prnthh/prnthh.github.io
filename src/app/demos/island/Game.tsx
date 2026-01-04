@@ -32,30 +32,28 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
                     endX={1}
                     startZ={-1}
                     endZ={1}
-                    tileSizePx={256}
+                    tileSizePx={128}
                 >
-                    <group position={[0, -0.7, 0]}>
-                        <MapTiles
-                            // ref={mapTilesRef}
-                            startX={-1}
-                            startZ={-1}
-                            endX={1}
-                            endZ={1}
-                            physics
-                            tileSize={256}
-                            viewRadius={2}
-                        //  onPointerMove={isBrushMode ? handlePointerMove : undefined}
-                        // onPointerDown={isBrushMode ? handlePointerDown : undefined}
-                        // onPointerUp={isBrushMode ? handlePointerUp : undefined}
-                        // onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
-                        />
-                    </group>
+                    <MapTiles
+                        // ref={mapTilesRef}
+                        startX={-1}
+                        startZ={-1}
+                        endX={1}
+                        endZ={1}
+                        physics
+                        tileSize={128}
+                        viewRadius={2}
+                    //  onPointerMove={isBrushMode ? handlePointerMove : undefined}
+                    // onPointerDown={isBrushMode ? handlePointerDown : undefined}
+                    // onPointerUp={isBrushMode ? handlePointerUp : undefined}
+                    // onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
+                    />
                 </MapProvider>
                 {/* <Plane rotation={[-Math.PI / 2, 0, 0]} position={[32, 0, 16]} args={[32, 32, 256, 256]} receiveShadow>
 
                     <ShinyFloor />
                 </Plane> */}
-                <Ocean size={20} distortionScale={1} alpha={0.5} />
+                {/* <Ocean size={20} distortionScale={1} alpha={0.5} /> */}
             </Physics>
             <ambientLight intensity={1} />
 
