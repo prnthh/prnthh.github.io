@@ -179,12 +179,12 @@ export function MapProvider({
             const key = tileKey(x, y), tile: MapData = { colormap: null, heightImage: null };
             loaded.set(key, tile);
             loader.load(
-                `${bp}/colormaps/${x}_${y}.jpg`,
+                `${bp}/${x}_${y}_color.png`,
                 tex => { tex.wrapS = tex.wrapT = RepeatWrapping; tile.colormap = tex; done(); },
                 undefined,
                 () => { tile.colormap = blankColormap; done(); }
             );
-            fetch(`${bp}/heightmaps/${x}_${y}.png`)
+            fetch(`${bp}/${x}_${y}_height.png`)
                 .then(r => r.blob())
                 .then(b => createImageBitmap(b))
                 .then(bmp => { tile.heightImage = bmp; done(); })
