@@ -15,8 +15,8 @@ import ShadedGround from "@/shared/ground/ShadedGround";
 
 // floor materials
 import { TextureSplatMaterial } from "@/shared/shaders/floor/TextureSplatMaterial";
-import { WaterMaterial } from "@/shared/shaders/Water";
 import DetailedMaterial from "@/shared/shaders/floor/TexturedMaterial";
+import { ShinyFloor } from "@/shared/shaders/floor/ShinyFloorMaterial";
 const detailedMaterials = {
     "dirt": {
         map: '/textures/floor/terrain/dirt-512.jpg'
@@ -61,7 +61,7 @@ export default function Home() {
 
                         <mesh position={[32, 0, 16]}>
                             <boxGeometry args={[32, 1, 32]} />
-                            <WaterMaterial />
+                            <ShinyFloor />
                         </mesh>
 
 
