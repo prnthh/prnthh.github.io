@@ -32,7 +32,7 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
                     endX={1}
                     startZ={-1}
                     endZ={1}
-                    tileSizePx={128}
+                    tileSizePx={256}
                 >
                     <MapTiles
                         // ref={mapTilesRef}
@@ -41,7 +41,7 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
                         endX={1}
                         endZ={1}
                         physics
-                        tileSize={128}
+                        tileSize={100}
                         viewRadius={2}
                     //  onPointerMove={isBrushMode ? handlePointerMove : undefined}
                     // onPointerDown={isBrushMode ? handlePointerDown : undefined}
@@ -49,11 +49,11 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
                     // onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
                     />
                 </MapProvider>
-                {/* <Plane rotation={[-Math.PI / 2, 0, 0]} position={[32, 0, 16]} args={[32, 32, 256, 256]} receiveShadow>
 
-                    <ShinyFloor />
-                </Plane> */}
-                {/* <Ocean size={20} distortionScale={1} alpha={0.5} /> */}
+                <group position={[0, 0.2, 0]}>
+                    <Ocean size={20} distortionScale={1} alpha={0.5} />
+
+                </group>
             </Physics>
             <ambientLight intensity={1} />
 
@@ -108,7 +108,7 @@ const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
 
 
     return <>
-        <ThirdPersonController lookTarget={ballRef} >
+        <ThirdPersonController position={[0, 5, 0]} lookTarget={ballRef} >
             <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"

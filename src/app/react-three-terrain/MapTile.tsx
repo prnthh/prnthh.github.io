@@ -47,6 +47,7 @@ interface TileProps {
     heightData?: Float32Array | null;
     colorTexture?: THREE.Texture | null;
     showWireframe?: boolean;
+    heightDataMap?: Map<string, Float32Array | null>;
     onClick?: (e: ThreeEvent<MouseEvent>) => void;
     onPointerMove?: (e: ThreeEvent<PointerEvent>) => void;
     onPointerDown?: (e: ThreeEvent<PointerEvent>) => void;
@@ -63,6 +64,7 @@ const Tile = memo(function Tile({
     heightData: externalHeightData,
     colorTexture: externalColorTexture,
     showWireframe,
+    heightDataMap,
     onClick,
     onPointerMove,
     onPointerDown,
@@ -78,17 +80,23 @@ const Tile = memo(function Tile({
     const resolution = tile.resolution ?? 32;
 
     // Get neighbor heightfields for edge stitching
-    // Only rebuild geometry when THIS tile's heightfield changes, not neighbors
-    // This prevents jittering but means edges are stitched to the neighbor's state at initial load
+    // Check heightDataMap first (for live updates), then fall back to getTile
     const neighborHeights = useMemo(() => {
         if (!heightField) return undefined;
-        return {
-            left: getTile(tileX - 1, tileZ).heightField,
-            right: getTile(tileX + 1, tileZ).heightField,
-            top: getTile(tileX, tileZ - 1).heightField,
-            bottom: getTile(tileX, tileZ + 1).heightField,
+
+        const getNeighborHeight = (x: number, z: number) => {
+            const key = `${x},${z}`;
+            // Check external updates first, then fall back to provider
+            return heightDataMap?.get(key) ?? getTile(x, z).heightField;
         };
-    }, [getTile, tileX, tileZ, heightField]);
+
+        return {
+            left: getNeighborHeight(tileX - 1, tileZ),
+            right: getNeighborHeight(tileX + 1, tileZ),
+            top: getNeighborHeight(tileX, tileZ - 1),
+            bottom: getNeighborHeight(tileX, tileZ + 1),
+        };
+    }, [getTile, tileX, tileZ, heightField, heightDataMap]);
 
     // Create stitched heightfield for both rendering and physics
     const stitchedHeightField = useMemo(() => {
@@ -98,18 +106,20 @@ const Tile = memo(function Tile({
         stitched.set(heightField);
 
         // Apply edge stitching to the heightfield
+        // Each tile defers its LEFT and TOP edges to its neighbors
+        // This creates a consistent authority hierarchy: negative coords have authority over positive coords
         if (neighborHeights) {
             for (let z = 0; z < gridSize; z++) {
                 for (let x = 0; x < gridSize; x++) {
                     const i = z * gridSize + x;
 
-                    // Left edge: defer to left neighbor
+                    // Left edge: defer to left neighbor's right edge
                     if (x === 0 && neighborHeights.left) {
                         const neighborIdx = z * gridSize + resolution;
                         stitched[i] = neighborHeights.left[neighborIdx] ?? stitched[i];
                     }
 
-                    // Top edge: defer to top neighbor
+                    // Top edge: defer to top neighbor's bottom edge
                     if (z === 0 && neighborHeights.top) {
                         const neighborIdx = resolution * gridSize + x;
                         stitched[i] = neighborHeights.top[neighborIdx] ?? stitched[i];
@@ -142,6 +152,7 @@ const Tile = memo(function Tile({
         <mesh
             geometry={geometry}
             position={position}
+            receiveShadow
             onClick={onClick}
             onPointerMove={onPointerMove}
             onPointerDown={onPointerDown}
@@ -248,6 +259,7 @@ export const MapTiles = forwardRef<MapTilesRef, MapTilesProps>(function MapTiles
                     tileSize={tileSize}
                     physics={physics}
                     heightData={heightDataMap.get(tileKey)}
+                    heightDataMap={heightDataMap}
                     colorTexture={colorTexture}
                     showWireframe={paintMode === "height"}
                     onClick={onClick}

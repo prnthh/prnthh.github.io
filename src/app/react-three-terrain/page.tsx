@@ -6,7 +6,7 @@ import { MapTiles, MapTilesRef } from "./MapTile";
 import { Map2DCanvas } from "./Map2DCanvas";
 import { MapControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { FirstPersonController } from "../react-three-controller";
 import { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import SynchronizedPointer from "./SynchronizedPointer";
@@ -14,14 +14,10 @@ import SynchronizedPointer from "./SynchronizedPointer";
 
 const MAP_CONFIG = { startX: -1, endX: 1, startZ: -1, endZ: 1, tileSize: 100, tileSizePx: 256 };
 
-function SceneContent({
-    mode
-}: {
-    mode: "play" | "move" | "brush";
-}) {
-    const { isDrawing, setIsDrawing, clearPreview, paintMode, setMapTilesRef, paintAt, pointerRef } = useMapEditor();
+function SceneContent() {
+    const { isDrawing, setIsDrawing, clearPreview, brush, setMapTilesRef, paintAt, pointerRef, editorMode, brushMode } = useMapEditor();
     const { gridConfig } = useMap();
-    const isBrushMode = mode === "brush";
+    const isBrushMode = editorMode === "edit" && brushMode === "brush";
     const mapTilesRef = useRef<MapTilesRef>(null);
 
     // Register the ref with the editor provider
@@ -71,26 +67,26 @@ function SceneContent({
                 startZ={MAP_CONFIG.startZ}
                 endX={MAP_CONFIG.endX}
                 endZ={MAP_CONFIG.endZ}
-                physics={mode === "play"}
+                physics={editorMode === "play"}
                 tileSize={MAP_CONFIG.tileSize}
                 viewRadius={2}
-                paintMode={paintMode}
+                paintMode={brush.mode}
                 onPointerMove={isBrushMode ? handlePointerMove : undefined}
                 onPointerDown={isBrushMode ? handlePointerDown : undefined}
                 onPointerUp={isBrushMode ? handlePointerUp : undefined}
                 onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
             />
 
-            {mode !== "play" ? (
+            {editorMode !== "play" ? (
                 <>
                     <PerspectiveCamera makeDefault position={[-100, 100, 0]}>
-                        <MapControls makeDefault target={[0, 0, 0]} enableRotate={mode === "move"} enabled={!isDrawing} />
+                        <MapControls makeDefault target={[0, 0, 0]} enableRotate={brushMode === "move"} enabled={!isDrawing} />
                     </PerspectiveCamera>
                     {isBrushMode && <SynchronizedPointer />}
                 </>
             ) : (
                 <>
-                    <FirstPersonController spawnPosition={[20, 10, 20]} />
+                    <FirstPersonController spawnPosition={[0, 10, 0]} />
                     <DemoEnvironment />
                 </>
             )}
@@ -98,9 +94,36 @@ function SceneContent({
     );
 }
 
-export default function Page() {
-    const [mode, setMode] = useState<"play" | "move" | "brush">("move");
+function PageContent() {
+    const { editorMode, setEditorMode } = useMapEditor();
 
+    return (
+        <>
+            <GameCanvas>
+                <SceneContent />
+            </GameCanvas>
+
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+                {(["play", "edit"] as const).map((m) => (
+                    <button
+                        key={m}
+                        onClick={() => setEditorMode(m)}
+                        className={`px-4 py-2 rounded border transition-colors ${editorMode === m
+                            ? "bg-blue-500 text-white border-blue-600"
+                            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                            }`}
+                    >
+                        {m.charAt(0).toUpperCase() + m.slice(1)}
+                    </button>
+                ))}
+            </div>
+
+            <Map2DCanvas />
+        </>
+    );
+}
+
+export default function Page() {
     return (
         <div className="w-screen h-screen">
             <MapProvider
@@ -111,28 +134,7 @@ export default function Page() {
                 tileSizePx={MAP_CONFIG.tileSizePx}
             >
                 <MapEditorProvider>
-                    <GameCanvas>
-                        <SceneContent
-                            mode={mode}
-                        />
-                    </GameCanvas>
-
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-                        {(["play", "move", "brush"] as const).map((m) => (
-                            <button
-                                key={m}
-                                onClick={() => setMode(m)}
-                                className={`px-4 py-2 rounded border transition-colors ${mode === m
-                                    ? "bg-blue-500 text-white border-blue-600"
-                                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                                    }`}
-                            >
-                                {m.charAt(0).toUpperCase() + m.slice(1)}
-                            </button>
-                        ))}
-                    </div>
-
-                    <Map2DCanvas />
+                    <PageContent />
                 </MapEditorProvider>
             </MapProvider>
         </div>

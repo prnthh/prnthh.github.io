@@ -6,7 +6,7 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 
 export default function SynchronizedPointer() {
-    const { brushSize, isDrawing, pointerRef } = useMapEditor();
+    const { brush, isDrawing, pointerRef } = useMapEditor();
     const groupRef = useRef<THREE.Group>(null);
 
     // Update group position directly from ref without triggering re-renders
@@ -26,7 +26,7 @@ export default function SynchronizedPointer() {
     return (
         <group ref={groupRef} visible={false}>
             <mesh position={[0, 0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <ringGeometry args={[brushSize * 0.8, brushSize, 32]} />
+                <ringGeometry args={[brush.size * 0.8, brush.size, 32]} />
                 <meshBasicMaterial
                     color={isDrawing ? "yellow" : "cyan"}
                     transparent

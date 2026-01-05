@@ -8,18 +8,8 @@ export function Map2DCanvas() {
     const { gridConfig, isLoaded } = useMap();
     const { canvasSize: CANVAS_SIZE } = gridConfig;
     const {
-        paintMode,
-        setPaintMode,
-        brushSize,
-        setBrushSize,
-        brushShape,
-        setBrushShape,
-        brushColor,
-        setBrushColor,
-        brushHeight,
-        setBrushHeight,
-        brushSoftness,
-        setBrushSoftness,
+        brush,
+        setBrush,
         isDrawing,
         setIsDrawing,
         modifiedTiles,
@@ -28,6 +18,9 @@ export function Map2DCanvas() {
         downloadModifiedTiles,
         loadAllTiles,
         setCanvasRefs,
+        editorMode,
+        brushMode,
+        setBrushMode,
     } = useMapEditor();
 
     const heightCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -76,14 +69,33 @@ export function Map2DCanvas() {
         clearPreview();
     };
 
+    // Only show in edit mode
+    if (editorMode !== "edit") return null;
+
     return (
         <div className="absolute bottom-0 right-0 bg-black/80 p-4 rounded-tl-lg">
             <div className="flex flex-col gap-3">
+                {/* Mode Toggle Buttons */}
+                <div className="flex gap-2">
+                    {(["move", "brush"] as const).map((m) => (
+                        <button
+                            key={m}
+                            onClick={() => setBrushMode(m)}
+                            className={`px-4 py-2 rounded border transition-colors ${brushMode === m
+                                ? "bg-blue-500 text-white border-blue-600"
+                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
+                                }`}
+                        >
+                            {m.charAt(0).toUpperCase() + m.slice(1)}
+                        </button>
+                    ))}
+                </div>
+
                 {/* Controls */}
                 <div className="flex flex-col gap-2">
                     <select
-                        value={paintMode}
-                        onChange={(e) => setPaintMode(e.target.value as "height" | "color")}
+                        value={brush.mode}
+                        onChange={(e) => setBrush({ mode: e.target.value as "height" | "color" })}
                         className="px-2 py-1 rounded bg-gray-700 text-white"
                     >
                         <option value="height">Height Map</option>
@@ -96,11 +108,11 @@ export function Map2DCanvas() {
                             type="range"
                             min="1"
                             max="50"
-                            value={brushSize}
-                            onChange={(e) => setBrushSize(Number(e.target.value))}
+                            value={brush.size}
+                            onChange={(e) => setBrush({ size: Number(e.target.value) })}
                             className="flex-1"
                         />
-                        <span className="text-white text-sm w-8">{brushSize}</span>
+                        <span className="text-white text-sm w-8">{brush.size}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -110,48 +122,48 @@ export function Map2DCanvas() {
                             min="0"
                             max="1"
                             step="0.01"
-                            value={brushSoftness}
-                            onChange={(e) => setBrushSoftness(Number(e.target.value))}
+                            value={brush.softness}
+                            onChange={(e) => setBrush({ softness: Number(e.target.value) })}
                             className="flex-1"
                         />
-                        <span className="text-white text-sm w-8">{(brushSoftness * 100).toFixed(0)}%</span>
+                        <span className="text-white text-sm w-8">{(brush.softness * 100).toFixed(0)}%</span>
                     </div>
 
                     <div className="flex gap-2">
                         <button
-                            onClick={() => setBrushShape("circle")}
-                            className={`px-3 py-1 rounded text-sm ${brushShape === "circle" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-200"}`}
+                            onClick={() => setBrush({ shape: "circle" })}
+                            className={`px-3 py-1 rounded text-sm ${brush.shape === "circle" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-200"}`}
                         >
                             Circle
                         </button>
                         <button
-                            onClick={() => setBrushShape("square")}
-                            className={`px-3 py-1 rounded text-sm ${brushShape === "square" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-200"}`}
+                            onClick={() => setBrush({ shape: "square" })}
+                            className={`px-3 py-1 rounded text-sm ${brush.shape === "square" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-200"}`}
                         >
                             Square
                         </button>
                     </div>
 
-                    {paintMode === "height" ? (
+                    {brush.mode === "height" ? (
                         <div className="flex items-center gap-2">
                             <label className="text-white text-sm">Height:</label>
                             <input
                                 type="range"
                                 min="0"
                                 max="255"
-                                value={brushHeight}
-                                onChange={(e) => setBrushHeight(Number(e.target.value))}
+                                value={brush.height}
+                                onChange={(e) => setBrush({ height: Number(e.target.value) })}
                                 className="flex-1"
                             />
-                            <span className="text-white text-sm w-8">{brushHeight}</span>
+                            <span className="text-white text-sm w-8">{brush.height}</span>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2">
                             <label className="text-white text-sm">Color:</label>
                             <input
                                 type="color"
-                                value={brushColor}
-                                onChange={(e) => setBrushColor(e.target.value)}
+                                value={brush.color}
+                                onChange={(e) => setBrush({ color: e.target.value })}
                                 className="flex-1 h-8"
                             />
                         </div>
@@ -172,7 +184,7 @@ export function Map2DCanvas() {
                         ref={heightCanvasRef}
                         width={CANVAS_SIZE}
                         height={CANVAS_SIZE}
-                        className={paintMode === "height" ? "block" : "hidden"}
+                        className={brush.mode === "height" ? "block" : "hidden"}
                         style={{ width: "300px", height: "300px", imageRendering: "pixelated" }}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
@@ -183,7 +195,7 @@ export function Map2DCanvas() {
                         ref={colorCanvasRef}
                         width={CANVAS_SIZE}
                         height={CANVAS_SIZE}
-                        className={paintMode === "color" ? "block" : "hidden"}
+                        className={brush.mode === "color" ? "block" : "hidden"}
                         style={{ width: "300px", height: "300px", imageRendering: "pixelated" }}
                         onMouseDown={handleMouseDown}
                         onMouseMove={handleMouseMove}
