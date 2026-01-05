@@ -22,7 +22,7 @@ import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
 
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
-import ButtonBox from "./Button";
+import ButtonBox from "../mechanics/Button";
 import { Text } from 'three-text/three/react';
 
 const maps = {

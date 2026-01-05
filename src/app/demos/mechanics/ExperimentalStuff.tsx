@@ -8,6 +8,7 @@ import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import { Mesh, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import Rain from "@/shared/rain";
+import ButtonBox from "./Button";
 
 const WavyTree = ({ position = [0, 0, 0] }: { position?: [number, number, number] }) => {
     const { scene } = useGLTF('/models/environment/tree.glb');
@@ -53,6 +54,10 @@ export default function ExperimentalStuff() {
         <group position={[-2, 0, 5]}>
             <CrawlerApp controlled={false} />
         </group>
+
+        <ButtonBox position={[0, 1, 0]} onActivate={() => {
+            console.log("Button activated!");
+        }} />
 
         <Rain
             particleCount={10000}

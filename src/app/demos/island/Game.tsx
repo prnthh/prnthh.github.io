@@ -64,7 +64,7 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
 
 
 const FogEnvironment = () => {
-    const texture = useTexture('/textures/skybox1.jpg');
+    const texture = useTexture('/textures/skybox/skybox1.jpg');
     // texture.minFilter = NearestFilter;
     // texture.magFilter = NearestFilter;
     return <>

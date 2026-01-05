@@ -152,7 +152,7 @@ const GameEntityWorld = ({
 
 const CoolRoomEnvironment = () => {
     const { texture } = useTexture({
-        texture: '/textures/skybox3.jpg',
+        texture: '/textures/skybox/skybox3.jpg',
     });
     return <Environment map={texture} />;
 };
