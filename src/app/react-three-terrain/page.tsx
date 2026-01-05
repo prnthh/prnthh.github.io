@@ -82,6 +82,7 @@ function SceneContent() {
                     <PerspectiveCamera makeDefault position={[-100, 100, 0]}>
                         <MapControls makeDefault target={[0, 0, 0]} enableRotate={brushMode === "move"} enabled={!isDrawing} />
                     </PerspectiveCamera>
+                    <gridHelper args={[500, 500, `white`, `gray`]} />
                     {isBrushMode && <SynchronizedPointer />}
                 </>
             ) : (

@@ -158,15 +158,37 @@ export function Map2DCanvas() {
                             <span className="text-white text-sm w-8">{brush.height}</span>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2">
-                            <label className="text-white text-sm">Color:</label>
-                            <input
-                                type="color"
-                                value={brush.color}
-                                onChange={(e) => setBrush({ color: e.target.value })}
-                                className="flex-1 h-8"
-                            />
-                        </div>
+                        <>
+                            <div className="flex items-center gap-2">
+                                <label className="text-white text-sm">Color:</label>
+                                <input
+                                    type="color"
+                                    value={brush.color}
+                                    onChange={(e) => setBrush({ color: e.target.value })}
+                                    className="flex-1 h-8"
+                                />
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {[
+                                    { label: "Grass", color: "#010000" },
+                                    { label: "Rock", color: "#020000" },
+                                    { label: "Sand", color: "#030000" },
+                                ].map(({ label, color }) => (
+                                    <button
+                                        key={color}
+                                        onClick={() => setBrush({ color })}
+                                        className={`px-3 py-1 rounded text-xs border-2 transition-all ${brush.color.toLowerCase() === color.toLowerCase()
+                                            ? "border-white scale-105"
+                                            : "border-transparent"
+                                            }`}
+                                        style={{ backgroundColor: color, color: "white", textShadow: "0 0 2px black" }}
+                                        title={label}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </>
                     )}
 
                     <button

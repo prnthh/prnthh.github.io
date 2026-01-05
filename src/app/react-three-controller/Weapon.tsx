@@ -5,18 +5,17 @@
  */
 
 import { useThree, useFrame } from "@react-three/fiber";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Mesh, MeshStandardMaterial, SphereGeometry, Vector3 } from "three";
 import { useRapier, RapierRigidBody } from "@react-three/rapier";
 import useInputStore from "./controls/InputStore";
+import { sound } from "@/shared/util/SoundManager";
 
 export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.RefObject<RapierRigidBody | null>, onFire?: () => void } = {}) {
     const { camera, scene } = useThree();
     const { rapier, world } = useRapier();
     const fire = useInputStore(state => state.fire);
     const prevFireRef = useRef(false);
-    const audioPoolRef = useRef(Array.from({ length: 5 }, () => new Audio('/sound/pistol.mp3')));
-    const audioIndexRef = useRef(0);
 
     function addSensorBullet({ position }: { position: Vector3 }) {
         const size = 0.01;
@@ -113,10 +112,7 @@ export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.
         if (fire && !prevFireRef.current) {
             weaponHandler();
             onFire?.();
-            const audio = audioPoolRef.current[audioIndexRef.current];
-            audio.currentTime = 0;
-            audio.play().catch(() => { });
-            audioIndexRef.current = (audioIndexRef.current + 1) % audioPoolRef.current.length;
+            sound.play("/sound/pistol.mp3", { volume: 0.2 });
         }
         prevFireRef.current = fire;
     });

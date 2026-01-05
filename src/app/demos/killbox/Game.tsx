@@ -23,6 +23,7 @@ import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
 import ButtonBox from "./Button";
+import { Text } from 'three-text/three/react';
 
 const maps = {
     killbox: killbox as Prefab,
@@ -100,14 +101,14 @@ function InnerGame({ loadedMap, isMultiplayer, onCanvasReady }: { loadedMap: Pre
 
             <Train id="lift-main" />
 
-            <group position={[-2, 0, -15]}>
+            <group position={[0, 0, -15]}>
                 <RandomNumberExample />
 
-                <Balloon position={[0, 1, 0]} />
-                <HitBox debug key={2} position={[1, 1, 0]} />
-                <HitBox debug key={3} position={[2, 1, 0]} />
-                <HitBox debug key={4} position={[3, 1, 0]} />
-                <Balloon position={[4, 1, 0]} />
+                <Balloon position={[-2, 1, 0]} />
+                <HitBox debug key={2} position={[-1, 1, 0]} />
+                <HitBox debug key={3} position={[0, 1, 0]} />
+                <HitBox debug key={4} position={[1, 1, 0]} />
+                <Balloon position={[2, 1, 0]} />
             </group>
 
             <ButtonBox position={[5, 1, -10]} onActivate={() => console.log("Button activated!")} />
@@ -203,17 +204,19 @@ const Train = ({ position = [10, 0, -10], id = "lift-main" }: { position?: [numb
     </RigidBody>
 }
 
+Text.setHarfBuzzPath('/fonts/hb.wasm');
+
 const RandomNumberExample = () => {
     const randomNum = useTimeRNGNumber({ min: 0, max: 100 });
     const randomNum2 = useTimeRNGNumber({ min: 0, max: Math.PI * 2, seedOffset: 42 });
 
-    return <>
-        <Html transform className="flex gap-x-2 flex-col items-center" position={[2, 2, 0]}>
-            today's random numbers: <br />
-            <div className="">
-                {randomNum.toFixed()} and {randomNum2.toFixed()}
+    const width = 5;
 
-            </div>
-        </Html>
+    return <>
+        <group position={[-width / 2, 2, 0]}>
+            <Text font="/fonts/NimbusSanL-Reg.woff" size={0.5} depth={0} layout={{ align: 'center', width: width }}>
+                {`today's random numbers: ${randomNum.toFixed()} and ${randomNum2.toFixed()}`}
+            </Text>
+        </group>
     </>
 }

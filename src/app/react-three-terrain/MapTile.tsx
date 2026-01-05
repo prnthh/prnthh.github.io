@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { RigidBody, HeightfieldCollider } from "@react-three/rapier";
 import { ThreeEvent } from "@react-three/fiber";
 import { useMap } from "./MapProvider";
+import { MapSplatMaterial } from "./MapSplatMaterial";
 
 export interface MapTilesRef {
     updateHeightData: (tileKey: string, heightData: Float32Array | null) => void;
@@ -48,6 +49,7 @@ interface TileProps {
     colorTexture?: THREE.Texture | null;
     showWireframe?: boolean;
     heightDataMap?: Map<string, Float32Array | null>;
+    paintMode?: "height" | "color";
     onClick?: (e: ThreeEvent<MouseEvent>) => void;
     onPointerMove?: (e: ThreeEvent<PointerEvent>) => void;
     onPointerDown?: (e: ThreeEvent<PointerEvent>) => void;
@@ -65,6 +67,7 @@ const Tile = memo(function Tile({
     colorTexture: externalColorTexture,
     showWireframe,
     heightDataMap,
+    paintMode,
     onClick,
     onPointerMove,
     onPointerDown,
@@ -160,7 +163,11 @@ const Tile = memo(function Tile({
             onPointerEnter={onPointerEnter}
             onPointerLeave={onPointerLeave}
         >
-            <meshStandardMaterial map={colormap ?? undefined} wireframe={showWireframe} />
+            {paintMode === "color" ? (
+                <MapSplatMaterial colorTexture={colormap} textureScale={4} />
+            ) : (
+                <meshStandardMaterial map={colormap ?? undefined} wireframe={showWireframe} />
+            )}
         </mesh>
     );
 
@@ -262,6 +269,7 @@ export const MapTiles = forwardRef<MapTilesRef, MapTilesProps>(function MapTiles
                     heightDataMap={heightDataMap}
                     colorTexture={colorTexture}
                     showWireframe={paintMode === "height"}
+                    paintMode={paintMode}
                     onClick={onClick}
                     onPointerMove={onPointerMove}
                     onPointerDown={onPointerDown}
