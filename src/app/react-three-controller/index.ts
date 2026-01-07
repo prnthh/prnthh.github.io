@@ -27,7 +27,6 @@ export { Weapon } from './Weapon';
 
 // Ped System
 export { default as Ped } from './ped/ped';
-export { default as HumanoidModel } from './ped/HumanoidModel';
 export { default as ModelAttachment } from './ped/ModelAttachment';
 export { default as useLookAtTarget } from './ped/useLookAtTarget';
 export { default as useAnimationStateBasic } from './ped/useAnimationStateBasic';

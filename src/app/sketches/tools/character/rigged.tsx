@@ -3,7 +3,6 @@ import type { MathProps, ReactProps, EventHandlers, InstanceProps, } from '@reac
 import { useEffect, useState, useRef, useLayoutEffect } from "react";
 import { Object3D, Object3DEventMap, Group } from "three";
 import { CCDIKHelper, CCDIKSolver, SkeletonUtils } from "three-stdlib";
-import * as THREE from "three";
 import { addBoneAxesHelpers } from "./SkeletonAxesHelper";
 
 type RiggedModelProps = {

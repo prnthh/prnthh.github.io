@@ -5,7 +5,7 @@ import Vehicle from "./car/base";
 import Lightsource from "@/shared/lighting/lightsource";
 import { GameCanvas } from "react-three-game";
 import DemoWorld from "@/shared/debug/DemoWorld";
-import AnimatedModel from "@/app/react-three-controller/ped/HumanoidModel";
+import AnimatedModel from "@/app/react-three-character/HumanoidModel";
 import FollowCam from "@/shared/cameras/FollowCam";
 import DriveControls from "./car/DriveControls";
 

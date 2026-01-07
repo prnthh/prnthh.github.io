@@ -4,7 +4,8 @@ import { useFrame } from "@react-three/fiber";
 import { RapierRigidBody } from "@react-three/rapier";
 
 import { useMultiplayerStore, PeerState, getMyState } from "@/shared/providers/MultiplayerStore";
-import { useMultiplayerProvider, useGameEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
+import { useMultiplayerProvider, useGameEvents } from "./MultiplayerProvider";
+import { PlayerAction } from "./GameRoom";
 import { selfId } from 'trystero';
 
 import FirstPersonController from "@/app/react-three-controller/firstperson/FirstPersonController";

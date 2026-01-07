@@ -4,9 +4,9 @@ import { SimplifyModifier, SkeletonUtils } from "three-stdlib";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 
-import useAnimationState from "./useAnimationStateBasic";
-import useLookAtTarget from "./useLookAtTarget";
-import { AnimatedModelProps, AnimatedModelRef } from "./types";
+import useAnimationState from "../react-three-controller/ped/useAnimationStateBasic";
+import useLookAtTarget from "../react-three-controller/ped/useLookAtTarget";
+import { AnimatedModelProps, AnimatedModelRef } from "../react-three-controller/ped/types";
 // import { MeshToonNodeMaterial } from "three/webgpu";
 
 // steps to go from AI generated model to animated model:

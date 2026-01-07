@@ -4,7 +4,7 @@ import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import useInputStore from "@/app/react-three-controller/controls/InputStore";
 import { Box, Capsule } from "@react-three/drei";
-import AnimatedModel from "@/app/react-three-controller/ped/HumanoidModel";
+import AnimatedModel from "@/app/react-three-character/HumanoidModel";
 import FollowCam from "@/shared/cameras/FollowCam";
 
 interface PlayerHandle {

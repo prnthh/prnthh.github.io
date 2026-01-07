@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
-import AnimatedModel from "../HumanoidModel";
+import AnimatedModel from "@/app/react-three-character/HumanoidModel";
 import { AnimatedModelRef, RigidHumanoidModelProps, RigidHumanoidModelRef } from "../types";
 
 const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelProps>(

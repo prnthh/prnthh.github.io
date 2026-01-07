@@ -3,7 +3,7 @@ import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { AgentHandle, useNavigableContext, Vector3Tuple } from "./NavigableContext";
 import { AnimatedModelRef } from "../ped/types";
-import AnimatedModel from "../ped/HumanoidModel";
+import AnimatedModel from "../../react-three-character/HumanoidModel";
 
 // ============================================================================
 // Constants

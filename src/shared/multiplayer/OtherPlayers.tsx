@@ -5,7 +5,8 @@ import { Billboard } from "@react-three/drei";
 import { CapsuleCollider, RigidBody, RapierRigidBody, useRapier } from "@react-three/rapier";
 
 import { usePeerStates, PeerState } from "@/shared/providers/MultiplayerStore";
-import { useGameEvents, PlayerAction } from "./TrysteroMultiplayerProvider";
+import { useGameEvents } from "./MultiplayerProvider";
+import { PlayerAction } from "./GameRoom";
 
 import { Gun } from "@/app/react-three-controller/Weapon";
 

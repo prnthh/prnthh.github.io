@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Environment, Helper, useTexture } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
@@ -89,14 +89,79 @@ const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
         </ThirdPersonController>
 
 
+        {<PedSpawner playerRef={ballRef} position={[2, 0, 10]} />}
+        <GoalFollowingPed ballRef={ballRef} />
+
         <ExperimentalStuff />
         <FootballGame ref={ballRef} />
-        <GoalFollowingPed ballRef={ballRef} />
     </>
 }
 
 
 
+const PedSpawner = ({ position = [0, 0, 0], playerRef }: { position?: [number, number, number], playerRef: React.RefObject<Object3D | null> }) => {
+    const [peds, setPeds] = useState<{ id: number, position: [number, number, number], dead?: boolean }[]>([
+        { id: 1, position: position }
+    ]);
+    const maxPeds = 10;
+    const nextIdRef = useRef(2);
+
+    const handlePedShot = useCallback((id: number) => {
+        // Mark as dead
+        setPeds(prev => prev.map(p => p.id === id ? { ...p, dead: true } : p));
+
+        // Spawn a new ped if under max
+        setPeds(prev => {
+            if (prev.length < maxPeds) {
+                return [...prev, {
+                    id: nextIdRef.current++,
+                    position: position
+                }];
+            }
+            return prev;
+        });
+
+        // Remove the dead ped after 5 seconds
+        setTimeout(() => {
+            setPeds(prev => prev.filter(p => p.id !== id));
+        }, 5000);
+    }, [position]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (playerRef.current) {
+                const pos = new Object3D();
+                playerRef.current.getWorldPosition(pos.position);
+                setPeds(prevPeds =>
+                    prevPeds.map(ped =>
+                        ped.dead ? ped : {
+                            ...ped,
+                            position: [pos.position.x, pos.position.y, pos.position.z]
+                        }
+                    )
+                );
+            }
+        }, 2000);
+        return () => clearInterval(interval);
+    }, [playerRef]);
+
+    return <>{peds.map(ped => <Ped
+        key={ped.id}
+        modelOffset={[0, -0.5, 0]}
+        position={ped.position}
+        model="rigga/rigga2.glb"
+        onBulletHit={() => handlePedShot(ped.id)}
+    >
+        {/* <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider> */}
+        <ModelAttachment
+            model="/models/environment/Katana.glb"
+            attachpoint="mixamorigRightHand"
+            offset={[2, 0, 0]}
+            scale={[100, 100, 100]}
+            rotation={[0.7, 0, -1]}
+        />
+    </Ped>)}</>
+}
 
 const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
     const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);
