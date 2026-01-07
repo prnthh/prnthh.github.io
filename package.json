@@ -12,6 +12,7 @@
     "server": "npm --prefix server start"
   },
   "dependencies": {
+    "@next/third-parties": "^16.1.1",
     "@pixiv/three-vrm": "^3.4.4",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.0",
