@@ -24,28 +24,17 @@ const maps = {
 };
 
 export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
-    const [selectedMap, setSelectedMap] = useState<keyof typeof maps>("killbox");
+    const [currentMap, setCurrentMap] = useState<Prefab>(maps.killbox);
+
     return (
         <Controls>
             <div className="items-center justify-items-center min-h-screen select-none">
-                <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 text-white">
-                    <select
-                        value={selectedMap}
-                        onChange={(e) => {
-                            const map = e.target.value as keyof typeof maps;
-                            setSelectedMap(map);
-                        }}
-                        className="px-2 py-1 bg-gray-800 rounded"
-                    >
-                        <option value="killbox">Killbox</option>
-                        <option value="test">Test</option>
-                    </select>
-                </div>
+                <MapPicker onMapChange={setCurrentMap} />
 
                 <div className="w-full" style={{ height: "100vh" }}>
                     <MultiplayerProvider roomId="lobby" debug>
                         <GameCanvas>
-                            <InnerGame loadedMap={maps[selectedMap]} onCanvasReady={onCanvasReady} />
+                            <InnerGame loadedMap={currentMap} onCanvasReady={onCanvasReady} />
                         </GameCanvas>
                     </MultiplayerProvider>
                 </div>
@@ -58,8 +47,65 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
     );
 }
 
+function MapPicker({ onMapChange }: { onMapChange: (map: Prefab) => void }) {
+    const [selectedMap, setSelectedMap] = useState<keyof typeof maps | 'custom'>('killbox');
+    const [customMap, setCustomMap] = useState<Prefab | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const json = JSON.parse(e.target?.result as string);
+                    setCustomMap(json as Prefab);
+                    setSelectedMap('custom');
+                    onMapChange(json as Prefab);
+                } catch (error) {
+                    console.error('Failed to parse JSON:', error);
+                    alert('Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+        }
+    };
+
+    return <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 text-white flex gap-2">
+        <select
+            value={selectedMap}
+            onChange={(e) => {
+                const mapKey = e.target.value as keyof typeof maps | 'custom';
+                setSelectedMap(mapKey);
+                if (mapKey !== 'custom') {
+                    onMapChange(maps[mapKey]);
+                } else if (customMap) {
+                    onMapChange(customMap);
+                }
+            }}
+            className="px-2 py-1 bg-black/75 rounded"
+        >
+            <option value="killbox">Killbox</option>
+            <option value="test">Test</option>
+            {customMap && <option value="custom">Custom</option>}
+        </select>
+        <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".json"
+            className="hidden"
+        />
+        <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-2 py-1 bg-black/75  rounded"
+        >
+            Upload JSON
+        </button>
+    </div>;
+}
+
 function InnerGame({ loadedMap, onCanvasReady }: { loadedMap: Prefab, onCanvasReady?: () => void }) {
-    const playerRef = useRef<Object3D>(null);
 
     useEffect(() => {
         onCanvasReady?.();
@@ -68,7 +114,7 @@ function InnerGame({ loadedMap, onCanvasReady }: { loadedMap: Prefab, onCanvasRe
     return <>
         <Physics>
             <PrefabRoot data={loadedMap} />
-            <LocalPlayer playerRef={playerRef} />
+            <LocalPlayer />
 
             <Train id="lift-main" />
 

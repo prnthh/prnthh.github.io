@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Group } from "three";
 import FirstPersonControls from "./FirstPersonControls";
 import { Weapon, Gun } from "../Weapon";
+import AnimatedModel from "@/app/react-three-character/HumanoidModel";
 
 const PLAYER_MASS = 70;
 
@@ -34,6 +35,7 @@ const FirstPersonController = ({
     const bodyMeshRef = useRef<Group | null>(null);
     const cameraRigRef = useRef<Group | null>(null);
     const [isFlashing, setIsFlashing] = useState(false);
+    const [animation, setAnimation] = useState<string>('idle');
 
     const CAPSULE_RADIUS = height / 5;
     const CAPSULE_HEIGHT = height / 2;
@@ -73,13 +75,35 @@ const FirstPersonController = ({
                 <meshStandardMaterial color="orange" />
             </mesh>}
 
+            {/* <group position={[0, -1, 0]} rotation={[0, Math.PI, 0]}>
+                <AnimatedModel
+                    scale={0.95}
+                    basePath="/models/human/onimilio/"
+                    model="rigged.glb"
+                    animation={animation}
+                    enableBoneCollider={false}
+                    animationOverrides={{
+                        idle: 'anim/idle.fbx',
+                        walk: 'anim/walk.fbx',
+                        run: 'anim/run.fbx',
+                        jump: 'anim/jump.fbx',
+                        walkLeft: 'anim/walkLeft.fbx',
+                        lpunch: 'anim/lpunch.fbx',
+                        rpunch: 'anim/rpunch.fbx',
+                    }}
+                />
+            </group> */}
+
+
             <FirstPersonControls
                 rigidBodyRef={rigidBodyRef}
                 height={CAPSULE_HEIGHT}
                 eyeHeight={EYE_HEIGHT}
                 cameraOffset={cameraOffset}
                 cameraRigRef={cameraRigRef}
+                setAnimation={setAnimation}
             >
+
                 <group position={[0.2, -0.2, -0.5]} scale={0.5}>
                     <Gun isFlashing={isFlashing} />
                     <Weapon excludeRigidBody={rigidBodyRef} onFire={handleFire} />

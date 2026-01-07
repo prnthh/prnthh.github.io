@@ -6,7 +6,7 @@
  */
 
 import { RapierRigidBody, useRapier } from "@react-three/rapier";
-import { useRef, RefObject } from "react";
+import { useRef, RefObject, useState, useEffect } from "react";
 import { Vector3, Quaternion, MathUtils, Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
@@ -27,6 +27,7 @@ interface FirstPersonControlsProps {
     floatSpring?: number;
     floatDamping?: number;
     cameraRigRef?: RefObject<Group | null>;
+    setAnimation?: (anim: string) => void;
     children?: React.ReactNode;
 }
 
@@ -41,6 +42,7 @@ const FirstPersonControls = ({
     floatSpring = 8,
     floatDamping = 0.3,
     cameraRigRef: providedCameraRigRef,
+    setAnimation,
     children,
 }: FirstPersonControlsProps) => {
     const internalCameraRigRef = useRef<Group | null>(null);
@@ -67,8 +69,12 @@ const FirstPersonControls = ({
                 {children}
             </group>
             <KeyboardControls />
-            <MovementSystem height={height} rigidBodyRef={rigidBodyRef} walkSpeed={walkSpeed}
-                sprintSpeed={sprintSpeed} jumpVelocity={jumpVelocity} floatSpring={floatSpring} floatDamping={floatDamping} />
+            <MovementSystem
+                height={height} rigidBodyRef={rigidBodyRef}
+                walkSpeed={walkSpeed} sprintSpeed={sprintSpeed} jumpVelocity={jumpVelocity}
+                floatSpring={floatSpring} floatDamping={floatDamping}
+                setAnimation={setAnimation}
+            />
             <LookSystem rigidBodyRef={rigidBodyRef} cameraRigRef={cameraRigRef} cameraPitch={cameraPitch} />
             <PointerLockControls onLook={applyLookDelta} />
         </>
@@ -85,6 +91,7 @@ export const MovementSystem = ({
     jumpVelocity = 4.5,
     floatSpring = 8,
     floatDamping = 0.3,
+    setAnimation,
 }: {
     height?: number;
     rigidBodyRef: RefObject<RapierRigidBody | null>;
@@ -93,12 +100,17 @@ export const MovementSystem = ({
     jumpVelocity?: number;
     floatSpring?: number;
     floatDamping?: number;
+    setAnimation?: (anim: string) => void;
 }) => {
     const horizontal = useInputStore(state => state.horizontal);
     const vertical = useInputStore(state => state.vertical);
     const sprint = useInputStore(state => state.sprint);
     const jump = useInputStore(state => state.jump);
+    const use = useInputStore(state => state.use);
+    const altUse = useInputStore(state => state.altUse);
     const rapier = useRapier();
+    const jumping = useRef(false);
+    const jumpReleased = useRef(true);
 
     useFrame((_, dt) => {
         const rb = rigidBodyRef.current;
@@ -122,10 +134,50 @@ export const MovementSystem = ({
         const hasInput = dir.lengthSq() > 1e-4;
         if (hasInput) dir.normalize();
 
+        // Handle jump
+        if (!jump) jumpReleased.current = true;
+        if (jumping.current && grounded) jumping.current = false;
+        if (jump && jumpReleased.current && !jumping.current && grounded) {
+            rb.wakeUp?.();
+            jumping.current = true;
+            jumpReleased.current = false;
+        }
+
+        // Update animation based on input
+        let nextAnimation = "idle";
+
+        if (use) {
+            nextAnimation = "rpunch";
+        } else if (altUse) {
+            nextAnimation = "lpunch";
+        } else if (jumping.current) {
+            nextAnimation = "jump";
+        } else if (hasInput) {
+            const absX = Math.abs(horizontal);
+            const absZ = Math.abs(vertical);
+
+            if (absX > 0.3 && absX > absZ * 1.5) {
+                // Strafing left/right
+                nextAnimation = horizontal > 0 ? "walkRight" : "walkLeft";
+            } else if (vertical < 0) {
+                // Moving backwards
+                nextAnimation = sprint ? "runBack" : "walkBack";
+            } else {
+                // Moving forwards
+                nextAnimation = sprint ? "run" : "walk";
+            }
+        }
+
+        setAnimation?.(nextAnimation);
+
         // Horizontal velocity
         let vx = vel.x, vz = vel.z;
 
-        if (grounded) {
+        if (use || altUse) {
+            // Stop movement during attacks
+            vx = 0;
+            vz = 0;
+        } else if (grounded) {
             if (hasInput) {
                 vx += (dir.x * spd - vx) * Math.min(1, 100 * dt);
                 vz += (dir.z * spd - vz) * Math.min(1, 100 * dt);
@@ -153,7 +205,7 @@ export const MovementSystem = ({
             vy = vy * (1 - floatDamping) + (height - hit.timeOfImpact) * floatSpring * floatDamping;
             if (Math.abs(vy) < 0.01) vy = 0;
             rb.setGravityScale(jump ? 1 : 0, true);
-            if (jump) vy = jumpVelocity;
+            if (jump && jumpReleased.current === false) vy = jumpVelocity;
         } else {
             rb.setGravityScale(1, true);
         }

@@ -25,6 +25,7 @@ export const useSyncedClock = () => {
 export default function MultiplayerProvider({ appId = 'pockit.world', roomId, roomType = 'lobby', children, debug = false }: { appId?: string, roomId: string, roomType?: RoomType, children: React.ReactNode, debug?: boolean }) {
     const gameRoomRef = useRef<GameRoom | null>(null)
     const actionCallbacksRef = useRef<Set<(action: PlayerAction, peerId: string) => void>>(new Set())
+    const [logs, setLogs] = useState<string[]>([])
 
     useEffect(() => {
         const store = useMultiplayerStore.getState()
@@ -35,8 +36,20 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ro
             roomId,
             roomType,
             (peerId, state) => store.updatePeerState(peerId, state),
-            (peerId) => gameRoom.syncPeer(peerId, store.myState),
-            (peerId) => store.removePeer(peerId)
+            (peerId) => {
+                const timestamp = new Date().toLocaleTimeString()
+                const logMessage = `[${timestamp}] Player joined: ${peerId.slice(0, 8)}...`
+                console.log(logMessage)
+                setLogs(prev => [...prev.slice(-19), logMessage])
+                gameRoom.syncPeer(peerId, store.myState)
+            },
+            (peerId) => {
+                const timestamp = new Date().toLocaleTimeString()
+                const logMessage = `[${timestamp}] Player left: ${peerId.slice(0, 8)}...`
+                console.log(logMessage)
+                setLogs(prev => [...prev.slice(-19), logMessage])
+                store.removePeer(peerId)
+            }
         )
 
         gameRoomRef.current = gameRoom
@@ -70,7 +83,7 @@ export default function MultiplayerProvider({ appId = 'pockit.world', roomId, ro
 
     return <MultiplayerContext.Provider value={contextValue}>
         {children}
-        {debug && <DebugPanel roomId={roomId} />}
+        {debug && <DebugPanel roomId={roomId} logs={logs} />}
     </MultiplayerContext.Provider>
 }
 
@@ -96,7 +109,7 @@ const renderJson = (value: any, depth = 0, keyPath = ''): React.ReactNode => {
 }
 
 // Separate component for debug UI to avoid re-rendering the provider
-const DebugPanel = ({ roomId }: { roomId: string }) => {
+const DebugPanel = ({ roomId, logs }: { roomId: string, logs: string[] }) => {
     const myState = useMyState()
     const peerStates = usePeerStates()
     const [mounted, setMounted] = useState(false)
@@ -111,7 +124,7 @@ const DebugPanel = ({ roomId }: { roomId: string }) => {
     return (
         <div className="absolute top-2 right-2 font-xs z-20 p-1 w-[300px] text-white bg-black/75">
             <div style={{ marginBottom: '4px', opacity: 0.6 }}> {roomId} </div>
-            <textarea readOnly className="w-full text-xs" value="logs" />
+            <textarea readOnly className="w-full text-xs" value={logs.join('\n')} />
             {/* {selfId} */}
             <div style={{ display: 'flex', flexWrap: 'wrap' }}>{renderJson(myState)}</div>
             {Object.keys(peerStates).length > 0 && (

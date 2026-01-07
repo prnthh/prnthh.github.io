@@ -1,5 +1,4 @@
-import { Room, joinRoom } from "trystero/torrent"
-import { selfId } from 'trystero'
+import { Room, joinRoom, selfId } from "trystero/torrent"
 
 export type PlayerAction =
     | { type: 'shoot' }
