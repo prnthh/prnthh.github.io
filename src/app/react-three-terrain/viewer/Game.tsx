@@ -26,7 +26,6 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
                 <Lighting />
                 <FogEnvironment />
                 <InnerGame onCanvasReady={onCanvasReady} />
-                {/* <MapModel position={[0, 0, 5]} modelUrl="/models/maps/soccer.glb" /> */}
                 <MapProvider
                     startX={-1}
                     endX={1}

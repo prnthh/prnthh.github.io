@@ -2,7 +2,57 @@
 
 import { useEffect, useRef } from "react";
 import { useMapEditor } from "./MapEditorProvider";
-import { useMap } from "./MapProvider";
+import { useMap } from "../MapProvider";
+
+function TileGridOverlay() {
+    const { gridConfig } = useMap();
+    const { tileSizePx, startX, endX, startZ, endZ } = gridConfig;
+
+    const numTilesX = endX - startX;
+    const numTilesZ = endZ - startZ;
+    const canvasDisplaySize = 300; // Same as the canvas display size
+    const maxTiles = Math.max(numTilesX, numTilesZ);
+    const tileSizeDisplay = maxTiles > 0 ? canvasDisplaySize / maxTiles : canvasDisplaySize;
+
+    // Don't render if grid is invalid
+    if (numTilesX < 1 || numTilesZ < 1 || !isFinite(tileSizeDisplay)) {
+        return null;
+    }
+
+    return (
+        <svg
+            className="absolute inset-0 pointer-events-none"
+            width={canvasDisplaySize}
+            height={canvasDisplaySize}
+            style={{ width: "300px", height: "300px", mixBlendMode: "difference" }}
+        >
+            {/* Vertical lines */}
+            {Array.from({ length: numTilesX + 1 }, (_, i) => (
+                <line
+                    key={`v-${i}`}
+                    x1={i * tileSizeDisplay}
+                    y1={0}
+                    x2={i * tileSizeDisplay}
+                    y2={canvasDisplaySize}
+                    stroke="rgba(255, 255, 255, 0.8)"
+                    strokeWidth="1"
+                />
+            ))}
+            {/* Horizontal lines */}
+            {Array.from({ length: numTilesZ + 1 }, (_, i) => (
+                <line
+                    key={`h-${i}`}
+                    x1={0}
+                    y1={i * tileSizeDisplay}
+                    x2={canvasDisplaySize}
+                    y2={i * tileSizeDisplay}
+                    stroke="rgba(255, 255, 255, 0.8)"
+                    strokeWidth="1"
+                />
+            ))}
+        </svg>
+    );
+}
 
 export function Map2DCanvas() {
     const { gridConfig, isLoaded } = useMap();
@@ -224,6 +274,7 @@ export function Map2DCanvas() {
                         onMouseUp={handleMouseUp}
                         onMouseLeave={handleMouseLeave}
                     />
+                    <TileGridOverlay />
                 </div>
             </div>
         </div>

@@ -4,7 +4,7 @@ import React, { useMemo, useState, useCallback, useImperativeHandle, forwardRef,
 import * as THREE from "three";
 import { RigidBody, HeightfieldCollider } from "@react-three/rapier";
 import { ThreeEvent } from "@react-three/fiber";
-import { useMap } from "./MapProvider";
+import { useMap, heightFieldToTexture, TILE_RESOLUTION, HEIGHT_SCALE } from "./MapProvider";
 import { MapSplatMaterial } from "./MapSplatMaterial";
 
 export interface MapTilesRef {
@@ -151,6 +151,12 @@ const Tile = memo(function Tile({
         return stitchedHeightField ? buildRapierHeightfield(stitchedHeightField, res) : buildFlatHeightfield(res);
     }, [stitchedHeightField, resolution]);
 
+    // Create heightmap texture for visualization
+    const heightTexture = useMemo(() => {
+        if (!stitchedHeightField) return null;
+        return heightFieldToTexture(stitchedHeightField, resolution || TILE_RESOLUTION, HEIGHT_SCALE);
+    }, [stitchedHeightField, resolution]);
+
     const meshElement = (
         <mesh
             geometry={geometry}
@@ -166,7 +172,7 @@ const Tile = memo(function Tile({
             {paintMode === "color" ? (
                 <MapSplatMaterial colorTexture={colormap} textureScale={4} />
             ) : (
-                <meshStandardMaterial map={colormap ?? undefined} wireframe={showWireframe} />
+                <meshStandardMaterial map={heightTexture ?? undefined} wireframe={showWireframe} />
             )}
         </mesh>
     );
@@ -268,7 +274,7 @@ export const MapTiles = forwardRef<MapTilesRef, MapTilesProps>(function MapTiles
                     heightData={heightDataMap.get(tileKey)}
                     heightDataMap={heightDataMap}
                     colorTexture={colorTexture}
-                    showWireframe={paintMode === "height"}
+                    // showWireframe={paintMode === "height"}
                     paintMode={paintMode}
                     onClick={onClick}
                     onPointerMove={onPointerMove}

@@ -57,6 +57,8 @@ export function MapSplatMaterial({ colorTexture, textureScale = 4 }: MapSplatMat
             const rockColor = TSL.texture(rockTexture, tiledUV);
             const sandColor = TSL.texture(sandTexture, tiledUV);
 
+            // todo use voronoi to blend textures
+
             // Detect specific red channel values (with small tolerance)
             const tolerance = 0.002;
             const isGrass = r.sub(1.0 / 255.0).abs().lessThan(tolerance);

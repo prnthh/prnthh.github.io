@@ -20,16 +20,16 @@ const experimentsConfig: Record<string, { name?: string; description?: string; e
     'demos/scumm': {
         description: 'A simple point-and-click adventure game demo inspired by classic SCUMM games.'
     },
-    'demos/island': {},
     'sketches/floor': {
         description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
     },
     'sketches/lighting': {
         description: 'Lighting and reflections.'
     },
-    'react-three-terrain': {},
     'react-three-controller/combined': {},
     'react-three-controller/firstperson': {},
+    'react-three-terrain/editor': {},
+    'react-three-terrain/viewer': {},
     'react-three-game': { external: true },
     'Pockit-Challenge-Protocol': { external: true },
     'sketches/tools/prefabeditor': {},
