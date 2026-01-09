@@ -157,23 +157,21 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "" }: { node: 
 }
 
 export default function Nav() {
-    const [open, setOpen] = useState(false);
     const [clicked, setClicked] = useState(false);
     const [search, setSearch] = useState("");
     const pathname = usePathname();
 
     return (
         <div>
-            <div className={`text-black dark:text-white fixed top-3 left-3 z-40 ${clicked || open ? 'w-[280px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : open ? 'h-[100px]' : 'h-8'} transition-all`}
-                onMouseEnter={() => setOpen(true)}
-                onMouseLeave={() => { setClicked(false); setOpen(false); }}
+            <div className={`text-black dark:text-white fixed top-3 left-3 z-40 ${clicked ? 'w-[280px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : 'h-8'} transition-all`}
+            // onMouseLeave={() => { setClicked(false); setOpen(false); }}
             >
-                <div className={`${open ? 'w-[280px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
+                <div className={`${clicked ? 'w-[280px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
                     onClick={() => setClicked(() => true)}
-                    onMouseLeave={e => { !clicked && setOpen(false); }}
+                // onMouseLeave={e => { !clicked && setOpen(false); }}
                 >
                     <button
-                        aria-label={open ? 'Close menu' : 'Open menu'}
+                        aria-label={clicked ? 'Close menu' : 'Open menu'}
                         onClick={(e) => { setClicked(o => !o); e.stopPropagation(); }}
                     >
                         <span className="block w-10 h-10">
@@ -188,7 +186,7 @@ export default function Nav() {
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : open ? 'h-[40px] border opacity-50' : 'opacity-0'}  bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar select-none flex flex-col mt-12 transition-all`}>
+                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : 'opacity-0'}  bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar select-none flex flex-col mt-12 transition-all`}>
                     <div className="my-1 font-bold text-lg ">Demos</div>
                     {clicked && <DemoTree node={treeObj} search={search} currentPath={pathname} />}
                 </div>
