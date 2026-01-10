@@ -7,6 +7,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import useInputStore from './InputStore';
+import { sound } from '@/shared/util/SoundManager';
 
 type JoystickProps = {
     horizontalAxis?: 'horizontal' | 'lookHorizontal';
@@ -237,6 +238,8 @@ export const Button = ({
                 pressing.current = true;
                 setIsPressed(true);
                 setButton(mapToStoreButton(button), true);
+                // Resume AudioContext on user interaction (required for iOS/iPad)
+                sound.resume();
             }}
             onTouchEnd={e => {
                 e.preventDefault();
@@ -249,6 +252,8 @@ export const Button = ({
                 pressing.current = true;
                 setIsPressed(true);
                 setButton(mapToStoreButton(button), true);
+                // Resume AudioContext on user interaction (required for iOS/iPad)
+                sound.resume();
                 const upListener = () => {
                     if (pressing.current) {
                         pressing.current = false;
