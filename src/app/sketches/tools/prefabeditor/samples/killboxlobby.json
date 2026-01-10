@@ -334,7 +334,420 @@
         "name": "Node Copy Copy Copy"
       },
       {
-        "id": "8acc0951-588b-4af4-9a75-aa7091623ca6",
+        "id": "74d6d485-9efd-4cf0-aad8-098325bf02b5",
+        "name": "walls",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "aa0bd5aa-1d82-4724-8b9f-def4f15cb772",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    1,
+                    2.5
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    5,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "groundspawn Copy"
+          },
+          {
+            "id": "c8e0d832-1ffb-4fcc-97f0-960545e7a143",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -2.498406553909769,
+                    1,
+                    -2.001990182638444
+                  ],
+                  "rotation": [
+                    0,
+                    1.570000000000824,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    2,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "groundspawn Copy Copy"
+          },
+          {
+            "id": "f5f17f85-980d-4c4b-8ee4-cb8583f26696",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    2.49840655390771,
+                    1,
+                    2.0019901826384423
+                  ],
+                  "rotation": [
+                    0,
+                    1.570000000000824,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    2,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "groundspawn Copy Copy Copy"
+          },
+          {
+            "id": "e8c39934-1b10-4d65-a0bd-9e38039b280b",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    2.5015918607473466,
+                    1,
+                    -1.998008549088899
+                  ],
+                  "rotation": [
+                    0,
+                    1.570000000000824,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    2,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "groundspawn Copy Copy Copy Copy"
+          },
+          {
+            "id": "9dc1fb9c-8c71-4fb3-a039-040fa27b7e33",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -2.5015918607494054,
+                    1,
+                    1.9980085490888972
+                  ],
+                  "rotation": [
+                    0,
+                    1.570000000000824,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    2,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "groundspawn Copy Copy Copy"
+          },
+          {
+            "id": "b9afb7cc-43c0-4264-864f-8183ce39075d",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    2,
+                    1,
+                    -2.5
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    2,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "groundspawn Copy Copy Copy"
+          },
+          {
+            "id": "680f6e18-f11d-4cd1-9148-624c5e345c24",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -2,
+                    1,
+                    -2.5
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    2,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "groundspawn Copy Copy Copy Copy"
+          }
+        ]
+      },
+      {
+        "id": "cadc7a8b-3e6e-4fc4-9be1-2160f11678b4",
         "components": {
           "transform": {
             "type": "Transform",

@@ -3,18 +3,22 @@
 
 import { useRef, useState } from "react";
 import { Prefab, } from "react-three-game";
+
+// Import default maps
+import killboxlobby from "../../sketches/tools/prefabeditor/samples/killboxlobby.json";
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
 
 const defaultMaps = {
     killbox: killbox as Prefab,
+    killboxlobby: killboxlobby as Prefab,
     test: test as Prefab
 };
 
 type mapList = { [key: string]: Prefab };
 
 function MapPicker({ onMapChange, maps = defaultMaps }: { onMapChange: (map: Prefab) => void, maps?: mapList }) {
-    const [selectedMap, setSelectedMap] = useState<keyof typeof maps | 'custom'>('killbox');
+    const [selectedMap, setSelectedMap] = useState<keyof typeof maps | 'custom'>("killboxlobby");
     const [customMap, setCustomMap] = useState<Prefab | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,8 +55,9 @@ function MapPicker({ onMapChange, maps = defaultMaps }: { onMapChange: (map: Pre
             }}
             className="px-2 py-1 bg-black/75 rounded"
         >
-            <option value="killbox">Killbox</option>
-            <option value="test">Test</option>
+            {Object.keys(maps).map((key) => (
+                <option key={key} value={key}>{key}</option>
+            ))}
             {customMap && <option value="custom">Custom</option>}
         </select>
         <input
