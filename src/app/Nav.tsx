@@ -285,7 +285,7 @@ export default function Nav() {
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : 'opacity-0'} bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar select-none flex flex-col mt-12 transition-all`}>
+                {clicked && <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : 'opacity-0'} bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar select-none flex flex-col mt-12 transition-all`}>
                     {/* Tab buttons */}
                     <div className="flex gap-2 my-2 z-10">
                         <button
@@ -315,7 +315,7 @@ export default function Nav() {
                     {clicked && activeTab === 'tools' && (
                         <DemoTree node={toolsTree} search={search} currentPath={pathname} config={toolsConfig} />
                     )}
-                </div>
+                </div>}
             </div>
         </div>
     );

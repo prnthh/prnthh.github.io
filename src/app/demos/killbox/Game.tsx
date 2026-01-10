@@ -12,19 +12,14 @@ import LocalPlayer from "@/shared/multiplayer/LocalPlayer";
 import OtherPlayers from "@/shared/multiplayer/OtherPlayers";
 import { useSyncedClock } from "@/shared/multiplayer/MultiplayerProvider";
 
-import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
-import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
+import killbox from "../../sketches/tools/prefabeditor/samples/killboxlobby.json";
 import ButtonBox from "../mechanics/Button";
 import { Text } from 'three-text/three/react';
 import MapPicker from "./MapPicker";
 
-const maps = {
-    killbox: killbox as Prefab,
-    test: test as Prefab
-};
 
 export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
-    const [currentMap, setCurrentMap] = useState<Prefab>(maps.killbox);
+    const [currentMap, setCurrentMap] = useState<Prefab>(killbox);
 
     return (
         <Controls>
