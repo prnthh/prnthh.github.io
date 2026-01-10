@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Object3D } from "three";
 
 import { useFrame } from "@react-three/fiber";
 import { Physics, RigidBody, RapierRigidBody } from "@react-three/rapier";
@@ -17,6 +16,7 @@ import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import test from "../../sketches/tools/prefabeditor/samples/killbox2.json";
 import ButtonBox from "../mechanics/Button";
 import { Text } from 'three-text/three/react';
+import MapPicker from "./MapPicker";
 
 const maps = {
     killbox: killbox as Prefab,
@@ -45,64 +45,6 @@ export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) 
             </div>
         </Controls>
     );
-}
-
-function MapPicker({ onMapChange }: { onMapChange: (map: Prefab) => void }) {
-    const [selectedMap, setSelectedMap] = useState<keyof typeof maps | 'custom'>('killbox');
-    const [customMap, setCustomMap] = useState<Prefab | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const json = JSON.parse(e.target?.result as string);
-                    setCustomMap(json as Prefab);
-                    setSelectedMap('custom');
-                    onMapChange(json as Prefab);
-                } catch (error) {
-                    console.error('Failed to parse JSON:', error);
-                    alert('Invalid JSON file');
-                }
-            };
-            reader.readAsText(file);
-        }
-    };
-
-    return <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 text-white flex gap-2">
-        <select
-            value={selectedMap}
-            onChange={(e) => {
-                const mapKey = e.target.value as keyof typeof maps | 'custom';
-                setSelectedMap(mapKey);
-                if (mapKey !== 'custom') {
-                    onMapChange(maps[mapKey]);
-                } else if (customMap) {
-                    onMapChange(customMap);
-                }
-            }}
-            className="px-2 py-1 bg-black/75 rounded"
-        >
-            <option value="killbox">Killbox</option>
-            <option value="test">Test</option>
-            {customMap && <option value="custom">Custom</option>}
-        </select>
-        <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            accept=".json"
-            className="hidden"
-        />
-        <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-2 py-1 bg-black/75  rounded"
-        >
-            Upload JSON
-        </button>
-    </div>;
 }
 
 function InnerGame({ loadedMap, onCanvasReady }: { loadedMap: Prefab, onCanvasReady?: () => void }) {
