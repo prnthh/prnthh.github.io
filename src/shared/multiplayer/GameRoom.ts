@@ -1,4 +1,4 @@
-import { Room, joinRoom, selfId } from "trystero/torrent"
+import { Room, joinRoom, selfId } from "trystero/mqtt";
 
 export type PlayerAction =
     | { type: 'shoot' }
