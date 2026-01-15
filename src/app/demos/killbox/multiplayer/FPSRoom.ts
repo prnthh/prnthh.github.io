@@ -1,12 +1,12 @@
 import { GameRoom, BaseAction } from "./GameRoom";
-import { selfId } from "trystero/mqtt";
+import { selfId } from "trystero/torrent";
 
 // FPS-specific actions
-export type FPSAction = BaseAction & (
-    | { type: 'move' | 'shoot', payload: { message: string, senderName?: string, nonce?: string } }
-    | { type: 'host_announce', payload: { hostId: string } }
-    | { type: 'state_sync', payload: { peerId: string, state: any } }
-);
+export type MoveAction = BaseAction & { type: 'move', payload: { message: string, senderName?: string, nonce?: string } }
+export type ShootAction = BaseAction & { type: 'shoot', payload: { message: string, senderName?: string, nonce?: string } }
+export type HostAnnounceAction = BaseAction & { type: 'host_announce', payload: { hostId: string } }
+export type StateSyncAction = BaseAction & { type: 'state_sync', payload: { peerId: string, state: any } }
+export type FPSAction = MoveAction | ShootAction | HostAnnounceAction | StateSyncAction;
 
 // FPSRoom - authoritative host architecture
 // Host maintains game state and syncs it to all clients

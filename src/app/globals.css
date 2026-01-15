@@ -11,6 +11,7 @@ body {
   overflow: hidden;
   height: 100%;
   overscroll-behavior-y: contain;
+  cursor: url('/cursors/customcursor.png'), auto;
 }
 
 canvas {

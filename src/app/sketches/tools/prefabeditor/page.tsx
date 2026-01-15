@@ -1,7 +1,7 @@
 "use client";
 
 import { PrefabEditor, registerComponent } from "react-three-game";
-import prefabToEdit from "../../tools/prefabeditor/samples/killboxlobby.json";
+import prefabToEdit from "../../tools/prefabeditor/samples/killbox.json";
 import RotatorComponent from "./plugins/RotatorComponent";
 
 registerComponent(RotatorComponent);

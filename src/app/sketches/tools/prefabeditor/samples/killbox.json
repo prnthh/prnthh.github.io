@@ -48,31 +48,6 @@
                 1
               ]
             }
-          },
-          "geometry": {
-            "type": "Geometry",
-            "properties": {
-              "geometryType": "plane",
-              "args": [
-                50,
-                50
-              ]
-            }
-          },
-          "material": {
-            "type": "Material",
-            "properties": {
-              "color": "white",
-              "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
-              "repeat": true,
-              "repeatCount": [25, 25]
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed"
-            }
           }
         },
         "children": [
@@ -115,7 +90,10 @@
                   "color": "white",
                   "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
                   "repeat": true,
-                  "repeatCount": [25, 25]
+                  "repeatCount": [
+                    25,
+                    25
+                  ]
                 }
               },
               "physics": {
@@ -164,9 +142,11 @@
                 "properties": {
                   "color": "white",
                   "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
-
                   "repeat": true,
-                  "repeatCount": [25, 25]
+                  "repeatCount": [
+                    25,
+                    25
+                  ]
                 }
               },
               "physics": {
@@ -191,7 +171,7 @@
                   "rotation": [
                     -1.5700000000000274,
                     -1.5655793333280263,
-                    1.0640496943741005e-14
+                    1.0640496943741004e-14
                   ],
                   "scale": [
                     1,
@@ -215,9 +195,11 @@
                 "properties": {
                   "color": "white",
                   "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
-
                   "repeat": true,
-                  "repeatCount": [25, 25]
+                  "repeatCount": [
+                    25,
+                    25
+                  ]
                 }
               },
               "physics": {
@@ -242,7 +224,7 @@
                   "rotation": [
                     -1.5700000000000274,
                     -1.5655793333280263,
-                    1.0640496943741005e-14
+                    1.0640496943741004e-14
                   ],
                   "scale": [
                     1,
@@ -266,9 +248,11 @@
                 "properties": {
                   "color": "white",
                   "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
-
                   "repeat": true,
-                  "repeatCount": [25, 25]
+                  "repeatCount": [
+                    25,
+                    25
+                  ]
                 }
               },
               "physics": {
@@ -278,6 +262,61 @@
                 }
               }
             }
+          },
+          {
+            "id": "461113e1-de1b-41d3-a905-495f76b0a1a8",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "plane",
+                  "args": [
+                    50,
+                    50
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "white",
+                  "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    25,
+                    25
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed"
+                }
+              }
+            },
+            "children": [],
+            "name": "Node Copy"
           }
         ]
       },

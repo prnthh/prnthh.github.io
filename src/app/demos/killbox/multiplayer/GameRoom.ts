@@ -1,4 +1,4 @@
-import { Room, joinRoom, selfId } from "trystero/mqtt";
+import { Room, joinRoom, selfId, pauseRelayReconnection } from "trystero/torrent";
 
 // Base action type - all actions have a type
 export type BaseAction = { type: string };
@@ -11,11 +11,13 @@ export class GameRoom<TAction extends BaseAction = BaseAction, TState = any> {
     protected sendState: (data: any, peerId?: string) => void
     protected sendAction: (data: any, peerId?: string) => void
 
+    protected peers = new Set<string>()
     protected actionCallbacks = new Set<(action: TAction, peerId: string) => void>()
     protected joinCallbacks = new Set<(peerId: string) => void>()
     protected leaveCallbacks = new Set<(peerId: string) => void>()
     protected connectCallbacks = new Set<() => void>()
     protected isConnected = false
+    protected isLeaving = false
 
     constructor(
         appId: string,
@@ -35,19 +37,25 @@ export class GameRoom<TAction extends BaseAction = BaseAction, TState = any> {
         this.sendAction = sendAction
 
         onState((data: any, peerId: string) => {
+            if (this.isLeaving) return
             onStateUpdate(peerId, data as TState)
         })
 
         onAction((data: any, peerId: string) => {
+            if (this.isLeaving) return
             const action = data as TAction
             this.actionCallbacks.forEach(cb => cb(action, peerId))
         })
 
         this.room.onPeerJoin((peerId: string) => {
+            if (this.isLeaving) return
+            this.peers.add(peerId)
             onPeerJoin(peerId)
             this.joinCallbacks.forEach(cb => cb(peerId))
         })
         this.room.onPeerLeave((peerId: string) => {
+            if (this.isLeaving) return
+            this.peers.delete(peerId)
             onPeerLeave(peerId)
             this.leaveCallbacks.forEach(cb => cb(peerId))
         })
@@ -94,7 +102,14 @@ export class GameRoom<TAction extends BaseAction = BaseAction, TState = any> {
     }
 
     async leave() {
-        await this.room.leave()
+        this.isLeaving = true
+        this.isConnected = false
+        try {
+            pauseRelayReconnection()
+            await this.room.leave()
+        } catch {
+            // Swallow disconnect errors (CONACK timeout, etc.)
+        }
     }
 
     getInfo() {
@@ -109,7 +124,7 @@ export class GameRoom<TAction extends BaseAction = BaseAction, TState = any> {
         return this.room
     }
 
-    getConnectedPeers(): string[] {
-        return Object.keys(this.room.getPeers())
+    getPeers(): string[] {
+        return [...this.peers]
     }
 }

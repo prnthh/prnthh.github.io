@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react"
 import { useLocalEntity } from "./core/GameStateStore"
 import { GameRoom, BaseAction } from "./multiplayer/GameRoom"
-
-type ChatAction = { type: 'chat', payload: { message: string, senderName: string } }
-type MatchmakingAction = { type: 'matchmaking', payload: { message: string, senderName?: string } }
+import { ChatAction, MatchmakingAction } from "./multiplayer/LobbyRoom"
 
 type LogEntry = {
     text: string
@@ -91,7 +89,12 @@ const ChatUI = ({ room, label, onJoinGame }: Props) => {
 
     return (
         <div className="font-xs p-1 w-[300px] text-white bg-black/75 border-white border rounded" style={{ maxHeight: '40vh', overflowY: 'auto', fontFamily: 'monospace' }}>
-            <div style={{ marginBottom: '4px', opacity: 0.6 }}>{label || roomInfo.id}</div>
+            <div className="flex justify-between">
+                {label || roomInfo.id}
+                <div>
+                    {room.getPeers().length + 1} 🧑‍🧒‍🧒
+                </div>
+            </div>
             <div
                 className="w-full text-xs overflow-y-auto"
                 style={{ background: '#222', padding: '4px', height: '150px' }}
