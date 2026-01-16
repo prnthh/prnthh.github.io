@@ -11,6 +11,7 @@ import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import killboxlobby from "../../sketches/tools/prefabeditor/samples/killboxlobby.json";
 import { Physics } from "@react-three/rapier";
 import { FirstPersonController } from "@/app/react-three-controller";
+import { PedSpawner } from "../mechanics/Game";
 
 export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => void }) {
     const [gameId, setGameId] = useState<string | null>(null);
@@ -70,7 +71,7 @@ export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => v
                     <GameCanvas>
                         <ambientLight intensity={0.5} />
                         {/* <OrbitControls makeDefault /> */}
-                        <Physics debug>
+                        <Physics>
                             <color attach="background" args={['#b5e9ff']} />
                             <PrefabRoot data={currentMap} />
 
@@ -83,6 +84,8 @@ export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => v
                             // }}
                             // onFire={handleFire}
                             />
+
+                            <PedSpawner position={[0, 0, -3]} />
                         </Physics>
                     </GameCanvas>
                 </div>

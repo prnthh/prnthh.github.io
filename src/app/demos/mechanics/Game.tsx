@@ -99,7 +99,7 @@ const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
 
 
 
-const PedSpawner = ({ position = [0, 0, 0], playerRef }: { position?: [number, number, number], playerRef: React.RefObject<Object3D | null> }) => {
+export const PedSpawner = ({ position = [0, 0, 0], playerRef }: { position?: [number, number, number], playerRef?: React.RefObject<Object3D | null> }) => {
     const [peds, setPeds] = useState<{ id: number, position: [number, number, number], dead?: boolean }[]>([
         { id: 1, position: position }
     ]);
@@ -129,7 +129,7 @@ const PedSpawner = ({ position = [0, 0, 0], playerRef }: { position?: [number, n
 
     useEffect(() => {
         const interval = setInterval(() => {
-            if (playerRef.current) {
+            if (playerRef?.current) {
                 const pos = new Object3D();
                 playerRef.current.getWorldPosition(pos.position);
                 setPeds(prevPeds =>
