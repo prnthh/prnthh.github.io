@@ -80,14 +80,16 @@ const Ped = memo(({
                 >
                     {children}
 
-                    <SteeringBehavior
-                        debug={rigidHumanoidProps.debug}
-                        rigidBodyRef={modelRef}
-                        setAnimation={setAnimation}
-                        position={position || spawnPosition}
-                        paused={false}
-                        onDestinationReached={onDestinationReached}
-                    />
+                    {position && (
+                        <SteeringBehavior
+                            debug={rigidHumanoidProps.debug}
+                            rigidBodyRef={modelRef}
+                            setAnimation={setAnimation}
+                            position={position}
+                            paused={false}
+                            onDestinationReached={onDestinationReached}
+                        />
+                    )}
                 </RigidHumanoidModel>
             )}
 

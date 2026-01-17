@@ -154,7 +154,7 @@ export function MapProvider({
     const blankHeightImage = useMemo(() => {
         if (typeof ImageData === 'undefined') return null;
         const data = new Uint8ClampedArray(64 * 64 * 4);
-        for (let i = 0; i < data.length; i += 4) data.set([60, 60, 60, 255], i);
+        for (let i = 0; i < data.length; i += 4) data.set([0, 0, 0, 255], i);
         return new ImageData(data, 64, 64);
     }, []);
 

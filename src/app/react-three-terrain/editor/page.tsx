@@ -209,7 +209,7 @@ const MapConfigPanel = ({
     const gridStart = config.startX;
 
     return (
-        <div className="absolute top-4 right-4 z-30 p-2 dark:bg-black rounded border border-gray-300 ">
+        <div className="absolute top-4 right-4 z-30 p-2 dark:bg-black rounded bg-white dark:bg-black ">
             {!isOpen ? (
                 <button onClick={() => setIsOpen(true)} title="Open settings">
                     ⚙️

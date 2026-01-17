@@ -17,7 +17,8 @@ const demosConfig: Record<string, ItemConfig> = {
         description: 'Basic game mechanics with a third-person character controller.'
     },
     'killbox': {
-        path: 'demos/killbox',
+        // path: 'demos/killbox',
+        path: 'demos/killbox2',
         description: 'First-person multiplayer shooting gallery with physics-based ragdolls.'
     },
     'colony': {
