@@ -32,14 +32,6 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'demos/scumm',
         description: 'A simple point-and-click adventure game demo inspired by classic SCUMM games.'
     },
-    'floor': {
-        path: 'sketches/floor',
-        description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
-    },
-    'lighting': {
-        path: 'sketches/lighting',
-        description: 'Lighting and reflections.'
-    },
     'car/simple': {
         path: 'sketches/car/simple',
         description: 'Simple car physics demo.'
@@ -47,14 +39,6 @@ const demosConfig: Record<string, ItemConfig> = {
     'car/road': {
         path: 'sketches/car/road',
         description: 'Car driving on procedural roads.'
-    },
-    'navmesh/raycast': {
-        path: 'sketches/navmesh/raycast',
-        description: 'Raycast-based navigation.'
-    },
-    'navmesh/navmesh': {
-        path: 'sketches/navmesh/navmesh',
-        description: 'Navmesh pathfinding demo.'
     },
     'ik/ragdoll': {
         path: 'sketches/ik/ragdoll',
@@ -92,6 +76,14 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'sketches/retargeting/variety',
         description: 'Multiple character retargeting.'
     },
+    'floor': {
+        path: 'sketches/floor',
+        description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
+    },
+    'lighting': {
+        path: 'sketches/lighting',
+        description: 'Lighting and reflections.'
+    },
     'particles': {
         path: 'sketches/particles',
         description: 'Particle system experiments.'
@@ -117,6 +109,14 @@ const toolsConfig: Record<string, ItemConfig> = {
     },
     'react-three-controller/firstperson': {
         path: 'react-three-controller/firstperson',
+        description: 'First-person controller component.'
+    },
+    'react-three-controller/navmesh': {
+        path: 'react-three-controller/navmesh',
+        description: 'First-person controller component.'
+    },
+    'react-three-controller/raycastped': {
+        path: 'react-three-controller/ped',
         description: 'First-person controller component.'
     },
     'react-three-terrain/editor': {

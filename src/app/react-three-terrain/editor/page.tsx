@@ -209,57 +209,27 @@ const MapConfigPanel = ({
     const gridStart = config.startX;
 
     return (
-        <div className="absolute top-4 right-4 z-30">
+        <div className="absolute top-4 right-4 z-30 p-2 dark:bg-black rounded border border-gray-300 ">
             {!isOpen ? (
-                <button
-                    onClick={() => setIsOpen(true)}
-                    className="p-3 rounded bg-white border border-gray-300 hover:bg-gray-100 transition-colors shadow-md"
-                    title="Open settings"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    >
-                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                        <circle cx="12" cy="12" r="3" />
-                    </svg>
+                <button onClick={() => setIsOpen(true)} title="Open settings">
+                    ⚙️
                 </button>
             ) : (
-                <div className="flex flex-col gap-2 bg-white p-4 rounded border border-gray-300 shadow-md">
+                <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-sm font-semibold text-gray-700">Settings</h2>
+                        <h2 className="text-sm font-semibold">Settings</h2>
                         <button
                             onClick={() => setIsOpen(false)}
                             className="p-1 rounded hover:bg-gray-100 transition-colors"
                             title="Close settings"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
+                            X
                         </button>
                     </div>
 
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 rounded border bg-white text-gray-700 border-gray-300 hover:bg-gray-100 transition-colors"
+                        className="p-1 rounded bg-white/50"
                     >
                         Load Image
                     </button>
@@ -272,10 +242,10 @@ const MapConfigPanel = ({
                     />
 
                     <div className="border-t border-gray-300 pt-2 mt-2">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Grid Configuration</h3>
+                        <h3 className="text-sm font-s mb-2">Grid Configuration</h3>
 
                         <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-700 w-20">Grid Size:</label>
+                            <label className="w-20">Grid Size:</label>
                             <input
                                 type="number"
                                 value={gridSize}
@@ -292,11 +262,11 @@ const MapConfigPanel = ({
                                 min="1"
                                 max="10"
                             />
-                            <span className="text-xs text-gray-500">tiles</span>
+                            <span className="">tiles</span>
                         </div>
 
                         <div className="flex items-center gap-2 mt-2">
-                            <label className="text-sm text-gray-700 w-20">Grid Start:</label>
+                            <label className=" w-20">Grid Start:</label>
                             <input
                                 type="number"
                                 value={gridStart}
@@ -315,10 +285,10 @@ const MapConfigPanel = ({
                     </div>
 
                     <div className="border-t border-gray-300 pt-2 mt-2">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Tile Configuration</h3>
+                        <h3 className="text-sm font-semibold mb-2">Tile Configuration</h3>
 
                         <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-700 w-20">Tile Size:</label>
+                            <label className="text-sm w-20">Tile Size:</label>
                             <input
                                 type="number"
                                 value={tileSize}
@@ -327,11 +297,11 @@ const MapConfigPanel = ({
                                 min="10"
                                 step="10"
                             />
-                            <span className="text-xs text-gray-500">units</span>
+                            <span className="text-xs">units</span>
                         </div>
 
                         <div className="flex items-center gap-2 mt-2">
-                            <label className="text-sm text-gray-700 w-20">Texture Res:</label>
+                            <label className="text-sm w-20">Texture Res:</label>
                             <input
                                 type="number"
                                 value={tileSizePx}

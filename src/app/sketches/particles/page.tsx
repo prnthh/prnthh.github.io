@@ -49,7 +49,7 @@ export default function Home() {
                         <Circular radius={5} speed={0.01} y={1}>
                             {(pos) => (
                                 <Smoke
-                                    particle="/textures/water1.png"
+                                    particle="/textures/water/water1.png"
                                     debug
                                     count={50}
                                     size={1}
