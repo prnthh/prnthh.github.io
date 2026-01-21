@@ -15,8 +15,11 @@ export default function GameComponents() {
         // onFire={handleFire}
         />
 
+        <DemoGroup label="ped" position={[-5, 0, -6]} size={[3, 3]}>
+            <Ped modelOffset={[0, 0.15, 0]} model="onimilio/rigged.glb" />
+        </DemoGroup>
         <DemoGroup label="ped" position={[0, 0, -6]} size={[3, 3]}>
-            <Ped model="rigga/rigga2.glb" />
+            <Ped height={1.2} modelOffset={[0, -0.8, 0]} scale={2} model="rigga/rigga2.glb" />
         </DemoGroup>
         <DemoGroup label="button" position={[5, 0, -6]} size={[3, 3]}>
             <ButtonBox position={[0, 1, 0]} onActivate={() => {

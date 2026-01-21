@@ -6,11 +6,10 @@
  */
 
 import { CapsuleCollider, RapierRigidBody, RigidBody } from "@react-three/rapier";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, RefObject } from "react";
 import { Group } from "three";
 import FirstPersonControls from "./FirstPersonControls";
 import { Weapon, Gun } from "../Weapon";
-import AnimatedModel from "@/app/react-three-character/HumanoidModel";
 
 const PLAYER_MASS = 70;
 
@@ -34,18 +33,12 @@ const FirstPersonController = ({
     const rigidBodyRef = useRef<RapierRigidBody | null>(null);
     const bodyMeshRef = useRef<Group | null>(null);
     const cameraRigRef = useRef<Group | null>(null);
-    const [isFlashing, setIsFlashing] = useState(false);
     const [animation, setAnimation] = useState<string>('idle');
 
     const CAPSULE_RADIUS = height / 5;
     const CAPSULE_HEIGHT = height / 2;
     const EYE_HEIGHT = CAPSULE_HEIGHT;
 
-    const handleFire = useCallback(() => {
-        setIsFlashing(true);
-        setTimeout(() => setIsFlashing(false), 100);
-        onFire?.();
-    }, [onFire]);
 
     useEffect(() => {
         if (typeof forwardRef === 'function') {
@@ -104,13 +97,27 @@ const FirstPersonController = ({
                 setAnimation={setAnimation}
             >
 
-                <group position={[0.2, -0.2, -0.5]} scale={0.5}>
-                    <Gun isFlashing={isFlashing} />
-                    <Weapon excludeRigidBody={rigidBodyRef} onFire={handleFire} />
-                </group>
+                <FirstPersonArms rigidBodyRef={rigidBodyRef} />
             </FirstPersonControls>
         </RigidBody>
     );
 };
+
+const FirstPersonArms = ({ rigidBodyRef }: { rigidBodyRef: RefObject<RapierRigidBody | null> }) => {
+    const [rightHand, setRightHand] = useState<'gun' | 'pick' | 'unarmed'>("gun");
+    const [isFlashing, setIsFlashing] = useState(false);
+    const handleFire = useCallback(() => {
+        setIsFlashing(true);
+        setTimeout(() => setIsFlashing(false), 100);
+        // onFire?.();
+    }, []);
+
+    return <>
+        {rightHand === 'gun' && <group position={[0.2, -0.2, -0.5]} scale={0.5}>
+            <Gun isFlashing={isFlashing} />
+            <Weapon excludeRigidBody={rigidBodyRef} onFire={handleFire} />
+        </group>}
+    </>
+}
 
 export default FirstPersonController;

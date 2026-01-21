@@ -72,7 +72,7 @@ export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.
                 ray,
                 maxToi,
                 true,
-                undefined,
+                rapier.QueryFilterFlags.EXCLUDE_SENSORS,
                 undefined,
                 undefined,
                 playerRb || undefined

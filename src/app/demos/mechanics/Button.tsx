@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { RigidBody } from "@react-three/rapier";
+import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
 import { useFrame } from "@react-three/fiber";
 import { Mesh, Vector2, Raycaster } from "three";
 import { useThree } from "@react-three/fiber";
@@ -10,11 +10,13 @@ import { InteractionManager, InteractionPriority } from "@/app/react-three-contr
 interface ButtonBoxProps {
   position?: [number, number, number];
   onActivate?: () => void;
+  interactionRadius?: number;
 }
 
-export default function ButtonBox({ position = [0, 1, 0], onActivate }: ButtonBoxProps) {
+export default function ButtonBox({ position = [0, 1, 0], onActivate, interactionRadius = 3 }: ButtonBoxProps) {
   const boxRef = useRef<Mesh>(null);
   const buttonRef = useRef<Mesh>(null);
+  const [isInRange, setIsInRange] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
   const [isActivated, setIsActivated] = useState(false);
@@ -24,6 +26,23 @@ export default function ButtonBox({ position = [0, 1, 0], onActivate }: ButtonBo
   const claimId = useRef(`button-${Math.random()}`);
   const prevFireRef = useRef(false);
   const clickDetectedRef = useRef(false);
+
+  const isPlayer = (event: any) => {
+    const name = event?.other?.rigidBodyObject?.name;
+    return name === 'bob';
+  };
+
+  const handleSensorEnter = (event: any) => {
+    if (!isPlayer(event)) return;
+    setIsInRange(true);
+  };
+
+  const handleSensorExit = (event: any) => {
+    if (!isPlayer(event)) return;
+    setIsInRange(false);
+    setIsHovered(false);
+    InteractionManager.release(claimId.current);
+  };
 
   // Listen for mouse clicks directly
   useEffect(() => {
@@ -45,7 +64,16 @@ export default function ButtonBox({ position = [0, 1, 0], onActivate }: ButtonBo
   useFrame(() => {
     if (!buttonRef.current) return;
 
-    // Check if looking at button
+    // When out of range, clear hover state
+    if (!isInRange) {
+      if (isHovered) {
+        setIsHovered(false);
+        InteractionManager.release(claimId.current);
+      }
+      return;
+    }
+
+    // Only raycast when player is in range
     raycaster.current.setFromCamera(new Vector2(0, 0), camera);
     const intersects = raycaster.current.intersectObject(buttonRef.current);
     const nowHovered = intersects.length > 0;
@@ -73,7 +101,16 @@ export default function ButtonBox({ position = [0, 1, 0], onActivate }: ButtonBo
   useEffect(() => () => InteractionManager.release(claimId.current), []);
 
   return (
-    <RigidBody type="fixed" position={position}>
+    <RigidBody type="fixed" position={position} colliders={false}>
+      <CylinderCollider
+        args={[1, interactionRadius]}
+        position={[0, 0.5, 0]}
+        sensor
+                onIntersectionEnter={handleSensorEnter}
+        onIntersectionExit={handleSensorExit}
+      />
+      <CuboidCollider args={[0.5, 0.5, 0.5]} />
+
       <mesh ref={boxRef} castShadow receiveShadow>
         <boxGeometry args={[1, 1, 1]} />
         <meshStandardMaterial color={isActivated ? "#4ade80" : "#6b7280"} />

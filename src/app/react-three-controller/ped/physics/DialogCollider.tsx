@@ -1,7 +1,5 @@
 import { CylinderCollider } from "@react-three/rapier";
-import React, { useRef, useState, useEffect, DOMElement } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
-
+import React, { useState } from "react";
 import { Html } from "@react-three/drei";
 
 export default function DialogCollider({
@@ -21,15 +19,22 @@ export default function DialogCollider({
 }) {
     const [dialogVisible, setDialogVisible] = useState(false);
 
-    const handleIntersectionEnter = (event: any) => {
-        const name = event?.other?.name || event?.other?.rigidBodyObject?.name
-        if (name == 'bob') {
-            console.log("DialogCollider: Intersection Entered with", name);
-            setDialogVisible(true);
-            onEnter?.();
-        }
+    const isPlayer = (event: any) => {
+        const name = event?.other?.rigidBodyObject?.name;
+        return name === 'bob';
     };
 
+    const handleIntersectionEnter = (event: any) => {
+        if (!isPlayer(event)) return;
+        setDialogVisible(true);
+        onEnter?.();
+    };
+
+    const handleIntersectionExit = (event: any) => {
+        if (!isPlayer(event)) return;
+        setDialogVisible(false);
+        onExit?.();
+    };
 
     return <>
         <CylinderCollider
@@ -37,7 +42,7 @@ export default function DialogCollider({
             position={[0, (height / 2), 0]}
             sensor
             onIntersectionEnter={handleIntersectionEnter}
-            onIntersectionExit={() => { setDialogVisible(false); onExit?.() }}
+            onIntersectionExit={handleIntersectionExit}
         />
         {dialogVisible && sceneChildren}
         {dialogVisible && <Html sprite transform position={[0, height * 1.1, 0]} scale={0.4}>

@@ -89,6 +89,10 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'sketches/particles',
         description: 'Particle system experiments.'
     },
+    'voxelcode': {
+        path: 'sketches/replicube',
+        description: 'Replicube style voxel system experiments.'
+    },
     'ecs-world': {
         path: 'sketches/ecs-world',
         description: 'Entity-component-system world.'
@@ -133,10 +137,10 @@ const toolsConfig: Record<string, ItemConfig> = {
         external: true,
         description: 'React Three Fiber game framework.'
     },
-    'pockit-challenge': {
+    'eth-pcp': {
         path: 'Pockit-Challenge-Protocol',
         external: true,
-        description: 'Pockit challenge protocol implementation.'
+        description: 'EVM Pockit Challenge Protocol implementation.'
     },
     'prefabeditor': {
         path: 'sketches/tools/prefabeditor',
@@ -212,11 +216,12 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "", config }: 
                         <a
                             href={`/${fullPath}`}
                             key={fullPath}
-                            className={`rounded px-2 py-1 transition-colors select-none
-                                ${isActive ? "font-bold dark:bg-white/10 bg-black/10 ring" : "hover:ring cursor-pointer"}`}
+                            className={`px-3 py-1.5 my-px transition-all select-none border-l-2
+                                ${isActive ? "font-semibold bg-neutral-600/40 border-neutral-400 text-white" : "bg-neutral-700/50 border-neutral-600 hover:bg-neutral-600/50 hover:border-neutral-400 cursor-pointer text-neutral-200"}`}
                         >
-                            {displayName} <br />
-                            <span className="text-sm font-light">
+                            <span className="font-semibold uppercase text-sm tracking-wider">{displayName}</span>
+                            <br />
+                            <span className="text-xs text-neutral-400">
                                 {itemConfig?.description}
                             </span>
                         </a>
@@ -225,11 +230,12 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "", config }: 
                             href={`/${fullPath}`}
                             prefetch={false}
                             key={fullPath}
-                            className={`rounded px-2 py-1 transition-colors select-none
-                                ${isActive ? "font-bold dark:bg-white/10 bg-black/10 ring" : "hover:ring cursor-pointer"}`}
+                            className={`px-3 py-1.5 my-px transition-all select-none border-l-2
+                                ${isActive ? "font-bold bg-neutral-600/40 border-neutral-400 text-white" : "bg-neutral-700/50 border-neutral-600 hover:bg-neutral-600/50 hover:border-neutral-400 cursor-pointer text-neutral-200"}`}
                         >
-                            {displayName} <br />
-                            <span className="text-sm font-light">
+                            <span className="font-semibold uppercase text-sm tracking-wider">{displayName}</span>
+                            <br />
+                            <span className="text-xs text-neutral-400">
                                 {itemConfig?.description}
                             </span>
                         </Link>
@@ -238,18 +244,18 @@ function DemoTree({ node, prefix = "", search = "", currentPath = "", config }: 
                     // Category node
                     const isOpen = open[key] || false;
                     return (
-                        <div key={prefix + key} className="mb-1">
+                        <div key={prefix + key}>
                             <div
-                                className={`border flex items-center rounded px-2 py-1 select-none cursor-pointer transition-colors bg-white/20  ${isOpen ? "opacity-80" : "hover:opacity-70"}`}
+                                className={`flex items-center px-2 py-1 select-none cursor-pointer transition-colors text-xs uppercase tracking-widest text-neutral-500 hover:text-neutral-300`}
                                 onClick={() => setOpen((o) => ({ ...o, [key]: !o[key] }))}
                                 tabIndex={0}
                                 role="button"
                                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setOpen((o) => ({ ...o, [key]: !o[key] })); }}
                             >
-                                <span className="mr-1">{isOpen ? "▼" : "▶"}</span>
+                                <span className="mr-1">{isOpen ? "−" : "+"}</span>
                                 {key}
                             </div>
-                            {isOpen && <DemoTree node={value} prefix={prefix + key + "/"} search={search} currentPath={currentPath} config={config} />}
+                            {isOpen && <div className="ml-3 border-l border-neutral-700 pl-1"><DemoTree node={value} prefix={prefix + key + "/"} search={search} currentPath={currentPath} config={config} /></div>}
                         </div>
                     );
                 }
@@ -266,8 +272,8 @@ export default function Nav() {
 
     return (
         <div>
-            <div className={`text-black dark:text-white fixed top-3 left-3 z-40 ${clicked ? 'w-[280px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : 'h-8'} transition-all`}>
-                <div className={`${clicked ? 'w-[280px]' : 'w-[42px]'} bg-white/40 dark:bg-black/30 backdrop-blur-[2px] fixed top-[12px] left-[12px] hover:opacity-90 rounded-xl flex overflow-hidden border transition-all`}
+            <div className={`text-neutral-200 fixed top-3 left-3 z-40 ${clicked ? 'w-[280px]' : 'w-8'} ${clicked ? 'h-[calc(100vh-80px)]' : 'h-8'} transition-all`}>
+                <div className={`${clicked ? 'w-[280px]' : 'w-[42px]'} bg-neutral-800/90 backdrop-blur-sm fixed top-[12px] left-[12px] hover:bg-neutral-800 border border-neutral-700 flex overflow-hidden transition-all`}
                     onClick={() => setClicked(() => true)}
                 >
                     <button
@@ -279,30 +285,30 @@ export default function Nav() {
                         </span>
                     </button>
                     <input
-                        className="bg-transparent focus:outline-none px-2 py-1 border-none placeholder-black/80 dark:placeholder-white/80 flex-grow"
+                        className="bg-transparent focus:outline-none px-2 py-1 border-none placeholder-neutral-500 text-neutral-200 flex-grow text-sm"
                         type="text"
-                        placeholder={`search ${activeTab}...`}
+                        placeholder={`SEARCH ${activeTab.toUpperCase()}...`}
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                {clicked && <div className={`${clicked ? 'overflow-y-scroll border border-foreground h-full opacity-100 backdrop-blur-[2px]' : 'opacity-0'} bg-white/40 dark:bg-black/30 px-2 rounded-xl noscrollbar select-none flex flex-col mt-12 transition-all`}>
+                {clicked && <div className={`${clicked ? 'overflow-y-scroll border border-neutral-700 h-full opacity-100 backdrop-blur-sm' : 'opacity-0'} bg-neutral-800/90 px-2 noscrollbar select-none flex flex-col mt-12 transition-all`}>
                     {/* Tab buttons */}
-                    <div className="flex gap-2 my-2 z-10">
+                    <div className="flex gap-px my-2 z-10 bg-neutral-900/50">
                         <button
                             onClick={() => setActiveTab('demos')}
-                            className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all ${activeTab === 'demos'
-                                ? 'bg-white/60 dark:bg-white/20 ring'
-                                : 'hover:bg-white/30 dark:hover:bg-white/10 border'
+                            className={`flex-1 px-3 py-1.5 text-xs uppercase tracking-widest font-semibold transition-all ${activeTab === 'demos'
+                                ? 'bg-neutral-700 text-white border-b-2 border-neutral-400'
+                                : 'hover:bg-neutral-700/50 text-neutral-500'
                                 }`}
                         >
                             demos
                         </button>
                         <button
                             onClick={() => setActiveTab('tools')}
-                            className={`flex-1 px-3 py-2 rounded-lg font-semibold transition-all ${activeTab === 'tools'
-                                ? 'bg-white/60 dark:bg-white/20 ring'
-                                : 'hover:bg-white/30 dark:hover:bg-white/10 border'
+                            className={`flex-1 px-3 py-1.5 text-xs uppercase tracking-widest font-semibold transition-all ${activeTab === 'tools'
+                                ? 'bg-neutral-700 text-white border-b-2 border-neutral-400'
+                                : 'hover:bg-neutral-700/50 text-neutral-500'
                                 }`}
                         >
                             tools
