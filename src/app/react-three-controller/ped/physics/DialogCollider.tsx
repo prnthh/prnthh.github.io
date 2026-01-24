@@ -1,5 +1,5 @@
 import { CylinderCollider } from "@react-three/rapier";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Html } from "@react-three/drei";
 
 export default function DialogCollider({
