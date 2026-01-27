@@ -13,7 +13,7 @@ import DebugGround from "@/shared/ground/DebugGround";
 
 export default function Home() {
     const { mode } = useControls({
-        mode: { value: 'click', options: ['click', 'wawa', 'tap', 'third-person'] }
+        mode: { value: 'wawa', options: ['click', 'wawa', 'tap', 'third-person', 'first-person'] }
     });
     const [target, setTarget] = useState<[number, number, number]>([0, 0, 2]);
 

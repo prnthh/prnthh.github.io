@@ -149,7 +149,7 @@ export const PedSpawner = ({ position = [0, 0, 0], playerRef }: { position?: [nu
         key={ped.id}
         modelOffset={[0, -0.5, 0]}
         position={ped.position}
-        model="rigga/rigga2.glb"
+        model="/models/human/rigga/rigga2.glb"
         onBulletHit={() => handlePedShot(ped.id)}
     >
         {/* <DialogCollider radius={3} height={1.2}>Ah hello</DialogCollider> */}
@@ -178,7 +178,7 @@ const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | nul
         return () => clearInterval(interval);
     }, [ballRef]);
 
-    return <Ped model="rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
+    return <Ped model="/models/human/rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
         <DialogCollider>Ole!</DialogCollider>
     </Ped>
 }

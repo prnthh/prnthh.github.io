@@ -53,7 +53,7 @@ const GameEntityWorld = () => {
         addEntity(randomPickupable());
         addEntity(randomPickupable());
 
-        addEntity({ name: 'PockitCEO', type: 'NPC', position: [1, 0, -4], basePath: "/models/human/rigga/", modelUrl: "rigga.glb", goal: 'follow' });
+        addEntity({ name: 'PockitCEO', type: 'NPC', position: [1, 0, -4], basePath: "/models/human/rigga/", modelUrl: "/models/human/rigga/rigga.glb", goal: 'follow' });
         addEntity({ name: 'Employee', type: 'NPC', position: [1, 0, -4], goal: 'hunt' });
         addEntity({ name: 'Employee', type: 'NPC', position: [-1, 0, 4], goal: 'hunt' });
         addEntity({ name: 'Employee', type: 'NPC', position: [-1, 0, -4], goal: 'hunt' });
@@ -177,7 +177,7 @@ const TalkativeNPC = ({ id }: { id: string }) => {
         debug
         key={name}
         basePath={entity.basePath || "/models/human/onimilio/"}
-        model={entity.modelUrl || "rigged.glb"}
+        model={entity.modelUrl || "/models/human/onimilio/rigged.glb"}
         position={position} height={1.5}
         lookTarget={{ current: playerRef }}
         onDestinationReached={reachedDestinationHandler.current}

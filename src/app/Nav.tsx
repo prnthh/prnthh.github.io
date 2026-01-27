@@ -12,14 +12,18 @@ type ItemConfig = {
 };
 
 const demosConfig: Record<string, ItemConfig> = {
-    'mechanics': {
-        path: 'demos/mechanics',
-        description: 'Basic game mechanics with a third-person character controller.'
+    'gym': {
+        path: 'react-three-controller/combined',
+        description: 'Controller gym'
     },
-    'killbox': {
+    'zoo': {
+        path: 'demos/zoo',
+        description: 'Asset showcase (models/vfx/assets)'
+    },
+    'museum': {
         // path: 'demos/killbox',
         path: 'demos/killbox2',
-        description: 'First-person multiplayer shooting gallery with physics-based ragdolls.'
+        description: 'Systems, lighting and prefabs demos'
     },
     'colony': {
         path: 'demos/colony',
@@ -111,10 +115,6 @@ const toolsConfig: Record<string, ItemConfig> = {
     'react-three-controller/combined': {
         path: 'react-three-controller/combined',
         description: 'Combined character controller package.'
-    },
-    'react-three-controller/firstperson': {
-        path: 'react-three-controller/firstperson',
-        description: 'First-person controller component.'
     },
     'react-three-controller/navmesh': {
         path: 'react-three-controller/navmesh',

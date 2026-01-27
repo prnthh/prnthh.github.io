@@ -10,9 +10,9 @@ import { useRef, RefObject, useState, useEffect, useMemo, useCallback } from "re
 import { Vector3, Quaternion, MathUtils, Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { PerspectiveCamera } from "@react-three/drei";
-import PointerLockControls from "../controls/PointerLockControls";
-import useInputStore from "../controls/InputStore";
-import KeyboardControls from "../controls/KeyboardControls";
+import PointerLockControls from "./PointerLockControls";
+import useInputStore from "./InputStore";
+import KeyboardControls from "./KeyboardControls";
 import { RigidHumanoidModelRef } from "../ped/types";
 
 const q = new Quaternion(), yq = new Quaternion(), fwd = new Vector3(), rt = new Vector3(), dir = new Vector3(), ray = new Vector3();
@@ -51,13 +51,8 @@ const FirstPersonControls = ({
     const cameraPitch = useRef(0);
 
     const applyLookDelta = useCallback((dx: number, dy: number) => {
-        console.log('applyLookDelta called', { dx, dy });
         const rb = modelRef.current?.rigidBodyRef.current;
-        console.log('rb check', { rb, modelRef: modelRef.current });
-        if (!rb) {
-            console.log('applyLookDelta: rb not found');
-            return;
-        }
+        if (!rb) return;
         rb.wakeUp?.();
         const rot = rb.rotation();
         q.set(rot.x, rot.y, rot.z, rot.w);
@@ -72,8 +67,8 @@ const FirstPersonControls = ({
             <group name='cameraRig' position={[0, eyeHeight, 0]} ref={cameraRigRef}>
                 <group name='camera' position={cameraOffset} rotation={[0, Math.PI, 0]}>
                     <PerspectiveCamera makeDefault />
+                    {children}
                 </group>
-                {children}
             </group>
             <KeyboardControls />
             <MovementSystem
@@ -241,7 +236,6 @@ export const LookSystem = ({
         if (!rb || !rig) return;
 
         if (Math.abs(lookHorizontal) > 0.01) {
-            rb.wakeUp?.();
             const rot = rb.rotation();
             q.set(rot.x, rot.y, rot.z, rot.w);
             yq.setFromAxisAngle({ x: 0, y: 1, z: 0 }, -lookHorizontal * 2.5 * dt);

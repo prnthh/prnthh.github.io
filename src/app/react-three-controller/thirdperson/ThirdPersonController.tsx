@@ -34,17 +34,18 @@ export const ThirdPersonController = ({
             position={position}
             name={name}
             basePath="/models/human/onimilio/"
-            model="rigged.glb"
+            model="/models/human/onimilio/rigged.glb"
             height={height}
             capsuleRadius={capsuleRadius}
             lookTarget={lookTarget}
             animationOverrides={{
-                walk: 'anim/walk.fbx',
-                run: 'anim/run.fbx',
-                jump: 'anim/jump.fbx',
-                walkLeft: "/anim/walkLeft.fbx",
-                lpunch: "/anim/lpunch.fbx",
-                rpunch: "/anim/rpunch.fbx",
+                idle: '/models/human/onimilio/anim/idle.fbx',
+                walk: '/models/human/onimilio/anim/walk.fbx',
+                run: '/models/human/onimilio/anim/run.fbx',
+                jump: '/models/human/onimilio/anim/jump.fbx',
+                walkLeft: "/models/human/onimilio/anim/walkLeft.fbx",
+                lpunch: "/models/human/onimilio/anim/lpunch.fbx",
+                rpunch: "/models/human/onimilio/anim/rpunch.fbx",
             }}
         >
             {children}

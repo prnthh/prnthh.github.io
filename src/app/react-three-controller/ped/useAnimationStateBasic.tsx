@@ -13,7 +13,6 @@ const cloneClip = (clip: AnimationClip) => (clip as any).clone?.() ?? clip
 
 export default function useAnimationState(
     clone?: Object3D<Object3DEventMap>,
-    basePath: string = '/models/human/',
     animationOverrides?: { [key: string]: string },
     onActions?: (actions: { [key: string]: AnimationAction }) => void,
     modelAnimations?: AnimationClip[]
@@ -25,15 +24,15 @@ export default function useAnimationState(
 
     const ANIMATIONS = useMemo(() => {
         const overridesWithBase = animationOverrides
-            ? Object.fromEntries(Object.entries(animationOverrides).map(([key, value]) => [key, basePath + value]))
+            ? Object.fromEntries(Object.entries(animationOverrides).map(([key, value]) => [key, value]))
             : {}
-        return { idle: basePath + '/anim/idle.fbx', ...overridesWithBase }
-    }, [animationOverrides, basePath])
+        return { idle: '/models/human/anim/idle.fbx', ...overridesWithBase }
+    }, [animationOverrides])
 
     const animationPaths = useMemo(() => {
-        if (modelAnimations?.length || !basePath || basePath === '/') return []
+        if (modelAnimations?.length) return []
         return Object.values(ANIMATIONS)
-    }, [ANIMATIONS, basePath, modelAnimations])
+    }, [ANIMATIONS, modelAnimations])
 
     const _loaded = animationPaths.length ? useLoader(FBXLoader, animationPaths) : []
     const fbxAnimations = useMemo(() =>

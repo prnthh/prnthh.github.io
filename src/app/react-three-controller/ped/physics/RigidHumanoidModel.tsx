@@ -32,7 +32,7 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
 
         return (
             <RigidBody
-                name={animatedModelProps.name ?? "ped"}
+                name={animatedModelProps.name ?? "bob"}
                 ref={rigidBodyRef}
                 type="dynamic"
                 position={position}
@@ -40,6 +40,7 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
                 linearDamping={0.5}
                 angularDamping={0.5}
                 lockRotations={true}
+                canSleep={false}
             >
                 <CapsuleCollider
                     args={[(height - capsuleRadius * 1.9) / 2, capsuleRadius]}
@@ -57,8 +58,8 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
                     ref={animatedModelRef}
                     {...animatedModelProps}
                     animationOverrides={{
-                        walk: "anim/walk.fbx",
-                        run: "anim/run.fbx",
+                        walk: "/models/human/anim/walk.fbx",
+                        run: "/models/human/anim/run.fbx",
                         ...animatedModelProps.animationOverrides,
                     }}
                 />

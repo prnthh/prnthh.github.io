@@ -17,8 +17,7 @@ export { default as TouchscreenControls } from './controls/TouchscreenControls';
 export { default as SwipeControls } from './controls/SwipeControls';
 
 // Controllers
-export { default as FirstPersonController } from './firstperson/FirstPersonController';
-export { default as FirstPersonControls } from './firstperson/FirstPersonControls';
+export { default as FirstPersonControls } from './controls/FirstPersonControls';
 export { default as ThirdPersonControls } from './thirdperson/ThirdPersonControls';
 export { default as CombinedController } from './combined/CombinedController';
 

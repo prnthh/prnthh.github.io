@@ -9,27 +9,32 @@ import TapControls from "../tap/TapControls";
 import FollowCam from "@/shared/cameras/FollowCam";
 import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
 import { RigidHumanoidModelRef } from "@/app/react-three-controller/ped/types";
+import FirstPersonControls from "../controls/FirstPersonControls";
+import { FirstPersonArms } from "../firstperson/FirstPersonArms";
+import { Group } from "three";
 
 const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number] }>(({ mode, target = [0, 0, 0] }, ref) => {
-    const [animation, setAnimation] = useState<"idle" | "walk" | "run" | "third-person">("idle");
+    const [animation, setAnimation] = useState<string>("idle");
     const modelRef = useRef<RigidHumanoidModelRef>(null);
+    const cameraRigRef = useRef<Group | null>(null);
 
     // Forward the internal ref to the parent
     useImperativeHandle(ref, () => modelRef.current as RigidHumanoidModelRef, []);
 
     const modelProps = {
         basePath: "/models/human/onimilio/",
-        model: "rigged.glb",
+        model: "/models/human/onimilio/rigged.glb",
         animation,
         height: 0.9,
+        position: [0, 2, 0] as [number, number, number],
         animationOverrides: {
-            idle: 'anim/idle.fbx',
-            walk: 'anim/walk.fbx',
-            run: 'anim/run.fbx',
-            jump: 'anim/jump.fbx',
-            walkLeft: "/anim/walkLeft.fbx",
-            lpunch: "/anim/lpunch.fbx",
-            rpunch: "/anim/rpunch.fbx",
+            idle: '/models/human/onimilio/anim/idle.fbx',
+            walk: '/models/human/onimilio/anim/walk.fbx',
+            run: '/models/human/onimilio/anim/run.fbx',
+            jump: '/models/human/onimilio/anim/jump.fbx',
+            walkLeft: "/models/human/onimilio/anim/walkLeft.fbx",
+            lpunch: "/models/human/onimilio/anim/lpunch.fbx",
+            rpunch: "/models/human/onimilio/anim/rpunch.fbx",
         }
     };
 
@@ -78,6 +83,20 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                     height={1.2}
                     capsuleRadius={0.25}
                 />}
+
+                {mode === 'first-person' && <>
+                    <FirstPersonControls
+                        modelRef={modelRef}
+                        height={modelProps.height}
+                        eyeHeight={modelProps.height / 2}
+                        cameraOffset={[0, 0, 0]}
+                        cameraRigRef={cameraRigRef}
+                        setAnimation={setAnimation}
+                    >
+
+                        <FirstPersonArms modelRef={modelRef} />
+                    </FirstPersonControls>
+                </>}
 
             </RigidHumanoidModel>
 

@@ -49,12 +49,12 @@ const Room = ({ playerRef, roomId }: { playerRef?: React.RefObject<Group>, roomI
                     scale={1.7}
                     lookTarget={playerRef}
                     basePath={"/models/human/rigga/"}
-                    model={"rigga.glb"}
+                    model={"/models/human/rigga/rigga.glb"}
                     // animation={'walk'}
                     animationOverrides={{
-                        walk: 'anim/walk.fbx',
-                        run: 'anim/run.fbx',
-                        jump: 'anim/jump.fbx',
+                        walk: '/models/human/anim/walk.fbx',
+                        run: '/models/human/anim/run.fbx',
+                        jump: '/models/human/anim/jump.fbx',
                     }}
                 >
                 </AnimatedModel>

@@ -18,14 +18,14 @@ import { AnimatedModelProps, AnimatedModelRef } from "../react-three-controller/
 // 6. This module loads the rigged .glb (5) and applies Mixamo animation .fbx (4) as needed
 
 const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
-    ({ name, model, basePath = "/models/human/", animation = "idle", onClick,
+    ({ name, model, animation = "idle", onClick,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
         debug = false, lookTarget, retargetOptions, onActions, attachments, enableBoneCollider = true, children, ...props
     }, ref) => {
         const modelRef = useRef<Object3D | undefined>(undefined);
         const groupRef = useRef<Group>(null!);
-        const { scene, animations } = useGLTF(basePath + model);
+        const { scene, animations } = useGLTF(model);
         const [clonedScene, setClonedScene] = useState<Object3D | undefined>(undefined);
 
         // Create a clone of the scene to avoid modifying the original
@@ -82,7 +82,7 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
         useLookAtTarget(clonedScene, lookTarget, 'mixamorigNeck')
 
 
-        const { mixer, setThisAnimation, actions } = useAnimationState(clonedScene, basePath, animationOverrides, onActions);
+        const { mixer, setThisAnimation, actions } = useAnimationState(clonedScene, animationOverrides, onActions);
 
         useEffect(() => {
             if (animation && mixer) {

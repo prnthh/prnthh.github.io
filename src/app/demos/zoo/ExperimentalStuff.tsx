@@ -7,7 +7,6 @@ import Balloon from "@/shared/physics/Balloon";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import { Mesh, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
-import Rain from "@/shared/rain";
 import ButtonBox from "./Button";
 import HitBox from "@/shared/physics/HitBox";
 import { useTimeRNGNumber } from "@/shared/etc/TimeRNG";
@@ -81,21 +80,10 @@ export default function ExperimentalStuff() {
         <WavyTree position={[-5, 0, 17]} />
         <WavyTree position={[5, 0, 17]} />
 
-        <group position={[-2, 0, 5]}>
-            <CrawlerApp controlled={false} />
-        </group>
-
         <ButtonBox position={[0, 1, 0]} onActivate={() => {
             console.log("Button activated!");
         }} />
 
-        <Rain
-            particleCount={10000}
-            areaSize={[60, 60]}
-            position={[0, 25, 0]}
-            enableCollision={true}
-            opacity={0.25}
-            speedMultiplier={1.5}
-        />
+
     </>
 }

@@ -11,7 +11,7 @@ import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import killboxlobby from "../../sketches/tools/prefabeditor/samples/killboxlobby.json";
 import { Physics } from "@react-three/rapier";
 import { FirstPersonController } from "@/app/react-three-controller";
-import { PedSpawner } from "../mechanics/Game";
+import { PedSpawner } from "../zoo/Game";
 
 export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => void }) {
     const [gameId, setGameId] = useState<string | null>(null);

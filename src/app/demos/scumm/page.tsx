@@ -46,7 +46,7 @@ export default function Home() {
                         <Ped onClick={(e) => {
                             setActiveEntity("ped");
                             e.stopPropagation();
-                        }} modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]} model="rigga/rigga2.glb" >
+                        }} modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]} model="/models/human/rigga/rigga2.glb" >
                             {activeEntity === "ped" && <CutsceneCamera position={[0, 1, 2]} />}
                         </Ped>
                     </Physics>

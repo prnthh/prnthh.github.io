@@ -31,7 +31,6 @@ export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => v
                             </RigidBody>
 
                             <GameComponents />
-
                             <ShadowLight debug camOffset={new Vector3(2, 10, 2)} />
                         </Physics>
                     </GameCanvas>
