@@ -29,9 +29,8 @@ const Ped = memo(({
         // RigidHumanoidModelProps extends AnimatedModelProps where `model` is the glb path.
         // We need to prepend basePath to get the full path for the ragdoll.
         const m = (rigidHumanoidProps as { model?: string }).model;
-        const basePath = (rigidHumanoidProps as { basePath?: string }).basePath ?? "/models/human/";
         const modelRelPath = m ?? "onimilio/rigged.glb";
-        return basePath + modelRelPath;
+        return modelRelPath;
     }, [rigidHumanoidProps]);
 
     const enterRagdoll = useCallback(() => {

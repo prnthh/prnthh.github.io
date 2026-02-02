@@ -5,6 +5,7 @@ import ButtonBox from "../zoo/Button";
 import Rain from "@/shared/rain";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import { FirstPersonArms } from "@/app/react-three-controller/firstperson/FirstPersonArms";
+import Breakable from "@/shared/Breakable";
 
 export default function GameComponents() {
     return <>
@@ -36,6 +37,15 @@ export default function GameComponents() {
 
         <DemoGroup label="pedspawner" position={[15, 0, -6]} size={[3, 3]}>
             <CrawlerApp controlled={false} />
+        </DemoGroup>
+
+        <DemoGroup label="breakable" position={[20, 0, -6]} size={[3, 3]}>
+            <Breakable type="dynamic" initialVelocity={false}>
+                <mesh castShadow receiveShadow position={[0, 0.6, 0]}>
+                    <boxGeometry args={[1, 1, 1]} />
+                    <meshStandardMaterial color="hotpink" />
+                </mesh>
+            </Breakable>
         </DemoGroup>
 
         <Rain
