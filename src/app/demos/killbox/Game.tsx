@@ -10,8 +10,8 @@ import MapPicker from "./MapPicker";
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import killboxlobby from "../../sketches/tools/prefabeditor/samples/killboxlobby.json";
 import { Physics } from "@react-three/rapier";
-import { FirstPersonController } from "@/app/react-three-controller";
 import { PedSpawner } from "../zoo/Game";
+import { CombinedController } from "@/app/react-three-controller";
 
 export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => void }) {
     const [gameId, setGameId] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => v
                             <color attach="background" args={['#b5e9ff']} />
                             <PrefabRoot data={currentMap} />
 
-                            <FirstPersonController
+                            <CombinedController mode="first-person"
                             // forwardRef={(refs) => {
                             //     rigidBodyRef.current = refs.rigidBodyRef.current;
                             //     bodyMeshRef.current = refs.meshref.current;

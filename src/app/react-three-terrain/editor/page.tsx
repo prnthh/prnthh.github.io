@@ -7,9 +7,9 @@ import { Map2DCanvas } from "./Map2DCanvas";
 import { MapControls, OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import { useCallback, useRef, useEffect, useState } from "react";
-import { FirstPersonController } from "../../react-three-controller";
 import { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import SynchronizedPointer from "./SynchronizedPointer";
+import { CombinedController } from "@/app/react-three-controller";
 
 
 function PageContent({
@@ -147,7 +147,7 @@ function PageContent({
                         </>
                     ) : (
                         <>
-                            <FirstPersonController spawnPosition={[0, 10, 0]} />
+                            <CombinedController mode="first-person" />
                             <DemoEnvironment />
                         </>
                     )}
