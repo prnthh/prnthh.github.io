@@ -1,6 +1,7 @@
 import { ThreeEvent } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useRef } from "react";
+import { useTexture } from "@react-three/drei";
 
 const DRAG_THRESHOLD = 5;
 
@@ -18,6 +19,7 @@ const DebugGround = ({
     onClick?: (e: ThreeEvent<MouseEvent>) => void;
 }) => {
     const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
+    const texture = useTexture("/textures/prototyping_textures_32x32px/Prototype_grey_32x32px.png");
 
     const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
         pointerDownPos.current = { x: e.clientX, y: e.clientY };
@@ -47,7 +49,7 @@ const DebugGround = ({
                         onPointerUp={handlePointerUp}
                     >
                         <planeGeometry args={[size, size]} />
-                        <meshStandardMaterial color="gray" />
+                        <meshStandardMaterial map={texture} color="gray" />
                     </mesh>
                 </RigidBody>
                 {debug && <gridHelper

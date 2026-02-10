@@ -123,10 +123,10 @@ export const MovementSystem = ({
         const spd = sprint ? sprintSpeed : walkSpeed;
 
         // Ground check
-        ray.set(pos.x, pos.y - height, pos.z);
-        const hit = rapier.world.castRay(new rapier.rapier.Ray(ray, { x: 0, y: -1, z: 0 }), 10, true,
+        ray.set(pos.x, pos.y, pos.z);
+        const hit = rapier.world.castRay(new rapier.rapier.Ray(ray, { x: 0, y: -1, z: 0 }), height + 0.5, true,
             rapier.rapier.QueryFilterFlags.EXCLUDE_SENSORS, undefined, undefined, rb);
-        const grounded = hit && hit.timeOfImpact < height;
+        const grounded = hit && hit.timeOfImpact <= height + 0.1;
 
         // Input direction
         q.set(rot.x, rot.y, rot.z, rot.w);
@@ -205,7 +205,8 @@ export const MovementSystem = ({
         // Vertical velocity
         let vy = vel.y;
         if (grounded) {
-            vy = vy * (1 - floatDamping) + (height - hit.timeOfImpact) * floatSpring * floatDamping;
+            const distFromGround = hit.timeOfImpact - height;
+            vy = vy * (1 - floatDamping) - distFromGround * floatSpring * floatDamping;
             if (Math.abs(vy) < 0.01) vy = 0;
             rb.setGravityScale(jump ? 1 : 0, true);
             if (jump && jumpReleased.current === false) vy = jumpVelocity;

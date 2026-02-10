@@ -23,7 +23,7 @@ export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => v
                     <GameCanvas>
                         <ambientLight intensity={1} />
                         {/* <OrbitControls makeDefault /> */}
-                        <Physics>
+                        <Physics debug>
                             <color attach="background" args={['#b5e9ff']} />
 
                             <RigidBody type="fixed" colliders="cuboid" position={[0, 0, 0]}>

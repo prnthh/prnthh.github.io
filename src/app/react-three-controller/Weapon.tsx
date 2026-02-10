@@ -99,7 +99,10 @@ export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.
                         addSensorBullet({ position: hitPoint });
                         setTimeout(() => {
                             // tiny delay so bullet has time to register hit
-                            rigidBody.applyImpulseAtPoint(impulse, hitPoint, true);
+                            // check if rigidBody still exists and has the method
+                            if (rigidBody && typeof rigidBody.applyImpulseAtPoint === "function") {
+                                rigidBody.applyImpulseAtPoint(impulse, hitPoint, true);
+                            }
                         }, 1);
                     }
                 }

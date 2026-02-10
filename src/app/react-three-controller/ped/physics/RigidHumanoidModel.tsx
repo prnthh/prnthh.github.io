@@ -21,12 +21,10 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
 
         useImperativeHandle(
             ref,
-            () => {
-                const meshMethods = animatedModelRef.current as AnimatedModelRef;
-                return Object.assign(meshMethods, {
-                    rigidBodyRef,
-                }) as RigidHumanoidModelRef;
-            },
+            () => ({
+                rigidBodyRef,
+                ...animatedModelRef.current,
+            } as RigidHumanoidModelRef),
             []
         );
 
@@ -54,15 +52,17 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
                         onIntersectionEnter={onCollisionEnter}
                     />
                 )}
-                <AnimatedModel
-                    ref={animatedModelRef}
-                    {...animatedModelProps}
-                    animationOverrides={{
-                        walk: "/models/human/anim/walk.fbx",
-                        run: "/models/human/anim/run.fbx",
-                        ...animatedModelProps.animationOverrides,
-                    }}
-                />
+                {animatedModelProps.basePath && (
+                    <AnimatedModel
+                        ref={animatedModelRef}
+                        {...animatedModelProps}
+                        animationOverrides={{
+                            walk: "/models/human/anim/walk.fbx",
+                            run: "/models/human/anim/run.fbx",
+                            ...animatedModelProps.animationOverrides,
+                        }}
+                    />
+                )}
             </RigidBody>
         );
     }

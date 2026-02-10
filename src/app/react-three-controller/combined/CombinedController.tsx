@@ -25,8 +25,8 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
         basePath: "/models/human/onimilio/",
         model: "/models/human/onimilio/rigged.glb",
         animation,
-        height: 0.9,
-        position: [0, 2, 0] as [number, number, number],
+        height: 1.3,
+        position: [0, 0, 0] as [number, number, number],
         animationOverrides: {
             idle: '/models/human/onimilio/anim/idle.fbx',
             walk: '/models/human/onimilio/anim/walk.fbx',
@@ -88,7 +88,7 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                     <FirstPersonControls
                         modelRef={modelRef}
                         height={modelProps.height}
-                        eyeHeight={modelProps.height / 2}
+                        eyeHeight={modelProps.height}
                         cameraOffset={[0, 0, 0]}
                         cameraRigRef={cameraRigRef}
                         setAnimation={setAnimation}

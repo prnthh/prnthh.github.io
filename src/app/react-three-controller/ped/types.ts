@@ -27,7 +27,7 @@ export interface AnimatedModelProps {
     /** Unique name identifier for the model */
     name?: string;
     /** Path to the .glb model file (relative to basePath) */
-    model: string;
+    model?: string;
     /** Base path for model assets */
     basePath?: string;
     /** Current animation name or array for blending */
