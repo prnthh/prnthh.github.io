@@ -52,7 +52,7 @@ const RigidHumanoidModel = forwardRef<RigidHumanoidModelRef, RigidHumanoidModelP
                         onIntersectionEnter={onCollisionEnter}
                     />
                 )}
-                {animatedModelProps.basePath && (
+                {animatedModelProps.model && (
                     <AnimatedModel
                         ref={animatedModelRef}
                         {...animatedModelProps}

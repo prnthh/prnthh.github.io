@@ -1,7 +1,8 @@
 import { ThreeEvent } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useTexture } from "@react-three/drei";
+import * as THREE from "three";
 
 const DRAG_THRESHOLD = 5;
 
@@ -20,6 +21,15 @@ const DebugGround = ({
 }) => {
     const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
     const texture = useTexture("/textures/prototyping_textures_32x32px/Prototype_grey_32x32px.png");
+
+    useEffect(() => {
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(size / 2, size / 2);
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.NearestFilter;
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+    }, [texture, size]);
 
     const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
         pointerDownPos.current = { x: e.clientX, y: e.clientY };
