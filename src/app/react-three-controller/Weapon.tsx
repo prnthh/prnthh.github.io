@@ -6,10 +6,11 @@
 
 import { useThree, useFrame } from "@react-three/fiber";
 import { useRef } from "react";
-import { Mesh, MeshStandardMaterial, SphereGeometry, Vector3 } from "three";
+import { Mesh, MeshStandardMaterial, SphereGeometry, Vector3, TextureLoader } from "three";
 import { useRapier, RapierRigidBody } from "@react-three/rapier";
 import useInputStore from "./controls/InputStore";
 import { sound } from "@/shared/util/SoundManager";
+import { useGLTF, useTexture } from "@react-three/drei";
 
 export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.RefObject<RapierRigidBody | null>, onFire?: () => void } = {}) {
     const { camera, scene } = useThree();
@@ -123,7 +124,30 @@ export function Weapon({ excludeRigidBody, onFire }: { excludeRigidBody?: React.
     return null;
 }
 
-export function Gun({ isFlashing = false }: { isFlashing?: boolean }) {
+export function Gun({ isFlashing = false, model }: { isFlashing?: boolean, model?: string }) {
+    const smokeTexture = useTexture("/textures/smoke.png");
+
+    if (model) {
+        const { scene } = useGLTF(model);
+        return <>
+            <group rotation={[0, Math.PI / 2, 0]} scale={0.1}>
+                <primitive object={scene.clone()} castShadow />
+            </group>
+            {isFlashing && (
+                <sprite position={[0, 0.05, -0.5]} scale={[0.3, 0.3, 1]}>
+                    <spriteMaterial
+                        map={smokeTexture}
+                        color="#ffaa00"
+                        opacity={1}
+                        transparent
+                        depthWrite={false}
+                        blending={2}
+                    />
+                </sprite>
+            )}
+        </>
+    }
+
     return <mesh rotation={[0, 0, 0]} castShadow>
         <boxGeometry args={[0.1, 0.1, 1]} />
         <meshStandardMaterial color={isFlashing ? "red" : "black"} emissive={isFlashing ? "red" : "black"} emissiveIntensity={isFlashing ? 2 : 0} />

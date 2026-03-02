@@ -13,7 +13,7 @@ import FirstPersonControls from "../controls/FirstPersonControls";
 import { FirstPersonArms } from "../firstperson/FirstPersonArms";
 import { Group } from "three";
 
-const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number] }>(({ mode, target = [0, 0, 0] }, ref) => {
+const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number], gunModel?: string }>(({ mode, target = [0, 0, 0], gunModel = "/models/environment/Colt 1911.glb" }, ref) => {
     const [animation, setAnimation] = useState<string>("idle");
     const modelRef = useRef<RigidHumanoidModelRef>(null);
     const cameraRigRef = useRef<Group | null>(null);
@@ -94,7 +94,7 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                         setAnimation={setAnimation}
                     >
 
-                        <FirstPersonArms modelRef={modelRef} />
+                        <FirstPersonArms modelRef={modelRef} gunModel={gunModel} />
                     </FirstPersonControls>
                 </>}
 

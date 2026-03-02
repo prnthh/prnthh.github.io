@@ -10,12 +10,12 @@ import { useState, useCallback, RefObject } from "react";
 import { Weapon, Gun } from "../Weapon";
 import { RigidHumanoidModelRef } from "../ped/types";
 
-export const FirstPersonArms = ({ rigidBodyRef, modelRef }: { rigidBodyRef?: RefObject<RapierRigidBody | null>, modelRef?: RefObject<RigidHumanoidModelRef | null> }) => {
+export const FirstPersonArms = ({ rigidBodyRef, modelRef, gunModel }: { rigidBodyRef?: RefObject<RapierRigidBody | null>, modelRef?: RefObject<RigidHumanoidModelRef | null>, gunModel?: string }) => {
     const [rightHand, setRightHand] = useState<'gun' | 'pick' | 'unarmed'>("gun");
     const [isFlashing, setIsFlashing] = useState(false);
     const handleFire = useCallback(() => {
         setIsFlashing(true);
-        setTimeout(() => setIsFlashing(false), 100);
+        setTimeout(() => setIsFlashing(false), 150);
         // onFire?.();
     }, []);
 
@@ -24,7 +24,7 @@ export const FirstPersonArms = ({ rigidBodyRef, modelRef }: { rigidBodyRef?: Ref
 
     return <>
         {rightHand === 'gun' && <group position={[0.2, -0.2, -0.5]} scale={0.5}>
-            <Gun isFlashing={isFlashing} />
+            <Gun isFlashing={isFlashing} model={gunModel} />
             <Weapon excludeRigidBody={rbRef} onFire={handleFire} />
         </group>}
     </>
