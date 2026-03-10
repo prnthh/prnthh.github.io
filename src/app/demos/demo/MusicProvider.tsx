@@ -2,6 +2,12 @@
 
 import { createContext, useContext, useRef, useState, useEffect, ReactNode } from "react";
 
+const NUM_BANDS = 20;
+const SENSITIVITY = 2.1;
+const SMOOTHING = 0.18;
+const LOW_FREQ = 20;
+const HIGH_FREQ = 20000;
+
 interface AudioData {
     bass: number;
     mid: number;
@@ -18,6 +24,7 @@ interface MusicContextType {
     audioRef: React.RefObject<HTMLAudioElement | null>;
     beatCountRef: React.RefObject<number>;
     elementColor: number;
+    bandsRef: React.RefObject<Float32Array>;
 }
 
 const MusicContext = createContext<MusicContextType | null>(null);
@@ -42,20 +49,20 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
     const animationFrameRef = useRef<number | null>(null);
 
     const [audioData, setAudioData] = useState<AudioData>({
-        bass: 0,
-        mid: 0,
-        high: 0,
-        energy: 0,
-        beatCount: 0,
-        currentTime: 0
+        bass: 0, mid: 0, high: 0, energy: 0, beatCount: 0, currentTime: 0
     });
 
-    const [elementColor, setElementColor] = useState<number>(0x000000); // Start with black
+    const [elementColor, setElementColor] = useState<number>(0x000000);
 
     const beatCountRef = useRef(0);
     const lastBeatTimeRef = useRef<number>(0);
     const energyHistoryRef = useRef<number[]>([]);
-    const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+    const dataArrayRef = useRef<Uint8Array | null>(null);
+
+    // 20 log-spaced frequency bands
+    const bandsRef = useRef<Float32Array>(new Float32Array(NUM_BANDS));
+    const rawBandsRef = useRef<Float32Array>(new Float32Array(NUM_BANDS));
+    const binRangesRef = useRef<[number, number][]>([]);
 
     useEffect(() => {
         return () => {
@@ -65,92 +72,78 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         };
     }, []);
 
+    const setupBinRanges = (sampleRate: number, fftSize: number) => {
+        const binWidth = sampleRate / fftSize;
+        const edges = new Float32Array(NUM_BANDS + 1);
+        for (let i = 0; i <= NUM_BANDS; i++) {
+            edges[i] = LOW_FREQ * Math.pow(HIGH_FREQ / LOW_FREQ, i / NUM_BANDS);
+        }
+        const ranges: [number, number][] = [];
+        for (let i = 0; i < NUM_BANDS; i++) {
+            const lo = Math.max(1, Math.round(edges[i] / binWidth));
+            const hi = Math.min(fftSize / 2 - 1, Math.round(edges[i + 1] / binWidth));
+            ranges.push([lo, Math.max(lo, hi)]);
+        }
+        binRangesRef.current = ranges;
+    };
+
     const analyzeAudio = () => {
         if (!analyserRef.current) return;
 
         const bufferLength = analyserRef.current.frequencyBinCount;
-
         if (!dataArrayRef.current || dataArrayRef.current.length !== bufferLength) {
             dataArrayRef.current = new Uint8Array(bufferLength);
         }
-        const dataArray = dataArrayRef.current;
-        analyserRef.current.getByteFrequencyData(dataArray);
+        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
 
-        // Frequency band ranges (demoscene standard approach)
-        // Bass: 20-140 Hz (bins 0-11 at 44.1kHz, FFT 256)
-        // Mid: 140-2500 Hz (bins 11-200)
-        // High: 2500-20000 Hz (bins 200+)
+        const ranges = binRangesRef.current;
+        const raw = rawBandsRef.current;
+        const smoothed = bandsRef.current;
+        const data = dataArrayRef.current;
 
-        const bassEnd = Math.floor(bufferLength * 0.1);  // ~10% for bass
-        const midEnd = Math.floor(bufferLength * 0.5);    // ~50% for mid
-
-        // Noise floor threshold - ignore very low values (silence)
-        const NOISE_FLOOR = 5;
-
-        let bassSum = 0, bassCount = 0;
-        let midSum = 0, midCount = 0;
-        let highSum = 0, highCount = 0;
-        let energySum = 0;
-
-        // Bass (20-140 Hz) - heavily weighted for kick drums
-        for (let i = 0; i < bassEnd; i++) {
-            const val = dataArray[i];
-            if (val > NOISE_FLOOR) {
-                bassSum += val * val; // Square for better peak response
-                bassCount++;
-            }
-            energySum += val;
+        // Compute 20 log-spaced frequency bands with smoothing
+        for (let i = 0; i < NUM_BANDS; i++) {
+            if (i >= ranges.length) break;
+            const [lo, hi] = ranges[i];
+            let sum = 0;
+            for (let j = lo; j <= hi; j++) sum += data[j];
+            const avg = sum / (hi - lo + 1) / 255;
+            raw[i] = avg * SENSITIVITY;
+            smoothed[i] += (raw[i] - smoothed[i]) * SMOOTHING;
         }
 
-        // Mid (140-2500 Hz) - most musical content
-        for (let i = bassEnd; i < midEnd; i++) {
-            const val = dataArray[i];
-            if (val > NOISE_FLOOR) {
-                midSum += val * val;
-                midCount++;
-            }
-            energySum += val;
+        // Derive bass/mid/high from bands for backward compat
+        const bassEnd = 3;
+        const midEnd = 10;
+        let bassSum = 0, midSum = 0, highSum = 0;
+        for (let i = 0; i < NUM_BANDS; i++) {
+            if (i < bassEnd) bassSum += smoothed[i];
+            else if (i < midEnd) midSum += smoothed[i];
+            else highSum += smoothed[i];
         }
+        const bass = (bassSum / bassEnd) * 85;
+        const mid = (midSum / (midEnd - bassEnd)) * 85;
+        const high = (highSum / (NUM_BANDS - midEnd)) * 85;
+        const energy = (bass + mid + high) / 3;
 
-        // High (2500-20000 Hz) - cymbals, hi-hats
-        for (let i = midEnd; i < bufferLength; i++) {
-            const val = dataArray[i];
-            if (val > NOISE_FLOOR) {
-                highSum += val * val;
-                highCount++;
-            }
-            energySum += val;
-        }
-
-        // RMS (root mean square) for each band - standard demoscene approach
-        // Use max(1, bassCount) to avoid division by zero during silence
-        const bass = bassCount > 0 ? Math.sqrt(bassSum / bassCount) : 0;
-        const mid = midCount > 0 ? Math.sqrt(midSum / midCount) : 0;
-        const high = highCount > 0 ? Math.sqrt(highSum / highCount) : 0;
-        const energy = energySum / bufferLength;
-
-        // Beat detection using bass energy with adaptive threshold
+        // Beat detection using bass with adaptive threshold
         const energyHistory = energyHistoryRef.current;
-        energyHistory.push(bass); // Use bass for beat detection
+        energyHistory.push(bass);
         if (energyHistory.length > 43) energyHistory.shift();
 
         if (energyHistory.length > 20) {
-            // Compute average and variance for adaptive threshold
             let avg = 0;
             for (let i = 0; i < energyHistory.length; i++) avg += energyHistory[i];
             avg /= energyHistory.length;
 
             let variance = 0;
             for (let i = 0; i < energyHistory.length; i++) {
-                variance += (energyHistory[i] - avg) * (energyHistory[i] - avg);
+                variance += (energyHistory[i] - avg) ** 2;
             }
             const stdDev = Math.sqrt(variance / energyHistory.length);
 
             const now = Date.now();
-            const threshold = avg + stdDev * 1.3; // Adaptive threshold (lowered for better sensitivity)
-
-            // Beat detection: bass spike above threshold with 150ms cooldown (up to 400 BPM)
-            // Reduced cooldown to detect quicker beats and double-time patterns
+            const threshold = avg + stdDev * 1.3;
             if (bass > threshold && now - lastBeatTimeRef.current > 150) {
                 beatCountRef.current += 1;
                 lastBeatTimeRef.current = now;
@@ -158,11 +151,6 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
         }
 
         const currentTime = audioRef.current?.currentTime || 0;
-        const cycleLength = 30;
-        const timeInCycle = currentTime % cycleLength;
-
-        // Update element color based on background (inverse)
-        // Background is black after 30s, so elements should be white
         const newColor = currentTime >= 30 ? 0xffffff : 0x000000;
         if (newColor !== elementColor) {
             setElementColor(newColor);
@@ -186,9 +174,13 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
                 audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
                 const source = audioContextRef.current.createMediaElementSource(audioRef.current);
                 analyserRef.current = audioContextRef.current.createAnalyser();
-                analyserRef.current.fftSize = 256;
+                analyserRef.current.fftSize = 2048;
+                analyserRef.current.smoothingTimeConstant = 0.3;
                 source.connect(analyserRef.current);
                 analyserRef.current.connect(audioContextRef.current.destination);
+
+                // Compute log-spaced bin ranges for 20 bands
+                setupBinRanges(audioContextRef.current.sampleRate, 2048);
             }
 
             audioRef.current.currentTime = 0;
@@ -196,6 +188,8 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
             beatCountRef.current = 0;
             lastBeatTimeRef.current = 0;
             energyHistoryRef.current = [];
+            bandsRef.current.fill(0);
+            rawBandsRef.current.fill(0);
             analyzeAudio();
         }
     };
@@ -207,7 +201,7 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
     };
 
     return (
-        <MusicContext.Provider value={{ audioData, play, pause, audioRef, beatCountRef, elementColor }}>
+        <MusicContext.Provider value={{ audioData, play, pause, audioRef, beatCountRef, elementColor, bandsRef }}>
             <audio ref={audioRef} src={song} loop />
             {children}
         </MusicContext.Provider>
