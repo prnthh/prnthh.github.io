@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, ReactNode, memo } from "react";
+import { useEffect, useMemo, useRef, useState, ReactNode, memo } from "react";
 import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { AgentHandle, useNavigableContext, Vector3Tuple } from "./NavigableContext";
@@ -8,11 +8,6 @@ import AnimatedModel from "../../react-three-character/HumanoidModel";
 // ============================================================================
 // Constants
 // ============================================================================
-
-const ANIMATION_OVERRIDES = {
-    walk: "anim/walk.fbx",
-    run: "anim/run.fbx",
-};
 
 // ============================================================================
 // Types
@@ -66,6 +61,10 @@ export const NavigableAgent = memo(({
     height = 1.5,
     children,
 }: NavigableAgentProps) => {
+    const animationOverrides = useMemo(() => ({
+        walk: `${basePath}anim/walk.fbx`,
+        run: `${basePath}anim/run.fbx`,
+    }), [basePath]);
     const { isReady, registerAgent, unregisterAgent } = useNavigableContext();
 
     // Refs
@@ -183,7 +182,7 @@ export const NavigableAgent = memo(({
                     model={model}
                     height={height}
                     animation="idle"
-                    animationOverrides={ANIMATION_OVERRIDES}
+                    animationOverrides={animationOverrides}
                 />
             )}
             {children}

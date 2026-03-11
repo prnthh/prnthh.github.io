@@ -3,6 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 import { CameraHelper, DirectionalLight, MeshBasicMaterial } from "three";
 import { Vector3 } from "three";
+import { LAYER_SHADOW_ONLY } from "@/shared/util/layers";
 
 
 export function ShadowLight({
@@ -23,6 +24,12 @@ export function ShadowLight({
 ) {
     const directionalLight = useRef<DirectionalLight>(null);
     const lastUpdate = useRef(0);
+
+    // Allow the shadow camera to see LAYER_SHADOW_ONLY objects (e.g. first-person player mesh)
+    useEffect(() => {
+        if (!directionalLight.current) return;
+        directionalLight.current.shadow.camera.layers.enable(LAYER_SHADOW_ONLY);
+    }, []);
 
     useFrame((state) => {
         const t = state.clock.getElapsedTime();

@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { CuboidCollider, CylinderCollider, RigidBody } from "@react-three/rapier";
+import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useFrame } from "@react-three/fiber";
 import { Mesh, Vector2, Raycaster } from "three";
 import { useThree } from "@react-three/fiber";
 import { InteractionManager, InteractionPriority } from "@/app/react-three-controller/controls/InputStore";
+import DialogCollider from "@/shared/physics/DialogCollider";
 
 interface ButtonBoxProps {
   position?: [number, number, number];
@@ -27,18 +28,11 @@ export default function ButtonBox({ position = [0, 1, 0], onActivate, interactio
   const prevFireRef = useRef(false);
   const clickDetectedRef = useRef(false);
 
-  const isPlayer = (event: any) => {
-    const name = event?.other?.rigidBodyObject?.name;
-    return name === 'bob';
-  };
-
-  const handleSensorEnter = (event: any) => {
-    if (!isPlayer(event)) return;
+  const handleSensorEnter = () => {
     setIsInRange(true);
   };
 
-  const handleSensorExit = (event: any) => {
-    if (!isPlayer(event)) return;
+  const handleSensorExit = () => {
     setIsInRange(false);
     setIsHovered(false);
     InteractionManager.release(claimId.current);
@@ -102,12 +96,11 @@ export default function ButtonBox({ position = [0, 1, 0], onActivate, interactio
 
   return (
     <RigidBody type="fixed" position={position} colliders={false}>
-      <CylinderCollider
-        args={[1, interactionRadius]}
-        position={[0, 0.5, 0]}
-        sensor
-                onIntersectionEnter={handleSensorEnter}
-        onIntersectionExit={handleSensorExit}
+      <DialogCollider
+        height={2}
+        radius={interactionRadius}
+        onEnter={handleSensorEnter}
+        onExit={handleSensorExit}
       />
       <CuboidCollider args={[0.5, 0.5, 0.5]} />
 

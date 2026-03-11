@@ -1,6 +1,7 @@
 import { useThree } from "@react-three/fiber"
 import { useEffect } from "react"
 import { DirectionalLight, HemisphereLight } from "three"
+import { LAYER_SHADOW_ONLY } from "@/shared/util/layers"
 
 export default function Sun() {
     const { scene, camera, gl } = useThree()
@@ -14,6 +15,7 @@ export default function Sun() {
         sun.shadow.mapSize.set(2048, 2048)
         sun.shadow.bias = -0.001
         sun.position.set(0.5, 3, 0.5)
+        sun.shadow.camera.layers.enable(LAYER_SHADOW_ONLY)
 
         const hemi1 = new HemisphereLight(0x333366, 0x74ccf4, 3)
         const hemi2 = new HemisphereLight(0x74ccf4, 0, 1)

@@ -8,7 +8,6 @@ import { Html } from "@react-three/drei";
 import { GameCanvas } from "react-three-game";
 
 import Ped from "@/app/react-three-controller/ped/ped";
-import DialogCollider from "@/app/react-three-controller/ped/physics/DialogCollider";
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import Playground from "@/shared/debug/Playground";
@@ -188,12 +187,6 @@ const TalkativeNPC = ({ id }: { id: string }) => {
                 {entity.goal}
             </pre>
         </Html>
-        <DialogCollider onExit={() => { setIsTalking(false) }}>
-            {!isTalking && <ActivationToggle onActivate={() => {
-                setIsTalking(true);
-            }} />}
-            phi
-        </DialogCollider>
     </Ped></>;
 }
 
@@ -211,11 +204,11 @@ const Pickupable = ({ id }: { id: string }) => {
     return <RigidBody position={entity.position}><mesh>
         <boxGeometry args={[0.2, 0.2, 0.2]} />
         <meshStandardMaterial color="orange" />
-        <DialogCollider radius={0.2} onEnter={() => {
+        {/* <DialogCollider radius={0.2} onEnter={() => {
             console.log('Picked up item:', id);
             setTimeout(() => {
                 removeEntity(id);
             }, 0);
-        }} />
+        }} /> */}
     </mesh></RigidBody>;
 }

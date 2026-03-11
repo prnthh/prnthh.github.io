@@ -22,7 +22,7 @@ const demosConfig: Record<string, ItemConfig> = {
     },
     'museum': {
         // path: 'demos/killbox',
-        path: 'demos/killbox2',
+        path: 'demos/museum',
         description: 'Systems, lighting and prefabs demos'
     },
     'colony': {

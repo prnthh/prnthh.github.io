@@ -35,7 +35,6 @@ export { default as Ragdoll } from './ped/physics/Ragdoll';
 export { default as PedRagdoll } from './ped/physics/PedRagdoll';
 export { default as RigidHumanoidModel } from './ped/physics/RigidHumanoidModel';
 export { default as SelfSteeringBehavior } from './ped/physics/SelfSteeringBehavior';
-export { default as DialogCollider } from './ped/physics/DialogCollider';
 
 // Navigation
 export { NavigableAgent } from './navmesh/NavigableAgent';

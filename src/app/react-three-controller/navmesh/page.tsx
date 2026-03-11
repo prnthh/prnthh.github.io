@@ -124,7 +124,7 @@ const HuntingAgent = ({
             position={spawnPosition}
             target={target}
             basePath="/models/human/onimilio/"
-            model="rigged.glb"
+            model="/models/human/onimilio/rigged.glb"
             height={1.5}
             onTargetReached={() => {
                 if (targetEntityIdRef.current) onPickup(targetEntityIdRef.current);

@@ -7,7 +7,7 @@ import Balloon from "@/shared/physics/Balloon";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
 import { Mesh, Object3D } from "three";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
-import ButtonBox from "./Button";
+import ButtonBox from "@/shared/util/Button";
 import HitBox from "@/shared/physics/HitBox";
 import { useTimeRNGNumber } from "@/shared/etc/TimeRNG";
 import { Text } from 'three-text/three/react';

@@ -10,7 +10,7 @@ import MapPicker from "./MapPicker";
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import killboxlobby from "../../sketches/tools/prefabeditor/samples/killboxlobby.json";
 import { Physics } from "@react-three/rapier";
-import { PedSpawner } from "../zoo/Game";
+import { PedSpawner } from "../museum/Game";
 import { CombinedController } from "@/app/react-three-controller";
 
 export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => void }) {

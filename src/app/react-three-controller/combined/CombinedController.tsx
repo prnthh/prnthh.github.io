@@ -27,6 +27,7 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
         animation,
         height: 1.3,
         position: [0, 0, 0] as [number, number, number],
+        shadowOnly: mode === 'first-person',
         animationOverrides: {
             idle: '/models/human/onimilio/anim/idle.fbx',
             walk: '/models/human/onimilio/anim/walk.fbx',

@@ -8,7 +8,7 @@ import { Html } from "@react-three/drei";
 import { GameCanvas } from "react-three-game";
 
 import Ped from "@/app/react-three-controller/ped/ped";
-import DialogCollider from "@/app/react-three-controller/ped/physics/DialogCollider";
+import DialogCollider from "@/shared/physics/DialogCollider";
 import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
 import Playground from "@/shared/debug/Playground";

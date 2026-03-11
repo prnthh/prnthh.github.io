@@ -66,6 +66,8 @@ export interface AnimatedModelProps {
     };
     /** Enable bone-based collision detection */
     enableBoneCollider?: boolean;
+    /** When true, the model is invisible but still casts shadows (e.g. first-person mode) */
+    shadowOnly?: boolean;
     /** React children */
     children?: React.ReactNode;
 }

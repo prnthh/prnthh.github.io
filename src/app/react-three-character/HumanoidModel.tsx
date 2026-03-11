@@ -3,6 +3,7 @@ import { Group, Mesh, Object3D, } from "three";
 import { SimplifyModifier, SkeletonUtils } from "three-stdlib";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
+import { LAYER_DEFAULT, LAYER_SHADOW_ONLY } from "@/shared/util/layers";
 
 import useAnimationState from "../react-three-controller/ped/useAnimationStateBasic";
 import useLookAtTarget from "../react-three-controller/ped/useLookAtTarget";
@@ -21,7 +22,7 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
     ({ name, model, animation = "idle", onClick,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
-        debug = false, lookTarget, retargetOptions, onActions, attachments, enableBoneCollider = true, children, ...props
+        debug = false, lookTarget, retargetOptions, onActions, attachments, enableBoneCollider = true, shadowOnly = false, children, ...props
     }, ref) => {
         const modelRef = useRef<Object3D | undefined>(undefined);
         const groupRef = useRef<Group>(null!);
@@ -78,6 +79,20 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
                 setClonedScene(cloned);
             }
         }, [scene]);
+
+        // In shadow-only mode, move meshes to LAYER_SHADOW_ONLY so the player
+        // camera (layer 0 only) cannot see them, but shadow cameras (which have
+        // LAYER_SHADOW_ONLY enabled) will still render them in the shadow map.
+        useEffect(() => {
+            if (!clonedScene) return;
+            const layer = shadowOnly ? LAYER_SHADOW_ONLY : LAYER_DEFAULT;
+            clonedScene.traverse((child) => {
+                if (!('isMesh' in child && child.isMesh)) return;
+                const mesh = child as Mesh;
+                mesh.castShadow = true;
+                mesh.layers.set(layer);
+            });
+        }, [clonedScene, shadowOnly]);
 
         useLookAtTarget(clonedScene, lookTarget, 'mixamorigNeck')
 
