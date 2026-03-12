@@ -39,14 +39,14 @@ export default function Home() {
                             <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />
                         )}
 
-                        <CombinedController ref={characterRef} mode={"click"} target={target} />
+                        <CombinedController model={'/models/human/sam.glb'} ref={characterRef} mode={"click"} target={target} />
                         {activeEntity === null && <SidewaysFollowCamera characterRef={characterRef} />}
 
 
                         <Ped onClick={(e) => {
                             setActiveEntity("ped");
                             e.stopPropagation();
-                        }} modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]} model="/models/human/rigga/rigga2.glb" >
+                        }} modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]} model="/models/human/max.glb" >
                             {activeEntity === "ped" && <CutsceneCamera position={[0, 1, 2]} />}
                         </Ped>
                     </Physics>

@@ -13,7 +13,7 @@ import FirstPersonControls from "../controls/FirstPersonControls";
 import { FirstPersonArms } from "../firstperson/FirstPersonArms";
 import { Group } from "three";
 
-const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number], gunModel?: string }>(({ mode, target = [0, 0, 0], gunModel = "/models/environment/Colt 1911.glb" }, ref) => {
+const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number], gunModel?: string, model?: string, basePath?: string }>(({ mode, target = [0, 0, 0], gunModel = "/models/environment/Colt 1911.glb", model = "/models/human/onimilio/rigged.glb", basePath = "/models/human/onimilio/" }, ref) => {
     const [animation, setAnimation] = useState<string>("idle");
     const modelRef = useRef<RigidHumanoidModelRef>(null);
     const cameraRigRef = useRef<Group | null>(null);
@@ -22,8 +22,8 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
     useImperativeHandle(ref, () => modelRef.current as RigidHumanoidModelRef, []);
 
     const modelProps = {
-        basePath: "/models/human/onimilio/",
-        model: "/models/human/onimilio/rigged.glb",
+        basePath,
+        model,
         animation,
         height: 1.3,
         position: [0, 0, 0] as [number, number, number],
