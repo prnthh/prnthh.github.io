@@ -26,7 +26,7 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
     }, ref) => {
         const modelRef = useRef<Object3D | undefined>(undefined);
         const groupRef = useRef<Group>(null!);
-        const { scene, animations } = useGLTF(model);
+        const { scene } = useGLTF(model!);
         const [clonedScene, setClonedScene] = useState<Object3D | undefined>(undefined);
 
         // Create a clone of the scene to avoid modifying the original

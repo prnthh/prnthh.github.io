@@ -57,7 +57,7 @@ export default function MusicProvider({ children, song }: MusicProviderProps) {
     const beatCountRef = useRef(0);
     const lastBeatTimeRef = useRef<number>(0);
     const energyHistoryRef = useRef<number[]>([]);
-    const dataArrayRef = useRef<Uint8Array | null>(null);
+    const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
 
     // 20 log-spaced frequency bands
     const bandsRef = useRef<Float32Array>(new Float32Array(NUM_BANDS));
