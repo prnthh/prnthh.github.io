@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Physics, RigidBody } from "@react-three/rapier";
 import { GameCanvas } from "react-three-game";
 import useGameStore, { allEntityIDsByType, Entity, getEntitiesByType, useEntityById } from "@/shared/providers/GameEntityStore";
 
-import DebugGround from "@/shared/ground/DebugGround";
 import DebugCamera from "@/shared/cameras/DebugCamera";
-import Playground from "@/shared/debug/Playground";
 import NavigableWorld from "@/app/react-three-controller/navmesh/NavigableContext";
 import NavigableAgent from "@/app/react-three-controller/navmesh/NavigableAgent";
 
@@ -16,13 +13,11 @@ export default function NavmeshExample() {
         <div className="items-center justify-items-center min-h-screen">
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas>
-                    <Physics debug>
-                        <ambientLight intensity={0.5} />
-                        <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
-                        <GameEntityWorld />
+                    <ambientLight intensity={0.5} />
+                    <pointLight position={[10, 10, 10]} castShadow intensity={1000} />
+                    <GameEntityWorld />
 
-                        <DebugCamera />
-                    </Physics>
+                    <DebugCamera />
                 </GameCanvas>
             </div>
         </div>
@@ -72,8 +67,13 @@ const GameEntityWorld = () => {
     return (
         <>
             <NavigableWorld>
-                <DebugGround size={200} onClick={(e) => addEntity(randomPickupable([e.point.x, e.point.z]))} />
-                <Playground dynamic={false} position={[0, -1.8, 0]} />
+                <mesh
+                    receiveShadow
+                    rotation={[-Math.PI / 2, 0, 0]}
+                >
+                    <planeGeometry args={[64, 64]} />
+                    <meshStandardMaterial color="gray" />
+                </mesh>
 
                 {INITIAL_AGENTS.map((agent) => (
                     <HuntingAgent
@@ -140,11 +140,9 @@ const Pickupable = ({ id }: { id: string }) => {
     if (!entity || !entity.position) return null;
 
     return (
-        <RigidBody position={entity.position}>
-            <mesh castShadow>
-                <boxGeometry args={[0.4, 0.4, 0.4]} />
-                <meshStandardMaterial color="orange" />
-            </mesh>
-        </RigidBody>
+        <mesh castShadow position={entity.position as [number, number, number]}>
+            <boxGeometry args={[0.4, 0.4, 0.4]} />
+            <meshStandardMaterial color="orange" />
+        </mesh>
     );
 };
