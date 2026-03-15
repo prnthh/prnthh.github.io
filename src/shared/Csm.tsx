@@ -1,5 +1,5 @@
 import { useRef, useLayoutEffect, useMemo } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useThree, useFrame } from '@react-three/fiber'
 import { DirectionalLight, DirectionalLightHelper, Vector3, OrthographicCamera, CameraHelper } from 'three'
 import { CSMShadowNode } from 'three/addons/csm/CSMShadowNode.js'
 import { Helper } from '@react-three/drei'
@@ -16,6 +16,8 @@ export function Csm({
     shadowNear = 1,
     shadowFar = 300,
     shadowBias = -0.0005,
+    followCamera = true,
+    snapStep = 8,
     ...props
 }: {
     debug?: boolean
@@ -29,10 +31,17 @@ export function Csm({
     shadowNear?: number
     shadowFar?: number
     shadowBias?: number
+    /** Move the shadow region to follow the camera (default true) */
+    followCamera?: boolean
+    /** Grid size for quantized light movement — larger = less frequent jumps (default 8) */
+    snapStep?: number
 }) {
     const lightRef = useRef<DirectionalLight>(null)
     const shadowCameraRef = useRef<OrthographicCamera>(null)
     const { camera } = useThree()
+
+    // Track the last snapped position so we only update on grid crossings
+    const lastSnapped = useRef(new Vector3())
 
     const csm = useMemo(() => {
         if (!lightRef.current) return null
@@ -71,6 +80,32 @@ export function Csm({
     const normalizedDirection = useMemo(() => {
         return new Vector3(...lightDirection).normalize().multiplyScalar(-50)
     }, [lightDirection])
+
+    // Follow camera in quantized steps to keep shadows around the player
+    useFrame(() => {
+        if (!followCamera || !lightRef.current) return
+
+        const camPos = camera.position
+        const snappedX = Math.round(camPos.x / snapStep) * snapStep
+        const snappedZ = Math.round(camPos.z / snapStep) * snapStep
+
+        if (snappedX !== lastSnapped.current.x || snappedZ !== lastSnapped.current.z) {
+            lastSnapped.current.set(snappedX, 0, snappedZ)
+
+            // Offset the light position so it aims at the snapped camera location
+            lightRef.current.position.set(
+                snappedX + normalizedDirection.x,
+                normalizedDirection.y,
+                snappedZ + normalizedDirection.z
+            )
+            lightRef.current.target.position.set(snappedX, 0, snappedZ)
+            lightRef.current.target.updateMatrixWorld()
+
+            if (csm) {
+                csm.updateFrustums()
+            }
+        }
+    })
 
     return (
         <>
