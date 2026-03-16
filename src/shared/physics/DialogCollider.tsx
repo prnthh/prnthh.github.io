@@ -4,14 +4,14 @@ import { Html } from "@react-three/drei";
 
 export default function DialogCollider({
     children,
-    sceneChildren,
+    label,
     height = 1.4,
     radius = 1.5,
     onEnter,
     onExit
 }: {
     children?: React.ReactNode,
-    sceneChildren?: React.ReactNode,
+    label?: React.ReactNode,
     height?: number,
     radius?: number,
     onEnter?: () => void,
@@ -44,10 +44,10 @@ export default function DialogCollider({
             onIntersectionEnter={handleIntersectionEnter}
             onIntersectionExit={handleIntersectionExit}
         />
-        {dialogVisible && sceneChildren}
+        {dialogVisible && children}
         {dialogVisible && <Html sprite transform position={[0, height * 1.1, 0]} scale={0.4}>
             <div className="select-none max-w-[250px] hover:text-yellow-500 font-serif p-1 text text-yellow-300 text-center bg-black-800/20 rounded">
-                {children || "Default Dialog Text"}
+                {label || "Default Dialog Text"}
             </div>
         </Html>}
     </>

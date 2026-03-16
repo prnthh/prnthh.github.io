@@ -9,6 +9,7 @@ import { Box, Environment, OrbitControls } from "@react-three/drei";
 import CombinedController from "./react-three-controller/combined/CombinedController";
 import { Csm } from "@/shared/Csm";
 import DebugGround from "@/shared/ground/DebugGround";
+import DialogCollider from "@/shared/physics/DialogCollider";
 
 export default function Home() {
   return (
@@ -38,8 +39,9 @@ export default function Home() {
               <Csm>
                 <DebugGround />
                 <ambientLight intensity={0.5} />
-
                 <CombinedController mode={'wawa'} />
+
+                <DialogCollider label="omg its prnth.com!" />
               </Csm>
 
 
