@@ -7,9 +7,9 @@
 import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
 import { useEffect, useRef, useState, useCallback, RefObject } from "react";
-import { Vector3, Quaternion, Object3D, MathUtils } from "three";
+import { Vector3, Object3D, MathUtils } from "three";
 
-import FollowCam from "@/shared/cameras/FollowCam";
+import { SceneCamera } from "@/shared/cameras/SceneCamera";
 
 import { Weapon } from "../Weapon";
 import useInputStore from "../controls/InputStore";
@@ -17,15 +17,17 @@ import KeyboardControls from "../controls/KeyboardControls";
 import PointerLockControls from "../controls/PointerLockControls";
 import { RigidHumanoidModelRef } from "../ped/types";
 
-const tempQuat = new Quaternion();
-const tempYawQuat = new Quaternion();
-const tempForward = new Vector3();
-const tempRight = new Vector3();
-const tempDirection = new Vector3();
+// Reusable temp vectors (allocated once)
+const _fwd = new Vector3();
+const _right = new Vector3();
+const _dir = new Vector3();
+const _pivot = new Vector3();
 
 const MOUSE_SENSITIVITY = 0.002;
 const JOYSTICK_SENSITIVITY = 2.5;
-const PITCH_LIMIT = Math.PI / 2; // 90 degrees up/down
+const PITCH_MIN = -0.4;
+const PITCH_MAX = 1.2;
+const TURN_SPEED = 10; // radians/sec for visual model rotation
 
 interface ThirdPersonControlsProps {
     modelRef: RefObject<RigidHumanoidModelRef | null>;
@@ -34,6 +36,7 @@ interface ThirdPersonControlsProps {
     walkSpeed?: number;
     runSpeed?: number;
     jumpForce?: number;
+    orbitDistance?: number;
     lookTarget?: RefObject<Object3D | null>;
 }
 
@@ -44,177 +47,66 @@ const ThirdPersonControls = ({
     walkSpeed = 1.2,
     runSpeed = 3,
     jumpForce = 1,
+    orbitDistance = 4,
     lookTarget,
 }: ThirdPersonControlsProps) => {
-    const verticalRotation = useRef(0);
+    const cameraYaw = useRef(0);
+    const cameraPitch = useRef(0.3);
+    const sceneCameraRef = useRef<any>(null);
 
-    const [animation, setAnimation] = useState<"idle" | "walk" | "walkBack" | "run" | "runBack" | "jump" | "walkLeft" | "walkRight" | "lpunch" | "rpunch" | string[]>("idle");
-    const [shoulderCamMode, setShoulderCamMode] = useState(false);
+    const [animation, setAnimation] = useState<string>("idle");
+    const [shoulderCamMode, setShoulder] = useState(false);
     const tap = useInputStore(state => state.tap);
 
-    // Shared look logic - processes movement deltas directly
-    const applyLookDelta = useCallback((dx: number, dy: number) => {
-        if (!modelRef.current?.rigidBodyRef.current) return;
-
-        const rb = modelRef.current.rigidBodyRef.current;
-        const yawDelta = -dx * MOUSE_SENSITIVITY;
-        const rot = rb.rotation();
-        tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-        tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
-        tempQuat.premultiply(tempYawQuat);
-        rb.setRotation(tempQuat, true);
-
-        verticalRotation.current = MathUtils.clamp(
-            verticalRotation.current + dy * MOUSE_SENSITIVITY,
-            -PITCH_LIMIT,
-            PITCH_LIMIT
-        );
-    }, [modelRef]);
-
-    // Update animation on the model
-    useEffect(() => {
-        if (modelRef.current?.setAnimation) {
-            modelRef.current.setAnimation(animation);
-        }
-    }, [animation, modelRef]);
-
-    return (
-        <>
-            <MovementSystem
-                modelRef={modelRef}
-                height={height}
-                capsuleRadius={capsuleRadius}
-                animation={animation}
-                setAnimation={setAnimation}
-                walkSpeed={walkSpeed}
-                runSpeed={runSpeed}
-                jumpForce={jumpForce}
-            />
-            <LookSystem
-                modelRef={modelRef}
-                verticalRotation={verticalRotation}
-            />
-            <group position={[0, -height / 2, 0]}>
-                <FollowCam
-                    height={1 / height}
-                    verticalRotation={verticalRotation}
-                    cameraOffset={
-                        shoulderCamMode
-                            ? [-0.5, 1.5, -0.5]
-                            : [0, 1.5, -1.5]
-                    }
-                    targetOffset={
-                        shoulderCamMode
-                            ? [0, 0.5, 1.5]
-                            : [0, 0.5, 1.5]
-                    }
-                />
-            </group>
-            <PointerLockControls
-                onLook={applyLookDelta}
-                onClick={() => { shoulderCamMode && tap(); }}
-                onRightClickDown={() => setShoulderCamMode(true)}
-                onRightClickUp={() => setShoulderCamMode(false)}
-            />
-            <KeyboardControls />
-            {shoulderCamMode && <Weapon excludeRigidBody={modelRef.current?.rigidBodyRef} />}
-        </>
-    );
-};
-
-export default ThirdPersonControls;
-
-// Movement System - handles character movement, jumping, and animations
-export const MovementSystem = ({
-    modelRef,
-    height,
-    capsuleRadius,
-    animation,
-    setAnimation,
-    walkSpeed,
-    runSpeed,
-    jumpForce,
-}: {
-    modelRef: RefObject<RigidHumanoidModelRef | null>;
-    height: number;
-    capsuleRadius: number;
-    animation: "idle" | "walk" | "walkBack" | "run" | "runBack" | "jump" | "walkLeft" | "walkRight" | "lpunch" | "rpunch" | string[];
-    setAnimation: (anim: "idle" | "walk" | "walkBack" | "run" | "runBack" | "jump" | "walkLeft" | "walkRight" | "lpunch" | "rpunch" | string[]) => void;
-    walkSpeed: number;
-    runSpeed: number;
-    jumpForce: number;
-}) => {
-    const horizontal = useInputStore(state => state.horizontal);
-    const vertical = useInputStore(state => state.vertical);
-    const sprint = useInputStore(state => state.sprint);
-    const jump = useInputStore(state => state.jump);
-    const use = useInputStore(state => state.use);
-    const altUse = useInputStore(state => state.altUse);
+    // ── Input selectors (subscribed reactively) ──
+    const horizontal = useInputStore(s => s.horizontal);
+    const vertical = useInputStore(s => s.vertical);
+    const sprint = useInputStore(s => s.sprint);
+    const jump = useInputStore(s => s.jump);
+    const use = useInputStore(s => s.use);
+    const altUse = useInputStore(s => s.altUse);
+    const lookH = useInputStore(s => s.lookHorizontal);
+    const lookV = useInputStore(s => s.lookVertical);
 
     const { rapier, world } = useRapier();
-    const velocityRef = useRef<Vector3>(new Vector3(0, 0, 0));
     const jumping = useRef(false);
     const jumpReleased = useRef(true);
 
+    // Mouse look → camera orbit
+    const applyLookDelta = useCallback((dx: number, dy: number) => {
+        cameraYaw.current += dx * MOUSE_SENSITIVITY;
+        cameraPitch.current = MathUtils.clamp(cameraPitch.current + dy * MOUSE_SENSITIVITY, PITCH_MIN, PITCH_MAX);
+    }, []);
+
+    // Push animation name to model
+    useEffect(() => { modelRef.current?.setAnimation?.(animation); }, [animation, modelRef]);
+
+    // Ground check
     const checkGrounded = useCallback(() => {
         const rb = modelRef.current?.rigidBodyRef.current;
         if (!rb || !rapier) return false;
-
         const origin = rb.translation();
-        const rayOrigin = {
-            x: origin.x,
-            y: origin.y,
-            z: origin.z
-        };
-        const direction = { x: 0, y: -1, z: 0 };
-        const ray = new rapier.Ray(rayOrigin, direction);
-        const maxToi = 0.1;
-        const solid = true;
-
-        const playerCollider = rb.collider(0);
-
         const hit = world.castRay(
-            ray,
-            maxToi,
-            solid,
-            undefined,
-            undefined,
-            playerCollider
+            new rapier.Ray(origin, { x: 0, y: -1, z: 0 }),
+            0.1, true, undefined, undefined, rb.collider(0),
         );
-
-        const isGrounded = !!hit && hit.timeOfImpact < 0.1 && Math.abs(rb.linvel().y) < 0.1;
-
-        // Add ground velocity if standing on a moving object
-        if (hit && isGrounded) {
-            const groundCollider = hit.collider;
-            const groundRigidBody = groundCollider.parent();
-            if (groundRigidBody && !groundRigidBody.isFixed()) {
-                const groundLinvel = groundRigidBody.linvel();
-                const speed = Math.sqrt(groundLinvel.x ** 2 + groundLinvel.y ** 2 + groundLinvel.z ** 2);
-                if (speed > 0.01) {
-                    const currentVel = rb.linvel();
-                    rb.setLinvel({
-                        x: currentVel.x + groundLinvel.x,
-                        y: currentVel.y,
-                        z: currentVel.z + groundLinvel.z
-                    }, true);
-                }
-            }
-        }
-
-        return isGrounded;
+        return !!hit && hit.timeOfImpact < 0.1 && Math.abs(rb.linvel().y) < 0.5;
     }, [modelRef, rapier, world]);
 
-    useFrame(() => {
+    // ── Single useFrame: movement + model turn + joystick orbit + camera ──
+    useFrame((_, dt) => {
         const rb = modelRef.current?.rigidBodyRef.current;
-        if (!rb) return;
+        const cam = sceneCameraRef.current?.cameraRef?.current;
+        if (!rb || !cam) return;
 
-        const moveX = horizontal;
-        const moveZ = vertical;
+        // ─ Joystick orbit ─
+        if (Math.abs(lookH) > 0.01) cameraYaw.current += lookH * JOYSTICK_SENSITIVITY * dt;
+        if (Math.abs(lookV) > 0.01) cameraPitch.current = MathUtils.clamp(cameraPitch.current - lookV * JOYSTICK_SENSITIVITY * dt, PITCH_MIN, PITCH_MAX);
+
+        // ─ Movement ─
         const speed = sprint ? runSpeed : walkSpeed;
         const grounded = checkGrounded();
 
-        // Handle jump
         if (!jump) jumpReleased.current = true;
         if (jumping.current && grounded) jumping.current = false;
         if (jump && jumpReleased.current && !jumping.current && grounded) {
@@ -224,99 +116,70 @@ export const MovementSystem = ({
             jumpReleased.current = false;
         }
 
-        // Update animation
-        let nextAnimation: typeof animation | string[] = "idle";
+        const yaw = cameraYaw.current;
+        _fwd.set(-Math.sin(yaw), 0, Math.cos(yaw));
+        _right.set(-Math.cos(yaw), 0, -Math.sin(yaw));
+        _dir.set(0, 0, 0).addScaledVector(_fwd, vertical).addScaledVector(_right, horizontal);
+        const hasInput = _dir.lengthSq() > 1e-4;
+        if (hasInput) _dir.normalize();
 
-        if (use) {
-            nextAnimation = "rpunch";
-        } else if (altUse) {
-            nextAnimation = "lpunch";
-        } else if (jumping.current) {
-            nextAnimation = "jump";
-        } else if (moveX || moveZ) {
-            const absX = Math.abs(moveX);
-            const absZ = Math.abs(moveZ);
+        // Animation
+        let anim = "idle";
+        if (use) anim = "rpunch";
+        else if (altUse) anim = "lpunch";
+        else if (jumping.current) anim = "jump";
+        else if (hasInput) anim = sprint ? "run" : "walk";
+        setAnimation(anim);
 
-            if (absX > 0.3 && absX > absZ * 1.5) {
-                // Use walkRight (reversed walkLeft) when moving right, walkLeft when moving left
-                nextAnimation = moveX > 0 ? "walkRight" : "walkLeft";
-            } else if (moveZ < 0) {
-                // Moving backwards - use reversed walk/run animations
-                nextAnimation = speed === runSpeed ? "runBack" : "walkBack";
-            } else {
-                // Moving forwards
-                nextAnimation = speed === runSpeed ? "run" : "walk";
+        // Velocity
+        const vy = rb.linvel().y;
+        if (use || altUse) rb.setLinvel({ x: 0, y: vy, z: 0 }, true);
+        else if (hasInput) rb.setLinvel({ x: _dir.x * speed, y: vy, z: _dir.z * speed }, true);
+        else rb.setLinvel({ x: 0, y: vy, z: 0 }, true);
+
+        // ─ Visual model rotation ─
+        if (hasInput && !use && !altUse) {
+            const targetYaw = Math.atan2(-horizontal, vertical) - yaw;
+            const modelObj = modelRef.current?.modelRef?.current;
+            if (modelObj) {
+                let diff = targetYaw - modelObj.rotation.y;
+                if (diff > Math.PI) diff -= Math.PI * 2;
+                else if (diff < -Math.PI) diff += Math.PI * 2;
+                modelObj.rotation.y += diff * Math.min(1, TURN_SPEED * dt);
             }
         }
 
-        setAnimation(nextAnimation);
+        // ─ Camera (local space — parent is the RigidBody with lockRotations) ─
+        const pos = rb.translation();
+        const headY = height * 0.85;
+        const pitch = cameraPitch.current;
+        const dist = shoulderCamMode ? 2 : orbitDistance;
+        const shoulder = shoulderCamMode ? 0.5 : 0;
+        const cp = Math.cos(pitch);
 
-        // Handle movement
-        if (use || altUse) {
-            velocityRef.current.set(0, rb.linvel().y, 0);
-            rb.setLinvel(velocityRef.current, true);
-        } else if (moveX || moveZ) {
-            const rot = rb.rotation();
-            tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-
-            tempForward.set(0, 0, 1).applyQuaternion(tempQuat).setY(0).normalize();
-            tempRight.set(-1, 0, 0).applyQuaternion(tempQuat).setY(0).normalize();
-
-            tempDirection.set(0, 0, 0)
-                .addScaledVector(tempForward, moveZ)
-                .addScaledVector(tempRight, moveX);
-
-            const inputMagnitude = tempDirection.length();
-            if (inputMagnitude > 0) {
-                tempDirection.multiplyScalar(speed / inputMagnitude);
-            }
-
-            velocityRef.current.set(tempDirection.x, rb.linvel().y, tempDirection.z);
-            rb.setLinvel(velocityRef.current, true);
-        } else {
-            velocityRef.current.set(0, rb.linvel().y, 0);
-            rb.setLinvel(velocityRef.current, true);
-        }
+        cam.position.set(
+            dist * Math.sin(yaw) * cp - shoulder * Math.cos(yaw),
+            headY + dist * Math.sin(pitch),
+            -dist * Math.cos(yaw) * cp - shoulder * Math.sin(yaw),
+        );
+        // lookAt expects world-space; offset by the rigid body's world position
+        _pivot.set(pos.x, pos.y + headY, pos.z);
+        cam.lookAt(_pivot);
     });
 
-    return null;
+    return (
+        <>
+            <SceneCamera ref={sceneCameraRef} fov={75} />
+            <PointerLockControls
+                onLook={applyLookDelta}
+                onClick={() => { shoulderCamMode && tap(); }}
+                onRightClickDown={() => setShoulder(true)}
+                onRightClickUp={() => setShoulder(false)}
+            />
+            <KeyboardControls />
+            {shoulderCamMode && <Weapon excludeRigidBody={modelRef.current?.rigidBodyRef} />}
+        </>
+    );
 };
 
-// Look System - handles joystick camera rotation
-export const LookSystem = ({
-    modelRef,
-    verticalRotation,
-}: {
-    modelRef: RefObject<RigidHumanoidModelRef | null>;
-    verticalRotation: React.MutableRefObject<number>;
-}) => {
-    const lookHorizontal = useInputStore(state => state.lookHorizontal);
-    const lookVertical = useInputStore(state => state.lookVertical);
-
-    useFrame((_, delta) => {
-        const rb = modelRef.current?.rigidBodyRef.current;
-        if (!rb) return;
-
-        const absHorizontal = Math.abs(lookHorizontal);
-        const absVertical = Math.abs(lookVertical);
-
-        if (absHorizontal > 0.01) {
-            const yawDelta = -lookHorizontal * JOYSTICK_SENSITIVITY * delta;
-            const rot = rb.rotation();
-            tempQuat.set(rot.x, rot.y, rot.z, rot.w);
-            tempYawQuat.setFromAxisAngle({ x: 0, y: 1, z: 0 }, yawDelta);
-            tempQuat.premultiply(tempYawQuat);
-            rb.setRotation(tempQuat, true);
-        }
-
-        if (absVertical > 0.01) {
-            verticalRotation.current = MathUtils.clamp(
-                verticalRotation.current - lookVertical * JOYSTICK_SENSITIVITY * delta,
-                -PITCH_LIMIT,
-                PITCH_LIMIT
-            );
-        }
-    });
-
-    return null;
-};
+export default ThirdPersonControls;

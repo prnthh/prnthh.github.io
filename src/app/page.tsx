@@ -1,12 +1,13 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { useState } from "react";
-import Controls from "./react-three-controller/controls/ControlsProvider";
+import { Environment } from "@react-three/drei";
+
 import { GameCanvas } from "react-three-game";
-import { useControls } from 'leva'
-import { Box, Environment, OrbitControls } from "@react-three/drei";
-import CombinedController from "./react-three-controller/combined/CombinedController";
+
+import Controls from "@/app/react-three-controller/controls/ControlsProvider";
+import CombinedController from "@/app/react-three-controller/combined/CombinedController";
+
 import { Csm } from "@/shared/Csm";
 import DebugGround from "@/shared/ground/DebugGround";
 import DialogCollider from "@/shared/physics/DialogCollider";

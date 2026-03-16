@@ -1,5 +1,5 @@
 
-import { useRef, useState, forwardRef, useImperativeHandle } from "react";
+import { useRef, useState, forwardRef, useImperativeHandle, Suspense } from "react";
 import RigidHumanoidModel from "@/app/react-three-controller/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior from "@/app/react-three-controller/ped/physics/SelfSteeringBehavior";
@@ -11,6 +11,7 @@ import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
 import { RigidHumanoidModelRef } from "@/app/react-three-controller/ped/types";
 import FirstPersonControls from "../controls/FirstPersonControls";
 import { FirstPersonArms } from "../firstperson/FirstPersonArms";
+import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
 import { Group } from "three";
 
 const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number], gunModel?: string, model?: string, basePath?: string }>(({ mode, target = [0, 0, 0], gunModel = "/models/environment/Colt 1911.glb", model = "/models/human/onimilio/rigged.glb", basePath = "/models/human/onimilio/" }, ref) => {
@@ -25,7 +26,7 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
         basePath,
         model,
         animation,
-        height: 1.3,
+        height: 0.95,
         position: [0, 0, 0] as [number, number, number],
         shadowOnly: mode === 'first-person',
         animationOverrides: {
@@ -79,17 +80,29 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                     <FollowCam height={2.5} />
                 </>}
 
-                {mode === 'third-person' && <ThirdPersonControls
-                    modelRef={modelRef}
-                    height={1.2}
-                    capsuleRadius={0.25}
-                />}
+                {mode === 'third-person' && <>
+                    <ThirdPersonControls
+                        modelRef={modelRef}
+                        height={1.2}
+                        capsuleRadius={0.25}
+                    />
+                    <Suspense>
+                        <ModelAttachment
+                            model={gunModel}
+                            attachpoint="mixamorigRightHand"
+                            offset={[0, 0, 0]}
+                            scale={[10, 10, 10]}
+                            rotation={[0, 0, 0]}
+                        />
+                    </Suspense>
+
+                </>}
 
                 {mode === 'first-person' && <>
                     <FirstPersonControls
                         modelRef={modelRef}
                         height={modelProps.height}
-                        eyeHeight={modelProps.height}
+                        eyeHeight={modelProps.height * 0.85}
                         cameraOffset={[0, 0, 0]}
                         cameraRigRef={cameraRigRef}
                         setAnimation={setAnimation}

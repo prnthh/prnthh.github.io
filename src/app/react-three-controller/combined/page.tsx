@@ -9,6 +9,7 @@ import { Box, OrbitControls } from "@react-three/drei";
 import CombinedController from "./CombinedController";
 import { Csm } from "@/shared/Csm";
 import DebugGround from "@/shared/ground/DebugGround";
+import Playground from "@/shared/debug/Playground";
 
 
 export default function Home() {
@@ -25,6 +26,7 @@ export default function Home() {
                         <Physics>
                             <Csm>
                                 <DebugGround onClick={mode === 'click' ? (e) => { setTarget([e.point.x, e.point.y, e.point.z]) } : undefined} />
+                                <Playground position={[0, -1, 4]} />
                                 <ambientLight intensity={0.5} />
 
                                 {target && mode === 'click' && (

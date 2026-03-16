@@ -1,8 +1,9 @@
-import { useRef, useLayoutEffect, useMemo } from 'react'
+import { useRef, useLayoutEffect, useMemo, useEffect } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import { DirectionalLight, DirectionalLightHelper, Vector3, OrthographicCamera, CameraHelper } from 'three'
 import { CSMShadowNode } from 'three/addons/csm/CSMShadowNode.js'
 import { Helper } from '@react-three/drei'
+import { LAYER_SHADOW_ONLY } from '@/shared/util/layers'
 
 export function Csm({
     debug = false,
@@ -42,6 +43,12 @@ export function Csm({
 
     // Track the last snapped position so we only update on grid crossings
     const lastSnapped = useRef(new Vector3())
+
+    // Allow the shadow camera to see LAYER_SHADOW_ONLY objects (e.g. first-person player mesh)
+    useEffect(() => {
+        if (!lightRef.current) return
+        lightRef.current.shadow.camera.layers.enable(LAYER_SHADOW_ONLY)
+    }, [])
 
     const csm = useMemo(() => {
         if (!lightRef.current) return null
