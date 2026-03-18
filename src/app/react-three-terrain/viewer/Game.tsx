@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Environment, Helper, Plane, useTexture } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
