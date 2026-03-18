@@ -6,6 +6,7 @@ import ChatUI from "./ChatUI";
 import { useState, useEffect } from "react";
 import { useEntities, useGameStateStore } from "./core/GameStateStore";
 import { GameCanvas, Prefab, PrefabRoot } from "react-three-game";
+import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
 import MapPicker from "./MapPicker";
 import killbox from "../../sketches/tools/prefabeditor/samples/killbox.json";
 import killboxlobby from "../../sketches/tools/prefabeditor/samples/killboxlobby.json";
@@ -13,7 +14,7 @@ import { Physics } from "@react-three/rapier";
 import { PedSpawner } from "../museum/Game";
 import { CombinedController } from "@/app/react-three-controller";
 
-export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => void }) {
+export default function GameWrapper() {
     const [gameId, setGameId] = useState<string | null>(null);
     const [isHost, setIsHost] = useState(false);
     const [offline, setOffline] = useState(false);
@@ -22,9 +23,9 @@ export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => v
     const playing = !!gameId || offline;
     const [currentMap, setCurrentMap] = useState<Prefab>(killbox);
 
-    useEffect(() => {
-        onCanvasReady && onCanvasReady();
+    useCanvasReady();
 
+    useEffect(() => {
         if (playing)
             setCurrentMap(killbox);
         else

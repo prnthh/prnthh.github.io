@@ -1,19 +1,17 @@
 "use client";
 
 import Controls from "@/app/react-three-controller/controls/ControlsProvider";
-import { useEffect } from "react";
 import { useTexture } from "@react-three/drei";
 import { GameCanvas } from "react-three-game";
+import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
 import { Physics, RigidBody } from "@react-three/rapier";
 import { NearestFilter, RepeatWrapping, Vector3 } from "three";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import GameComponents from "./GameComponents";
 
-export default function GameWrapper({ onCanvasReady }: { onCanvasReady?: () => void }) {
+export default function GameWrapper() {
 
-    useEffect(() => {
-        onCanvasReady && onCanvasReady();
-    }, []);
+    useCanvasReady();
 
     return (
         <Controls>

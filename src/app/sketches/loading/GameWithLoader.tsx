@@ -1,15 +1,27 @@
 "use client";
 
-import { ReactElement, cloneElement, useState } from "react";
+import { createContext, ReactNode, useContext, useRef, useState } from "react";
 import LoadingSpinner from "../../sketches/loading/loading";
 
-export default function GameWithLoader({ children }: { children: ReactElement<{ onCanvasReady?: () => void }> }) {
+const CanvasReadyContext = createContext<(() => void) | null>(null);
+
+/** Call this hook inside the canvas tree to dismiss the loading spinner. */
+export function useCanvasReady() {
+    const onReady = useContext(CanvasReadyContext);
+    const called = useRef(false);
+    if (!called.current && onReady) {
+        called.current = true;
+        onReady();
+    }
+}
+
+export default function GameWithLoader({ children }: { children: ReactNode }) {
     const [isCanvasReady, setIsCanvasReady] = useState(false);
 
     return (
-        <>
+        <CanvasReadyContext.Provider value={() => setIsCanvasReady(true)}>
             {!isCanvasReady && <LoadingSpinner />}
-            {cloneElement(children, { onCanvasReady: () => setIsCanvasReady(true) })}
-        </>
+            {children}
+        </CanvasReadyContext.Provider>
     );
 }

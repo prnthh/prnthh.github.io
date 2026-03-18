@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { Environment, Helper, Plane, useTexture } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
 import { BackSide, DirectionalLightHelper, Object3D } from "three";
 import { GameCanvas } from "react-three-game";
+import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
 
 import Controls from "@/app/react-three-controller/controls/ControlsProvider";
 import { ThirdPersonController } from "@/app/react-three-controller/thirdperson/ThirdPersonController";
@@ -19,13 +20,13 @@ import Ocean from "@/shared/shaders/Water";
 
 
 
-export default function Game({ onCanvasReady }: { onCanvasReady?: () => void }) {
+export default function Game() {
     return <Controls>
         <GameCanvas>
             <Physics>
                 <Lighting />
                 <FogEnvironment />
-                <InnerGame onCanvasReady={onCanvasReady} />
+                <InnerGame />
                 <MapProvider
                     startX={-1}
                     endX={1}
@@ -97,12 +98,10 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
     </directionalLight>
 }
 
-const InnerGame = ({ onCanvasReady }: { onCanvasReady?: () => void }) => {
+const InnerGame = () => {
     const ballRef = useRef<Object3D | null>(null);
 
-    useEffect(() => {
-        onCanvasReady?.();
-    }, [onCanvasReady]);
+    useCanvasReady();
 
 
 
