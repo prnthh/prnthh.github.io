@@ -12,10 +12,6 @@ type ItemConfig = {
 };
 
 const demosConfig: Record<string, ItemConfig> = {
-    'gym': {
-        path: 'react-three-controller/combined',
-        description: 'Controller gym'
-    },
     'zoo': {
         path: 'demos/zoo',
         description: 'Asset showcase (models/vfx/assets)'
@@ -24,14 +20,6 @@ const demosConfig: Record<string, ItemConfig> = {
         // path: 'demos/killbox',
         path: 'demos/museum',
         description: 'Systems, lighting and prefabs demos'
-    },
-    'colony': {
-        path: 'demos/colony',
-        description: 'A top-down world with autonomous NPCs and basic AI behaviors.'
-    },
-    'runner': {
-        path: 'demos/runner',
-        description: 'Endless runner game demo with procedural level generation.'
     },
     'scumm': {
         path: 'demos/scumm',
@@ -73,21 +61,9 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'sketches/instancing/npc4',
         description: 'NPC crowd with behaviors.'
     },
-    'retargeting/basic': {
-        path: 'sketches/retargeting/basic',
-        description: 'Basic animation retargeting.'
-    },
-    'retargeting/variety': {
-        path: 'sketches/retargeting/variety',
-        description: 'Multiple character retargeting.'
-    },
     'floor': {
         path: 'sketches/floor',
         description: 'A variety of floor shaders and techniques for realistic and stylized surfaces.'
-    },
-    'lighting': {
-        path: 'sketches/lighting',
-        description: 'Lighting and reflections.'
     },
     'particles': {
         path: 'sketches/particles',

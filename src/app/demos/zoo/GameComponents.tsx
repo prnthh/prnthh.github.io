@@ -6,18 +6,19 @@ import Rain from "@/shared/shaders/rain";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import Breakable from "@/shared/Breakable";
 import { useState } from "react";
+import { useControls } from "leva";
+import DebugGround from "@/shared/ground/DebugGround";
+import DialogCollider from "@/shared/physics/DialogCollider";
 
 export default function GameComponents() {
+    const { mode } = useControls({
+        mode: { value: 'wawa', options: ['click', 'wawa', 'tap', 'third-person', 'first-person'] }
+    });
+    const [target, setTarget] = useState<[number, number, number]>([0, 0, 2]);
+
     return <>
-        <CombinedController mode="first-person"
-        // forwardRef={(refs) => {
-        //     rigidBodyRef.current = refs.rigidBodyRef.current;
-        //     bodyMeshRef.current = refs.meshref.current;
-        //     cameraRigRef.current = refs.cameraRigRef.current;
-        //     if (playerRef) playerRef.current = refs.meshref.current;
-        // }}
-        // onFire={handleFire}
-        />
+        <CombinedController mode={mode} target={target} />
+
 
         <DemoGroup label="ped" position={[-5, 0, 6]} size={[3, 3]}>
             <Ped modelOffset={[0, 0.15, 0]} model="/models/human/onimilio/rigged.glb" />
@@ -51,7 +52,9 @@ export default function GameComponents() {
             <RainButton />
 
         </DemoGroup>
+        <DebugGround onClick={mode === 'click' ? (e) => { setTarget([e.point.x, e.point.y, e.point.z]) } : undefined} />
 
+        <DialogCollider label="omg its prnth.com!" />
 
     </>;
 }
