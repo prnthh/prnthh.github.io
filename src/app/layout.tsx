@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "./Nav";
+import AnimatedCursor from "./AnimatedCursor";
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 const geistSans = Geist({
@@ -39,6 +40,7 @@ export default function RootLayout({
       >
         {children}
         <Nav />
+        <AnimatedCursor />
       </body>
       <GoogleAnalytics gaId="G-ZPS50VC97K" />
     </html>

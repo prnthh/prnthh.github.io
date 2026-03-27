@@ -12,11 +12,11 @@ type ItemConfig = {
 };
 
 const demosConfig: Record<string, ItemConfig> = {
-    'zoo': {
+    'museum': {
         path: 'demos/zoo',
         description: 'Asset showcase (models/vfx/assets)'
     },
-    'museum': {
+    'football': {
         // path: 'demos/killbox',
         path: 'demos/museum',
         description: 'Systems, lighting and prefabs demos'
@@ -24,6 +24,10 @@ const demosConfig: Record<string, ItemConfig> = {
     'scumm': {
         path: 'demos/scumm',
         description: 'A simple point-and-click adventure game demo inspired by classic SCUMM games.'
+    },
+    'scumm2': {
+        path: 'demos/scumm2',
+        description: 'NavAgent version of SCUMM game demo.'
     },
     'car/simple': {
         path: 'sketches/car/simple',
