@@ -137,6 +137,11 @@ const toolsConfig: Record<string, ItemConfig> = {
     'dragdrop': {
         path: 'sketches/tools/dragdrop',
         description: 'Drag and drop scene builder.'
+    },
+
+    'picocad': {
+        path: 'tools/picocad',
+        description: 'Picocad model exporter.'
     }
 };
 

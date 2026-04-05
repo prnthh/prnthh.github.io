@@ -1,0 +1,21 @@
+{
+  "asset": { "version": "2.0" },
+  "scene": 0,
+  "scenes": [{ "nodes": [0,1,2,3,4,5] }],
+  "nodes": [{"mesh":0},{"mesh":1},{"mesh":2},{"mesh":3},{"mesh":4},{"mesh":5}],
+  "meshes": [{"primitives":[{"attributes":{"POSITION":0,"TEXCOORD_0":1},"indices":2,"material":0}]},{"primitives":[{"attributes":{"POSITION":3,"TEXCOORD_0":4},"indices":5,"material":0}]},{"primitives":[{"attributes":{"POSITION":6,"TEXCOORD_0":7},"indices":8,"material":0}]},{"primitives":[{"attributes":{"POSITION":9,"TEXCOORD_0":10},"indices":11,"material":0}]},{"primitives":[{"attributes":{"POSITION":12,"TEXCOORD_0":13},"indices":14,"material":0}]},{"primitives":[{"attributes":{"POSITION":15,"TEXCOORD_0":16},"indices":17,"material":0}]}],
+  "materials": [{
+    "name" : "tablet",
+    "pbrMetallicRoughness": {
+      "baseColorTexture": { "index": 0 },
+      "metallicFactor": 0.0,
+      "roughnessFactor": 1.0
+    }
+  }],
+  "samplers": [{ "magFilter": 9728, "minFilter": 9728 }],
+  "textures": [{ "source": 0, "sampler": 0 }],
+  "images": [{ "uri": "tablet.png" }],
+  "accessors": [{"bufferView":0,"byteOffset":0,"componentType":5126,"count":132,"type":"VEC3","min":[-0.85,-0.5,-11.25],"max":[0.85,9,0.25]},{"bufferView":1,"byteOffset":0,"componentType":5126,"count":132,"type":"VEC2"},{"bufferView":2,"byteOffset":0,"componentType":5123,"count":132,"type":"SCALAR"},{"bufferView":3,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC3","min":[0.65,7.725,-10.275],"max":[1.35,8.775,-9.225]},{"bufferView":4,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC2"},{"bufferView":5,"byteOffset":0,"componentType":5123,"count":84,"type":"SCALAR"},{"bufferView":6,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC3","min":[0.72,7.83,-8.67],"max":[1.28,8.67,-7.83]},{"bufferView":7,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC2"},{"bufferView":8,"byteOffset":0,"componentType":5123,"count":84,"type":"SCALAR"},{"bufferView":9,"byteOffset":0,"componentType":5126,"count":36,"type":"VEC3","min":[-1,7.25,-3],"max":[1,8.75,-2]},{"bufferView":10,"byteOffset":0,"componentType":5126,"count":36,"type":"VEC2"},{"bufferView":11,"byteOffset":0,"componentType":5123,"count":36,"type":"SCALAR"},{"bufferView":12,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC3","min":[-0.3,6.45,0.3],"max":[0.3,7.05,0.9]},{"bufferView":13,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC2"},{"bufferView":14,"byteOffset":0,"componentType":5123,"count":84,"type":"SCALAR"},{"bufferView":15,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC3","min":[-0.75,6,0.75],"max":[0.75,7.5,1.25]},{"bufferView":16,"byteOffset":0,"componentType":5126,"count":84,"type":"VEC2"},{"bufferView":17,"byteOffset":0,"componentType":5123,"count":84,"type":"SCALAR"}],
+  "bufferViews": [{"buffer":0,"byteOffset":0,"byteLength":1584,"target":34962},{"buffer":0,"byteOffset":1584,"byteLength":1056,"target":34962},{"buffer":0,"byteOffset":2640,"byteLength":264,"target":34963},{"buffer":0,"byteOffset":2904,"byteLength":1008,"target":34962},{"buffer":0,"byteOffset":3912,"byteLength":672,"target":34962},{"buffer":0,"byteOffset":4584,"byteLength":168,"target":34963},{"buffer":0,"byteOffset":4752,"byteLength":1008,"target":34962},{"buffer":0,"byteOffset":5760,"byteLength":672,"target":34962},{"buffer":0,"byteOffset":6432,"byteLength":168,"target":34963},{"buffer":0,"byteOffset":6600,"byteLength":432,"target":34962},{"buffer":0,"byteOffset":7032,"byteLength":288,"target":34962},{"buffer":0,"byteOffset":7320,"byteLength":72,"target":34963},{"buffer":0,"byteOffset":7392,"byteLength":1008,"target":34962},{"buffer":0,"byteOffset":8400,"byteLength":672,"target":34962},{"buffer":0,"byteOffset":9072,"byteLength":168,"target":34963},{"buffer":0,"byteOffset":9240,"byteLength":1008,"target":34962},{"buffer":0,"byteOffset":10248,"byteLength":672,"target":34962},{"buffer":0,"byteOffset":10920,"byteLength":168,"target":34963}],
+  "buffers": [{ "uri": "tablet.bin", "byteLength": 11088 }]
+}
