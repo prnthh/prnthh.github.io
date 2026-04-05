@@ -20,7 +20,7 @@ const DebugGround = ({
     onClick?: (e: ThreeEvent<MouseEvent>) => void;
 }) => {
     const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
-    const texture = useTexture("/textures/prototyping_textures_32x32px/Prototype_grey_32x32px.png");
+    const texture = useTexture("/textures/proto32/grey.png");
 
     useEffect(() => {
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
