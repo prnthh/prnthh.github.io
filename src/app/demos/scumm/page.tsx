@@ -10,7 +10,7 @@ import { PrefabRoot } from "react-three-game";
 import DebugGround from "@/shared/ground/DebugGround";
 import { useFrame } from "@react-three/fiber";
 import Ped from "@/app/react-three-controller/ped/ped";
-import room from "@/app/sketches/tools/prefabeditor/samples/room.json";
+import room from "@/app/tools/prefabeditor/samples/room.json";
 import CutsceneCamera from "@/shared/cameras/CutsceneCamera";
 
 
