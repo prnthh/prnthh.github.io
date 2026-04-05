@@ -1,10 +1,8 @@
 "use client";
 
 import { GameCanvas } from "react-three-game";
-import RiggedModel from "./rigged";
 import { OrbitControls } from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
-import { Object3D } from "three";
 import Mouth from "./Mouth";
 import AnimatedModel from "@/app/react-three-character/HumanoidModel";
 

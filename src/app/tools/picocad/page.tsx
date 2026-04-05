@@ -4,6 +4,7 @@ import { ChangeEvent, DragEvent, useCallback, useEffect, useMemo, useRef, useSta
 import { Prefab, PrefabEditor, PrefabEditorRef } from "react-three-game";
 import { LoadingManager, Material, Object3D, Texture } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import PixelationEffect from "../../demos/homepage/PixelationEffect";
 
 type SupportedAssetType = "gltf" | "bin" | "png";
 
@@ -168,6 +169,7 @@ export default function PicocadPage() {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [exportError, setExportError] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
+    const [pixelationEnabled, setPixelationEnabled] = useState(true);
     const [editorReady, setEditorReady] = useState(false);
     const editorRef = useRef<PrefabEditorRef | null>(null);
     const fileInputRefs = useRef<Record<SupportedAssetType, HTMLInputElement | null>>({
@@ -435,7 +437,7 @@ export default function PicocadPage() {
 
     return (
         <div
-            className="relative grid min-h-screen grid-cols-1 overflow-hidden bg-[#8f84b0] font-bold text-[#ffd5e8] lg:grid-cols-[minmax(0,1fr)_360px]"
+            className="noscrollbar relative grid h-screen grid-cols-1 overflow-x-hidden overflow-y-auto bg-[#8f84b0] font-bold text-[#ffd5e8] lg:h-auto lg:min-h-screen lg:grid-cols-[minmax(0,1fr)_360px] lg:overflow-y-visible"
             style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
             onDragEnter={onDragEnter}
             onDragOver={onDragOver}
@@ -455,7 +457,7 @@ export default function PicocadPage() {
                 />
             ))}
 
-            <main className="relative min-h-[50vh] border-b-4 border-[#24315d] bg-[#24315d] lg:min-h-screen lg:border-b-0 lg:border-r-4">
+            <main className="relative aspect-square w-full border-b-4 border-[#24315d] bg-[#24315d] lg:min-h-screen lg:aspect-auto lg:border-b-0 lg:border-r-4">
                 <PrefabEditor
                     ref={handleEditorRef}
                     initialPrefab={EMPTY_PREFAB}
@@ -467,31 +469,41 @@ export default function PicocadPage() {
                             width: "100%",
                             height: "100%",
                             display: "block",
+                            touchAction: "pan-y",
                         },
                     }}
-                />
+                >
+                    {pixelationEnabled && (
+                        <PixelationEffect pixelSize={6} normalEdgeStrength={0.3} depthEdgeStrength={0.4} />
+                    )}
+                </PrefabEditor>
             </main>
 
             <aside className="border-t-4 border-[#24315d] bg-[#7b2154] text-[#ffb1cf] lg:border-t-0 lg:border-l-4">
-                <div className="flex h-full w-full flex-col bg-[#7b2154] text-[#ffb1cf]">
-                    <div className="border-b-4 border-[#24315d] bg-[#ff1654] px-4 py-3 text-[#fff2f4]">
+                <div className="flex h-full w-full flex-col items-center bg-[#7b2154] text-[#ffb1cf]">
+                    <div className="w-full border-b-4 border-[#24315d] bg-[#ff1654] px-4 py-3 text-center text-[#fff2f4]">
                         <p className="text-xl font-bold tracking-wide">
-                            <a href="https://picocad.net/" target="_blank" rel="noreferrer" className="hover:underline">
+                            <a
+                                href="https://picocad.net/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline hover:text-[#b6ddff]"
+                            >
                                 picoCAD
                             </a>{" "}
-                            export
+                            export combinator
                         </p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.18em] text-[#ffd6df]">asset combinator</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.1em] text-[#ffd6df]">advanced postprocessing <br /> for picoCAD models</p>
                     </div>
 
-                    <div className="p-4">
-                        <div className="border-b-4 border-[#24315d] pb-4">
+                    <div className="flex w-full flex-1 flex-col items-center p-4 text-center">
+                        <div className="w-full max-w-[320px] border-b-4 border-[#24315d] pb-4">
                             <p className="text-sm leading-6 text-[#ffb1cf]">
                                 Drop your picoCAD files anywhere, or add them here.
                             </p>
                         </div>
 
-                        <div className="space-y-3 bg-[#7b2154] p-4">
+                        <div className="w-full max-w-[320px] space-y-3 bg-[#7b2154] p-4">
                             <div className="flex items-center justify-between pb-3">
                                 <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#ffd5e8]">Assets</h2>
                                 <button
@@ -548,7 +560,7 @@ export default function PicocadPage() {
                         </div>
 
                         {loadedScene ? (
-                            <div className="mt-5 flex justify-center">
+                            <div className="mt-5">
                                 <button
                                     className="bg-[#ff1654] px-4 py-2 text-sm font-bold uppercase tracking-[0.12em] text-[#fff2f4] transition disabled:cursor-not-allowed disabled:bg-[#7d7496] disabled:text-[#b8afd0]"
                                     type="button"
@@ -569,6 +581,21 @@ export default function PicocadPage() {
                         <p className="mt-4 text-xs leading-5 text-[#f596bd]">
                             Dropping files replaces the existing slot for that file type.
                         </p>
+
+
+                        <div className="mt-4 w-full max-w-[320px] space-y-3  p-4 border-t-4 border-[#24315d] ">
+                            <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#ffd5e8] w-full text-left">Effects</h2>
+
+                            <label className="mt-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#ffd5e8]">
+                                <input
+                                    type="checkbox"
+                                    checked={pixelationEnabled}
+                                    onChange={event => setPixelationEnabled(event.target.checked)}
+                                    className="h-4 w-4"
+                                />
+                                Pixelate
+                            </label>
+                        </div>
                     </div>
                 </div>
             </aside>

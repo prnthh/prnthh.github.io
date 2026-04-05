@@ -123,7 +123,7 @@ const toolsConfig: Record<string, ItemConfig> = {
         description: 'EVM Pockit Challenge Protocol implementation.'
     },
     'prefabeditor': {
-        path: 'sketches/tools/prefabeditor',
+        path: 'tools/prefabeditor',
         description: 'Prefab editor tool.'
     },
     'assetviewer': {
