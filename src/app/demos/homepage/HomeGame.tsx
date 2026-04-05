@@ -71,10 +71,10 @@ function Crystal() {
 
 function PixelScene() {
     const texChecker = pixelTexture(
-        useLoader(TextureLoader, "/textures/prototyping_textures_32x32px/Prototype_checkers_03_32x32px.png")
+        useLoader(TextureLoader, "/textures/proto1k/checkers_03.png")
     );
     const texChecker2 = pixelTexture(
-        useLoader(TextureLoader, "/textures/prototyping_textures_32x32px/Prototype_checkers_03_32x32px.png")
+        useLoader(TextureLoader, "/textures/proto1k/checkers_03.png")
     );
     texChecker.repeat.set(3, 3);
     texChecker2.repeat.set(1.5, 1.5);
