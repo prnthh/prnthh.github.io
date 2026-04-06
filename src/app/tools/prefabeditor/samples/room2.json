@@ -1,0 +1,267 @@
+{
+  "id": "prefab-1",
+  "name": "Test Prefab",
+  "root": {
+    "id": "root",
+    "components": {
+      "transform": {
+        "type": "Transform",
+        "properties": {
+          "position": [
+            0,
+            -1,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "children": [
+      {
+        "id": "ground",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                -1.57,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane",
+              "args": [
+                50,
+                50
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "white",
+              "texture": "/textures/proto32/grey.png",
+              "repeat": true,
+              "repeatCount": [
+                50,
+                50
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "cuboid"
+            }
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "92f0f143-6cd2-4f2f-bd03-4012a24c932b",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -1,
+                2,
+                -2.5
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                12,
+                4,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#ffffff",
+              "wireframe": false,
+              "texture": "/textures/proto32/checkers_01.png",
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
+        }
+      },
+      {
+        "id": "lights",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                -2.475775595566237,
+                -1.9783099792406535
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "ba4366f4-695a-4fa4-b32f-7bd1b1d95515",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    1.460346518114203,
+                    5.940192645275776,
+                    3.979639900383754
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 100,
+                  "penumbra": 0.5,
+                  "angle": 1.2,
+                  "distance": 55
+                }
+              }
+            },
+            "name": "light"
+          },
+          {
+            "id": "4bcbe46f-e47b-486c-aff2-a5aa6df896b2",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -3.228169789596622,
+                    5.940192645275776,
+                    3.979639900383754
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 100,
+                  "penumbra": 0.5,
+                  "angle": 1.2,
+                  "distance": 55
+                }
+              }
+            },
+            "name": "light2"
+          }
+        ]
+      },
+      {
+        "id": "5ee592e7-8993-4421-9546-2b062f96dfdb",
+        "name": "door",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -1,
+                -0.05410899740291253,
+                -2.5
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                2.9999999999999996,
+                3,
+                2.9999999999999996
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/Doorway.glb",
+              "instanced": false
+            }
+          }
+        }
+      }
+    ]
+  }
+}

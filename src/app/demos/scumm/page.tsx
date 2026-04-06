@@ -1,17 +1,22 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { useState, useRef } from "react";
-import Controls from "@/app/react-three-controller/controls/ControlsProvider";
-import { GameCanvas } from "react-three-game";
+import { useState, useRef, useLayoutEffect } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Box, OrbitControls } from "@react-three/drei";
-import CombinedController from "@/app/react-three-controller/combined/CombinedController";
+
+import { GameCanvas } from "react-three-game";
 import { PrefabRoot } from "react-three-game";
-import DebugGround from "@/shared/ground/DebugGround";
-import { useFrame } from "@react-three/fiber";
-import Ped from "@/app/react-three-controller/ped/ped";
-import room from "@/app/tools/prefabeditor/samples/room.json";
 import CutsceneCamera from "@/shared/cameras/CutsceneCamera";
+import DebugGround from "@/shared/ground/DebugGround";
+
+import CombinedController from "@/app/react-three-controller/combined/CombinedController";
+import Ped from "@/app/react-three-controller/ped/ped";
+
+import room from "@/app/tools/prefabeditor/samples/room.json";
+
+const SCUMM_CAMERA_POSITION: [number, number, number] = [0, 0.6, 6];
+const SCUMM_CAMERA_TARGET: [number, number, number] = [0, 0, 0];
 
 
 export default function Home() {
@@ -43,10 +48,14 @@ export default function Home() {
                         {activeEntity === null && <SidewaysFollowCamera characterRef={characterRef} />}
 
 
-                        <Ped onClick={(e) => {
-                            setActiveEntity("ped");
-                            e.stopPropagation();
-                        }} modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]} model="/models/human/rigga/rigga.glb" >
+                        <Ped
+                            modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]}
+                            model="/models/human/rigga/rigga.glb"
+                            onClick={(e) => {
+                                setActiveEntity("ped");
+                                e.stopPropagation();
+                            }}
+                        >
                             {activeEntity === "ped" && <CutsceneCamera position={[0, 1, 2]} />}
                         </Ped>
                     </Physics>
@@ -60,6 +69,17 @@ const SidewaysFollowCamera = ({ characterRef }: { characterRef: React.RefObject<
     const orbitRef = useRef<any>(null);
     const targetCameraX = useRef(0);
     const tolerance = 1;
+    const camera = useThree((state) => state.camera);
+
+    useLayoutEffect(() => {
+        targetCameraX.current = SCUMM_CAMERA_TARGET[0];
+        camera.position.set(...SCUMM_CAMERA_POSITION);
+
+        if (orbitRef.current) {
+            orbitRef.current.target.set(...SCUMM_CAMERA_TARGET);
+            orbitRef.current.update();
+        }
+    }, [camera]);
 
     useFrame(({ camera }) => {
         if (orbitRef.current && characterRef.current?.rigidBodyRef?.current) {

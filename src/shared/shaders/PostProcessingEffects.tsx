@@ -1,74 +1,43 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
+import { useMemo } from "react";
 import { PostProcessing, WebGPURenderer } from "three/webgpu";
-import { pass, mrt, output, emissive, saturation, blendColor, directionToColor, normalView, roughness, metalness, vec2, sample, colorToDirection } from 'three/tsl';
-import { useEffect, useState } from "react";
-import { bloom } from "three/examples/jsm/tsl/display/BloomNode.js";
-import * as THREE from "three";
-import { ao } from 'three/addons/tsl/display/GTAONode.js';
-import { ssr } from "three/examples/jsm/tsl/display/SSRNode.js";
-import { smaa } from "three/examples/jsm/tsl/display/SMAANode.js";
+import { pass, mrt, output, directionToColor, normalView } from "three/tsl";
+import { ao } from "three/addons/tsl/display/GTAONode.js";
 
 const RenderPipeline = () => {
-    const { gl, scene, camera } = useThree()
+    const { gl, scene, camera } = useThree();
 
-    const [postProcessing, setPostProcessing] = useState<PostProcessing>(new PostProcessing(gl as unknown as WebGPURenderer))
+    const postProcessing = useMemo(() => {
+        const pipeline = new PostProcessing(gl as unknown as WebGPURenderer);
+        const scenePass = pass(scene, camera);
 
-    useEffect(() => {
-        // const scenePass = pass(scene, camera, {
-        //     magFilter: THREE.NearestFilter,
-        //     minFilter: THREE.NearestFilter,
-        // })
-
-        // scenePass.setMRT(mrt({ output }))
-
-        // const scenePassColor = scenePass.getTextureNode('output')
-
-        // const strength = 0.2
-        // const radius = 0.02
-        // const threshold = 0
-        // const bloomPass = bloom(scenePassColor, strength, radius, threshold)
-
-        // const outputNode = blendColor(scenePassColor, bloomPass)
-        const scenePass = pass(scene, camera, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter });
         scenePass.setMRT(mrt({
-            output: output,
+            output,
             normal: directionToColor(normalView),
-            metalrough: vec2(metalness, roughness)
         }));
 
-        const scenePassColor = scenePass.getTextureNode('output');
-        const scenePassNormal = scenePass.getTextureNode('normal');
-        const scenePassDepth = scenePass.getTextureNode('depth');
-        const scenePassMetalRough = scenePass.getTextureNode('metalrough');
-        const sceneNormal = sample((uv) => {
-            return colorToDirection(scenePassNormal.sample(uv));
-        });
+        const sceneColor = scenePass.getTextureNode("output");
+        const sceneDepth = scenePass.getTextureNode("depth");
+        const sceneNormal = scenePass.getTextureNode("normal");
+        const ambientOcclusion = ao(sceneDepth, sceneNormal, camera);
 
-        // const ssrPass = ssr(scenePassColor, scenePassDepth, sceneNormal, scenePassMetalRough.r, scenePassMetalRough.g);
-        // ssrPass.maxDistance.value = 10;
-        // ssrPass.blurQuality.value = 1;
-        // ssrPass.thickness.value = 0.015;
-        // ssrPass.resolutionScale = 0.5;
+        ambientOcclusion.radius.value = 0.1;
+        ambientOcclusion.scale.value = 0.2;
+        ambientOcclusion.thickness.value = 0.5;
+        ambientOcclusion.samples.value = 16;
+        ambientOcclusion.resolutionScale = 0.5;
 
-        const aoPass = ao(scenePassDepth, sceneNormal, camera);
-        // @ts-expect-error custom property
-        aoPass.radius = 0.2;
-        // @ts-expect-error custom property
-        aoPass.scale = 0.2;
-        // @ts-expect-error custom property
-        aoPass.thickness = 0.5;
+        pipeline.outputNode = sceneColor.mul(ambientOcclusion.getTextureNode().r);
 
-        const blendPassAO = aoPass.getTextureNode().mul(scenePassColor);
-        postProcessing.outputNode = blendPassAO;
+        return pipeline;
+    }, [gl, scene, camera]);
 
-        // const outputNode = smaa(blendPassAO);
-        // const outputNode = smaa(blendColor(blendPassAO, ssrPass));
-        // postProcessing.outputNode = outputNode;
-    }, [gl, scene, camera])
+    useFrame(() => {
+        postProcessing.render();
+    }, 1);
 
-    useFrame(() => { postProcessing?.render() }, 1)
+    return null;
+};
 
-    return null
-}
 export default RenderPipeline;

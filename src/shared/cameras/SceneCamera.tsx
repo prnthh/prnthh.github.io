@@ -5,11 +5,13 @@ import * as THREE from "three";
 interface SceneCameraProps {
     fov?: number;
     children?: ReactNode;
+    initializeCamera?: (camera: THREE.PerspectiveCamera) => void;
 }
 
-export const SceneCamera = forwardRef<any, SceneCameraProps>(({ 
+export const SceneCamera = forwardRef<any, SceneCameraProps>(({
     fov = 75,
-    children 
+    children,
+    initializeCamera,
 }, ref) => {
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const set = useThree((three) => three.set);
@@ -29,6 +31,8 @@ export const SceneCamera = forwardRef<any, SceneCameraProps>(({
         const current = cameraRef.current;
         if (!current) return;
 
+        initializeCamera?.(current);
+
         // Set proper aspect ratio and update projection matrix
         current.aspect = size.width / size.height;
         current.updateProjectionMatrix();
@@ -41,7 +45,7 @@ export const SceneCamera = forwardRef<any, SceneCameraProps>(({
 
         // Restore the previous camera when the effect cleans up
         return () => set(() => ({ camera: prev }));
-    }, [cameraRef, set, size]);
+    }, [initializeCamera, set, size, prevCamera]);
 
     return (
         <group>

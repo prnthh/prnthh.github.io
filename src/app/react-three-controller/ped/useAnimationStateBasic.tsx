@@ -22,12 +22,10 @@ export default function useAnimationState(
     const prevActionRef = useRef<AnimationAction | null>(null)
     const lastKeyRef = useRef<string | undefined>(undefined)
 
-    const ANIMATIONS = useMemo(() => {
-        const overridesWithBase = animationOverrides
-            ? Object.fromEntries(Object.entries(animationOverrides).map(([key, value]) => [key, value]))
-            : {}
-        return { idle: '/models/human/anim/idle.fbx', ...overridesWithBase }
-    }, [animationOverrides])
+    const ANIMATIONS = useMemo(() => ({
+        idle: '/models/human/anim/idle.fbx',
+        ...(animationOverrides ?? {}),
+    }), [animationOverrides])
 
     const animationPaths = useMemo(() => {
         if (modelAnimations?.length) return []

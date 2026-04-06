@@ -63,11 +63,11 @@
             "type": "Material",
             "properties": {
               "color": "white",
-              "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+              "texture": "/textures/proto32/red.png",
               "repeat": true,
               "repeatCount": [
-                25,
-                25
+                50,
+                50
               ]
             }
           },
@@ -115,7 +115,7 @@
             "properties": {
               "color": "#ffffff",
               "wireframe": false,
-              "texture": "/textures/GreyboxTextures/greybox_teal_solid.png",
+              "texture": "/textures/proto32/checkers_03.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -131,144 +131,6 @@
             }
           }
         }
-      },
-      {
-        "id": "61b59c5f-1ffb-4628-a442-7eaaef7ca515",
-        "components": {
-          "transform": {
-            "type": "Transform",
-            "properties": {
-              "position": [
-                0,
-                0,
-                0
-              ],
-              "rotation": [
-                0,
-                0,
-                0
-              ],
-              "scale": [
-                1,
-                1,
-                1
-              ]
-            }
-          },
-          "model": {
-            "type": "Model",
-            "properties": {
-              "filename": "models/environment/Executive Desk.glb",
-              "instanced": false
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "cuboid"
-            }
-          }
-        },
-        "children": [
-          {
-            "id": "63ad3fae-674f-4acf-b2f5-f66934c2611d",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    0.7213835314973418,
-                    0.8672621727512282,
-                    -0.003309683510794581
-                  ],
-                  "rotation": [
-                    -3.141592653589793,
-                    -0.7492790571795859,
-                    -3.141592653589793
-                  ],
-                  "scale": [
-                    0.0060000000000000045,
-                    0.006,
-                    0.0060000000000000045
-                  ]
-                }
-              },
-              "model": {
-                "type": "Model",
-                "properties": {
-                  "filename": "models/environment/Phone.glb",
-                  "instanced": false
-                }
-              }
-            }
-          },
-          {
-            "id": "0e6c4393-7d25-4a57-a8b6-3b201dfa1835",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    -0.6612834603784342,
-                    0.8767377098684103,
-                    -0.09758926225128128
-                  ],
-                  "rotation": [
-                    -1.300000000000003,
-                    0.9000000000000027,
-                    4.465111087720449e-16
-                  ],
-                  "scale": [
-                    0.9999999999999996,
-                    0.9999999999999996,
-                    0.9999999999999998
-                  ]
-                }
-              },
-              "model": {
-                "type": "Model",
-                "properties": {
-                  "filename": "models/environment/Diamond Sword.glb",
-                  "instanced": false
-                }
-              }
-            }
-          },
-          {
-            "id": "f6384af0-2d7a-4af7-8a42-9c2ec386f74a",
-            "name": "desktop",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    0.02251049660359347,
-                    0.8435544586572346,
-                    -0.000017925715400986947
-                  ],
-                  "rotation": [
-                    0,
-                    -1.5699999999998482,
-                    0
-                  ],
-                  "scale": [
-                    0.009999999999999997,
-                    0.01,
-                    0.009999999999999997
-                  ]
-                }
-              },
-              "model": {
-                "type": "Model",
-                "properties": {
-                  "filename": "models/environment/Computer.glb",
-                  "instanced": false
-                }
-              }
-            }
-          }
-        ]
       },
       {
         "id": "fb5fef53-937e-411a-b64b-8f1abc51dde2",
@@ -304,7 +166,7 @@
             "properties": {
               "color": "#ffffff",
               "wireframe": false,
-              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "texture": "/textures/proto32/checkers_01.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -334,7 +196,7 @@
               ],
               "rotation": [
                 0,
-                1.570000000000127,
+                -1.5707963267948966,
                 0
               ],
               "scale": [
@@ -355,7 +217,7 @@
             "properties": {
               "color": "#ffffff",
               "wireframe": false,
-              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "texture": "/textures/proto32/checkers_01.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -406,7 +268,7 @@
             "properties": {
               "color": "#ffffff",
               "wireframe": false,
-              "texture": "/textures/GreyboxTextures/greybox_teal_grid.png",
+              "texture": "/textures/proto32/checkers_01.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -561,9 +423,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -0.5004276146322764,
+                -1,
                 0.3906912048655975,
-                0.9545406493935422
+                -0.5
               ],
               "rotation": [
                 0,
@@ -632,6 +494,173 @@
             }
           }
         }
+      },
+      {
+        "id": "8d658d4c-be64-4b05-b89b-20cf95e3796c",
+        "name": "New Node",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                -1.5
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "61b59c5f-1ffb-4628-a442-7eaaef7ca515",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Executive Desk.glb",
+                  "instanced": false
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "fixed",
+                  "collider": "cuboid",
+                  "colliders": "cuboid"
+                }
+              }
+            },
+            "children": [],
+            "disabled": false
+          },
+          {
+            "id": "63ad3fae-674f-4acf-b2f5-f66934c2611d",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0.7213835314973418,
+                    0.8672621727512282,
+                    -0.003309683510794581
+                  ],
+                  "rotation": [
+                    -3.141592653589793,
+                    -0.7492790571795859,
+                    -3.141592653589793
+                  ],
+                  "scale": [
+                    0.0060000000000000045,
+                    0.006,
+                    0.0060000000000000045
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Phone.glb",
+                  "instanced": false
+                }
+              }
+            }
+          },
+          {
+            "id": "0e6c4393-7d25-4a57-a8b6-3b201dfa1835",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -0.6612834603784342,
+                    0.8767377098684103,
+                    -0.09758926225128128
+                  ],
+                  "rotation": [
+                    -1.300000000000003,
+                    0.9000000000000027,
+                    4.465111087720449e-16
+                  ],
+                  "scale": [
+                    0.9999999999999996,
+                    0.9999999999999996,
+                    0.9999999999999998
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Diamond Sword.glb",
+                  "instanced": false
+                }
+              }
+            }
+          },
+          {
+            "id": "f6384af0-2d7a-4af7-8a42-9c2ec386f74a",
+            "name": "desktop",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0.02251049660359347,
+                    0.8435544586572346,
+                    -0.000017925715400986947
+                  ],
+                  "rotation": [
+                    0,
+                    -1.5699999999998482,
+                    0
+                  ],
+                  "scale": [
+                    0.009999999999999997,
+                    0.01,
+                    0.009999999999999997
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/Computer.glb",
+                  "instanced": false
+                }
+              }
+            }
+          }
+        ]
       }
     ]
   }

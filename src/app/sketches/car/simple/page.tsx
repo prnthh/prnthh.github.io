@@ -20,7 +20,7 @@ export default function Home() {
                         <Lightsource model="/models/environment/lamppost2.glb" position={[-3, -2, 4]} />
                         <Lightsource model="/models/environment/lamppost2.glb" position={[3, -2, 4]} />
                         <Vehicle>
-                            <AnimatedModel model="milady.glb" animationOverrides={{ idle: '/anim/driving.fbx' }} scale={1} rotation={[-Math.PI / 8, 0, 0]} position={[0, -0.3, 0.7]} />
+                            <AnimatedModel model="/models/human/milady.glb" animationOverrides={{ idle: "/models/human/anim/driving.fbx" }} scale={1} rotation={[-Math.PI / 8, 0, 0]} position={[0, -0.3, 0.7]} />
                             <FollowCam height={1.5} />
                         </Vehicle>
                     </Physics>

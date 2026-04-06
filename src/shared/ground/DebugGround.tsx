@@ -1,35 +1,33 @@
-import { ThreeEvent } from "@react-three/fiber";
+import { ThreeElements, ThreeEvent } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useRef, useEffect } from "react";
 import { useTexture } from "@react-three/drei";
-import * as THREE from "three";
+import { LinearMipmapLinearFilter, NearestFilter, RepeatWrapping } from "three";
 
 const DRAG_THRESHOLD = 5;
+const DEFAULT_TEXTURE_URL = "/textures/proto32/grey.png";
+
+type DebugGroundVisualProps = ThreeElements["mesh"] & {
+    size?: number;
+    textureUrl?: string;
+};
 
 const DebugGround = ({
     debug = false,
     size = 100,
+    textureUrl = DEFAULT_TEXTURE_URL,
     position = [0, -0.5, 0],
     rotation = [0, 0, 0],
     onClick,
 }: {
     debug?: boolean;
     size?: number;
+    textureUrl?: string;
     position?: [number, number, number];
     rotation?: [number, number, number];
     onClick?: (e: ThreeEvent<MouseEvent>) => void;
 }) => {
     const pointerDownPos = useRef<{ x: number; y: number } | null>(null);
-    const texture = useTexture("/textures/proto32/grey.png");
-
-    useEffect(() => {
-        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-        texture.repeat.set(size / 2, size / 2);
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.NearestFilter;
-        texture.generateMipmaps = true;
-        texture.needsUpdate = true;
-    }, [texture, size]);
 
     const handlePointerDown = (e: ThreeEvent<PointerEvent>) => {
         pointerDownPos.current = { x: e.clientX, y: e.clientY };
@@ -52,15 +50,13 @@ const DebugGround = ({
             <group position={position} rotation={rotation}>
                 <RigidBody type="fixed" colliders={false}>
                     <CuboidCollider args={[size / 2, 0.01, size / 2]} />
-                    <mesh
+                    <DebugGroundVisual
+                        size={size}
+                        textureUrl={textureUrl}
                         receiveShadow
-                        rotation={[-Math.PI / 2, 0, 0]}
                         onPointerDown={handlePointerDown}
                         onPointerUp={handlePointerUp}
-                    >
-                        <planeGeometry args={[size, size]} />
-                        <meshStandardMaterial map={texture} color="gray" />
-                    </mesh>
+                    />
                 </RigidBody>
                 {debug && <gridHelper
                     args={[size, size]}
@@ -70,5 +66,30 @@ const DebugGround = ({
         </>
     );
 };
+
+export function DebugGroundVisual({
+    size = 100,
+    textureUrl = DEFAULT_TEXTURE_URL,
+    rotation = [-Math.PI / 2, 0, 0],
+    ...meshProps
+}: DebugGroundVisualProps) {
+    const texture = useTexture(textureUrl);
+
+    useEffect(() => {
+        texture.wrapS = texture.wrapT = RepeatWrapping;
+        texture.repeat.set(size / 2, size / 2);
+        texture.minFilter = LinearMipmapLinearFilter;
+        texture.magFilter = NearestFilter;
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+    }, [texture, size]);
+
+    return (
+        <mesh rotation={rotation} {...meshProps}>
+            <planeGeometry args={[size, size]} />
+            <meshStandardMaterial map={texture} color="gray" />
+        </mesh>
+    );
+}
 
 export default DebugGround;

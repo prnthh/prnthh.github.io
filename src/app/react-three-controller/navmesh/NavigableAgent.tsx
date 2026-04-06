@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, ReactNode, memo } from "react";
 import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { AgentHandle, useNavigableContext, Vector3Tuple } from "./NavigableContext";
-import { AnimatedModelRef } from "../ped/types";
+import { AnimatedModelProps, AnimatedModelRef } from "../ped/types";
 import AnimatedModel from "../../react-three-character/HumanoidModel";
 
 // ============================================================================
@@ -32,15 +32,38 @@ export type NavigableAgentProps = {
     arrivalThreshold?: number;
     /** Show default animated model */
     showModel?: boolean;
+    /** JSON-friendly character definition for model loading */
+    character?: NavigableCharacterDefinition;
     /** Model base path */
     basePath?: string;
     /** Model file name */
     model?: string;
     /** Model height for scaling */
     height?: number;
+    /** Override animation file paths */
+    animationOverrides?: { [key: string]: string };
+    /** Offset applied to the model container */
+    modelOffset?: [number, number, number];
+    /** Uniform model scale */
+    scale?: number;
+    /** Model rotation */
+    rotation?: [number, number, number];
+    /** Optional model name */
+    name?: string;
     /** Custom content to render with agent */
     children?: ReactNode;
 };
+
+export type NavigableCharacterDefinition = Pick<AnimatedModelProps, "name" | "model" | "basePath" | "height" | "animationOverrides" | "modelOffset" | "scale" | "rotation"> & {
+    showModel?: boolean;
+};
+
+const DEFAULT_BASE_PATH = "/models/human/onimilio/";
+
+const getDefaultAnimationOverrides = (basePath: string) => ({
+    walk: `${basePath}anim/walk.fbx`,
+    run: `${basePath}anim/run.fbx`,
+});
 
 // ============================================================================
 // NavigableAgent Component
@@ -55,16 +78,31 @@ export const NavigableAgent = memo(({
     maxSpeed = 4.0,
     maxAcceleration = 4.0,
     arrivalThreshold = 1.0,
-    showModel = true,
-    basePath = "/models/human/onimilio/",
-    model = "rigged.glb",
-    height = 1.5,
+    showModel,
+    character,
+    basePath,
+    model,
+    height,
+    animationOverrides,
+    modelOffset,
+    scale,
+    rotation,
+    name,
     children,
 }: NavigableAgentProps) => {
-    const animationOverrides = useMemo(() => ({
-        walk: `${basePath}anim/walk.fbx`,
-        run: `${basePath}anim/run.fbx`,
-    }), [basePath]);
+    const resolvedBasePath = basePath ?? character?.basePath ?? DEFAULT_BASE_PATH;
+    const resolvedModel = model ?? character?.model ?? "rigged.glb";
+    const resolvedHeight = height ?? character?.height ?? 1.5;
+    const resolvedShowModel = showModel ?? character?.showModel ?? true;
+    const resolvedAnimationOverrides = useMemo(() => ({
+        ...getDefaultAnimationOverrides(resolvedBasePath),
+        ...(character?.animationOverrides ?? {}),
+        ...(animationOverrides ?? {}),
+    }), [animationOverrides, character?.animationOverrides, resolvedBasePath]);
+    const resolvedModelOffset = modelOffset ?? character?.modelOffset;
+    const resolvedScale = scale ?? character?.scale;
+    const resolvedRotation = rotation ?? character?.rotation;
+    const resolvedName = name ?? character?.name;
     const { isReady, registerAgent, unregisterAgent } = useNavigableContext();
 
     // Refs
@@ -87,7 +125,7 @@ export const NavigableAgent = memo(({
 
         const handle = registerAgent(initialPosition.current, {
             radius,
-            height,
+            height: resolvedHeight,
             maxSpeed,
             maxAcceleration,
         });
@@ -110,7 +148,7 @@ export const NavigableAgent = memo(({
                 setIsRegistered(false);
             }
         };
-    }, [isReady, registerAgent, unregisterAgent, radius, height, maxSpeed, maxAcceleration]);
+    }, [isReady, registerAgent, unregisterAgent, radius, resolvedHeight, maxSpeed, maxAcceleration]);
 
     // Update target when changed
     useEffect(() => {
@@ -175,14 +213,18 @@ export const NavigableAgent = memo(({
 
     return (
         <group ref={groupRef} position={position}>
-            {showModel && (
+            {resolvedShowModel && (
                 <AnimatedModel
                     ref={modelRef}
-                    basePath={basePath}
-                    model={model}
-                    height={height}
+                    name={resolvedName}
+                    basePath={resolvedBasePath}
+                    model={resolvedModel}
+                    height={resolvedHeight}
                     animation="idle"
-                    animationOverrides={animationOverrides}
+                    animationOverrides={resolvedAnimationOverrides}
+                    modelOffset={resolvedModelOffset}
+                    scale={resolvedScale}
+                    rotation={resolvedRotation}
                 />
             )}
             {children}

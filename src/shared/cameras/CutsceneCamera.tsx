@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useImperativeHandle, useLayoutEffect, useState } from "react";
+import { forwardRef, useRef, useImperativeHandle, useLayoutEffect, useState, useCallback } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { SceneCamera } from "./SceneCamera";
 import * as THREE from "three";
@@ -21,10 +21,29 @@ const CutsceneCamera = forwardRef<any, CutsceneCameraProps>(({
     const currentCamera = useThree((three) => three.camera);
     const tweenRef = useRef<Tween<any> | null>(null);
     const tweenGroupRef = useRef(new TweenGroup());
+    const startPositionRef = useRef(new THREE.Vector3());
+    const startQuaternionRef = useRef(new THREE.Quaternion());
 
-    // Clone both position and rotation from current camera
-    const [startPosition] = useState(() => currentCamera.position.clone());
-    const [startQuaternion] = useState(() => currentCamera.quaternion.clone());
+    const [startWorldPosition] = useState(() => currentCamera.getWorldPosition(new THREE.Vector3()));
+    const [startWorldQuaternion] = useState(() => currentCamera.getWorldQuaternion(new THREE.Quaternion()));
+
+    const initializeCamera = useCallback((camera: THREE.PerspectiveCamera) => {
+        const localStartPosition = startWorldPosition.clone();
+        const localStartQuaternion = startWorldQuaternion.clone();
+        const parent = camera.parent;
+
+        if (parent) {
+            parent.worldToLocal(localStartPosition);
+            const parentWorldQuaternion = new THREE.Quaternion();
+            parent.getWorldQuaternion(parentWorldQuaternion);
+            localStartQuaternion.premultiply(parentWorldQuaternion.invert());
+        }
+
+        startPositionRef.current.copy(localStartPosition);
+        startQuaternionRef.current.copy(localStartQuaternion);
+        camera.position.copy(localStartPosition);
+        camera.quaternion.copy(localStartQuaternion);
+    }, [startWorldPosition, startWorldQuaternion]);
 
     // Forward the ref to expose the camera
     useImperativeHandle(ref, () => sceneCameraRef.current);
@@ -33,10 +52,10 @@ const CutsceneCamera = forwardRef<any, CutsceneCameraProps>(({
         if (!sceneCameraRef.current?.cameraRef?.current) return;
 
         const camera = sceneCameraRef.current.cameraRef.current;
+        initializeCamera(camera);
 
-        // Set initial position and rotation from cloned camera
-        camera.position.copy(startPosition);
-        camera.quaternion.copy(startQuaternion);
+        const startPosition = startPositionRef.current.clone();
+        const startQuaternion = startQuaternionRef.current.clone();
 
         // Calculate target quaternion from rotation prop or use start quaternion
         const targetQuaternion = rotation
@@ -74,13 +93,13 @@ const CutsceneCamera = forwardRef<any, CutsceneCameraProps>(({
         return () => {
             tween.stop();
         };
-    }, [startPosition, startQuaternion, position, rotation, duration]);
+    }, [initializeCamera, position, rotation, duration]);
 
     useFrame((state, delta) => {
         tweenGroupRef.current.update(performance.now());
     });
 
-    return <SceneCamera ref={sceneCameraRef} fov={fov} />;
+    return <SceneCamera ref={sceneCameraRef} fov={fov} initializeCamera={initializeCamera} />;
 });
 
 export default CutsceneCamera;

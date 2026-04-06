@@ -24,6 +24,14 @@ export type AgentHandle = {
     setTarget: (position: Vector3Tuple) => void;
 };
 
+export type NavMeshGenerationConfig = {
+    tileSize?: number;
+    cs?: number;
+    ch?: number;
+    walkableClimb?: number;
+    maxSimplificationError?: number;
+};
+
 type NavigableContextValue = {
     isReady: boolean;
     registerAgent: (position: Vector3Tuple, config?: AgentConfig) => AgentHandle | null;
@@ -52,12 +60,22 @@ export type NavigableWorldProps = {
     children: ReactNode;
     debug?: boolean;
     maxAgents?: number;
+    navMeshConfig?: NavMeshGenerationConfig;
+};
+
+const DEFAULT_NAV_MESH_CONFIG: NavMeshGenerationConfig = {
+    tileSize: 16,
+    cs: 0.1,
+    ch: 0.1,
+    walkableClimb: 4,
+    maxSimplificationError: 0.8,
 };
 
 export const NavigableWorld = ({
     children,
     debug = false,
     maxAgents = 50,
+    navMeshConfig,
 }: NavigableWorldProps) => {
     const { scene } = useThree();
     const worldRef = useRef<THREE.Group>(null);
@@ -98,7 +116,10 @@ export const NavigableWorld = ({
                 return;
             }
 
-            const { success, navMesh, tileCache } = threeToTileCache(meshes, { tileSize: 16 });
+            const { success, navMesh, tileCache } = threeToTileCache(meshes, {
+                ...DEFAULT_NAV_MESH_CONFIG,
+                ...navMeshConfig,
+            });
 
             if (!success || !navMesh || !mounted) {
                 if (mounted) console.error("NavigableWorld: Failed to generate navmesh");
@@ -142,7 +163,7 @@ export const NavigableWorld = ({
             agentsMapRef.current.clear();
             setIsReady(false);
         };
-    }, [debug, getSceneMeshes, maxAgents, scene]);
+    }, [debug, getSceneMeshes, maxAgents, navMeshConfig, scene]);
 
     // Register a new agent
     const registerAgent = useCallback((position: Vector3Tuple, config?: AgentConfig): AgentHandle | null => {

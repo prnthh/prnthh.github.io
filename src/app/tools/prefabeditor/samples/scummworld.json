@@ -1,0 +1,146 @@
+{
+  "id": "scumm2-scene",
+  "name": "Scumm2 Scene",
+  "root": {
+    "id": "root",
+    "children": [
+      {
+        "id": "ground",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                -1.5707963267948966,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane",
+              "args": [
+                64,
+                64
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#dfffd6",
+              "texture": "/textures/proto32/checkers_01.png",
+              "repeat": true,
+              "repeatCount": [
+                50,
+                50
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "platform",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0.75,
+                -10
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "box",
+              "args": [
+                8,
+                1.5,
+                8
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#e0f9ff",
+              "texture": "/textures/proto32/checkers_01.png",
+              "repeat": true,
+              "repeatCount": [
+                15,
+                3
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "ramp",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                1,
+                0.75,
+                -4.25
+              ],
+              "rotation": [
+                0.4048917862850834,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "box",
+              "args": [
+                1,
+                0.15,
+                3.8078865529319543
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#a8a8a8"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

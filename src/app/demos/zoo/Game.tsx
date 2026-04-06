@@ -5,8 +5,6 @@ import { Environment, useTexture } from "@react-three/drei";
 import { GameCanvas } from "react-three-game";
 import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
 import { Physics, RigidBody } from "@react-three/rapier";
-import { NearestFilter, RepeatWrapping, Vector3 } from "three";
-import { ShadowLight } from "@/shared/lighting/ShadowLight";
 import GameComponents from "./GameComponents";
 import { Csm } from "@/shared/Csm";
 

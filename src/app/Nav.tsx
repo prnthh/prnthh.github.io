@@ -16,18 +16,17 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'demos/zoo',
         description: 'Asset showcase (models/vfx/assets)'
     },
-    'football': {
-        // path: 'demos/killbox',
-        path: 'demos/museum',
-        description: 'Systems, lighting and prefabs demos'
-    },
-    'scumm': {
+    'scumm-physics': {
         path: 'demos/scumm',
         description: 'A simple point-and-click adventure game demo inspired by classic SCUMM games.'
     },
-    'scumm2': {
+    'scumm-nav': {
         path: 'demos/scumm2',
         description: 'NavAgent version of SCUMM game demo.'
+    },
+    'prefabeditor': {
+        path: 'tools/prefabeditor',
+        description: 'Prefab editor tool.'
     },
     'car/simple': {
         path: 'sketches/car/simple',
@@ -77,10 +76,6 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'sketches/replicube',
         description: 'Replicube style voxel system experiments.'
     },
-    'ecs-world': {
-        path: 'sketches/ecs-world',
-        description: 'Entity-component-system world.'
-    },
     'wfc': {
         path: '../wfc/index.html',
         description: 'Wave function collapse algorithm.'
@@ -117,32 +112,19 @@ const toolsConfig: Record<string, ItemConfig> = {
         external: true,
         description: 'React Three Fiber game framework.'
     },
+    'character': {
+        path: 'tools/character',
+        description: 'Character editor tool.'
+    },
+    'picocad': {
+        path: 'tools/picocad',
+        description: 'Picocad model exporter.'
+    },
     'eth-pcp': {
         path: 'Pockit-Challenge-Protocol',
         external: true,
         description: 'EVM Pockit Challenge Protocol implementation.'
     },
-    'prefabeditor': {
-        path: 'tools/prefabeditor',
-        description: 'Prefab editor tool.'
-    },
-    'assetviewer': {
-        path: 'sketches/tools/assetviewer',
-        description: 'Asset viewer and inspector.'
-    },
-    'character': {
-        path: 'sketches/tools/character',
-        description: 'Character editor tool.'
-    },
-    'dragdrop': {
-        path: 'sketches/tools/dragdrop',
-        description: 'Drag and drop scene builder.'
-    },
-
-    'picocad': {
-        path: 'tools/picocad',
-        description: 'Picocad model exporter.'
-    }
 };
 
 // Helper to build a tree from the flat list

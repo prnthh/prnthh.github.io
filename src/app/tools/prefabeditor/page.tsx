@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Leva } from "leva";
 import { Prefab, PrefabEditor, registerComponent } from "react-three-game";
 import RotatorComponent from "./plugins/RotatorComponent";
+import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
 
 registerComponent(RotatorComponent);
 
-const SAMPLE_NAMES = ["killbox", "killbox2", "killboxlobby", "room", "test"] as const;
+const SAMPLE_NAMES = ["killbox", "killbox2", "killboxlobby", "room", "room2", "scummworld"] as const;
 const DEFAULT_SAMPLE = "killbox";
 
 type SampleName = typeof SAMPLE_NAMES[number];
@@ -63,8 +65,10 @@ export default function PrefabEditorPage() {
     }, []);
 
     return <div className="relative w-screen h-screen">
+        <Leva collapsed oneLineLabels />
         {selectedPrefab ? (
             <PrefabEditor uiPlugins={<Toolbar setSelectedPrefab={setSelectedPrefab} />} initialPrefab={selectedPrefab}>
+                <RenderPipeline />
             </PrefabEditor>
         ) : (
             <div className="flex h-full items-center justify-center bg-black text-sm uppercase tracking-[0.12em] text-white">
