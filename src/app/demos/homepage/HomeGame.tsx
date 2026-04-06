@@ -70,12 +70,12 @@ function FloatingTablet() {
 
     useFrame(({ clock }) => {
         const t = clock.getElapsedTime();
-        ref.current.position.y = 0.6 + Math.sin(t * 2) * 0.05;
+        ref.current.position.y = 0.2 + Math.sin(t * 2) * 0.05;
         ref.current.rotation.y = stopGoEased(t, 2, 4) * 2 * Math.PI;
     });
 
     return (
-        <group position={[0, 0.6, 0.5]} ref={ref}>
+        <group position={[0, 0.6, 0]} ref={ref}>
             <primitive object={clonedScene} rotation={[0, -Math.PI / 2, 0]} scale={0.08} />
         </group>
     );
@@ -116,8 +116,6 @@ function PixelScene() {
                 target-position={[0, 0, 0]}
                 castShadow
             />
-
-            <OrbitControls />
         </>
     );
 }
@@ -133,8 +131,8 @@ export default function HomeGame() {
             <GameCanvas>
                 <OrthographicCamera
                     makeDefault
-                    position={[0, 2 * Math.tan(Math.PI / 6), 2]}
-                    rotation={[-Math.PI / 6, 0, 0]}
+                    position={[0, 0.8, 2]}
+                    rotation={[-Math.PI / 16, 0, 0]}
                     zoom={400}
                     near={0.1}
                     far={10}
