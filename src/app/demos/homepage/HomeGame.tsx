@@ -1,22 +1,23 @@
 "use client";
 
-import { useRef } from "react";
-import { OrthographicCamera } from "@react-three/drei";
+import { useMemo, useRef } from "react";
+import { OrbitControls, OrthographicCamera, useGLTF } from "@react-three/drei";
 import { useFrame, useLoader } from "@react-three/fiber";
-import { extend } from "@react-three/fiber";
-import { MeshBasicNodeMaterial, MeshStandardNodeMaterial, MeshPhongNodeMaterial, SpriteNodeMaterial, PCFShadowMap, NearestFilter, Texture, RepeatWrapping, SRGBColorSpace, TextureLoader, Mesh, MathUtils } from "three/webgpu";
+import {
+    Group,
+    MathUtils,
+    Mesh,
+    NearestFilter,
+    RepeatWrapping,
+    SRGBColorSpace,
+    Texture,
+    TextureLoader,
+} from "three";
 
 import { GameCanvas } from "react-three-game";
-import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
-import Controls from "@/app/react-three-controller/controls/ControlsProvider";
+import Controls from "../../react-three-controller/controls/ControlsProvider";
+import { useCanvasReady } from "../../sketches/loading/GameWithLoader";
 import PixelationEffect from "./PixelationEffect";
-
-extend({
-    MeshBasicNodeMaterial: MeshBasicNodeMaterial,
-    MeshStandardNodeMaterial: MeshStandardNodeMaterial,
-    MeshPhongNodeMaterial: MeshPhongNodeMaterial,
-    SpriteNodeMaterial: SpriteNodeMaterial,
-});
 
 function pixelTexture(texture: Texture) {
     texture.minFilter = NearestFilter;
@@ -46,63 +47,53 @@ function stopGoEased(x: number, downtime: number, period: number) {
     return cycle + linStep;
 }
 
-function Crystal() {
-    const ref = useRef<Mesh>(null!);
+function useTabletScene() {
+    const { scene } = useGLTF("/models/environment/picocad/tablet.glb");
+    return useMemo(() => {
+        const tablet = scene.clone();
+
+        tablet.traverse((child) => {
+            if (!("isMesh" in child) || !child.isMesh) return;
+
+            const mesh = child as Mesh;
+            mesh.castShadow = true;
+            // mesh.receiveShadow = true;
+        });
+
+        return tablet;
+    }, [scene]);
+}
+
+function FloatingTablet() {
+    const ref = useRef<Group>(null!);
+    const clonedScene = useTabletScene();
 
     useFrame(({ clock }) => {
         const t = clock.getElapsedTime();
-        ref.current.position.y = 0.7 + Math.sin(t * 2) * 0.05;
+        ref.current.position.y = 0.6 + Math.sin(t * 2) * 0.05;
         ref.current.rotation.y = stopGoEased(t, 2, 4) * 2 * Math.PI;
-        (ref.current.material as any).emissiveIntensity = Math.sin(t * 3) * 0.5 + 0.5;
     });
 
     return (
-        <mesh ref={ref} castShadow receiveShadow>
-            <icosahedronGeometry args={[0.2]} />
-            <meshPhongNodeMaterial
-                color={0x68b7e9}
-                emissive={0x4f7e8b}
-                shininess={10}
-                specular={0xffffff}
-            />
-        </mesh>
+        <group position={[0, 0.6, 0.5]} ref={ref}>
+            <primitive object={clonedScene} rotation={[0, -Math.PI / 2, 0]} scale={0.08} />
+        </group>
     );
 }
 
 function PixelScene() {
-    const texChecker = pixelTexture(
-        useLoader(TextureLoader, "/textures/proto32/checkers_03.png")
-    );
-    const texChecker2 = pixelTexture(
-        useLoader(TextureLoader, "/textures/proto32/checkers_03.png")
-    );
+    const texChecker = pixelTexture(useLoader(TextureLoader, "/textures/proto32/checkers_03.png"));
     texChecker.repeat.set(3, 3);
-    texChecker2.repeat.set(1.5, 1.5);
 
     return (
         <>
-            {/* Box 1 */}
-            <mesh
-                castShadow
-                receiveShadow
-                position={[0, 0.2001, 0]}
-                rotation={[0, Math.PI / 4, 0]}
-            >
-                <boxGeometry args={[0.4, 0.4, 0.4]} />
-                <meshPhongNodeMaterial map={texChecker2} />
-            </mesh>
-
-
-            {/* Ground plane */}
             <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
                 <planeGeometry args={[2, 2]} />
-                <meshPhongNodeMaterial map={texChecker} />
+                <meshPhongMaterial map={texChecker} />
             </mesh>
 
-            {/* Crystal */}
-            <Crystal />
+            <FloatingTablet />
 
-            {/* Lights */}
             <ambientLight color={0x757f8e} intensity={3} />
 
             <directionalLight
@@ -125,6 +116,8 @@ function PixelScene() {
                 target-position={[0, 0, 0]}
                 castShadow
             />
+
+            <OrbitControls />
         </>
     );
 }
