@@ -11,8 +11,8 @@ import MapPicker from "./MapPicker";
 import killbox from "../../tools/prefabeditor/samples/killbox.json";
 import killboxlobby from "../../tools/prefabeditor/samples/killboxlobby.json";
 import { Physics } from "@react-three/rapier";
-import { PedSpawner } from "../museum/Game";
 import { CombinedController } from "@/app/react-three-controller";
+import { PedSpawner } from "../zoo/GameComponents";
 
 export default function GameWrapper() {
     const [gameId, setGameId] = useState<string | null>(null);
