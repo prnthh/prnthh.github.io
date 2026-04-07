@@ -2,22 +2,25 @@
 
 import { ChangeEvent, DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Prefab, PrefabEditor, PrefabEditorRef } from "react-three-game";
+import { useEditorContext } from "react-three-game/dist/tools/prefabeditor/EditorContext";
 import { LoadingManager, Material, Object3D, Texture } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-import PixelationEffect from "../../demos/homepage/PixelationEffect";
+import PixelationEffect from "./PixelationEffect";
 
-type SupportedAssetType = "gltf" | "bin" | "png";
+type SupportedAssetType = "glb" | "gltf" | "bin" | "png";
+type TransformMode = "translate" | "rotate" | "scale";
 
 type AssetSlots = Partial<Record<SupportedAssetType, File>>;
 
 const ASSET_CONFIG: Array<{ type: SupportedAssetType; label: string; accept: string }> = [
+    { type: "glb", label: "GLB", accept: ".glb" },
     { type: "gltf", label: "GLTF", accept: ".gltf" },
     { type: "bin", label: "BIN", accept: ".bin" },
     { type: "png", label: "PNG", accept: ".png" },
 ];
 
-const DEFAULT_ASSET_BASE = "/models/environment/picocad/tablet";
-const EDITOR_MODEL_PATH = "imports/picocad-tablet.gltf";
+const VISIBLE_ASSET_CONFIG = ASSET_CONFIG.filter(config => config.type !== "glb");
+const SAMPLE_NAMES = ["question", "tablet"] as const;
 const EMPTY_PREFAB: Prefab = {
     id: "picocad-editor",
     name: "Picocad Scene",
@@ -38,30 +41,31 @@ const EMPTY_PREFAB: Prefab = {
     },
 };
 
+function TransformModeBridge({ mode }: { mode: TransformMode }) {
+    const { setTransformMode } = useEditorContext();
+
+    useEffect(() => {
+        setTransformMode(mode);
+    }, [mode, setTransformMode]);
+
+    return null;
+}
+
 function getFileExtension(filename: string): SupportedAssetType | null {
     const extension = filename.toLowerCase().split(".").pop();
 
-    if (extension === "gltf" || extension === "bin" || extension === "png") {
+    if (extension === "glb" || extension === "gltf" || extension === "bin" || extension === "png") {
         return extension;
     }
 
     return null;
 }
 
-function normalizeLookupKey(value: string) {
-    const withoutQuery = value.split(/[?#]/)[0].replace(/\\/g, "/");
+function getAssetTypeFromReference(value: string) {
+    const normalized = value.toLowerCase().split(/[?#]/)[0].replace(/\\/g, "/");
+    const filename = normalized.split("/").pop() ?? normalized;
 
-    try {
-        return decodeURIComponent(withoutQuery).toLowerCase();
-    } catch {
-        return withoutQuery.toLowerCase();
-    }
-}
-
-function getFilename(value: string) {
-    const normalized = normalizeLookupKey(value);
-    const parts = normalized.split("/");
-    return parts[parts.length - 1] ?? normalized;
+    return getFileExtension(filename);
 }
 
 function mergeSupportedFiles(files: File[], currentAssets: AssetSlots) {
@@ -74,6 +78,16 @@ function mergeSupportedFiles(files: File[], currentAssets: AssetSlots) {
             return;
         }
 
+        if (type === "glb") {
+            delete nextAssets.gltf;
+            delete nextAssets.bin;
+            delete nextAssets.png;
+        }
+
+        if (type === "gltf") {
+            delete nextAssets.glb;
+        }
+
         nextAssets[type] = file;
     });
 
@@ -81,19 +95,27 @@ function mergeSupportedFiles(files: File[], currentAssets: AssetSlots) {
 }
 
 function getPrimarySceneAsset(assets: AssetSlots) {
-    return assets.gltf ?? null;
+    return assets.glb ?? assets.gltf ?? null;
 }
 
 function getAssetByReference(assets: AssetSlots, value: string) {
-    const referenceName = getFilename(value);
+    const referenceType = getAssetTypeFromReference(value);
+    return referenceType ? assets[referenceType] ?? null : null;
+}
 
-    return Object.values(assets).find(file => {
-        if (!file) {
-            return false;
-        }
+function getMissingAssetLabels(assets: AssetSlots) {
+    if (assets.glb) {
+        return [] as string[];
+    }
 
-        return file.name.toLowerCase() === referenceName;
-    }) ?? null;
+    if (!assets.gltf) {
+        return ["GLTF"];
+    }
+
+    return VISIBLE_ASSET_CONFIG
+        .filter(config => config.type !== "gltf")
+        .filter(config => !assets[config.type])
+        .map(config => config.label);
 }
 
 function disposeMaterial(material: Material) {
@@ -139,21 +161,20 @@ function downloadArrayBuffer(buffer: ArrayBuffer, filename: string) {
     URL.revokeObjectURL(url);
 }
 
-async function loadDefaultAssets() {
+async function loadSampleAssets(sampleName: (typeof SAMPLE_NAMES)[number]) {
     const entries = await Promise.all(
-        ASSET_CONFIG.map(async config => {
-            const response = await fetch(`${DEFAULT_ASSET_BASE}.${config.type}`);
+        VISIBLE_ASSET_CONFIG.map(async config => {
+            const response = await fetch(`/models/environment/picocad/${sampleName}.${config.type}`);
 
             if (!response.ok) {
-                throw new Error(`Failed to load default ${config.label} asset.`);
+                throw new Error(`Failed to load ${sampleName} ${config.label} asset.`);
             }
 
             const blob = await response.blob();
-            const filename = `tablet.${config.type}`;
 
             return [
                 config.type,
-                new File([blob], filename, { type: blob.type || "application/octet-stream" }),
+                new File([blob], `${sampleName}.${config.type}`, { type: blob.type || "application/octet-stream" }),
             ] as const;
         }),
     );
@@ -169,55 +190,37 @@ export default function PicocadPage() {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [exportError, setExportError] = useState<string | null>(null);
     const [isExporting, setIsExporting] = useState(false);
-    const [pixelationEnabled, setPixelationEnabled] = useState(true);
+    const [loadingSampleName, setLoadingSampleName] = useState<string | null>(null);
+    const [pixelSize, setPixelSize] = useState(6);
+    const [transformMode, setTransformMode] = useState<TransformMode>("translate");
     const [editorReady, setEditorReady] = useState(false);
     const editorRef = useRef<PrefabEditorRef | null>(null);
     const fileInputRefs = useRef<Record<SupportedAssetType, HTMLInputElement | null>>({
+        glb: null,
         gltf: null,
         bin: null,
         png: null,
     });
 
     const primarySceneAsset = useMemo(() => getPrimarySceneAsset(assets), [assets]);
+    const missingAssetLabels = useMemo(() => getMissingAssetLabels(assets), [assets]);
     const exportFilename = primarySceneAsset
         ? `${primarySceneAsset.name.replace(/\.[^.]+$/, "")}.glb`
         : "picocad-export.glb";
-    const editorModelPath = primarySceneAsset ? `imports/${primarySceneAsset.name}` : EDITOR_MODEL_PATH;
     const handleEditorRef = useCallback((value: PrefabEditorRef | null) => {
         editorRef.current = value;
         if (value) {
             setEditorReady(true);
         }
     }, []);
+    const replaceLoadedScene = useCallback((nextScene: Object3D | null) => {
+        setLoadedScene(previousScene => {
+            if (previousScene && previousScene !== nextScene) {
+                disposeObject(previousScene);
+            }
 
-    useEffect(() => {
-        let cancelled = false;
-
-        loadDefaultAssets()
-            .then(defaultAssets => {
-                if (cancelled) {
-                    return;
-                }
-
-                setAssets(previousAssets => {
-                    if (previousAssets.gltf || previousAssets.bin || previousAssets.png) {
-                        return previousAssets;
-                    }
-
-                    return defaultAssets;
-                });
-            })
-            .catch(error => {
-                if (cancelled) {
-                    return;
-                }
-
-                console.error(error);
-            });
-
-        return () => {
-            cancelled = true;
-        };
+            return nextScene;
+        });
     }, []);
 
     useEffect(() => {
@@ -230,95 +233,94 @@ export default function PicocadPage() {
 
     useEffect(() => {
         const sceneAsset = getPrimarySceneAsset(assets);
+        let cancelled = false;
 
         if (!sceneAsset) {
             setIsLoading(false);
             setLoadError(null);
-            setLoadedScene(previousScene => {
-                if (previousScene) {
-                    disposeObject(previousScene);
-                }
-
-                return null;
-            });
+            replaceLoadedScene(null);
             return;
         }
 
-        const manager = new LoadingManager();
-        const objectUrls = new Map<string, string>();
-        let cancelled = false;
+        if (sceneAsset === assets.gltf && missingAssetLabels.length > 0) {
+            setIsLoading(false);
+            setLoadError(null);
+            replaceLoadedScene(null);
+            return;
+        }
 
-        const getObjectUrl = (file: File) => {
-            const cachedUrl = objectUrls.get(file.name);
-
-            if (cachedUrl) {
-                return cachedUrl;
-            }
-
-            const nextUrl = URL.createObjectURL(file);
-            objectUrls.set(file.name, nextUrl);
-            return nextUrl;
-        };
-
-        manager.setURLModifier(url => {
-            const normalized = normalizeLookupKey(url);
-            const fileAsset = getAssetByReference(assets, normalized);
-
-            if (!fileAsset) {
-                return url;
-            }
-
-            return getObjectUrl(fileAsset);
-        });
-
-        setIsLoading(true);
         setLoadError(null);
         setExportError(null);
 
-        const loader = new GLTFLoader(manager);
+        const loadScene = async () => {
+            const manager = new LoadingManager();
+            const objectUrls = new Map<string, string>();
 
-        loader.loadAsync(getObjectUrl(sceneAsset))
-            .then(gltf => {
+            const getObjectUrl = (file: File) => {
+                const cachedUrl = objectUrls.get(file.name);
+
+                if (cachedUrl) {
+                    return cachedUrl;
+                }
+
+                const nextUrl = URL.createObjectURL(file);
+                objectUrls.set(file.name, nextUrl);
+                return nextUrl;
+            };
+
+            manager.setURLModifier(url => {
+                const fileAsset = getAssetByReference(assets, url);
+
+                if (!fileAsset) {
+                    return url;
+                }
+
+                return getObjectUrl(fileAsset);
+            });
+
+            setIsLoading(true);
+
+            const loader = new GLTFLoader(manager);
+
+            try {
+                const gltf = await loader.loadAsync(getObjectUrl(sceneAsset));
+
                 if (cancelled) {
                     disposeObject(gltf.scene);
                     return;
                 }
 
-                setLoadedScene(previousScene => {
-                    if (previousScene) {
-                        disposeObject(previousScene);
-                    }
-
-                    return gltf.scene;
-                });
-            })
-            .catch(error => {
+                replaceLoadedScene(gltf.scene);
+            } catch (error) {
                 if (cancelled) {
                     return;
                 }
 
-                setLoadedScene(previousScene => {
-                    if (previousScene) {
-                        disposeObject(previousScene);
-                    }
-
-                    return null;
-                });
+                replaceLoadedScene(null);
                 setLoadError(error instanceof Error ? error.message : "Failed to assemble dropped assets.");
-            })
-            .finally(() => {
+            } finally {
                 objectUrls.forEach(url => URL.revokeObjectURL(url));
 
                 if (!cancelled) {
                     setIsLoading(false);
                 }
-            });
+            }
+        };
+
+        loadScene().catch(error => {
+            if (cancelled) {
+                return;
+            }
+
+            setIsLoading(false);
+            replaceLoadedScene(null);
+            setLoadError(error instanceof Error ? error.message : "Failed to assemble dropped assets.");
+        });
 
         return () => {
             cancelled = true;
-            objectUrls.forEach(url => URL.revokeObjectURL(url));
         };
-    }, [assets]);
+    }, [assets, missingAssetLabels, replaceLoadedScene]);
 
     useEffect(() => {
         const editor = editorRef.current;
@@ -333,6 +335,7 @@ export default function PicocadPage() {
         }
 
         const sceneName = primarySceneAsset?.name.replace(/\.[^.]+$/, "") || "Picocad Model";
+        const editorModelPath = `imports/${primarySceneAsset?.name ?? "model.glb"}`;
 
         editor.replacePrefab({
             ...EMPTY_PREFAB,
@@ -349,7 +352,7 @@ export default function PicocadPage() {
                 editor.rootRef.current?.focusNode(node.id);
             });
         });
-    }, [editorModelPath, editorReady, loadedScene, primarySceneAsset]);
+    }, [editorReady, loadedScene, primarySceneAsset]);
 
     function addFiles(files: File[]) {
         setAssets(previousAssets => mergeSupportedFiles(files, previousAssets));
@@ -359,10 +362,7 @@ export default function PicocadPage() {
         const file = event.target.files?.[0];
 
         if (file) {
-            setAssets(previousAssets => ({
-                ...previousAssets,
-                [type]: file,
-            }));
+            setAssets(previousAssets => mergeSupportedFiles([file], previousAssets));
         }
 
         event.target.value = "";
@@ -407,8 +407,33 @@ export default function PicocadPage() {
         setExportError(null);
     }
 
+    function removeAsset(type: SupportedAssetType) {
+        setAssets(previousAssets => {
+            const nextAssets = { ...previousAssets };
+
+            delete nextAssets[type];
+
+            return nextAssets;
+        });
+    }
+
     function openFilePicker(type: SupportedAssetType) {
         fileInputRefs.current[type]?.click();
+    }
+
+    async function applySample(sampleName: (typeof SAMPLE_NAMES)[number]) {
+        setLoadingSampleName(sampleName);
+        setLoadError(null);
+        setExportError(null);
+
+        try {
+            const sampleAssets = await loadSampleAssets(sampleName);
+            setAssets(sampleAssets);
+        } catch (error) {
+            setLoadError(error instanceof Error ? error.message : `Failed to load ${sampleName} sample.`);
+        } finally {
+            setLoadingSampleName(null);
+        }
     }
 
     async function downloadGlb() {
@@ -438,7 +463,6 @@ export default function PicocadPage() {
     return (
         <div
             className="noscrollbar relative grid h-screen grid-cols-1 overflow-x-hidden overflow-y-auto bg-[#8f84b0] font-bold text-[#ffd5e8] lg:h-auto lg:min-h-screen lg:grid-cols-[minmax(0,1fr)_360px] lg:overflow-y-visible"
-            style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
             onDragEnter={onDragEnter}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
@@ -473,14 +497,15 @@ export default function PicocadPage() {
                         },
                     }}
                 >
-                    {pixelationEnabled && (
-                        <PixelationEffect pixelSize={6} normalEdgeStrength={0.3} depthEdgeStrength={0.4} />
+                    <TransformModeBridge mode={transformMode} />
+                    {pixelSize > 0 && (
+                        <PixelationEffect pixelSize={pixelSize} normalEdgeStrength={0.3} depthEdgeStrength={0.4} />
                     )}
                 </PrefabEditor>
             </main>
 
-            <aside className="border-t-4 border-[#24315d] bg-[#7b2154] text-[#ffb1cf] lg:border-t-0 lg:border-l-4">
-                <div className="flex h-full w-full flex-col items-center bg-[#7b2154] text-[#ffb1cf]">
+            <aside className="border-t-4 border-[#24315d] bg-[#7b2154] text-[#ffb1cf] lg:h-screen lg:overflow-y-auto lg:border-t-0 lg:border-l-4">
+                <div className="flex h-full w-full flex-col items-center bg-[#7b2154] text-[#ffb1cf] lg:min-h-full">
                     <div className="w-full border-b-4 border-[#24315d] bg-[#ff1654] px-4 py-3 text-center text-[#fff2f4]">
                         <p className="text-xl font-bold tracking-wide">
                             <a
@@ -499,15 +524,33 @@ export default function PicocadPage() {
                     <div className="flex w-full flex-1 flex-col items-center p-4 text-center">
                         <div className="w-full max-w-[320px] border-b-4 border-[#24315d] pb-4">
                             <p className="text-sm leading-6 text-[#ffb1cf]">
-                                Drop your picoCAD files anywhere, or add them here.
+                                Drop a picoCAD GLTF + BIN + PNG <br />
+                                (Export &gt; Export GLTF) <br />
                             </p>
                         </div>
 
-                        <div className="w-full max-w-[320px] space-y-3 bg-[#7b2154] p-4">
-                            <div className="flex items-center justify-between pb-3">
-                                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#ffd5e8]">Assets</h2>
+                        <div className="flex items-center gap-2 my-4">
+                            <h2 className="text-sm font-bold uppercase text-[#ffd5e8]">Samples</h2>
+                            <div className="flex gap-2">
+                                {SAMPLE_NAMES.map(sampleName => (
+                                    <button
+                                        key={sampleName}
+                                        className="bg-[#ff1654] px-3 py-2 text-xs font-bold uppercase text-[#fff2f4] transition hover:bg-[#c01343] disabled:cursor-not-allowed disabled:bg-[#7d7496] disabled:text-[#b8afd0]"
+                                        type="button"
+                                        onClick={() => applySample(sampleName)}
+                                        disabled={loadingSampleName !== null}
+                                    >
+                                        {loadingSampleName === sampleName ? `Loading ${sampleName}...` : sampleName}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="w-full max-w-[320px] bg-[#ffccaa] p-4 text-[#24315d]">
+                            <div className="flex items-center justify-between ">
+                                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#24315d]">Files</h2>
                                 <button
-                                    className="bg-[#ff89b3] px-4 py-2 text-sm text-[#fff2f4] hover:bg-[#ff94ba]"
+                                    className="bg-[#ff1654] p-1 text-sm text-[#fff2f4] hover:bg-[#ff4a7a]"
                                     type="button"
                                     onClick={clearAssets}
                                 >
@@ -515,44 +558,49 @@ export default function PicocadPage() {
                                 </button>
                             </div>
 
-                            {ASSET_CONFIG.map(config => {
+                            {VISIBLE_ASSET_CONFIG.map(config => {
                                 const file = assets[config.type];
 
                                 return (
-                                    <div key={config.type} className="flex items-center gap-3 bg-[#8b2b62] px-3 py-3">
-                                        <div className="flex min-w-0 flex-1 items-center gap-3">
-                                            <span className="w-12 text-xs font-bold uppercase tracking-[0.2em] text-[#ffd5e8]">
-                                                {config.label}
-                                            </span>
-                                            <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm text-[#fff2f4]">
-                                                    {file ? file.name : `No ${config.label.toLowerCase()} file added`}
-                                                </p>
-                                                <p className="text-xs text-[#f596bd]">
-                                                    {file ? `${(file.size / 1024).toFixed(1)} KB` : config.accept}
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                className="bg-[#ff89b3] px-3 py-1.5 text-sm text-[#fff2f4] hover:bg-[#ff94ba]"
-                                                type="button"
-                                                onClick={() => openFilePicker(config.type)}
-                                            >
-                                                Add
-                                            </button>
+                                    <div key={config.type} className="flex items-center my-1">
+                                        {file && (
                                             <span
-                                                className={[
-                                                    "flex h-8 w-8 items-center justify-center bg-[#7b2154]",
-                                                    file ? "text-[#ffe28a]" : "text-[#a33a73]",
-                                                ].join(" ")}
-                                                aria-label={file ? `${config.label} added` : `${config.label} missing`}
+                                                className="mr-2 flex h-4 w-4 items-center justify-center text-[#ff9c00]"
+                                                aria-label={`${config.label} added`}
+                                                title={`${config.label} added`}
                                             >
                                                 <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                                                     <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
                                                 </svg>
                                             </span>
+                                        )}
+
+                                        <div className="min-w-0 flex-1 text-left">
+                                            {file ? file.name : config.accept}
+                                        </div>
+
+                                        <div className="ml-3 flex items-center justify-end">
+                                            {file ? (
+                                                <button
+                                                    className="bg-[#ff1654] px-3 py-1 text-xs font-bold uppercase text-[#fff2f4] transition hover:bg-[#c01343]"
+                                                    type="button"
+                                                    onClick={() => removeAsset(config.type)}
+                                                    aria-label={`Remove ${config.label} file`}
+                                                    title={`Remove ${config.label} file`}
+                                                >
+                                                    Remove
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="bg-[#ff1654] px-3 py-1 text-xs font-bold uppercase text-[#fff2f4] transition hover:bg-[#c01343]"
+                                                    type="button"
+                                                    onClick={() => openFilePicker(config.type)}
+                                                    aria-label={`Add ${config.label} file`}
+                                                    title={`Add ${config.label} file`}
+                                                >
+                                                    Add
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 );
@@ -572,30 +620,65 @@ export default function PicocadPage() {
                             </div>
                         ) : (
                             <div className="mt-5 text-sm text-[#24315d]">
-                                {loadError ? loadError : isLoading ? "Loading..." : "Waiting for model..."}
+                                {loadError ? loadError : missingAssetLabels.length > 0 ? `Waiting for: ${missingAssetLabels.join(", ")}` : isLoading ? "Loading..." : "Waiting for model..."}
                             </div>
                         )}
 
                         {exportError && <div className="mt-3 text-sm text-[#7b2154]">{exportError}</div>}
 
-                        <p className="mt-4 text-xs leading-5 text-[#f596bd]">
-                            Dropping files replaces the existing slot for that file type.
-                        </p>
+
+                        <div className="mt-4 w-full max-w-[320px] space-y-3  p-4 border-t-4 border-[#24315d]">
+                            <div className="w-full text-left">
+                                <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#ffd5e8]">Transform</h2>
+                                <div className="mt-3 flex gap-2 justify-center">
+                                    {([
+                                        ["translate", "Move"],
+                                        ["rotate", "Rotate"],
+                                        ["scale", "Scale"],
+                                    ] as const).map(([mode, label]) => (
+                                        <button
+                                            key={mode}
+                                            className={[
+                                                "min-w-10 px-3 py-2 text-sm font-bold uppercase",
+                                                transformMode === mode
+                                                    ? "bg-[#ff1654] text-[#fff2f4]"
+                                                    : "bg-[#ffccaa] text-[#24315d] hover:bg-[#ffd8bd]",
+                                            ].join(" ")}
+                                            type="button"
+                                            onClick={() => setTransformMode(mode)}
+                                            aria-label={`${mode} transform mode`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
 
-                        <div className="mt-4 w-full max-w-[320px] space-y-3  p-4 border-t-4 border-[#24315d] ">
+                        </div>
+
+                        <div className="mt-4 w-full p-4 border-t-4 border-[#24315d]">
+
                             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-[#ffd5e8] w-full text-left">Effects</h2>
 
-                            <label className="mt-4 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#ffd5e8]">
+                            <label className="mt-4 flex w-full flex-col items-start gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#ffd5e8]">
+                                <div className="flex w-full items-center justify-between">
+                                    <span>Pixelate</span>
+                                    <span>{pixelSize}</span>
+                                </div>
                                 <input
-                                    type="checkbox"
-                                    checked={pixelationEnabled}
-                                    onChange={event => setPixelationEnabled(event.target.checked)}
-                                    className="h-4 w-4"
+                                    type="range"
+                                    min="0"
+                                    max="12"
+                                    step="1"
+                                    value={pixelSize}
+                                    onChange={event => setPixelSize(Number(event.target.value))}
+                                    className="w-full accent-[#ff1654]"
                                 />
-                                Pixelate
+                                <span>{pixelSize === 0 ? "Off" : `Strength ${pixelSize}`}</span>
                             </label>
                         </div>
+
                     </div>
                 </div>
             </aside>

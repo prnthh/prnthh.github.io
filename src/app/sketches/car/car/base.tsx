@@ -5,7 +5,6 @@ import { CuboidCollider, RapierRigidBody, RigidBody, useRapier } from '@react-th
 import { RefObject, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { WheelInfo, useVehicleController } from './vehicleController'
-import FollowCam from '@/shared/cameras/FollowCam'
 import { SkeletonUtils } from 'three/examples/jsm/Addons.js'
 import React from 'react'
 import useInputStore from '@/app/react-three-controller/controls/InputStore'
@@ -197,7 +196,6 @@ const Vehicle = React.forwardRef<ObjectRef, {
                 position={spawn.position}
                 type="dynamic"
             >
-                {driving && <FollowCam key={'cam' + name} height={1.5} />}
                 <CuboidCollider args={[carDimensions[0] / 2, carDimensions[1] / 2, carDimensions[2] / 2]} />
 
                 {/* chassis */}

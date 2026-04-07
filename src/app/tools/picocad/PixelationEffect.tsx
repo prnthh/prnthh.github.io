@@ -4,8 +4,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { PostProcessing, WebGPURenderer } from "three/webgpu";
 import { uniform } from "three/tsl";
 import { pixelationPass } from "three/addons/tsl/display/PixelationPassNode.js";
-import { useEffect, useMemo, useRef } from "react";
-import * as THREE from "three";
+import { useEffect, useMemo } from "react";
 
 export default function PixelationEffect({
     pixelSize = 6,
@@ -26,6 +25,12 @@ export default function PixelationEffect({
         }),
         []
     );
+
+    useEffect(() => {
+        uniforms.pixelSize.value = pixelSize;
+        uniforms.normalEdgeStrength.value = normalEdgeStrength;
+        uniforms.depthEdgeStrength.value = depthEdgeStrength;
+    }, [depthEdgeStrength, normalEdgeStrength, pixelSize, uniforms]);
 
     const postProcessing = useMemo(() => {
         const pp = new PostProcessing(gl as unknown as WebGPURenderer);

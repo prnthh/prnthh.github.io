@@ -1,11 +1,18 @@
-import { ThreeElements, ThreeEvent } from "@react-three/fiber";
+import { ThreeElements, ThreeEvent, useLoader } from "@react-three/fiber";
 import { CuboidCollider, RigidBody } from "@react-three/rapier";
 import { useRef, useEffect } from "react";
-import { useTexture } from "@react-three/drei";
-import { LinearMipmapLinearFilter, NearestFilter, RepeatWrapping } from "three";
+import { LinearMipmapLinearFilter, NearestFilter, RepeatWrapping, SRGBColorSpace, Texture, TextureLoader } from "three";
 
 const DRAG_THRESHOLD = 5;
 const DEFAULT_TEXTURE_URL = "/textures/proto32/grey.png";
+
+function repeatedTexture(texture: Texture) {
+    texture.wrapS = texture.wrapT = RepeatWrapping;
+    texture.magFilter = NearestFilter;
+    texture.minFilter = LinearMipmapLinearFilter;
+    texture.colorSpace = SRGBColorSpace;
+    return texture;
+}
 
 type DebugGroundVisualProps = ThreeElements["mesh"] & {
     size?: number;
@@ -73,14 +80,10 @@ export function DebugGroundVisual({
     rotation = [-Math.PI / 2, 0, 0],
     ...meshProps
 }: DebugGroundVisualProps) {
-    const texture = useTexture(textureUrl);
+    const texture = repeatedTexture(useLoader(TextureLoader, textureUrl));
 
     useEffect(() => {
-        texture.wrapS = texture.wrapT = RepeatWrapping;
         texture.repeat.set(size / 2, size / 2);
-        texture.minFilter = LinearMipmapLinearFilter;
-        texture.magFilter = NearestFilter;
-        texture.generateMipmaps = true;
         texture.needsUpdate = true;
     }, [texture, size]);
 

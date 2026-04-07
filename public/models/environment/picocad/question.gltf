@@ -1,0 +1,21 @@
+{
+  "asset": { "version": "2.0" },
+  "scene": 0,
+  "scenes": [{ "nodes": [0,1] }],
+  "nodes": [{"mesh":0},{"mesh":1}],
+  "meshes": [{"primitives":[{"attributes":{"POSITION":0,"TEXCOORD_0":1},"indices":2,"material":0}]},{"primitives":[{"attributes":{"POSITION":3,"TEXCOORD_0":4},"indices":5,"material":0}]}],
+  "materials": [{
+    "name" : "question",
+    "pbrMetallicRoughness": {
+      "baseColorTexture": { "index": 0 },
+      "metallicFactor": 0.0,
+      "roughnessFactor": 1.0
+    }
+  }],
+  "samplers": [{ "magFilter": 9728, "minFilter": 9728 }],
+  "textures": [{ "source": 0, "sampler": 0 }],
+  "images": [{ "uri": "question.png" }],
+  "accessors": [{"bufferView":0,"byteOffset":0,"componentType":5126,"count":276,"type":"VEC3","min":[-0.5,1,-1.921875],"max":[0.5,6,2.1171875]},{"bufferView":1,"byteOffset":0,"componentType":5126,"count":276,"type":"VEC2"},{"bufferView":2,"byteOffset":0,"componentType":5123,"count":276,"type":"SCALAR"},{"bufferView":3,"byteOffset":0,"componentType":5126,"count":36,"type":"VEC3","min":[-0.5,-0.5,-0.5],"max":[0.5,0.25,0.5]},{"bufferView":4,"byteOffset":0,"componentType":5126,"count":36,"type":"VEC2"},{"bufferView":5,"byteOffset":0,"componentType":5123,"count":36,"type":"SCALAR"}],
+  "bufferViews": [{"buffer":0,"byteOffset":0,"byteLength":3312,"target":34962},{"buffer":0,"byteOffset":3312,"byteLength":2208,"target":34962},{"buffer":0,"byteOffset":5520,"byteLength":552,"target":34963},{"buffer":0,"byteOffset":6072,"byteLength":432,"target":34962},{"buffer":0,"byteOffset":6504,"byteLength":288,"target":34962},{"buffer":0,"byteOffset":6792,"byteLength":72,"target":34963}],
+  "buffers": [{ "uri": "question.bin", "byteLength": 6864 }]
+}

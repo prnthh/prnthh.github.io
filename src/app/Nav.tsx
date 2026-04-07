@@ -28,13 +28,9 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'tools/prefabeditor',
         description: 'Prefab editor tool.'
     },
-    'car/simple': {
-        path: 'sketches/car/simple',
+    'car': {
+        path: 'sketches/car',
         description: 'Simple car physics demo.'
-    },
-    'car/road': {
-        path: 'sketches/car/road',
-        description: 'Car driving on procedural roads.'
     },
     'ik/ragdoll': {
         path: 'sketches/ik/ragdoll',

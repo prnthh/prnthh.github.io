@@ -9,8 +9,6 @@ const filterNeckAnimations = (animation: AnimationClip): AnimationClip => {
     return filteredAnimation
 }
 
-const cloneClip = (clip: AnimationClip) => (clip as any).clone?.() ?? clip
-
 export default function useAnimationState(
     clone?: Object3D<Object3DEventMap>,
     animationOverrides?: { [key: string]: string },
@@ -52,13 +50,13 @@ export default function useAnimationState(
 
         // Model animations first (built-in)
         Object.entries(modelAnimationMap).forEach(([name, clip]) => {
-            if (clip) map[name] = mixer.clipAction(cloneClip(clip), clone)
+            if (clip) map[name] = mixer.clipAction(clip, clone)
         })
 
         // FBX animations as fallback
         Object.keys(ANIMATIONS).forEach((key, i) => {
             const clip = fbxAnimations[i]
-            if (clip && !map[key]) map[key] = mixer.clipAction(cloneClip(clip), clone)
+            if (clip && !map[key]) map[key] = mixer.clipAction(clip, clone)
         })
 
         return map
@@ -91,7 +89,7 @@ export default function useAnimationState(
         if (!thisAnimation || !mixer) return
 
         const animationKey = typeof thisAnimation === 'string' ? thisAnimation : thisAnimation[0]
-        if (!animationKey || lastKeyRef.current === animationKey) return
+        if (!animationKey) return
 
         // Handle reversed animations (no separate animation files needed)
         // walkRight -> walkLeft reversed, walkBack -> walk reversed, runBack -> run reversed
@@ -105,6 +103,7 @@ export default function useAnimationState(
 
         const next = actions[lookupKey] ?? actions[lookupKey.toLowerCase()] ?? actions.idle ?? actions[Object.keys(actions)[0]]
         if (!next) return
+        if (lastKeyRef.current === animationKey && prevActionRef.current === next) return
 
         const prev = prevActionRef.current
         next.clampWhenFinished = true

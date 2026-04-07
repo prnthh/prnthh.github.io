@@ -1,5 +1,4 @@
 import HomeGame from "@/app/demos/homepage/HomeGame";
-import GameWithLoader from "@/app/sketches/loading/GameWithLoader";
 
 export default function Home() {
   return (
@@ -23,9 +22,7 @@ export default function Home() {
         </a>
       </header>
       <div className="w-full" style={{ height: "100vh" }}>
-        <GameWithLoader>
-          <HomeGame />
-        </GameWithLoader>
+        <HomeGame />
       </div>
     </div>
   );

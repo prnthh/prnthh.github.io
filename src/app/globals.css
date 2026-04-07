@@ -3,10 +3,18 @@
 @source "../**/*.{js,ts,jsx,tsx}";
 @source "../../node_modules/react-three-game/dist/**/*.{js,ts,jsx,tsx}";
 
+@font-face {
+  font-family: "Nimbus Sans";
+  src: url("/fonts/NimbusSanL-Reg.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   /* background: var(--color-background);
   color: var(--color-foreground); */
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Nimbus Sans", Arial, Helvetica, sans-serif;
   /* fix to prevent iOS pull to refresh */
   overflow: hidden;
   height: 100%;

@@ -1,19 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "./Nav";
 import AnimatedCursor from "./AnimatedCursor";
 import { GoogleAnalytics } from '@next/third-parties/google';
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "prnth - graphics demos",
@@ -36,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en text-black dark:text-white">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white dark:bg-black text-black dark:text-white transition-colors duration-500 ease-in-out`}
+        className="antialiased bg-white dark:bg-black text-black dark:text-white transition-colors duration-500 ease-in-out"
       >
         {children}
         <Nav />

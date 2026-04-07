@@ -12,7 +12,7 @@ interface CarProps {
     children: React.ReactNode;
 }
 
-export function Car({ points, tangents, normals, binormals, speed, children }: CarProps) {
+export function PedCar({ points, tangents, normals, binormals, speed, children }: CarProps) {
     const carRef = useRef<THREE.Group>(null);
     const i = useRef(0);
 
