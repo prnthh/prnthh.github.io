@@ -1,13 +1,13 @@
-import { forwardRef, useEffect, useRef, useState, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Group, Mesh, Object3D, } from "three";
-import { SimplifyModifier, SkeletonUtils } from "three-stdlib";
+import { SkeletonUtils } from "three-stdlib";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { LAYER_DEFAULT, LAYER_SHADOW_ONLY } from "@/shared/util/layers";
 
-import useAnimationState from "../react-three-controller/ped/useAnimationStateBasic";
-import useLookAtTarget from "../react-three-controller/ped/useLookAtTarget";
-import { AnimatedModelProps, AnimatedModelRef } from "../react-three-controller/ped/types";
+import useAnimationState from "./useAnimationStateBasic";
+import useLookAtTarget from "./useLookAtTarget";
+import { AnimatedModelProps, AnimatedModelRef } from "./types";
 // import { MeshToonNodeMaterial } from "three/webgpu";
 
 // steps to go from AI generated model to animated model:
@@ -18,22 +18,45 @@ import { AnimatedModelProps, AnimatedModelRef } from "../react-three-controller/
 // 5. Convert mixamo rigged .fbx (3) to .glb using Blender to preserve bones, fix rotations etc.
 // 6. This module loads the rigged .glb (5) and applies Mixamo animation .fbx (4) as needed
 
+const DEFAULT_HUMANOID_BASE_PATH = "/models/human/onimilio/";
+
+function resolveAssetPath(path: string | undefined, basePath = DEFAULT_HUMANOID_BASE_PATH) {
+    const value = path?.trim();
+    if (!value) return undefined;
+    if (value.startsWith("/") || value.startsWith("data:") || /^[a-z]+:\/\//i.test(value)) return value;
+
+    const normalizedBasePath = basePath.trim().replace(/\/?$/, "/");
+    return `${normalizedBasePath}${value.replace(/^\/+/, "")}`;
+}
+
+function resolveAnimationOverrides(animationOverrides: AnimatedModelProps["animationOverrides"], basePath: string) {
+    if (!animationOverrides) {
+        return undefined;
+    }
+
+    return Object.fromEntries(
+        Object.entries(animationOverrides).map(([key, value]) => [key, resolveAssetPath(value, basePath) ?? value])
+    );
+}
+
 const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
     ({ name, model, animation = "idle", onClick,
+        basePath = DEFAULT_HUMANOID_BASE_PATH,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
         debug = false, lookTarget, retargetOptions, onActions, attachments, enableBoneCollider = true, shadowOnly = false, children, ...props
     }, ref) => {
         const modelRef = useRef<Object3D | undefined>(undefined);
         const groupRef = useRef<Group>(null!);
-        const { scene } = useGLTF(model!);
+        const resolvedModelPath = useMemo(() => resolveAssetPath(model ?? "rigged.glb", basePath)!, [basePath, model]);
+        const resolvedAnimationOverrides = useMemo(() => resolveAnimationOverrides(animationOverrides, basePath), [animationOverrides, basePath]);
+        const { scene, animations } = useGLTF(resolvedModelPath);
         const [clonedScene, setClonedScene] = useState<Object3D | undefined>(undefined);
 
         // Create a clone of the scene to avoid modifying the original
         useEffect(() => {
             if (scene) {
                 const cloned = SkeletonUtils.clone(scene as unknown as Object3D);
-                const modifier = new SimplifyModifier();
                 cloned.traverse((child) => {
                     if (!('isMesh' in child && child.isMesh)) return;
                     const mesh = child as Mesh;
@@ -97,7 +120,7 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
         useLookAtTarget(clonedScene, lookTarget, 'mixamorigNeck')
 
 
-        const { mixer, setThisAnimation, actions } = useAnimationState(clonedScene, animationOverrides, onActions);
+        const { mixer, setThisAnimation, actions } = useAnimationState(clonedScene, resolvedAnimationOverrides, onActions, animations);
 
         useEffect(() => {
             if (animation && mixer) {

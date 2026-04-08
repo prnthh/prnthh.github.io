@@ -27,7 +27,7 @@
     "next": "^16.0.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-three-game": "^0.0.66",
+    "react-three-game": "^0.0.69",
     "recast-navigation": "^0.43.0",
     "three": "^0.182.0",
     "three-text": "^0.4.4",

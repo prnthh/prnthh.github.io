@@ -11,7 +11,7 @@ import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
 import { RigidHumanoidModelRef } from "@/app/react-three-controller/ped/types";
 import FirstPersonControls from "../controls/FirstPersonControls";
 import { FirstPersonArms } from "../firstperson/FirstPersonArms";
-import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
+import ModelAttachment from "@/app/react-three-character/ModelAttachment";
 import { Group } from "three";
 
 const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number], gunModel?: string, model?: string, basePath?: string }>(({ mode, target = [0, 0, 0], gunModel = "/models/environment/Colt 1911.glb", model = "/models/human/onimilio/rigged.glb", basePath = "/models/human/onimilio/" }, ref) => {

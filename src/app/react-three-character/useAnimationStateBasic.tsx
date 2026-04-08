@@ -25,10 +25,7 @@ export default function useAnimationState(
         ...(animationOverrides ?? {}),
     }), [animationOverrides])
 
-    const animationPaths = useMemo(() => {
-        if (modelAnimations?.length) return []
-        return Object.values(ANIMATIONS)
-    }, [ANIMATIONS, modelAnimations])
+    const animationPaths = useMemo(() => Object.values(ANIMATIONS), [ANIMATIONS])
 
     const _loaded = animationPaths.length ? useLoader(FBXLoader, animationPaths) : []
     const fbxAnimations = useMemo(() =>

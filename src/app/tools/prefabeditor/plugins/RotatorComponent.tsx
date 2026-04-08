@@ -9,21 +9,21 @@ function RotatorComponentEditor({ component, onUpdate }: { component: any; onUpd
         axis: component.properties.axis ?? 'y'
     };
 
-    return <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    return <div className="flex flex-col gap-2">
         <div>
-            <label style={{ display: 'block', fontSize: '9px', color: 'rgba(34, 211, 238, 0.6)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Rotation Speed</label>
+            <label className="mb-0.5 block text-[9px] uppercase tracking-[0.05em] text-cyan-400/60">Rotation Speed</label>
             <input
                 type="number"
                 step="0.1"
-                style={{ width: '100%', backgroundColor: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(34, 211, 238, 0.3)', padding: '2px 4px', fontSize: '10px', color: 'rgba(165, 243, 252, 1)', fontFamily: 'monospace', outline: 'none' }}
+                className="w-full border border-cyan-400/30 bg-black/40 px-1 py-0.5 font-mono text-[10px] text-cyan-200 outline-none"
                 value={props.speed}
                 onChange={e => onUpdate({ ...component.properties, speed: parseFloat(e.target.value) })}
             />
         </div>
         <div>
-            <label style={{ display: 'block', fontSize: '9px', color: 'rgba(34, 211, 238, 0.6)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>Rotation Axis</label>
+            <label className="mb-0.5 block text-[9px] uppercase tracking-[0.05em] text-cyan-400/60">Rotation Axis</label>
             <select
-                style={{ width: '100%', backgroundColor: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(34, 211, 238, 0.3)', padding: '2px 4px', fontSize: '10px', color: 'rgba(165, 243, 252, 1)', fontFamily: 'monospace', outline: 'none' }}
+                className="w-full border border-cyan-400/30 bg-black/40 px-1 py-0.5 font-mono text-[10px] text-cyan-200 outline-none"
                 value={props.axis}
                 onChange={e => onUpdate({ ...component.properties, axis: e.target.value })}
             >

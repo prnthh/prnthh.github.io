@@ -1,8 +1,7 @@
 "use client";
 
 import { ChangeEvent, DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Prefab, PrefabEditor, PrefabEditorRef } from "react-three-game";
-import { useEditorContext } from "react-three-game/dist/tools/prefabeditor/EditorContext";
+import { Prefab, PrefabEditor, PrefabEditorRef, useEditorContext } from "react-three-game";
 import { LoadingManager, Material, Object3D, Texture } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import PixelationEffect from "./PixelationEffect";
@@ -330,17 +329,17 @@ export default function PicocadPage() {
         }
 
         if (!loadedScene) {
-            editor.replacePrefab(EMPTY_PREFAB);
+            editor.load(EMPTY_PREFAB, { resetHistory: true });
             return;
         }
 
         const sceneName = primarySceneAsset?.name.replace(/\.[^.]+$/, "") || "Picocad Model";
         const editorModelPath = `imports/${primarySceneAsset?.name ?? "model.glb"}`;
 
-        editor.replacePrefab({
+        editor.load({
             ...EMPTY_PREFAB,
             name: sceneName,
-        });
+        }, { resetHistory: true });
         const node = editor.addModel(editorModelPath, loadedScene, {
             name: sceneName,
             parentId: "root",
@@ -349,7 +348,7 @@ export default function PicocadPage() {
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                editor.rootRef.current?.focusNode(node.id);
+                editor.viewRef.current?.focusNode(node.id);
             });
         });
     }, [editorReady, loadedScene, primarySceneAsset]);

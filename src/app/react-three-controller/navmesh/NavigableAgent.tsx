@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, ReactNode, memo } from "react";
 import { Group } from "three";
 import { useFrame } from "@react-three/fiber";
 import { AgentHandle, useNavigableContext, Vector3Tuple } from "./NavigableContext";
-import { AnimatedModelProps, AnimatedModelRef } from "../ped/types";
+import type { AnimatedModelProps, AnimatedModelRef } from "@/app/react-three-character/types";
 import AnimatedModel from "../../react-three-character/HumanoidModel";
 
 // ============================================================================

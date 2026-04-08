@@ -26,9 +26,9 @@ export { Weapon } from './Weapon';
 
 // Ped System
 export { default as Ped } from './ped/ped';
-export { default as ModelAttachment } from './ped/ModelAttachment';
-export { default as useLookAtTarget } from './ped/useLookAtTarget';
-export { default as useAnimationStateBasic } from './ped/useAnimationStateBasic';
+export { default as ModelAttachment } from '../react-three-character/ModelAttachment';
+export { default as useLookAtTarget } from '../react-three-character/useLookAtTarget';
+export { default as useAnimationStateBasic } from '../react-three-character/useAnimationStateBasic';
 
 // Ped Physics
 export { default as Ragdoll } from './ped/physics/Ragdoll';
@@ -41,4 +41,5 @@ export { NavigableAgent } from './navmesh/NavigableAgent';
 export { NavigableContextProvider, useNavigableContext } from './navmesh/NavigableContext';
 
 // Types
+export type * from '../react-three-character/types';
 export type * from './ped/types';

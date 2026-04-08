@@ -21,7 +21,7 @@
   "include": [
     "./**/*.ts",
     "./**/*.tsx"
-  ],
+, "../react-three-character/useAnimationStateBasic.tsx", "../react-three-character/useLookAtTarget.tsx", "../react-three-character/ModelAttachment.tsx"  ],
   "exclude": [
     "node_modules",
     "dist",

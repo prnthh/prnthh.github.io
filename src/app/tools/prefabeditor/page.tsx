@@ -4,9 +4,11 @@ import React, { useEffect, useState } from "react";
 import { Leva } from "leva";
 import { Prefab, PrefabEditor, registerComponent } from "react-three-game";
 import RotatorComponent from "./plugins/RotatorComponent";
+import HumanoidModelComponent from "./plugins/HumanoidModelComponent";
 import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
 
 registerComponent(RotatorComponent);
+registerComponent(HumanoidModelComponent);
 
 const SAMPLE_NAMES = ["killbox", "killbox2", "killboxlobby", "room", "room2", "scummworld"] as const;
 const DEFAULT_SAMPLE = "killbox";

@@ -11,7 +11,7 @@ import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
 import Controls from "@/app/react-three-controller/controls/ControlsProvider";
 import { ThirdPersonController } from "@/app/react-three-controller/thirdperson/ThirdPersonController";
 import Ped from "@/app/react-three-controller/ped/ped";
-import ModelAttachment from "@/app/react-three-controller/ped/ModelAttachment";
+import ModelAttachment from "@/app/react-three-character/ModelAttachment";
 import DialogCollider from "@/shared/physics/DialogCollider";
 import { MapProvider } from "@/app/react-three-terrain/MapProvider";
 import { MapTiles } from "@/app/react-three-terrain/MapTile";
