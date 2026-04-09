@@ -71,7 +71,9 @@ const Scene = () => {
 
     return (
         <NavigableWorld navMeshConfig={SCUMM_NAV_MESH_CONFIG}>
-            <PrefabRoot data={scummworld} onClick={handleClick} />
+            <group onClick={handleClick}>
+                <PrefabRoot data={scummworld} />
+            </group>
 
             {STANDING_AGENTS.map((agent, i) => (
                 <NavigableAgent

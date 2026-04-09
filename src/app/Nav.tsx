@@ -24,10 +24,6 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'demos/scumm2',
         description: 'NavAgent version of SCUMM game demo.'
     },
-    'prefabeditor': {
-        path: 'tools/prefabeditor',
-        description: 'Prefab editor tool.'
-    },
     'car': {
         path: 'sketches/car',
         description: 'Simple car physics demo.'
@@ -115,6 +111,10 @@ const toolsConfig: Record<string, ItemConfig> = {
     'picocad': {
         path: 'tools/picocad',
         description: 'Picocad model exporter.'
+    },
+    'prefabeditor': {
+        path: 'tools/prefabeditor',
+        description: 'Prefab editor tool.'
     },
     'eth-pcp': {
         path: 'Pockit-Challenge-Protocol',
