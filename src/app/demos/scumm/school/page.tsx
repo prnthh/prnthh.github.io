@@ -127,7 +127,7 @@ function SchoolScenePage() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas shadows={{ type: PCFSoftShadowMap }}>
                     <Physics>
-                        <RenderPipeline />
+                        {/* <RenderPipeline /> */}
                         <group onClick={handleSurfaceClick}>
                             <PrefabRoot
                                 onSelect={(id) => {
