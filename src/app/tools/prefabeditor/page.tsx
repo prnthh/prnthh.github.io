@@ -16,8 +16,13 @@ const DEFAULT_SAMPLE = "killbox";
 type SampleName = typeof SAMPLE_NAMES[number];
 
 async function loadSample(name: SampleName) {
-    const module = await import(`./samples/${name}.json`);
-    return module.default as Prefab;
+    const response = await fetch(`/samples/${name}.json`);
+
+    if (!response.ok) {
+        throw new Error(`Failed to load sample ${name}: ${response.status} ${response.statusText}`);
+    }
+
+    return await response.json() as Prefab;
 }
 
 export const Toolbar = ({ setSelectedPrefab }: { setSelectedPrefab: React.Dispatch<React.SetStateAction<Prefab | null>> }) => {

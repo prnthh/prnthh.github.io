@@ -1,31 +1,113 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { useState, useRef, useLayoutEffect } from "react";
+import { useState, useRef, useLayoutEffect, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Box, OrbitControls } from "@react-three/drei";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { GameCanvas } from "react-three-game";
 import { PrefabRoot } from "react-three-game";
+import type { Prefab } from "react-three-game";
+import { useGameEvent } from "react-three-game";
 import CutsceneCamera from "@/shared/cameras/CutsceneCamera";
 import DebugGround from "@/shared/ground/DebugGround";
 
 import CombinedController from "@/app/react-three-controller/combined/CombinedController";
 import Ped from "@/app/react-three-controller/ped/ped";
 
-import room from "@/app/tools/prefabeditor/samples/room.json";
+const DEFAULT_PREFAB_PATH = "/samples/room.json";
+const ROOM2_PREFAB_PATH = "/samples/room2.json";
 
 const SCUMM_CAMERA_POSITION: [number, number, number] = [0, 0.6, 6];
 const SCUMM_CAMERA_TARGET: [number, number, number] = [0, 0, 0];
 
 
 export default function Home() {
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const prefabUrl = searchParams.get("prefab");
     const [target, setTarget] = useState<[number, number, number]>([0, 0, 2]);
     const characterRef = useRef<any>(null);
     const [activeEntity, setActiveEntity] = useState<string | null>(null);
+    const [scenePrefab, setScenePrefab] = useState<Prefab | null>(null);
+    const [prefabError, setPrefabError] = useState<string | null>(null);
+
+    const loadScene = (nextPrefab: Prefab) => {
+        setScenePrefab(nextPrefab);
+        setPrefabError(null);
+        setTarget([0, 0, 2]);
+        setActiveEntity(null);
+    };
+
+    useGameEvent("portal:to-room2", () => {
+        router.push(`${pathname}?prefab=${encodeURIComponent(ROOM2_PREFAB_PATH)}`);
+    }, [pathname, router]);
+
+    useGameEvent("portal:to-room1", () => {
+        router.push(pathname);
+    }, [pathname, router]);
+
+    useEffect(() => {
+        const resolvedPrefabUrl = prefabUrl ?? DEFAULT_PREFAB_PATH;
+
+        let cancelled = false;
+
+        const fetchPrefab = async (url: string) => {
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                throw new Error(`Failed to load prefab: ${response.status} ${response.statusText}`);
+            }
+
+            return await response.json() as Prefab;
+        };
+
+        const loadPrefab = async () => {
+            try {
+                setPrefabError(null);
+                const prefab = await fetchPrefab(resolvedPrefabUrl);
+
+                if (!cancelled) {
+                    loadScene(prefab);
+                }
+            } catch (error) {
+                console.error("Failed to load prefab from URL", resolvedPrefabUrl, error);
+                if (!cancelled) {
+                    if (resolvedPrefabUrl !== DEFAULT_PREFAB_PATH) {
+                        try {
+                            const fallbackPrefab = await fetchPrefab(DEFAULT_PREFAB_PATH);
+                            if (!cancelled) {
+                                loadScene(fallbackPrefab);
+                                setPrefabError(resolvedPrefabUrl);
+                            }
+                            return;
+                        } catch (fallbackError) {
+                            console.error("Failed to load default prefab fallback", fallbackError);
+                        }
+                    }
+
+                    setScenePrefab(null);
+                    setPrefabError(resolvedPrefabUrl);
+                }
+            }
+        };
+
+        void loadPrefab();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [prefabUrl]);
 
     return (
         <div className="items-center justify-items-center min-h-screen">
+            {prefabError && (
+                <div className="absolute left-4 top-4 z-10 rounded bg-black/70 px-3 py-2 text-sm text-white">
+                    Failed to load prefab from {prefabError}. Using default scene.
+                </div>
+            )}
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Physics>
@@ -33,7 +115,7 @@ export default function Home() {
                             onSelect={(id) => {
                                 console.log("selected prefab root", id);
                             }}
-                            data={room} />
+                            data={scenePrefab ?? undefined} />
                         <ambientLight intensity={1.5} />
                         <DebugGround position={[0, -0.99, 0]} onClick={(e) => {
                             setTarget([e.point.x, e.point.y, e.point.z])

@@ -412,6 +412,12 @@
               "filename": "models/environment/Doorway.glb",
               "instanced": false
             }
+          },
+          "click": {
+            "type": "Click",
+            "properties": {
+              "eventName": "portal:to-room2"
+            }
           }
         }
       },
