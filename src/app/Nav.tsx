@@ -17,7 +17,7 @@ const demosConfig: Record<string, ItemConfig> = {
         description: 'Asset showcase (models/vfx/assets)'
     },
     'scumm-physics': {
-        path: 'demos/scumm',
+        path: 'demos/scumm/school',
         description: 'A simple point-and-click adventure game demo inspired by classic SCUMM games.'
     },
     'scumm-nav': {

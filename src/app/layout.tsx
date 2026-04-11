@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Nav from "./Nav";
-import AnimatedCursor from "./AnimatedCursor";
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 export const metadata: Metadata = {
@@ -29,7 +28,6 @@ export default function RootLayout({
       >
         {children}
         <Nav />
-        <AnimatedCursor />
       </body>
       <GoogleAnalytics gaId="G-ZPS50VC97K" />
     </html>

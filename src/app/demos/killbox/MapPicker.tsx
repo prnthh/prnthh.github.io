@@ -5,9 +5,9 @@ import { useRef, useState } from "react";
 import { Prefab, } from "react-three-game";
 
 // Import default maps
-import killboxlobby from "../../../../public/samples/killboxlobby.json";
-import killbox from "../../../../public/samples/killbox.json";
-import test from "../../../../public/samples/killbox2.json";
+import killboxlobby from "@public/samples/killboxlobby.json";
+import killbox from "@public/samples/killbox.json";
+import test from "@public/samples/killbox2.json";
 
 const defaultMaps = {
     killbox: killbox as Prefab,

@@ -6,6 +6,7 @@ import { Prefab, PrefabEditor, registerComponent } from "react-three-game";
 import RotatorComponent from "./plugins/RotatorComponent";
 import HumanoidModelComponent from "./plugins/HumanoidModelComponent";
 import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
+import { PCFShadowMap, PCFSoftShadowMap } from "three";
 
 registerComponent(RotatorComponent);
 registerComponent(HumanoidModelComponent);
@@ -74,13 +75,13 @@ export default function PrefabEditorPage() {
     return <div className="relative w-screen h-screen">
         <Leva collapsed oneLineLabels />
         {selectedPrefab ? (
-            <PrefabEditor uiPlugins={<Toolbar setSelectedPrefab={setSelectedPrefab} />} initialPrefab={selectedPrefab}>
-                <RenderPipeline />
+            <PrefabEditor canvasProps={{ shadows: { type: PCFSoftShadowMap } }} uiPlugins={<Toolbar setSelectedPrefab={setSelectedPrefab} />} initialPrefab={selectedPrefab}>
+                {/* <RenderPipeline /> */}
             </PrefabEditor>
         ) : (
             <div className="flex h-full items-center justify-center bg-black text-sm uppercase tracking-[0.12em] text-white">
                 Loading sample...
             </div>
         )}
-    </div>
+    </div >
 }

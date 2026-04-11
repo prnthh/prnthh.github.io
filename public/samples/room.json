@@ -38,7 +38,7 @@
                 0
               ],
               "rotation": [
-                -1.57,
+                -1.5707963267948963,
                 0,
                 0
               ],
@@ -62,13 +62,17 @@
           "material": {
             "type": "Material",
             "properties": {
-              "color": "white",
-              "texture": "/textures/proto32/red.png",
+              "color": "#b28b66",
               "repeat": true,
               "repeatCount": [
-                50,
-                50
-              ]
+                18.3,
+                20
+              ],
+              "texture": "/textures/floor/vector-realistic-wooden-plank-texture_1409-3037.jpg",
+              "roughness": 0.91,
+              "metalness": 0.6,
+              "magFilter": "NearestFilter",
+              "minFilter": "NearestFilter"
             }
           },
           "physics": {
@@ -113,9 +117,8 @@
           "material": {
             "type": "Material",
             "properties": {
-              "color": "#ffffff",
+              "color": "#fff6d6",
               "wireframe": false,
-              "texture": "/textures/proto32/checkers_03.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -130,7 +133,8 @@
               "collider": "hull"
             }
           }
-        }
+        },
+        "children": []
       },
       {
         "id": "fb5fef53-937e-411a-b64b-8f1abc51dde2",
@@ -164,9 +168,8 @@
           "material": {
             "type": "Material",
             "properties": {
-              "color": "#ffffff",
+              "color": "#eff599",
               "wireframe": false,
-              "texture": "/textures/proto32/checkers_01.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -181,7 +184,8 @@
               "collider": "hull"
             }
           }
-        }
+        },
+        "children": []
       },
       {
         "id": "1612867d-5dcc-45af-ad3a-da064cbe6226",
@@ -215,9 +219,8 @@
           "material": {
             "type": "Material",
             "properties": {
-              "color": "#ffffff",
+              "color": "#eff599",
               "wireframe": false,
-              "texture": "/textures/proto32/checkers_01.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -232,7 +235,8 @@
               "collider": "hull"
             }
           }
-        }
+        },
+        "children": []
       },
       {
         "id": "92f0f143-6cd2-4f2f-bd03-4012a24c932b",
@@ -241,9 +245,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -1.0082052818834666,
+                -1,
                 1.9771409688336967,
-                -2.593900950784758
+                -2.5
               ],
               "rotation": [
                 0,
@@ -266,14 +270,14 @@
           "material": {
             "type": "Material",
             "properties": {
-              "color": "#ffffff",
+              "color": "#eff599",
               "wireframe": false,
-              "texture": "/textures/proto32/checkers_01.png",
               "repeat": true,
               "repeatCount": [
                 8,
                 4
-              ]
+              ],
+              "roughness": 1
             }
           },
           "physics": {
@@ -283,18 +287,19 @@
               "collider": "hull"
             }
           }
-        }
+        },
+        "children": []
       },
       {
-        "id": "lights",
+        "id": "4a56ce53-f019-4049-bcd7-7b84d6c87d46",
         "components": {
           "transform": {
             "type": "Transform",
             "properties": {
               "position": [
-                0,
-                -2.475775595566237,
-                -1.9783099792406535
+                -6,
+                1.9771409688336967,
+                -2.5
               ],
               "rotation": [
                 0,
@@ -302,85 +307,162 @@
                 0
               ],
               "scale": [
+                2.5678125000000005,
+                4,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "box",
+              "args": [
                 1,
                 1,
                 1
               ]
             }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#eff599",
+              "wireframe": false,
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ],
+              "roughness": 1
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
           }
         },
-        "children": [
-          {
-            "id": "ba4366f4-695a-4fa4-b32f-7bd1b1d95515",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    1.460346518114203,
-                    5.940192645275776,
-                    3.979639900383754
-                  ],
-                  "rotation": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "scale": [
-                    1,
-                    1,
-                    1
-                  ]
-                }
-              },
-              "spotlight": {
-                "type": "SpotLight",
-                "properties": {
-                  "intensity": 100,
-                  "penumbra": 0.5,
-                  "angle": 1.2,
-                  "distance": 55
-                }
-              }
-            },
-            "name": "light"
+        "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy",
+        "children": []
+      },
+      {
+        "id": "6c073961-dbf0-487c-b641-1ecde291175e",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                4,
+                1.9771409688336967,
+                -2.5
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                2.5678125000000005,
+                4,
+                1
+              ]
+            }
           },
-          {
-            "id": "4bcbe46f-e47b-486c-aff2-a5aa6df896b2",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    -3.228169789596622,
-                    5.940192645275776,
-                    3.979639900383754
-                  ],
-                  "rotation": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "scale": [
-                    1,
-                    1,
-                    1
-                  ]
-                }
-              },
-              "spotlight": {
-                "type": "SpotLight",
-                "properties": {
-                  "intensity": 100,
-                  "penumbra": 0.5,
-                  "angle": 1.2,
-                  "distance": 55
-                }
-              }
-            },
-            "name": "light2"
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "box",
+              "args": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#eff599",
+              "wireframe": false,
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ],
+              "roughness": 1
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
           }
-        ]
+        },
+        "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy Copy",
+        "children": []
+      },
+      {
+        "id": "680c0553-8073-4024-a062-3854a3777b4f",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                4,
+                1.9771409688336967,
+                -2.5
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                2.5678125000000005,
+                4,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "box",
+              "args": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#eff599",
+              "wireframe": false,
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ],
+              "roughness": 1
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
+        },
+        "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy Copy Copy",
+        "children": []
       },
       {
         "id": "5ee592e7-8993-4421-9546-2b062f96dfdb",
@@ -419,7 +501,8 @@
               "eventName": "portal:to-room2"
             }
           }
-        }
+        },
+        "children": []
       },
       {
         "id": "5c1e3515-6680-46ac-8687-0d5766d1b771",
@@ -429,9 +512,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -1,
+                1,
                 0.3906912048655975,
-                -0.5
+                0
               ],
               "rotation": [
                 0,
@@ -459,7 +542,8 @@
               "collider": "cuboid"
             }
           }
-        }
+        },
+        "children": []
       },
       {
         "id": "a6686e33-4aee-4d90-82cb-71fbbe633582",
@@ -499,7 +583,8 @@
               "collider": "cuboid"
             }
           }
-        }
+        },
+        "children": []
       },
       {
         "id": "8d658d4c-be64-4b05-b89b-20cf95e3796c",
@@ -509,13 +594,13 @@
             "type": "Transform",
             "properties": {
               "position": [
+                2.1213203435596424,
                 0,
-                0,
-                -1.5
+                -1.1102230246251565e-16
               ],
               "rotation": [
                 0,
-                0,
+                -0.7853981633974485,
                 0
               ],
               "scale": [
@@ -566,40 +651,8 @@
                 }
               }
             },
-            "children": [],
-            "disabled": false
-          },
-          {
-            "id": "63ad3fae-674f-4acf-b2f5-f66934c2611d",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    0.7213835314973418,
-                    0.8672621727512282,
-                    -0.003309683510794581
-                  ],
-                  "rotation": [
-                    -3.141592653589793,
-                    -0.7492790571795859,
-                    -3.141592653589793
-                  ],
-                  "scale": [
-                    0.0060000000000000045,
-                    0.006,
-                    0.0060000000000000045
-                  ]
-                }
-              },
-              "model": {
-                "type": "Model",
-                "properties": {
-                  "filename": "models/environment/Phone.glb",
-                  "instanced": false
-                }
-              }
-            }
+            "disabled": false,
+            "children": []
           },
           {
             "id": "0e6c4393-7d25-4a57-a8b6-3b201dfa1835",
@@ -631,40 +684,385 @@
                   "instanced": false
                 }
               }
-            }
+            },
+            "children": []
           },
           {
-            "id": "f6384af0-2d7a-4af7-8a42-9c2ec386f74a",
-            "name": "desktop",
+            "id": "9fbce934-f026-4e40-8bbe-55255bff5513",
+            "name": "display",
             "components": {
               "transform": {
                 "type": "Transform",
                 "properties": {
                   "position": [
-                    0.02251049660359347,
-                    0.8435544586572346,
-                    -0.000017925715400986947
+                    0,
+                    1,
+                    0
                   ],
                   "rotation": [
                     0,
-                    -1.5699999999998482,
+                    -1.5707963267948966,
                     0
                   ],
                   "scale": [
-                    0.009999999999999997,
-                    0.01,
-                    0.009999999999999997
+                    0.06539062500000001,
+                    0.06539062500000001,
+                    0.06539062500000001
                   ]
                 }
               },
               "model": {
                 "type": "Model",
                 "properties": {
-                  "filename": "models/environment/Computer.glb",
-                  "instanced": false
+                  "filename": "models/environment/picocad/tablet.glb",
+                  "instanced": false,
+                  "repeat": false,
+                  "repeatAxes": [
+                    {
+                      "axis": "x",
+                      "count": 1,
+                      "offset": 1
+                    }
+                  ]
+                }
+              },
+              "click": {
+                "type": "Click",
+                "properties": {
+                  "eventName": "click-display"
+                }
+              },
+              "sound": {
+                "type": "Sound",
+                "properties": {
+                  "path": "/sound/click.mp3",
+                  "eventName": "click-display",
+                  "clips": [
+                    ""
+                  ],
+                  "clipMode": "single",
+                  "positional": false,
+                  "refDistance": 1,
+                  "maxDistance": 24,
+                  "rolloffFactor": 1,
+                  "distanceModel": "inverse",
+                  "pitch": 1,
+                  "randomizePitch": false,
+                  "minPitch": 0.96,
+                  "maxPitch": 1.04,
+                  "volume": 1,
+                  "randomizeVolume": false,
+                  "minVolume": 0.9,
+                  "maxVolume": 1
                 }
               }
+            },
+            "children": []
+          },
+          {
+            "id": "54baeea2-1adb-4e9e-a26a-dd98d757b50d",
+            "name": "New Node",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -2.220446049250313e-16,
+                    2.5,
+                    -1
+                  ],
+                  "rotation": [
+                    0,
+                    1.5707963267948966,
+                    0
+                  ],
+                  "scale": [
+                    0.06539062500000001,
+                    0.06539062500000001,
+                    0.06539062500000001
+                  ]
+                }
+              },
+              "model": {
+                "type": "Model",
+                "properties": {
+                  "filename": "models/environment/picocad/island.glb",
+                  "instanced": false,
+                  "repeat": false,
+                  "repeatAxes": [
+                    {
+                      "axis": "x",
+                      "count": 1,
+                      "offset": 1
+                    }
+                  ]
+                }
+              },
+              "rotator": {
+                "type": "Rotator",
+                "properties": {
+                  "speed": 1,
+                  "axis": "y"
+                }
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "80789d96-efb4-4f82-904d-b31b77b66510",
+        "name": "New Node",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -1.0000000000000004,
+                0.001686919413990129,
+                2.5
+              ],
+              "rotation": [
+                -1.5707963267948963,
+                0,
+                1.5707963267948963
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
             }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane",
+              "args": [
+                2.4,
+                4
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "materialType": "standard",
+              "color": "#b8b8b8",
+              "toneMapped": true,
+              "wireframe": false,
+              "transparent": true,
+              "opacity": 1,
+              "metalness": 0,
+              "roughness": 1,
+              "texture": "/textures/posters/jaernvaeg-rug-low-pile-ornament-pattern-pink-beige__1435108_pe983701_s5.png",
+              "magFilter": "NearestFilter",
+              "minFilter": "NearestFilter"
+            }
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "a1e06e0b-f0be-42ba-86ee-b6aedb870492",
+        "name": "env",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "environment": {
+            "type": "Environment",
+            "properties": {
+              "intensity": 0.5
+            }
+          }
+        },
+        "disabled": false,
+        "children": [
+          {
+            "id": "26c72d08-3715-42ae-aab3-82ef200d1ed8",
+            "name": "New Node",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "sphere",
+                  "args": [
+                    150,
+                    32,
+                    16
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "materialType": "basic",
+                  "color": "#ffffff",
+                  "toneMapped": true,
+                  "wireframe": false,
+                  "transparent": false,
+                  "opacity": 1,
+                  "metalness": 0,
+                  "roughness": 1,
+                  "texture": "/textures/skybox/skybox1.jpg",
+                  "side": "BackSide"
+                }
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "8ac0b7a6-9802-448e-bf15-b4db021686bb",
+        "name": "bulb",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -1,
+                3.5,
+                2
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                0.08203125,
+                0.08203125,
+                0.08203125
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/Light bulb.glb",
+              "instanced": false,
+              "repeat": false,
+              "repeatAxes": [
+                {
+                  "axis": "x",
+                  "count": 1,
+                  "offset": 1
+                }
+              ]
+            }
+          }
+        },
+        "disabled": false,
+        "children": [
+          {
+            "id": "3577c86b-ee78-45d8-85f0-79680622da47",
+            "name": "New Node",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    30,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 100,
+                  "angle": 1.2,
+                  "penumbra": 0.15,
+                  "decay": 2,
+                  "castShadow": true,
+                  "shadowBias": -0.004
+                }
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "4c864691-09a6-4648-b122-4b0e50b6807d",
+            "name": "New Node",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "ambientlight": {
+                "type": "AmbientLight",
+                "properties": {
+                  "intensity": 0.5
+                }
+              }
+            },
+            "children": []
           }
         ]
       }

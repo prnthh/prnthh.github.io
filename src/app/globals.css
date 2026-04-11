@@ -19,7 +19,6 @@ body {
   overflow: hidden;
   height: 100%;
   overscroll-behavior-y: contain;
-  cursor: none;
 }
 
 canvas {

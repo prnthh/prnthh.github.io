@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ThreeEvent } from "@react-three/fiber";
 import { GameCanvas, PrefabRoot } from "react-three-game";
-import scummworld from "../../../../public/samples/scummworld.json";
+import scummworld from "@public/samples/scummworld.json";
 
 import NavigableWorld from "@/app/react-three-controller/navmesh/NavigableContext";
 import NavigableAgent, { type NavigableCharacterDefinition } from "@/app/react-three-controller/navmesh/NavigableAgent";

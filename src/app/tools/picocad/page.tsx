@@ -50,6 +50,20 @@ function TransformModeBridge({ mode }: { mode: TransformMode }) {
     return null;
 }
 
+function FocusNodeBridge({ nodeId }: { nodeId: string | null }) {
+    const { onFocusNode } = useEditorContext();
+
+    useEffect(() => {
+        if (!nodeId) {
+            return;
+        }
+
+        onFocusNode?.(nodeId);
+    }, [nodeId, onFocusNode]);
+
+    return null;
+}
+
 function getFileExtension(filename: string): SupportedAssetType | null {
     const extension = filename.toLowerCase().split(".").pop();
 
@@ -193,6 +207,7 @@ export default function PicocadPage() {
     const [pixelSize, setPixelSize] = useState(6);
     const [transformMode, setTransformMode] = useState<TransformMode>("translate");
     const [editorReady, setEditorReady] = useState(false);
+    const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
     const editorRef = useRef<PrefabEditorRef | null>(null);
     const fileInputRefs = useRef<Record<SupportedAssetType, HTMLInputElement | null>>({
         glb: null,
@@ -330,6 +345,7 @@ export default function PicocadPage() {
 
         if (!loadedScene) {
             editor.load(EMPTY_PREFAB, { resetHistory: true });
+            setFocusNodeId(null);
             return;
         }
 
@@ -348,7 +364,7 @@ export default function PicocadPage() {
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                editor.viewRef.current?.focusNode(node.id);
+                setFocusNodeId(node.id);
             });
         });
     }, [editorReady, loadedScene, primarySceneAsset]);
@@ -496,7 +512,9 @@ export default function PicocadPage() {
                         },
                     }}
                 >
+                    <ambientLight intensity={2} />
                     <TransformModeBridge mode={transformMode} />
+                    <FocusNodeBridge nodeId={focusNodeId} />
                     {pixelSize > 0 && (
                         <PixelationEffect pixelSize={pixelSize} normalEdgeStrength={0.3} depthEdgeStrength={0.4} />
                     )}

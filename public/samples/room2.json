@@ -79,7 +79,59 @@
             }
           }
         },
-        "children": []
+        "children": [
+          {
+            "id": "bc325267-498f-4c5a-953c-9113ba563e2f",
+            "name": "New Node",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -0.7232911136489462,
+                    1.9999999999999991,
+                    0.0483895587502674
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "box",
+                  "args": [
+                    2.5,
+                    1,
+                    0.9
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "materialType": "standard",
+                  "color": "#696969",
+                  "toneMapped": true,
+                  "wireframe": false,
+                  "transparent": false,
+                  "opacity": 1,
+                  "metalness": 0,
+                  "roughness": 1
+                }
+              }
+            },
+            "children": []
+          }
+        ]
       },
       {
         "id": "92f0f143-6cd2-4f2f-bd03-4012a24c932b",
@@ -115,7 +167,6 @@
             "properties": {
               "color": "#ffffff",
               "wireframe": false,
-              "texture": "/textures/proto32/checkers_01.png",
               "repeat": true,
               "repeatCount": [
                 8,
@@ -130,7 +181,172 @@
               "collider": "hull"
             }
           }
-        }
+        },
+        "children": []
+      },
+      {
+        "id": "fd3776f9-b3b6-493f-bc7c-02e76d91bdd2",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -6.999999999999998,
+                2,
+                -8.499999999999998
+              ],
+              "rotation": [
+                0,
+                -1.5707963267948966,
+                0
+              ],
+              "scale": [
+                12,
+                4,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#ffffff",
+              "wireframe": false,
+              "repeat": true,
+              "repeatCount": [
+                8,
+                4
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
+        },
+        "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy",
+        "children": []
+      },
+      {
+        "id": "adbfd710-15b4-4042-b74d-2a68c5fd469e",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -1,
+                6,
+                -2.5
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                12,
+                4,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#ffffff",
+              "wireframe": false,
+              "texture": "/textures/apartment.jpg",
+              "repeat": true,
+              "repeatCount": [
+                0.5,
+                0.2
+              ],
+              "minFilter": "NearestFilter",
+              "magFilter": "LinearFilter",
+              "generateMipmaps": true
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
+        },
+        "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy",
+        "children": []
+      },
+      {
+        "id": "199571ea-d82a-4305-9139-dc32ed18455c",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -7.000000000000002,
+                6,
+                -8.499999999999998
+              ],
+              "rotation": [
+                0,
+                -1.5707963267948966,
+                0
+              ],
+              "scale": [
+                12,
+                4,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane"
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "#ffffff",
+              "wireframe": false,
+              "texture": "/textures/apartment.jpg",
+              "repeat": true,
+              "repeatCount": [
+                0.5,
+                0.2
+              ],
+              "minFilter": "NearestFilter",
+              "magFilter": "LinearFilter",
+              "generateMipmaps": true
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "collider": "hull"
+            }
+          }
+        },
+        "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy Copy",
+        "children": []
       },
       {
         "id": "lights",
@@ -158,50 +374,15 @@
         },
         "children": [
           {
-            "id": "ba4366f4-695a-4fa4-b32f-7bd1b1d95515",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    1.460346518114203,
-                    5.940192645275776,
-                    3.979639900383754
-                  ],
-                  "rotation": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "scale": [
-                    1,
-                    1,
-                    1
-                  ]
-                }
-              },
-              "spotlight": {
-                "type": "SpotLight",
-                "properties": {
-                  "intensity": 100,
-                  "penumbra": 0.5,
-                  "angle": 1.2,
-                  "distance": 55
-                }
-              }
-            },
-            "name": "light"
-          },
-          {
             "id": "4bcbe46f-e47b-486c-aff2-a5aa6df896b2",
             "components": {
               "transform": {
                 "type": "Transform",
                 "properties": {
                   "position": [
-                    -3.228169789596622,
-                    5.940192645275776,
-                    3.979639900383754
+                    0,
+                    9.5,
+                    5.5
                   ],
                   "rotation": [
                     0,
@@ -218,14 +399,15 @@
               "spotlight": {
                 "type": "SpotLight",
                 "properties": {
-                  "intensity": 100,
+                  "intensity": 200,
                   "penumbra": 0.5,
                   "angle": 1.2,
                   "distance": 55
                 }
               }
             },
-            "name": "light2"
+            "name": "light2",
+            "children": []
           }
         ]
       },
@@ -237,8 +419,8 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -1,
-                -0.05410899740291253,
+                0,
+                0.5,
                 -2.5
               ],
               "rotation": [
@@ -266,7 +448,8 @@
               "eventName": "portal:to-room1"
             }
           }
-        }
+        },
+        "children": []
       }
     ]
   }

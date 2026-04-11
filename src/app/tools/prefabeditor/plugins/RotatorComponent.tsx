@@ -1,63 +1,46 @@
-import { Component } from "react-three-game";
+import { Component, FieldRenderer, FieldDefinition, useEntityObjectRef, useEntityRuntime } from "react-three-game";
 import { useFrame } from "@react-three/fiber";
-import { useRef } from "react";
-import { Group } from "three";
+
+const rotatorFields: FieldDefinition[] = [
+    { name: 'speed', type: 'number', label: 'Rotation Speed', step: 0.1 },
+    {
+        name: 'axis',
+        type: 'select',
+        label: 'Rotation Axis',
+        options: [
+            { value: 'x', label: 'X' },
+            { value: 'y', label: 'Y' },
+            { value: 'z', label: 'Z' },
+        ],
+    },
+];
 
 function RotatorComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
-    const props = {
-        speed: component.properties.speed ?? 1.0,
-        axis: component.properties.axis ?? 'y'
-    };
-
-    return <div className="flex flex-col gap-2">
-        <div>
-            <label className="mb-0.5 block text-[9px] uppercase tracking-[0.05em] text-cyan-400/60">Rotation Speed</label>
-            <input
-                type="number"
-                step="0.1"
-                className="w-full border border-cyan-400/30 bg-black/40 px-1 py-0.5 font-mono text-[10px] text-cyan-200 outline-none"
-                value={props.speed}
-                onChange={e => onUpdate({ ...component.properties, speed: parseFloat(e.target.value) })}
-            />
-        </div>
-        <div>
-            <label className="mb-0.5 block text-[9px] uppercase tracking-[0.05em] text-cyan-400/60">Rotation Axis</label>
-            <select
-                className="w-full border border-cyan-400/30 bg-black/40 px-1 py-0.5 font-mono text-[10px] text-cyan-200 outline-none"
-                value={props.axis}
-                onChange={e => onUpdate({ ...component.properties, axis: e.target.value })}
-            >
-                <option value="x">X</option>
-                <option value="y">Y</option>
-                <option value="z">Z</option>
-            </select>
-        </div>
-    </div>;
+    return (
+        <FieldRenderer
+            fields={rotatorFields}
+            values={component.properties}
+            onChange={onUpdate}
+        />
+    );
 }
 
-// The view component for Rotator
 function RotatorView({ properties, children }: { properties: any; children?: React.ReactNode }) {
-    const groupRef = useRef<Group>(null);
+    const { editMode } = useEntityRuntime();
+    const objectRef = useEntityObjectRef();
     const speed = properties.speed ?? 1.0;
     const axis = properties.axis ?? 'y';
 
-    useFrame((state, delta) => {
-        if (groupRef.current) {
-            if (axis === 'x') {
-                groupRef.current.rotation.x += delta * speed;
-            } else if (axis === 'y') {
-                groupRef.current.rotation.y += delta * speed;
-            } else if (axis === 'z') {
-                groupRef.current.rotation.z += delta * speed;
-            }
+    useFrame((_, delta) => {
+        if (editMode) return;
+        const obj = objectRef.current;
+
+        if (obj) {
+            obj.rotation[axis as 'x' | 'y' | 'z'] += delta * speed;
         }
     });
 
-    return (
-        <group ref={groupRef}>
-            {children}
-        </group>
-    );
+    return <>{children}</>;
 }
 
 const RotatorComponent: Component = {
