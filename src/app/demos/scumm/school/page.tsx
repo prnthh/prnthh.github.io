@@ -1,7 +1,7 @@
 "use client";
 
 import { Physics } from "@react-three/rapier";
-import { useState, useRef, useLayoutEffect, useEffect } from "react";
+import { Suspense, useState, useRef, useLayoutEffect, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import type { ThreeEvent } from "@react-three/fiber";
 import { Box, OrbitControls } from "@react-three/drei";
@@ -26,6 +26,14 @@ const SCUMM_CAMERA_TARGET: [number, number, number] = [0, 0, 0];
 
 
 export default function Home() {
+    return (
+        <Suspense fallback={null}>
+            <SchoolScenePage />
+        </Suspense>
+    );
+}
+
+function SchoolScenePage() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
