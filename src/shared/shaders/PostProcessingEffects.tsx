@@ -1,12 +1,42 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { PostProcessing, WebGPURenderer } from "three/webgpu";
 import { pass, mrt, output, directionToColor, normalView, vec4 } from "three/tsl";
 import { ao } from "three/addons/tsl/display/GTAONode.js";
 import { denoise } from "three/addons/tsl/display/DenoiseNode.js";
 
-const RenderPipeline = () => {
+type RenderPipelineProps = {
+    aoResolutionScale?: number;
+    aoRadius?: number;
+    aoScale?: number;
+    aoThickness?: number;
+    aoDistanceExponent?: number;
+    aoDistanceFallOff?: number;
+    aoSamples?: number;
+    denoiseEnabled?: boolean;
+    denoiseRadius?: number;
+    denoiseLumaPhi?: number;
+    denoiseDepthPhi?: number;
+    denoiseNormalPhi?: number;
+    aoPower?: number;
+};
+
+const RenderPipeline = ({
+    aoResolutionScale = 1,
+    aoRadius = 0.18,
+    aoScale = 1,
+    aoThickness = 0.25,
+    aoDistanceExponent = 2,
+    aoDistanceFallOff = 0.9,
+    aoSamples = 8,
+    denoiseEnabled = true,
+    denoiseRadius = 2.5,
+    denoiseLumaPhi = 8,
+    denoiseDepthPhi = 3,
+    denoiseNormalPhi = 24,
+    aoPower = 1.02,
+}: RenderPipelineProps) => {
     const { gl, scene, camera } = useThree();
 
     const postProcessing = useMemo(() => {
@@ -23,25 +53,53 @@ const RenderPipeline = () => {
         const sceneNormal = scenePass.getTextureNode("normal");
         const ambientOcclusion = ao(sceneDepth, sceneNormal, camera);
 
-        ambientOcclusion.resolutionScale = 1;
-        ambientOcclusion.radius.value = 0.18;
-        ambientOcclusion.scale.value = 0.85;
-        ambientOcclusion.thickness.value = 0.25;
-        ambientOcclusion.distanceExponent.value = 1.8;
-        ambientOcclusion.distanceFallOff.value = 0.95;
-        ambientOcclusion.samples.value = 16;
+        ambientOcclusion.resolutionScale = aoResolutionScale;
+        ambientOcclusion.radius.value = aoRadius;
+        ambientOcclusion.scale.value = aoScale;
+        ambientOcclusion.thickness.value = aoThickness;
+        ambientOcclusion.distanceExponent.value = aoDistanceExponent;
+        ambientOcclusion.distanceFallOff.value = aoDistanceFallOff;
+        ambientOcclusion.samples.value = aoSamples;
 
-        const denoisedAmbientOcclusion = denoise(ambientOcclusion.getTextureNode(), sceneDepth, sceneNormal, camera);
-        denoisedAmbientOcclusion.radius.value = 2.5;
-        denoisedAmbientOcclusion.lumaPhi.value = 8;
-        denoisedAmbientOcclusion.depthPhi.value = 3;
-        denoisedAmbientOcclusion.normalPhi.value = 24;
+        const ambientOcclusionNode = denoiseEnabled
+            ? denoise(ambientOcclusion.getTextureNode(), sceneDepth, sceneNormal, camera)
+            : ambientOcclusion.getTextureNode();
 
-        const aoFactor = denoisedAmbientOcclusion.r.pow(1.02);
+        if (denoiseEnabled && "radius" in ambientOcclusionNode) {
+            ambientOcclusionNode.radius.value = denoiseRadius;
+            ambientOcclusionNode.lumaPhi.value = denoiseLumaPhi;
+            ambientOcclusionNode.depthPhi.value = denoiseDepthPhi;
+            ambientOcclusionNode.normalPhi.value = denoiseNormalPhi;
+        }
+
+        const aoFactor = ambientOcclusionNode.r.pow(aoPower);
         pipeline.outputNode = vec4(sceneColor.rgb.mul(aoFactor), sceneColor.a);
 
         return pipeline;
-    }, [gl, scene, camera]);
+    }, [
+        aoDistanceExponent,
+        aoDistanceFallOff,
+        aoPower,
+        aoRadius,
+        aoResolutionScale,
+        aoSamples,
+        aoScale,
+        aoThickness,
+        camera,
+        denoiseDepthPhi,
+        denoiseEnabled,
+        denoiseLumaPhi,
+        denoiseNormalPhi,
+        denoiseRadius,
+        gl,
+        scene,
+    ]);
+
+    useEffect(() => {
+        return () => {
+            postProcessing.dispose();
+        };
+    }, [postProcessing]);
 
     useFrame(() => {
         postProcessing.render();

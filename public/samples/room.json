@@ -1025,7 +1025,8 @@
                   "penumbra": 0.15,
                   "decay": 2,
                   "castShadow": true,
-                  "shadowBias": -0.004
+                  "shadowBias": -0.004,
+                  "shadowAutoUpdate": false
                 }
               }
             },
