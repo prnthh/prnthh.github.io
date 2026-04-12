@@ -21,6 +21,7 @@ const PointerLockControls = ({
     const isPointerLocked = useRef<boolean>(false);
     const rightClickActive = useRef<boolean>(false);
     const pinchDistance = useRef<number | null>(null);
+    const pinchTouchIds = useRef<[number, number] | null>(null);
     const { setButton } = useInputStore();
 
     useEffect(() => {
@@ -120,6 +121,10 @@ const PointerLockControls = ({
         const canvas = document.querySelector('canvas');
         if (!canvas) return;
 
+        const isCanvasTouch = (touch: Touch) => (touch.target as HTMLElement) === canvas;
+
+        const getCanvasTouches = (touches: TouchList) => Array.from(touches).filter(isCanvasTouch);
+
         const getTouchDistance = (touches: TouchList) => {
             if (touches.length < 2) return null;
             const firstTouch = touches[0];
@@ -128,8 +133,19 @@ const PointerLockControls = ({
         };
 
         const onTouchStart = (e: TouchEvent) => {
-            if (e.touches.length === 2) {
-                pinchDistance.current = getTouchDistance(e.touches);
+            const canvasTouches = getCanvasTouches(e.touches);
+            if (canvasTouches.length >= 2) {
+                pinchTouchIds.current = [canvasTouches[0].identifier, canvasTouches[1].identifier];
+                pinchDistance.current = getTouchDistance({
+                    0: canvasTouches[0],
+                    1: canvasTouches[1],
+                    length: 2,
+                    item: (index: number) => canvasTouches[index] ?? null,
+                    [Symbol.iterator]: function* () {
+                        yield canvasTouches[0];
+                        yield canvasTouches[1];
+                    },
+                } as TouchList);
                 lastTouch.current = null;
                 return;
             }
@@ -145,8 +161,22 @@ const PointerLockControls = ({
         };
 
         const onTouchMoveHandler = (e: TouchEvent) => {
-            if (e.touches.length === 2) {
-                const nextPinchDistance = getTouchDistance(e.touches);
+            const canvasTouches = getCanvasTouches(e.touches);
+            const activePinchTouches = pinchTouchIds.current
+                ? canvasTouches.filter((touch) => pinchTouchIds.current?.includes(touch.identifier))
+                : [];
+
+            if (activePinchTouches.length === 2) {
+                const nextPinchDistance = getTouchDistance({
+                    0: activePinchTouches[0],
+                    1: activePinchTouches[1],
+                    length: 2,
+                    item: (index: number) => activePinchTouches[index] ?? null,
+                    [Symbol.iterator]: function* () {
+                        yield activePinchTouches[0];
+                        yield activePinchTouches[1];
+                    },
+                } as TouchList);
                 if (nextPinchDistance !== null && pinchDistance.current !== null) {
                     onZoom?.((pinchDistance.current - nextPinchDistance) * PINCH_ZOOM_STEP);
                 }
@@ -168,8 +198,14 @@ const PointerLockControls = ({
         };
 
         const onTouchEnd = (e: TouchEvent) => {
-            if (e.touches.length < 2) {
+            const canvasTouches = getCanvasTouches(e.touches);
+            const hasActivePinchTouches = pinchTouchIds.current
+                ? canvasTouches.filter((touch) => pinchTouchIds.current?.includes(touch.identifier)).length === 2
+                : false;
+
+            if (!hasActivePinchTouches) {
                 pinchDistance.current = null;
+                pinchTouchIds.current = null;
             }
             if (!lastTouch.current) return;
             const ended = Array.from(e.changedTouches).some((t) => t.identifier === lastTouch.current!.id);
