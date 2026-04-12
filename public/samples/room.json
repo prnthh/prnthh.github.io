@@ -1030,39 +1030,6 @@
               }
             },
             "children": []
-          },
-          {
-            "id": "4c864691-09a6-4648-b122-4b0e50b6807d",
-            "name": "New Node",
-            "components": {
-              "transform": {
-                "type": "Transform",
-                "properties": {
-                  "position": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "rotation": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "scale": [
-                    1,
-                    1,
-                    1
-                  ]
-                }
-              },
-              "ambientlight": {
-                "type": "AmbientLight",
-                "properties": {
-                  "intensity": 0.5
-                }
-              }
-            },
-            "children": []
           }
         ]
       }
