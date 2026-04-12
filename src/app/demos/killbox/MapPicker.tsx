@@ -18,7 +18,7 @@ const defaultMaps = {
 type mapList = { [key: string]: Prefab };
 
 function MapPicker({ onMapChange, maps = defaultMaps }: { onMapChange: (map: Prefab) => void, maps?: mapList }) {
-    const [selectedMap, setSelectedMap] = useState<keyof typeof maps | 'custom'>("killboxlobby");
+    const [selectedMap, setSelectedMap] = useState<keyof typeof maps | 'custom'>("killbox");
     const [customMap, setCustomMap] = useState<Prefab | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 

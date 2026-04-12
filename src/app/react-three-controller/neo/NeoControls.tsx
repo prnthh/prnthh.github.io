@@ -6,10 +6,9 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
-import { useEffect, useRef, useState, useCallback, RefObject, forwardRef, useImperativeHandle } from "react";
-import { Vector3, Object3D, MathUtils } from "three";
+import { useRef, useCallback, RefObject, forwardRef, useImperativeHandle } from "react";
+import { Vector3, MathUtils } from "three";
 
-import { Weapon } from "../Weapon";
 import useInputStore from "../controls/InputStore";
 import KeyboardControls from "../controls/KeyboardControls";
 import PointerLockControls from "../controls/PointerLockControls";
@@ -25,44 +24,42 @@ const JOYSTICK_SENSITIVITY = 2.5;
 const PITCH_MIN = -0.4;
 const PITCH_MAX = 1.2;
 const TURN_SPEED = 10; // radians/sec for visual model rotation
+const MIN_CAMERA_DISTANCE = 0;
+const MAX_CAMERA_DISTANCE = 4;
+const STRAFE_THRESHOLD = 0.3;
 
-export interface ThirdPersonCameraState {
+export interface NeoCameraState {
     yaw: number;
     pitch: number;
-    shoulderCamMode: boolean;
+    cameraDistance: number;
     cameraOffset: [number, number, number];
 }
 
-export interface ThirdPersonControlsRef {
-    getCameraState: () => ThirdPersonCameraState;
+export interface NeoControlsRef {
+    getCameraState: () => NeoCameraState;
 }
 
-interface ThirdPersonControlsProps {
+interface NeoControlsProps {
     modelRef: RefObject<RigidHumanoidModelRef | null>;
-    height: number;
-    capsuleRadius: number;
+    cameraDistance?: number;
+    onCameraDistanceChange?: (cameraDistance: number) => void;
     walkSpeed?: number;
     runSpeed?: number;
     jumpForce?: number;
-    orbitDistance?: number;
-    lookTarget?: RefObject<Object3D | null>;
 }
 
-const ThirdPersonControls = forwardRef<ThirdPersonControlsRef, ThirdPersonControlsProps>(({
+const NeoControls = forwardRef<NeoControlsRef, NeoControlsProps>(({
     modelRef,
-    height,
-    capsuleRadius,
+    cameraDistance = MAX_CAMERA_DISTANCE,
+    onCameraDistanceChange,
     walkSpeed = 1.2,
     runSpeed = 3,
     jumpForce = 1,
-    orbitDistance = 4,
-    lookTarget,
-}: ThirdPersonControlsProps, ref) => {
+}: NeoControlsProps, ref) => {
     const cameraYaw = useRef(0);
     const cameraPitch = useRef(0.3);
+    const currentAnimation = useRef("idle");
 
-    const [animation, setAnimation] = useState<string>("idle");
-    const [shoulderCamMode, setShoulder] = useState(false);
     const tap = useInputStore(state => state.tap);
 
     // ── Input selectors (subscribed reactively) ──
@@ -72,6 +69,7 @@ const ThirdPersonControls = forwardRef<ThirdPersonControlsRef, ThirdPersonContro
     const jump = useInputStore(s => s.jump);
     const use = useInputStore(s => s.use);
     const altUse = useInputStore(s => s.altUse);
+    const aim = useInputStore(s => s.aim);
     const lookH = useInputStore(s => s.lookHorizontal);
     const lookV = useInputStore(s => s.lookVertical);
 
@@ -85,17 +83,26 @@ const ThirdPersonControls = forwardRef<ThirdPersonControlsRef, ThirdPersonContro
         cameraPitch.current = MathUtils.clamp(cameraPitch.current + dy * MOUSE_SENSITIVITY, PITCH_MIN, PITCH_MAX);
     }, []);
 
+    const applyCameraDistanceDelta = useCallback((delta: number) => {
+        onCameraDistanceChange?.(
+            MathUtils.clamp(cameraDistance + delta, MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE)
+        );
+    }, [cameraDistance, onCameraDistanceChange]);
+
+    const setModelAnimation = useCallback((nextAnimation: string) => {
+        if (currentAnimation.current === nextAnimation) return;
+        currentAnimation.current = nextAnimation;
+        modelRef.current?.setAnimation?.(nextAnimation);
+    }, [modelRef]);
+
     useImperativeHandle(ref, () => ({
         getCameraState: () => ({
             yaw: cameraYaw.current,
             pitch: cameraPitch.current,
-            shoulderCamMode,
-            cameraOffset: shoulderCamMode ? [0.5, 0, -2] : [0, 0, -4],
+            cameraDistance,
+            cameraOffset: [0, 0, -cameraDistance],
         }),
-    }), [shoulderCamMode]);
-
-    // Push animation name to model
-    useEffect(() => { modelRef.current?.setAnimation?.(animation); }, [animation, modelRef]);
+    }), [cameraDistance]);
 
     // Ground check
     const checkGrounded = useCallback(() => {
@@ -113,9 +120,12 @@ const ThirdPersonControls = forwardRef<ThirdPersonControlsRef, ThirdPersonContro
     useFrame((_, dt) => {
         const rb = modelRef.current?.rigidBodyRef.current;
         if (!rb) return;
+        const attacking = use || altUse;
 
         // ─ Joystick orbit ─
-        if (Math.abs(lookH) > 0.01) cameraYaw.current += lookH * JOYSTICK_SENSITIVITY * dt;
+        if (Math.abs(lookH) > 0.01) {
+            cameraYaw.current += lookH * JOYSTICK_SENSITIVITY * dt;
+        }
         if (Math.abs(lookV) > 0.01) cameraPitch.current = MathUtils.clamp(cameraPitch.current - lookV * JOYSTICK_SENSITIVITY * dt, PITCH_MIN, PITCH_MAX);
 
         // ─ Movement ─
@@ -143,23 +153,37 @@ const ThirdPersonControls = forwardRef<ThirdPersonControlsRef, ThirdPersonContro
         if (use) anim = "rpunch";
         else if (altUse) anim = "lpunch";
         else if (jumping.current) anim = "jump";
-        else if (hasInput) anim = sprint ? "run" : "walk";
-        setAnimation(anim);
+        else if (hasInput) {
+            const absX = Math.abs(horizontal);
+            const absZ = Math.abs(vertical);
+            const isStrafing = aim && absX > STRAFE_THRESHOLD && absX > absZ * 1.5;
+            const isBackpedaling = aim && vertical < 0;
+
+            if (isStrafing) {
+                anim = horizontal > 0 ? "walkRight" : "walkLeft";
+            } else if (isBackpedaling) {
+                anim = sprint ? "runBack" : "walkBack";
+            } else {
+                anim = sprint ? "run" : "walk";
+            }
+        }
+        setModelAnimation(anim);
 
         // Velocity
         const vy = rb.linvel().y;
-        if (use || altUse) rb.setLinvel({ x: 0, y: vy, z: 0 }, true);
+        if (attacking) rb.setLinvel({ x: 0, y: vy, z: 0 }, true);
         else if (hasInput) rb.setLinvel({ x: _dir.x * speed, y: vy, z: _dir.z * speed }, true);
         else rb.setLinvel({ x: 0, y: vy, z: 0 }, true);
 
         // ─ Visual model rotation ─
-        if (hasInput && !use && !altUse) {
-            const targetYaw = Math.atan2(-horizontal, vertical) - yaw;
+        if (hasInput && !attacking) {
             const modelObj = modelRef.current?.modelRef?.current;
             if (modelObj) {
-                let diff = targetYaw - modelObj.rotation.y;
-                if (diff > Math.PI) diff -= Math.PI * 2;
-                else if (diff < -Math.PI) diff += Math.PI * 2;
+                const targetYaw = aim ? -yaw : Math.atan2(-horizontal, vertical) - yaw;
+                const diff = Math.atan2(
+                    Math.sin(targetYaw - modelObj.rotation.y),
+                    Math.cos(targetYaw - modelObj.rotation.y)
+                );
                 modelObj.rotation.y += diff * Math.min(1, TURN_SPEED * dt);
             }
         }
@@ -169,16 +193,14 @@ const ThirdPersonControls = forwardRef<ThirdPersonControlsRef, ThirdPersonContro
         <>
             <PointerLockControls
                 onLook={applyLookDelta}
-                onClick={() => { shoulderCamMode && tap(); }}
-                onRightClickDown={() => setShoulder(true)}
-                onRightClickUp={() => setShoulder(false)}
+                onZoom={applyCameraDistanceDelta}
+                onClick={() => { cameraDistance <= MIN_CAMERA_DISTANCE && tap(); }}
             />
             <KeyboardControls />
-            {shoulderCamMode && <Weapon excludeRigidBody={modelRef.current?.rigidBodyRef} />}
         </>
     );
 });
 
-ThirdPersonControls.displayName = "ThirdPersonControls";
+NeoControls.displayName = "NeoControls";
 
-export default ThirdPersonControls;
+export default NeoControls;

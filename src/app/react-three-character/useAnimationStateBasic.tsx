@@ -3,6 +3,12 @@ import { type AnimationAction, AnimationClip, AnimationMixer, LoopRepeat, type O
 import { useLoader } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/Addons.js'
 
+const REVERSE_ANIMATION_MAP: Record<string, string> = {
+    walkRight: 'walkLeft',
+    walkBack: 'walk',
+    runBack: 'run',
+}
+
 const filterNeckAnimations = (animation: AnimationClip): AnimationClip => {
     const filteredAnimation = animation.clone()
     filteredAnimation.tracks = animation.tracks.filter((track) => !track.name.includes('mixamorigNeck'))
@@ -56,6 +62,16 @@ export default function useAnimationState(
             if (clip && !map[key]) map[key] = mixer.clipAction(clip, clone)
         })
 
+        // Reversed variants need their own actions so they can crossfade cleanly
+        // against the forward version instead of mutating the same action in place.
+        Object.entries(REVERSE_ANIMATION_MAP).forEach(([reverseKey, baseKey]) => {
+            const baseAction = map[baseKey]
+            if (!baseAction || map[reverseKey]) return
+            const reverseClip = baseAction.getClip().clone()
+            reverseClip.name = reverseKey
+            map[reverseKey] = mixer.clipAction(reverseClip, clone)
+        })
+
         return map
     }, [mixer, clone, fbxAnimations, ANIMATIONS, modelAnimationMap])
 
@@ -88,17 +104,8 @@ export default function useAnimationState(
         const animationKey = typeof thisAnimation === 'string' ? thisAnimation : thisAnimation[0]
         if (!animationKey) return
 
-        // Handle reversed animations (no separate animation files needed)
-        // walkRight -> walkLeft reversed, walkBack -> walk reversed, runBack -> run reversed
-        const reverseAnimationMap: Record<string, string> = {
-            walkRight: 'walkLeft',
-            walkBack: 'walk',
-            runBack: 'run'
-        }
-        const isReversed = animationKey in reverseAnimationMap
-        const lookupKey = isReversed ? reverseAnimationMap[animationKey] : animationKey
-
-        const next = actions[lookupKey] ?? actions[lookupKey.toLowerCase()] ?? actions.idle ?? actions[Object.keys(actions)[0]]
+        const isReversed = animationKey in REVERSE_ANIMATION_MAP
+        const next = actions[animationKey] ?? actions[animationKey.toLowerCase()] ?? actions.idle ?? actions[Object.keys(actions)[0]]
         if (!next) return
         if (lastKeyRef.current === animationKey && prevActionRef.current === next) return
 
@@ -109,11 +116,15 @@ export default function useAnimationState(
         next.timeScale = isReversed ? -1 : (next.timeScale < 0 ? 1 : next.timeScale)
 
         try { if (prev && prev !== next) prev.fadeOut(0.2) } catch { }
-        try { next.reset().setLoop(LoopRepeat, 1000).fadeIn(0.2).play() } catch { }
+        try {
+            next.reset().setLoop(LoopRepeat, 1000).fadeIn(0.2)
+            next.time = isReversed ? next.getClip().duration : 0
+            next.play()
+        } catch { }
 
         prevActionRef.current = next
         lastKeyRef.current = animationKey
-    }, [thisAnimation, actions])
+    }, [thisAnimation, actions, mixer])
 
     return useMemo(() => ({
         thisAnimation,

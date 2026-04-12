@@ -201,20 +201,27 @@ export const Joystick: React.FC<JoystickProps> = ({
 export const Button = ({
     button,
 }: {
-    button: 'jump' | 'sprint' | 'action' | 'fire';
+    button: 'jump' | 'sprint' | 'action' | 'altAction' | 'fire';
 }) => {
     const setButton = useInputStore(state => state.setButton);
     const pressing = useRef(false);
     const [isPressed, setIsPressed] = useState(false);
 
-    type PublicButton = 'jump' | 'sprint' | 'action' | 'fire';
+    type PublicButton = 'jump' | 'sprint' | 'action' | 'altAction' | 'fire';
     type StoreButton = 'jump' | 'sprint' | 'use' | 'altUse' | 'fire';
 
     const mapToStoreButton = (b: PublicButton): StoreButton => {
         // Map public "action" to the store's "use" button
         if (b === 'action') return 'use';
+        if (b === 'altAction') return 'altUse';
         return b;
     };
+
+    const label = button === 'action'
+        ? 'Use'
+        : button === 'altAction'
+            ? 'Alt'
+            : button.charAt(0).toUpperCase() + button.slice(1);
 
     return (
         <div
@@ -265,7 +272,7 @@ export const Button = ({
                 document.addEventListener('mouseup', upListener, { once: true });
             }}
         >
-            {button.charAt(0).toUpperCase() + button.slice(1)}
+            {label}
         </div>
     );
 }

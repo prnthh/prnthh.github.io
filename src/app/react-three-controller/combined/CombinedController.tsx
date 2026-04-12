@@ -5,19 +5,20 @@ import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior from "@/app/react-three-controller/ped/physics/SelfSteeringBehavior";
 import SwipeControls from "../controls/SwipeControls";
 import useInputStore from "../controls/InputStore";
-import TapControls from "../tap/TapControls";
 import FollowCam from "@/shared/cameras/FollowCam";
-import ThirdPersonControls from "../thirdperson/ThirdPersonControls";
 import { RigidHumanoidModelRef } from "@/app/react-three-controller/ped/types";
 import FirstPersonControls from "../controls/FirstPersonControls";
 import { FirstPersonArms } from "../firstperson/FirstPersonArms";
 import ModelAttachment from "@/app/react-three-character/ModelAttachment";
-import { Group } from "three";
+import { Group, Vector3 } from "three";
+import ThirdPersonControls, { ThirdPersonControlsRef } from "../thirdperson/ThirdPersonControls";
 
-const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number], gunModel?: string, model?: string, basePath?: string }>(({ mode, target = [0, 0, 0], gunModel = "/models/environment/Colt 1911.glb", model = "/models/human/onimilio/rigged.glb", basePath = "/models/human/onimilio/" }, ref) => {
+const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, target?: [number, number, number], gunModel?: string, model?: string, basePath?: string }>(({ mode, target = [0, 0, 0], gunModel = "/models/environment/picocad/gunv1.glb", model = "/models/human/onimilio/rigged.glb", basePath = "/models/human/onimilio/" }, ref) => {
     const [animation, setAnimation] = useState<string>("idle");
     const modelRef = useRef<RigidHumanoidModelRef>(null);
     const cameraRigRef = useRef<Group | null>(null);
+    const thirdPersonControlsRef = useRef<ThirdPersonControlsRef>(null);
+    const thirdPersonWorldPosition = useRef(new Vector3());
 
     // Forward the internal ref to the parent
     useImperativeHandle(ref, () => modelRef.current as RigidHumanoidModelRef, []);
@@ -67,21 +68,9 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                     />
                 )}
 
-                {mode === 'tap' && <>
-                    <TapControls
-                        modelRef={modelRef}
-                        setAnimation={setAnimation}
-                    />
-                    <SwipeControls
-                        onTap={() => useInputStore.getState().tap()}
-                        onSwipeLeft={() => useInputStore.getState().swipe('right')}
-                        onSwipeRight={() => useInputStore.getState().swipe('left')}
-                    />
-                    <FollowCam height={2.5} />
-                </>}
-
                 {mode === 'third-person' && <>
                     <ThirdPersonControls
+                        ref={thirdPersonControlsRef}
                         modelRef={modelRef}
                         height={1.2}
                         capsuleRadius={0.25}
@@ -95,7 +84,6 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                             rotation={[0, 0, 0]}
                         />
                     </Suspense>
-
                 </>}
 
                 {mode === 'first-person' && <>
@@ -113,6 +101,27 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                 </>}
 
             </RigidHumanoidModel>
+
+            {mode === 'third-person' && (
+                <FollowCam
+                    height={1.2 * 0.85}
+                    targetOffset={[0, 0, 0]}
+                    getTargetState={() => {
+                        const targetObject = modelRef.current?.groupRef.current ?? modelRef.current?.modelRef.current;
+                        const cameraState = thirdPersonControlsRef.current?.getCameraState();
+                        if (!targetObject || !cameraState) return null;
+
+                        targetObject.getWorldPosition(thirdPersonWorldPosition.current);
+
+                        return {
+                            position: thirdPersonWorldPosition.current,
+                            yaw: cameraState.yaw,
+                            pitch: cameraState.pitch,
+                            cameraOffset: cameraState.cameraOffset,
+                        };
+                    }}
+                />
+            )}
 
         </>
     );

@@ -1,15 +1,26 @@
 import { Box } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { forwardRef, useRef, useImperativeHandle } from "react";
-import { Vector3, Group, MathUtils } from "three";
+import { Vector3, Group } from "three";
 import { SceneCamera } from "./SceneCamera";
+
+type FollowCamTargetState = {
+    position: { x: number; y: number; z: number };
+    yaw?: number;
+    pitch?: number;
+    cameraOffset?: [number, number, number];
+};
+
+const _externalCameraPosition = new Vector3();
+const _externalLookAt = new Vector3();
 
 const FollowCam = forwardRef(({
     height,
     cameraOffset = [0, -0.3, -3],
     targetOffset = [0, 0.3, 3],
     verticalRotation,
-    cameraSpeed = 0.1,
+    getTargetState,
+    cameraSpeed = 0.2,
     debug = false,
     fov = 75,
 }: {
@@ -17,6 +28,7 @@ const FollowCam = forwardRef(({
     cameraOffset?: [number, number, number],
     targetOffset?: [number, number, number],
     verticalRotation?: React.RefObject<number>
+    getTargetState?: () => FollowCamTargetState | null
     cameraSpeed?: number
     debug?: boolean
     fov?: number
@@ -33,12 +45,40 @@ const FollowCam = forwardRef(({
 
     useFrame(() => {
         const cameraRef = sceneCameraRef.current?.cameraRef;
+        const targetState = getTargetState?.();
+
+        if (cameraRef?.current && targetState) {
+            const activeCameraOffset = targetState.cameraOffset ?? cameraOffset;
+            const yaw = targetState.yaw ?? 0;
+            const pitch = targetState.pitch ?? verticalRotation?.current ?? 0;
+            const distance = -activeCameraOffset[2];
+            const shoulderOffset = activeCameraOffset[0];
+            const cosPitch = Math.cos(pitch);
+
+            _externalCameraPosition.set(
+                targetState.position.x + distance * Math.sin(yaw) * cosPitch - shoulderOffset * Math.cos(yaw),
+                targetState.position.y + height + activeCameraOffset[1] + distance * Math.sin(pitch),
+                targetState.position.z - distance * Math.cos(yaw) * cosPitch - shoulderOffset * Math.sin(yaw),
+            );
+
+            cameraRef.current.position.lerp(_externalCameraPosition, cameraSpeed);
+
+            _externalLookAt.set(
+                targetState.position.x + targetOffset[0] * Math.cos(yaw) - targetOffset[2] * Math.sin(yaw),
+                targetState.position.y + height + targetOffset[1],
+                targetState.position.z + targetOffset[0] * Math.sin(yaw) + targetOffset[2] * Math.cos(yaw),
+            );
+
+            cameraRef.current.lookAt(_externalLookAt);
+            return;
+        }
+
         if (cameraRef?.current && cameraPosition.current && cameraTarget.current) {
             cameraPosition.current.position.x = cameraOffset[0];
             cameraPosition.current.position.y = height + cameraOffset[1];
             cameraPosition.current.position.z = cameraOffset[2];
 
-            let pitch = verticalRotation?.current ?? 0;
+            const pitch = verticalRotation?.current ?? 0;
 
             // Get world position for camera
             cameraPosition.current.getWorldPosition(cameraWorldPosition.current);

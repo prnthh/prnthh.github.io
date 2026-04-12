@@ -148,7 +148,7 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
                 position={position}
                 {...props}
             >
-                {clonedScene && <primitive position={modelOffset} name={name} scale={scale / height} rotation={rotation} object={clonedScene} ref={modelRef} />}
+                {clonedScene && <primitive position={modelOffset} name={name} scale={scale} rotation={rotation} object={clonedScene} ref={modelRef} />}
 
                 {/* raycast mesh instead of skinned mesh for better interaction */}
                 <mesh position={[0, height / 2, 0]} onClick={(e) => {

@@ -14,7 +14,6 @@ import {
 } from "three";
 
 import { GameCanvas } from "react-three-game";
-import Controls from "../../react-three-controller/controls/ControlsProvider";
 import PixelationEffect from "../../tools/picocad/PixelationEffect";
 import SimpleModel from "../../../shared/SimpleModel";
 
@@ -40,6 +39,14 @@ const HOMEPAGE_MODELS = [
         rotation: [0, -Math.PI / 2, 0] as [number, number, number],
         position: [0, 0, 0] as [number, number, number],
     },
+    {
+        name: "Gun",
+        url: "/models/environment/picocad/gunv1.glb",
+        scale: 1,
+        rotation: [0, -Math.PI / 2, 0] as [number, number, number],
+        position: [0, 1, 0] as [number, number, number],
+    },
+
 ] as const;
 
 function pixelTexture(texture: Texture) {
@@ -148,20 +155,18 @@ function PixelScene() {
 
 export default function HomeGame() {
     return (
-        <Controls>
-            <GameCanvas>
-                <OrthographicCamera
-                    makeDefault
-                    position={[0, 0.8, 2]}
-                    rotation={[-Math.PI / 16, 0, 0]}
-                    zoom={400}
-                    near={0.1}
-                    far={10}
-                />
+        <GameCanvas>
+            <OrthographicCamera
+                makeDefault
+                position={[0, 0.8, 2]}
+                rotation={[-Math.PI / 16, 0, 0]}
+                zoom={400}
+                near={0.1}
+                far={10}
+            />
 
-                <PixelScene />
-                <PixelationEffect pixelSize={3} normalEdgeStrength={0.1} depthEdgeStrength={0.4} />
-            </GameCanvas>
-        </Controls>
+            <PixelScene />
+            <PixelationEffect pixelSize={3} normalEdgeStrength={0.1} depthEdgeStrength={0.4} />
+        </GameCanvas>
     );
 }

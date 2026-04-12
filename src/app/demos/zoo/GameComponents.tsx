@@ -5,7 +5,7 @@ import Rain from "@/shared/shaders/rain";
 import CrawlerApp from "@/shared/ik/CrawlerPed";
 import Breakable from "@/shared/Breakable";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useControls } from "leva";
+// import { useControls } from "leva";
 import DebugGround from "@/shared/ground/DebugGround";
 import DialogCollider from "@/shared/physics/DialogCollider";
 import FootballGame from "./FootballGame";
@@ -14,16 +14,17 @@ import Balloon from "@/shared/physics/Balloon";
 import HitBox from "@/shared/physics/HitBox";
 import { useGLTF, } from "@react-three/drei";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
+import { NeoController } from "@/app/react-three-controller/neo/NeoController";
 
 export default function GameComponents() {
-    const { mode } = useControls({
-        mode: { value: 'wawa', options: ['click', 'wawa', 'tap', 'third-person', 'first-person'] }
-    });
+    // const { mode } = useControls({
+    //     mode: { value: 'wawa', options: ['click', 'wawa', 'tap', 'third-person', 'first-person'] }
+    // });
     const [target, setTarget] = useState<[number, number, number]>([0, 0, 2]);
     const ballRef = useRef<Object3D | null>(null);
 
     return <>
-        <CombinedController mode={mode} target={target} />
+        <NeoController />
 
         <group position={[30, 0, 0]}>
             <FootballGame ref={ballRef} />
@@ -73,7 +74,9 @@ export default function GameComponents() {
             <PunchingBag position={[0, 2, 0]} />
         </DemoGroup>
 
-        <DebugGround onClick={mode === 'click' ? (e) => { setTarget([e.point.x, e.point.y, e.point.z]) } : undefined} />
+        <DebugGround
+        //  onClick={mode === 'click' ? (e) => { setTarget([e.point.x, e.point.y, e.point.z]) } : undefined}
+        />
         <DialogCollider label="omg its prnth.com!" />
 
         {/* <RandomNumberExample /> */}
