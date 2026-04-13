@@ -17,6 +17,8 @@ import CombinedController from "@/app/react-three-controller/combined/CombinedCo
 import Ped from "@/app/react-three-controller/ped/ped";
 import { PCFSoftShadowMap } from "three";
 import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
+import TextView from "@/shared/shaders/TextView";
+import BoneAttachment from "@/app/react-three-character/BoneAttachment";
 
 const DEFAULT_PREFAB_PATH = "/samples/room.json";
 const ROOM2_PREFAB_PATH = "/samples/room2.json";
@@ -128,13 +130,15 @@ function SchoolScenePage() {
                 <GameCanvas shadows={{ type: PCFSoftShadowMap }}>
                     <Physics>
                         <RenderPipeline />
-                        <group onClick={handleSurfaceClick}>
-                            <PrefabRoot
-                                onSelect={(id) => {
-                                    console.log("selected prefab root", id);
-                                }}
-                                data={scenePrefab ?? undefined} />
-                        </group>
+                        {scenePrefab && (
+                            <group onClick={handleSurfaceClick}>
+                                <PrefabRoot
+                                    onSelect={(id) => {
+                                        console.log("selected prefab root", id);
+                                    }}
+                                    data={scenePrefab} />
+                            </group>
+                        )}
                         {target && (
                             <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />
                         )}
@@ -144,14 +148,27 @@ function SchoolScenePage() {
 
 
                         <Ped
-                            modelOffset={[0, -0.8, 0]} scale={2.4} height={1.5} position={[2, 0, 2]}
+                            modelOffset={[0, -0.8, 0]} scale={1.8} height={1.5} position={[2, 0, 2]}
                             model="/models/human/rigga/rigga.glb"
                             onClick={(e) => {
                                 setActiveEntity("ped");
                                 e.stopPropagation();
                             }}
                         >
-                            {activeEntity === "ped" && <CutsceneCamera position={[0, 1, 2]} />}
+                            {activeEntity === "ped" && <>
+                                <CutsceneCamera position={[0, 1, 2]} />
+                                <BoneAttachment
+                                    attachpoint={["mixamorigHead", "Head", "head", "mixamorig:Head"]}
+                                    // scale={[0.01, 0.01, 0.01]}
+                                    position={[0, 25, 0.1]}
+                                >
+                                    {/* <Box args={[100, 100, 100]} /> */}
+                                    <TextView size={5} color='#ffe054'>hello there</TextView>
+                                </BoneAttachment>
+
+                            </>}
+
+
                         </Ped>
                     </Physics>
                 </GameCanvas>

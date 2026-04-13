@@ -14,12 +14,10 @@ export { default as ControlsProvider } from './controls/ControlsProvider';
 export { default as PointerLockControls } from './controls/PointerLockControls';
 export { default as KeyboardControls } from './controls/KeyboardControls';
 export { default as TouchscreenControls } from './controls/TouchscreenControls';
-export { default as SwipeControls } from './controls/SwipeControls';
 
 // Controllers
-export { default as FirstPersonControls } from './controls/FirstPersonControls';
-export { default as ThirdPersonControls } from './thirdperson/ThirdPersonControls';
-export { default as CombinedController } from './combined/CombinedController';
+export { default as NeoControls } from './neo/NeoControls';
+export { NeoController } from './neo/NeoController';
 
 // Weapon System
 export { Weapon } from './Weapon';

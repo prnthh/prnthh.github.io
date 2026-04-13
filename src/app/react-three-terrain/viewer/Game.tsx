@@ -9,7 +9,6 @@ import { GameCanvas } from "react-three-game";
 import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
 
 import Controls from "@/app/react-three-controller/controls/ControlsProvider";
-import { ThirdPersonController } from "@/app/react-three-controller/thirdperson/ThirdPersonController";
 import Ped from "@/app/react-three-controller/ped/ped";
 import ModelAttachment from "@/app/react-three-character/ModelAttachment";
 import DialogCollider from "@/shared/physics/DialogCollider";
@@ -17,6 +16,7 @@ import { MapProvider } from "@/app/react-three-terrain/MapProvider";
 import { MapTiles } from "@/app/react-three-terrain/MapTile";
 import { ShinyFloor } from "@/shared/shaders/floor/ShinyFloorMaterial";
 import Ocean from "@/shared/shaders/Water";
+import { NeoController } from "@/app/react-three-controller";
 
 
 
@@ -35,7 +35,6 @@ export default function Game() {
                     tileSizePx={256}
                 >
                     <MapTiles
-                        // ref={mapTilesRef}
                         startX={-1}
                         startZ={-1}
                         endX={1}
@@ -106,7 +105,7 @@ const InnerGame = () => {
 
 
     return <>
-        <ThirdPersonController position={[0, 5, 0]} lookTarget={ballRef} >
+        <NeoController position={[0, 5, 0]} lookTarget={ballRef} >
             <ModelAttachment
                 model="/models/environment/Katana.glb"
                 attachpoint="mixamorigRightHand"
@@ -114,7 +113,7 @@ const InnerGame = () => {
                 scale={[100, 100, 100]}
                 rotation={[0, 0.8, -1.2]}
             />
-        </ThirdPersonController>
+        </NeoController>
 
 
         <GoalFollowingPed ballRef={ballRef} />
@@ -139,7 +138,7 @@ const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | nul
         return () => clearInterval(interval);
     }, [ballRef]);
 
-    return <Ped model="rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
+    return <Ped model="/models/human/rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
         <DialogCollider>Ole!</DialogCollider>
     </Ped>
 }

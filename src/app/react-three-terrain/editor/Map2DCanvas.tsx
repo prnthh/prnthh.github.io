@@ -1,70 +1,17 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMapEditor } from "./MapEditorProvider";
 import { useMap } from "../MapProvider";
 
-function TileGridOverlay() {
-    const { gridConfig } = useMap();
-    const { tileSizePx, startX, endX, startZ, endZ } = gridConfig;
-
-    const numTilesX = endX - startX;
-    const numTilesZ = endZ - startZ;
-    const canvasDisplaySize = 300; // Same as the canvas display size
-    const maxTiles = Math.max(numTilesX, numTilesZ);
-    const tileSizeDisplay = maxTiles > 0 ? canvasDisplaySize / maxTiles : canvasDisplaySize;
-
-    // Don't render if grid is invalid
-    if (numTilesX < 1 || numTilesZ < 1 || !isFinite(tileSizeDisplay)) {
-        return null;
-    }
-
-    return (
-        <svg
-            className="absolute inset-0 pointer-events-none"
-            width={canvasDisplaySize}
-            height={canvasDisplaySize}
-            style={{ width: "300px", height: "300px", mixBlendMode: "difference" }}
-        >
-            {/* Vertical lines */}
-            {Array.from({ length: numTilesX + 1 }, (_, i) => (
-                <line
-                    key={`v-${i}`}
-                    x1={i * tileSizeDisplay}
-                    y1={0}
-                    x2={i * tileSizeDisplay}
-                    y2={canvasDisplaySize}
-                    stroke="rgba(255, 255, 255, 0.8)"
-                    strokeWidth="1"
-                />
-            ))}
-            {/* Horizontal lines */}
-            {Array.from({ length: numTilesZ + 1 }, (_, i) => (
-                <line
-                    key={`h-${i}`}
-                    x1={0}
-                    y1={i * tileSizeDisplay}
-                    x2={canvasDisplaySize}
-                    y2={i * tileSizeDisplay}
-                    stroke="rgba(255, 255, 255, 0.8)"
-                    strokeWidth="1"
-                />
-            ))}
-        </svg>
-    );
-}
-
 export function Map2DCanvas() {
     const { gridConfig, isLoaded } = useMap();
-    const { canvasSize: CANVAS_SIZE } = gridConfig;
     const {
         brush,
         setBrush,
-        isDrawing,
-        setIsDrawing,
         modifiedTiles,
-        paintAt,
-        clearPreview,
+        generateRandomHeightmap,
+        generateColormapFromHeightmap,
         downloadModifiedTiles,
         loadAllTiles,
         setCanvasRefs,
@@ -72,211 +19,208 @@ export function Map2DCanvas() {
         brushMode,
         setBrushMode,
     } = useMapEditor();
+    const [isOpen, setIsOpen] = useState(true);
 
     const heightCanvasRef = useRef<HTMLCanvasElement>(null);
     const colorCanvasRef = useRef<HTMLCanvasElement>(null);
 
-    // Set canvas refs when mounted
     useEffect(() => {
-        setCanvasRefs({
-            height: heightCanvasRef.current,
-            color: colorCanvasRef.current,
-        });
-    }, [setCanvasRefs]);
+        const height = heightCanvasRef.current;
+        const color = colorCanvasRef.current;
+        setCanvasRefs({ height, color });
 
-    // Load tiles when map is ready
-    useEffect(() => {
-        if (isLoaded && heightCanvasRef.current && colorCanvasRef.current) {
+        if (isLoaded && height && color) {
             loadAllTiles();
         }
-    }, [isLoaded, loadAllTiles]);
-
-    const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        return [
-            Math.floor((e.clientX - rect.left) * CANVAS_SIZE / rect.width),
-            Math.floor((e.clientY - rect.top) * CANVAS_SIZE / rect.height),
-        ] as const;
-    };
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const [x, y] = getCanvasCoords(e);
-        setIsDrawing(true);
-        paintAt(x, y, true);
-    };
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        const [x, y] = getCanvasCoords(e);
-        paintAt(x, y, isDrawing);
-    };
-
-    const handleMouseUp = () => {
-        setIsDrawing(false);
-    };
-
-    const handleMouseLeave = () => {
-        setIsDrawing(false);
-        clearPreview();
-    };
+    }, [isLoaded, loadAllTiles, setCanvasRefs]);
 
     // Only show in edit mode
     if (editorMode !== "edit") return null;
 
     return (
-        <div className="absolute bottom-0 right-0 bg-black/80 p-4 rounded-tl-lg">
-            <div className="flex flex-col gap-3">
-                {/* Mode Toggle Buttons */}
-                <div className="flex gap-2">
-                    {(["move", "brush"] as const).map((m) => (
-                        <button
-                            key={m}
-                            onClick={() => setBrushMode(m)}
-                            className={`px-4 py-2 rounded border transition-colors ${brushMode === m
-                                ? "bg-blue-500 text-white border-blue-600"
-                                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
-                                }`}
-                        >
-                            {m.charAt(0).toUpperCase() + m.slice(1)}
-                        </button>
-                    ))}
-                </div>
-
-                {/* Controls */}
-                <div className="flex flex-col gap-2">
-                    <select
-                        value={brush.mode}
-                        onChange={(e) => setBrush({ mode: e.target.value as "height" | "color" })}
-                        className="px-2 py-1 rounded bg-gray-700 text-white"
-                    >
-                        <option value="height">Height Map</option>
-                        <option value="color">Color Map</option>
-                    </select>
-
-                    <div className="flex items-center gap-2">
-                        <label className="text-white text-sm">Brush Size:</label>
-                        <input
-                            type="range"
-                            min="1"
-                            max="50"
-                            value={brush.size}
-                            onChange={(e) => setBrush({ size: Number(e.target.value) })}
-                            className="flex-1"
-                        />
-                        <span className="text-white text-sm w-8">{brush.size}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <label className="text-white text-sm">Softness:</label>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value={brush.softness}
-                            onChange={(e) => setBrush({ softness: Number(e.target.value) })}
-                            className="flex-1"
-                        />
-                        <span className="text-white text-sm w-8">{(brush.softness * 100).toFixed(0)}%</span>
-                    </div>
-
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setBrush({ shape: "circle" })}
-                            className={`px-3 py-1 rounded text-sm ${brush.shape === "circle" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-200"}`}
-                        >
-                            Circle
-                        </button>
-                        <button
-                            onClick={() => setBrush({ shape: "square" })}
-                            className={`px-3 py-1 rounded text-sm ${brush.shape === "square" ? "bg-blue-600 text-white" : "bg-gray-600 text-gray-200"}`}
-                        >
-                            Square
-                        </button>
-                    </div>
-
-                    {brush.mode === "height" ? (
-                        <div className="flex items-center gap-2">
-                            <label className="text-white text-sm">Height:</label>
-                            <input
-                                type="range"
-                                min="0"
-                                max="255"
-                                value={brush.height}
-                                onChange={(e) => setBrush({ height: Number(e.target.value) })}
-                                className="flex-1"
-                            />
-                            <span className="text-white text-sm w-8">{brush.height}</span>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="flex items-center gap-2">
-                                <label className="text-white text-sm">Color:</label>
-                                <input
-                                    type="color"
-                                    value={brush.color}
-                                    onChange={(e) => setBrush({ color: e.target.value })}
-                                    className="flex-1 h-8"
-                                />
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {[
-                                    { label: "Grass", color: "#010000" },
-                                    { label: "Rock", color: "#020000" },
-                                    { label: "Sand", color: "#030000" },
-                                ].map(({ label, color }) => (
-                                    <button
-                                        key={color}
-                                        onClick={() => setBrush({ color })}
-                                        className={`px-3 py-1 rounded text-xs border-2 transition-all ${brush.color.toLowerCase() === color.toLowerCase()
-                                            ? "border-white scale-105"
-                                            : "border-transparent"
-                                            }`}
-                                        style={{ backgroundColor: color, color: "white", textShadow: "0 0 2px black" }}
-                                        title={label}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                        </>
-                    )}
-
+        <>
+            <div className="w-full">
+                <div className="overflow-hidden rounded-[1.5rem] border border-white/15 bg-neutral-900/92 text-white shadow-2xl backdrop-blur-md">
                     <button
-                        onClick={downloadModifiedTiles}
-                        disabled={modifiedTiles.size === 0}
-                        className="px-3 py-2 bg-blue-600 text-white rounded disabled:bg-gray-600 disabled:cursor-not-allowed"
+                        type="button"
+                        onClick={() => setIsOpen((open) => !open)}
+                        className="flex w-full items-center justify-between gap-4 border-b border-white/10 px-4 py-3 text-left"
                     >
-                        Download Modified Tiles ({modifiedTiles.size})
+                        <div>
+                            <div className="text-xs uppercase tracking-[0.2em] text-white/45">Terrain Editor</div>
+                            <div className="text-sm font-medium text-white/90">
+                                {brush.mode === "height" ? "Height Tools" : "Color Tools"}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <div className="hidden text-xs text-white/50 sm:block">
+                                {brushMode === "brush" ? "Paint" : "Navigate"}
+                            </div>
+                            <div className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/80">
+                                {isOpen ? "Hide" : "Show"}
+                            </div>
+                        </div>
                     </button>
-                </div>
 
-                {/* Canvas */}
-                <div className="relative border border-gray-600">
-                    <canvas
-                        ref={heightCanvasRef}
-                        width={CANVAS_SIZE}
-                        height={CANVAS_SIZE}
-                        className={brush.mode === "height" ? "block" : "hidden"}
-                        style={{ width: "300px", height: "300px", imageRendering: "pixelated" }}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseLeave}
-                    />
-                    <canvas
-                        ref={colorCanvasRef}
-                        width={CANVAS_SIZE}
-                        height={CANVAS_SIZE}
-                        className={brush.mode === "color" ? "block" : "hidden"}
-                        style={{ width: "300px", height: "300px", imageRendering: "pixelated" }}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onMouseLeave={handleMouseLeave}
-                    />
-                    <TileGridOverlay />
+                    {isOpen && (
+                        <div className="max-h-[calc(100vh-7rem)] overflow-y-auto px-4 pb-4 pt-3">
+                            <div className="flex flex-col gap-4">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {(["move", "brush"] as const).map((m) => (
+                                        <button
+                                            key={m}
+                                            onClick={() => setBrushMode(m)}
+                                            className={`rounded-2xl border px-4 py-3 text-sm transition-colors ${brushMode === m
+                                                ? "border-sky-500 bg-sky-500 text-white"
+                                                : "border-white/10 bg-white/8 text-white/75 hover:bg-white/12"
+                                                }`}
+                                        >
+                                            {m.charAt(0).toUpperCase() + m.slice(1)}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <select
+                                        value={brush.mode}
+                                        onChange={(e) => setBrush({ mode: e.target.value as "height" | "color" })}
+                                        className="rounded-2xl border border-white/10 bg-slate-700 px-3 py-3 text-sm text-white"
+                                    >
+                                        <option value="height">Height Map</option>
+                                        <option value="color">Color Map</option>
+                                    </select>
+
+                                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-3">
+                                        <label className="w-20 text-sm text-white/80">Size</label>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="50"
+                                            value={brush.size}
+                                            onChange={(e) => setBrush({ size: Number(e.target.value) })}
+                                            className="flex-1"
+                                        />
+                                        <span className="w-10 text-right text-sm text-white">{brush.size}</span>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-3">
+                                        <label className="w-20 text-sm text-white/80">Softness</label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="1"
+                                            step="0.01"
+                                            value={brush.softness}
+                                            onChange={(e) => setBrush({ softness: Number(e.target.value) })}
+                                            className="flex-1"
+                                        />
+                                        <span className="w-12 text-right text-sm text-white">{(brush.softness * 100).toFixed(0)}%</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setBrush({ shape: "circle" })}
+                                            className={`rounded-2xl px-3 py-2 text-sm ${brush.shape === "circle" ? "bg-sky-600 text-white" : "bg-white/10 text-white/75"}`}
+                                        >
+                                            Circle
+                                        </button>
+                                        <button
+                                            onClick={() => setBrush({ shape: "square" })}
+                                            className={`rounded-2xl px-3 py-2 text-sm ${brush.shape === "square" ? "bg-sky-600 text-white" : "bg-white/10 text-white/75"}`}
+                                        >
+                                            Square
+                                        </button>
+                                    </div>
+
+                                    {brush.mode === "height" ? (
+                                        <button
+                                            onClick={generateRandomHeightmap}
+                                            className="rounded-2xl bg-emerald-600 px-3 py-3 text-white"
+                                        >
+                                            Generate Random
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={generateColormapFromHeightmap}
+                                            className="rounded-2xl bg-amber-600 px-3 py-3 text-white"
+                                        >
+                                            Generate From Heightmap
+                                        </button>
+                                    )}
+
+                                    {brush.mode === "height" ? (
+                                        <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-3">
+                                            <label className="w-20 text-sm text-white/80">Height</label>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="255"
+                                                value={brush.height}
+                                                onChange={(e) => setBrush({ height: Number(e.target.value) })}
+                                                className="flex-1"
+                                            />
+                                            <span className="w-10 text-right text-sm text-white">{brush.height}</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-3">
+                                                <label className="w-20 text-sm text-white/80">Color</label>
+                                                <input
+                                                    type="color"
+                                                    value={brush.color}
+                                                    onChange={(e) => setBrush({ color: e.target.value })}
+                                                    className="h-10 flex-1 rounded-xl"
+                                                />
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {[
+                                                    { label: "Grass", color: "#010000" },
+                                                    { label: "Rock", color: "#020000" },
+                                                    { label: "Sand", color: "#030000" },
+                                                ].map(({ label, color }) => (
+                                                    <button
+                                                        key={color}
+                                                        onClick={() => setBrush({ color })}
+                                                        className={`rounded-xl px-3 py-2 text-xs border transition-all ${brush.color.toLowerCase() === color.toLowerCase()
+                                                            ? "border-white scale-105"
+                                                            : "border-white/10"
+                                                            }`}
+                                                        style={{ backgroundColor: color, color: "white", textShadow: "0 0 2px black" }}
+                                                        title={label}
+                                                    >
+                                                        {label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <button
+                                        onClick={downloadModifiedTiles}
+                                        disabled={modifiedTiles.size === 0}
+                                        className="rounded-2xl bg-slate-600 px-3 py-3 text-white disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-white/40"
+                                    >
+                                        Download Modified Tiles ({modifiedTiles.size})
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
-        </div>
+
+            <div className="pointer-events-none absolute -left-[9999px] top-0 opacity-0" aria-hidden="true">
+                <canvas
+                    ref={heightCanvasRef}
+                    width={gridConfig.canvasSize}
+                    height={gridConfig.canvasSize}
+                />
+                <canvas
+                    ref={colorCanvasRef}
+                    width={gridConfig.canvasSize}
+                    height={gridConfig.canvasSize}
+                />
+            </div>
+        </>
     );
 }

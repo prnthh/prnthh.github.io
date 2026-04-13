@@ -42,9 +42,23 @@ const HOMEPAGE_MODELS = [
     {
         name: "Gun",
         url: "/models/environment/picocad/gunv1.glb",
-        scale: 1,
+        scale: 0.2,
         rotation: [0, -Math.PI / 2, 0] as [number, number, number],
-        position: [0, 1, 0] as [number, number, number],
+        position: [0, 0.1, 0] as [number, number, number],
+    },
+    {
+        name: "Slot Machine",
+        url: "/models/environment/picocad/slot.glb",
+        scale: 0.2,
+        rotation: [0, 0, 0] as [number, number, number],
+        position: [0, 0.1, 0] as [number, number, number],
+    },
+    {
+        name: "Hand",
+        url: "/models/environment/picocad/hand1.glb",
+        scale: 0.2,
+        rotation: [0, 0, 0] as [number, number, number],
+        position: [0, 0.1, 0] as [number, number, number],
     },
 
 ] as const;

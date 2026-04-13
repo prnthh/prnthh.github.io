@@ -2,8 +2,11 @@
 
 import { createContext, useContext, useRef, useState, useCallback, useMemo, ReactNode, useEffect } from "react";
 import * as THREE from "three";
-import { useMap, buildHeightFieldFromImageData, imageToImageData } from "../MapProvider";
-import { MapTilesRef } from "../MapTile";
+import { useMap } from "../MapProvider";
+import { BrushMode, BrushSettings, CachedTileImages, EditorMode, PaintMode, PreviewColorTextureMap, PreviewHeightDataMap } from "./editorTypes";
+import { blend, brushIntensity, buildHeightFieldFromImageData, disposeTextureMap, hexToRgb, imageToImageData, makeTexture, parseTileKey, solidImageData, tileToCanvas } from "./editorUtils";
+import { useTerrainCanvasStore } from "./useTerrainCanvasStore";
+import { useTerrainEditorTools } from "./useTerrainEditorTools";
 
 /**
  * MapEditorProvider handles all terrain editing functionality.
@@ -18,78 +21,13 @@ import { MapTilesRef } from "../MapTile";
  *    - Clears strokeTiles for next stroke
  */
 
-// Simple utilities
-const parseTileKey = (key: string) => key.split(",").map(Number) as [number, number];
-const tileToCanvas = (tileX: number, tileZ: number, startX: number, startZ: number, tileSize: number) =>
-    [(tileX - startX) * tileSize, (tileZ - startZ) * tileSize] as const;
-
-const solidImageData = (size: number, r: number, g: number, b: number) => {
-    const data = new Uint8ClampedArray(size * size * 4).fill(255);
-    for (let i = 0; i < data.length; i += 4) { data[i] = r; data[i + 1] = g; data[i + 2] = b; }
-    return typeof ImageData === 'undefined' ? { data, width: size, height: size } as ImageData : new ImageData(data, size, size);
-};
-
-const makeTexture = (data: ImageData, size: number) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.putImageData(data, 0, 0);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.minFilter = texture.magFilter = THREE.NearestFilter;
-    texture.needsUpdate = true;
-    return texture;
-};
-
-const downloadTile = (key: string, type: string, data: ImageData, size: number) => new Promise<void>(resolve => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return resolve();
-    ctx.putImageData(data, 0, 0);
-    canvas.toBlob(blob => {
-        if (!blob) return resolve();
-        const [x, z] = parseTileKey(key);
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${x}_${z}_${type}.png`;
-        a.click();
-        setTimeout(resolve, 100);
-    });
-});
-
-const hexToRgb = (hex: string) => {
-    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return r ? [parseInt(r[1], 16), parseInt(r[2], 16), parseInt(r[3], 16)] : [255, 255, 255];
-};
-
-const brushIntensity = (dist: number, half: number, soft: number) => {
-    if (soft <= 0) return 1;
-    const ratio = dist / half;
-    return ratio > 1 - soft ? 1 - Math.pow((ratio - (1 - soft)) / soft, 2) * (3 - 2 * ((ratio - (1 - soft)) / soft)) : 1;
-};
-
-const blend = (curr: number, target: number, intensity: number) => Math.round(curr + (target - curr) * intensity);
-
-type PaintMode = "height" | "color";
-type BrushShape = "circle" | "square";
-type EditorMode = "play" | "edit";
-type BrushMode = "brush" | "move";
-
-interface BrushSettings {
-    mode: PaintMode;
-    size: number;
-    shape: BrushShape;
-    color: string;
-    height: number;
-    softness: number;
-}
-
 interface MapEditorState {
     brush: BrushSettings;
     isDrawing: boolean;
     isLoaded: boolean;
     modifiedTiles: Map<string, Set<PaintMode>>;
+    previewHeightDataMap: PreviewHeightDataMap;
+    previewColorTextureMap: PreviewColorTextureMap;
     editorMode: EditorMode;
     brushMode: BrushMode;
 }
@@ -99,10 +37,12 @@ interface MapEditorActions {
     setIsDrawing: (drawing: boolean) => void;
     paintAt: (x: number, y: number, commit: boolean) => void;
     clearPreview: () => void;
+    generateRandomHeightmap: () => void;
+    generateColormapFromHeightmap: () => void;
     downloadModifiedTiles: () => void;
     loadAllTiles: () => Promise<void>;
+    reloadFromSource: () => Promise<void>;
     setCanvasRefs: (refs: { height: HTMLCanvasElement | null; color: HTMLCanvasElement | null }) => void;
-    setMapTilesRef: (ref: MapTilesRef | null) => void;
     pointerRef: React.MutableRefObject<[number, number, number] | null>;
     setEditorMode: (mode: EditorMode) => void;
     setBrushMode: (mode: BrushMode) => void;
@@ -118,7 +58,7 @@ export function useMapEditor() {
 }
 
 export function MapEditorProvider({ children }: { children: ReactNode }) {
-    const { isLoaded: mapLoaded, getTile, updateTile: updateProviderTile, gridConfig, tileChangeCount } = useMap();
+    const { isLoaded: mapLoaded, getTile, updateTile: updateProviderTile, gridConfig } = useMap();
     const { startX, endX, startZ, endZ, tileSizePx: tileSize, canvasSize } = gridConfig;
 
     const blankImage = useMemo(() => solidImageData(tileSize, 200, 200, 200), [tileSize]);
@@ -144,28 +84,51 @@ export function MapEditorProvider({ children }: { children: ReactNode }) {
     const [isDrawing, setIsDrawing] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const [modifiedTiles, setModifiedTiles] = useState<Map<string, Set<PaintMode>>>(new Map());
+    const [previewHeightDataMap, setPreviewHeightDataMap] = useState<PreviewHeightDataMap>(new Map());
+    const [previewColorTextureMap, setPreviewColorTextureMap] = useState<PreviewColorTextureMap>(new Map());
     const [editorMode, setEditorMode] = useState<EditorMode>("edit");
     const [brushMode, setBrushMode] = useState<BrushMode>("move");
 
-    const setBrush = useCallback((settings: Partial<BrushSettings>) => {
-        setBrushState(prev => ({ ...prev, ...settings }));
-    }, []);
-
     const pointerRef = useRef<[number, number, number] | null>(null);
-    const hRef = useRef<HTMLCanvasElement | null>(null);
-    const cRef = useRef<HTMLCanvasElement | null>(null);
-    const tilesRef = useRef<MapTilesRef | null>(null);
     const cache = useRef(new Map<string, { height: ImageData; color: ImageData }>());
     const preview = useRef(new Set<string>());
     const lastPos = useRef<{ x: number; y: number } | null>(null);
     const strokeTiles = useRef(new Set<string>());
     const strokeMode = useRef<PaintMode>("height");
+    const previewColorTextureMapRef = useRef(previewColorTextureMap);
+    const brushRef = useRef<BrushSettings>(brush);
 
-    const getActiveContext = () => (brush.mode === "height" ? hRef : cRef).current?.getContext("2d", { willReadFrequently: true }) ?? null;
+    brushRef.current = brush;
+
+    const handleTileLoaded = useCallback((key: string, images: CachedTileImages) => {
+        cache.current.set(key, images);
+    }, []);
+
+    const resetModifiedState = useCallback(() => {
+        preview.current.clear();
+        strokeTiles.current.clear();
+        lastPos.current = null;
+        cache.current.clear();
+        setModifiedTiles(new Map());
+        setPreviewHeightDataMap(new Map());
+        setPreviewColorTextureMap(prev => {
+            disposeTextureMap(prev);
+            return new Map();
+        });
+    }, []);
+
+    const {
+        getCanvasContexts,
+        getActiveContext,
+        setCanvasRefs,
+    } = useTerrainCanvasStore({
+        paintMode: brush.mode,
+    });
+
+    previewColorTextureMapRef.current = previewColorTextureMap;
 
     const captureTile = useCallback((key: string) => {
-        const hCtx = hRef.current?.getContext("2d", { willReadFrequently: true });
-        const cCtx = cRef.current?.getContext("2d", { willReadFrequently: true });
+        const { height: hCtx, color: cCtx } = getCanvasContexts() ?? {};
         if (!hCtx || !cCtx) return;
 
         const [tileX, tileZ] = parseTileKey(key);
@@ -175,22 +138,12 @@ export function MapEditorProvider({ children }: { children: ReactNode }) {
             height: hCtx.getImageData(canvasX, canvasZ, tileSize, tileSize),
             color: cCtx.getImageData(canvasX, canvasZ, tileSize, tileSize)
         });
-    }, [startX, startZ, tileSize]);
-
-    const setCanvasRefs = (refs: { height: HTMLCanvasElement | null; color: HTMLCanvasElement | null }) => {
-        hRef.current = refs.height;
-        cRef.current = refs.color;
-    };
-
-    const setMapTilesRef = (ref: MapTilesRef | null) => {
-        tilesRef.current = ref;
-    };
+    }, [getCanvasContexts, startX, startZ, tileSize]);
 
     const applyView = useCallback((tiles: Set<string>) => {
-        if (!tilesRef.current) return;
-        const hCtx = hRef.current?.getContext("2d", { willReadFrequently: true });
-        const cCtx = cRef.current?.getContext("2d", { willReadFrequently: true });
-        if (!hCtx || !cCtx) return;
+        const contexts = getCanvasContexts();
+        if (!contexts) return;
+        const { height: hCtx, color: cCtx } = contexts;
 
         // Include neighbors for edge stitching
         const tilesToUpdate = new Set<string>(tiles);
@@ -201,44 +154,165 @@ export function MapEditorProvider({ children }: { children: ReactNode }) {
             );
         });
 
+        const nextHeightEntries = new Map<string, Float32Array | null>();
+        const nextColorEntries = new Map<string, THREE.Texture | null>();
+
         tilesToUpdate.forEach(key => {
             const [tileX, tileZ] = parseTileKey(key);
             const [canvasX, canvasZ] = tileToCanvas(tileX, tileZ, startX, startZ, tileSize);
 
             const height = hCtx.getImageData(canvasX, canvasZ, tileSize, tileSize);
             const heightField = buildHeightFieldFromImageData(height, tileSize);
-            tilesRef.current!.updateHeightData(key, heightField);
+            nextHeightEntries.set(key, heightField);
 
             const color = cCtx.getImageData(canvasX, canvasZ, tileSize, tileSize);
             const colorTexture = makeTexture(color, tileSize);
-            if (colorTexture) tilesRef.current!.updateImageData(key, colorTexture);
+            nextColorEntries.set(key, colorTexture);
         });
-    }, [startX, startZ, tileSize]);
+
+        setPreviewHeightDataMap(prev => {
+            const next = new Map(prev);
+            nextHeightEntries.forEach((value, key) => next.set(key, value));
+            return next;
+        });
+        setPreviewColorTextureMap(prev => {
+            const next = new Map(prev);
+            nextColorEntries.forEach((value, key) => {
+                const previous = next.get(key);
+                if (previous && previous !== value) previous.dispose();
+                next.set(key, value);
+            });
+            return next;
+        });
+    }, [getCanvasContexts, startX, startZ, tileSize]);
+
+    const syncTilesToProvider = useCallback((tiles: Set<string>, modes: PaintMode[]) => {
+        const contexts = getCanvasContexts();
+        if (!contexts || tiles.size === 0) return;
+        const { height: hCtx, color: cCtx } = contexts;
+
+        tiles.forEach(key => {
+            const [tileX, tileZ] = parseTileKey(key);
+            const [canvasX, canvasZ] = tileToCanvas(tileX, tileZ, startX, startZ, tileSize);
+            const height = hCtx.getImageData(canvasX, canvasZ, tileSize, tileSize);
+            const color = cCtx.getImageData(canvasX, canvasZ, tileSize, tileSize);
+
+            cache.current.set(key, { height, color });
+
+            updateProviderTile(
+                tileX,
+                tileZ,
+                modes.includes("height") ? height : undefined,
+                modes.includes("color") ? color : undefined
+            );
+        });
+
+        setModifiedTiles(prev => {
+            const updated = new Map(prev);
+            tiles.forEach(key => {
+                const current = updated.get(key) ?? new Set<PaintMode>();
+                modes.forEach(mode => current.add(mode));
+                updated.set(key, current);
+            });
+            return updated;
+        });
+    }, [getCanvasContexts, startX, startZ, tileSize, updateProviderTile]);
+
+    const getAllTileKeys = useCallback(() => {
+        const allTiles = new Set<string>();
+        for (let z = startZ; z <= endZ; z++) {
+            for (let x = startX; x <= endX; x++) {
+                allTiles.add(`${x},${z}`);
+            }
+        }
+        return allTiles;
+    }, [startX, endX, startZ, endZ]);
+
+    const refreshVisiblePreview = useCallback(() => {
+        if (!isLoaded) return;
+        applyView(getAllTileKeys());
+    }, [isLoaded, applyView, getAllTileKeys]);
+
+    const setBrush = useCallback((settings: Partial<BrushSettings>) => {
+        const modeChanged = settings.mode !== undefined && settings.mode !== brushRef.current.mode;
+        setBrushState(prev => ({ ...prev, ...settings }));
+        if (modeChanged) {
+            refreshVisiblePreview();
+        }
+    }, [refreshVisiblePreview]);
+
+    const handleSetEditorMode = useCallback((mode: EditorMode) => {
+        setEditorMode(mode);
+        if (mode === "edit") return;
+
+        setPreviewHeightDataMap(new Map());
+        setPreviewColorTextureMap(prev => {
+            disposeTextureMap(prev);
+            return new Map();
+        });
+    }, []);
 
     const loadAllTiles = useCallback(async () => {
         if (!mapLoaded) return;
-        const hCtx = hRef.current?.getContext("2d", { willReadFrequently: true });
-        const cCtx = cRef.current?.getContext("2d", { willReadFrequently: true });
-        if (!hCtx || !cCtx) return;
+        const contexts = getCanvasContexts();
+        if (!contexts) return;
 
         setIsLoaded(false);
         const allTiles = new Set<string>();
-
+        const coords: Array<[number, number]> = [];
         for (let z = startZ; z <= endZ; z++) {
             for (let x = startX; x <= endX; x++) {
-                const key = `${x},${z}`;
-                allTiles.add(key);
-                const { height, color } = getTileImages(x, z);
-                const [canvasX, canvasZ] = tileToCanvas(x, z, startX, startZ, tileSize);
-                hCtx.putImageData(height, canvasX, canvasZ);
-                cCtx.putImageData(color, canvasX, canvasZ);
-                captureTile(key);
+                coords.push([x, z]);
             }
         }
 
+        const batchSize = 4;
+        for (let i = 0; i < coords.length; i += batchSize) {
+            const batch = coords.slice(i, i + batchSize);
+
+            batch.forEach(([x, z]) => {
+                const key = `${x},${z}`;
+                allTiles.add(key);
+                const images = getTileImages(x, z);
+                const canvasX = (x - startX) * tileSize;
+                const canvasZ = (z - startZ) * tileSize;
+                contexts.height.putImageData(images.height, canvasX, canvasZ);
+                contexts.color.putImageData(images.color, canvasX, canvasZ);
+                handleTileLoaded(key, images);
+            });
+
+            await new Promise<void>((resolve) => {
+                window.setTimeout(resolve, 0);
+            });
+        }
+
+        if (!allTiles) return;
         setIsLoaded(true);
         applyView(allTiles);
-    }, [mapLoaded, captureTile, applyView, startX, endX, startZ, endZ, tileSize, getTileImages]);
+    }, [mapLoaded, getCanvasContexts, startX, endX, startZ, endZ, tileSize, getTileImages, handleTileLoaded, applyView]);
+
+    const reloadFromSource = useCallback(async () => {
+        resetModifiedState();
+        await loadAllTiles();
+    }, [resetModifiedState, loadAllTiles]);
+
+    const {
+        generateRandomHeightmap,
+        generateColormapFromHeightmap,
+        downloadModifiedTiles,
+    } = useTerrainEditorTools({
+        canvasSize,
+        tileSize,
+        startX,
+        endX,
+        startZ,
+        endZ,
+        modifiedTiles,
+        cacheRef: cache,
+        getCanvasContexts,
+        syncTilesToProvider,
+        applyView,
+    });
 
     const restore = useCallback(() => {
         if (preview.current.size === 0) return;
@@ -317,88 +391,44 @@ export function MapEditorProvider({ children }: { children: ReactNode }) {
 
     const clearPreview = useCallback(() => restore(), [restore]);
 
-    const downloadModifiedTiles = useCallback(async () => {
-        const queue: { key: string; type: string; data: ImageData }[] = [];
-
-        modifiedTiles.forEach((types, key) => {
-            const data = cache.current.get(key);
-            if (!data) return;
-            if (types.has("height")) queue.push({ key, type: "height", data: data.height });
-            if (types.has("color")) queue.push({ key, type: "color", data: data.color });
-        });
-
-        for (let i = 0; i < queue.length; i++) {
-            await downloadTile(queue[i].key, queue[i].type, queue[i].data, tileSize);
-            if (i < queue.length - 1) await new Promise(resolve => setTimeout(resolve, 100));
-        }
-    }, [modifiedTiles, tileSize]);
-
     const handleSetIsDrawing = useCallback((drawing: boolean) => {
         if (!drawing && strokeTiles.current.size > 0) {
             const mode = strokeMode.current;
             const tiles = new Set(strokeTiles.current);
-
-            tiles.forEach(key => {
-                const cached = cache.current.get(key);
-                if (!cached) return;
-                const [tileX, tileZ] = parseTileKey(key);
-                updateProviderTile(
-                    tileX, tileZ,
-                    mode === "height" ? cached.height : undefined,
-                    mode === "color" ? cached.color : undefined
-                );
-            });
-
-            setModifiedTiles(prev => {
-                const updated = new Map(prev);
-                tiles.forEach(key => {
-                    const modes = updated.get(key) ?? new Set<PaintMode>();
-                    modes.add(mode);
-                    updated.set(key, modes);
-                });
-                return updated;
-            });
+            syncTilesToProvider(tiles, [mode]);
             strokeTiles.current.clear();
         }
 
         if (!drawing) lastPos.current = null;
         setIsDrawing(drawing);
-    }, [updateProviderTile]);
+    }, [syncTilesToProvider]);
 
     useEffect(() => {
-        if (!isLoaded || !tilesRef.current) return;
-        const allTiles = new Set<string>();
-        for (let z = startZ; z <= endZ; z++) {
-            for (let x = startX; x <= endX; x++) allTiles.add(`${x},${z}`);
-        }
-        applyView(allTiles);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [brush.mode, isLoaded]);
-
-    // Reload all tiles when MapProvider tiles change (e.g., image loaded)
-    useEffect(() => {
-        if (mapLoaded && isLoaded) {
-            loadAllTiles();
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [tileChangeCount]);
+        return () => {
+            disposeTextureMap(previewColorTextureMapRef.current);
+        };
+    }, []);
 
     const value: MapEditorContextType = {
         brush,
         isDrawing,
         isLoaded,
         modifiedTiles,
+        previewHeightDataMap,
+        previewColorTextureMap,
         editorMode,
         brushMode,
         setBrush,
         setIsDrawing: handleSetIsDrawing,
         paintAt,
         clearPreview,
+        generateRandomHeightmap,
+        generateColormapFromHeightmap,
         downloadModifiedTiles,
         loadAllTiles,
+        reloadFromSource,
         setCanvasRefs,
-        setMapTilesRef,
-        setEditorMode,
+        setEditorMode: handleSetEditorMode,
         setBrushMode,
         pointerRef,
     };

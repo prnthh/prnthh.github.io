@@ -50,20 +50,6 @@ function TransformModeBridge({ mode }: { mode: TransformMode }) {
     return null;
 }
 
-function FocusNodeBridge({ nodeId }: { nodeId: string | null }) {
-    const { onFocusNode } = useEditorContext();
-
-    useEffect(() => {
-        if (!nodeId) {
-            return;
-        }
-
-        onFocusNode?.(nodeId);
-    }, [nodeId, onFocusNode]);
-
-    return null;
-}
-
 function getFileExtension(filename: string): SupportedAssetType | null {
     const extension = filename.toLowerCase().split(".").pop();
 
@@ -207,8 +193,8 @@ export default function PicocadPage() {
     const [pixelSize, setPixelSize] = useState(6);
     const [transformMode, setTransformMode] = useState<TransformMode>("translate");
     const [editorReady, setEditorReady] = useState(false);
-    const [focusNodeId, setFocusNodeId] = useState<string | null>(null);
     const editorRef = useRef<PrefabEditorRef | null>(null);
+    const injectedSceneRef = useRef<Object3D | null>(null);
     const fileInputRefs = useRef<Record<SupportedAssetType, HTMLInputElement | null>>({
         glb: null,
         gltf: null,
@@ -227,23 +213,15 @@ export default function PicocadPage() {
             setEditorReady(true);
         }
     }, []);
-    const replaceLoadedScene = useCallback((nextScene: Object3D | null) => {
-        setLoadedScene(previousScene => {
-            if (previousScene && previousScene !== nextScene) {
-                disposeObject(previousScene);
-            }
-
-            return nextScene;
-        });
-    }, []);
 
     useEffect(() => {
         return () => {
-            if (loadedScene) {
-                disposeObject(loadedScene);
+            if (injectedSceneRef.current) {
+                disposeObject(injectedSceneRef.current);
+                injectedSceneRef.current = null;
             }
         };
-    }, [loadedScene]);
+    }, []);
 
     useEffect(() => {
         const sceneAsset = getPrimarySceneAsset(assets);
@@ -252,14 +230,14 @@ export default function PicocadPage() {
         if (!sceneAsset) {
             setIsLoading(false);
             setLoadError(null);
-            replaceLoadedScene(null);
+            setLoadedScene(null);
             return;
         }
 
         if (sceneAsset === assets.gltf && missingAssetLabels.length > 0) {
             setIsLoading(false);
             setLoadError(null);
-            replaceLoadedScene(null);
+            setLoadedScene(null);
             return;
         }
 
@@ -304,13 +282,13 @@ export default function PicocadPage() {
                     return;
                 }
 
-                replaceLoadedScene(gltf.scene);
+                setLoadedScene(gltf.scene);
             } catch (error) {
                 if (cancelled) {
                     return;
                 }
 
-                replaceLoadedScene(null);
+                setLoadedScene(null);
                 setLoadError(error instanceof Error ? error.message : "Failed to assemble dropped assets.");
             } finally {
                 objectUrls.forEach(url => URL.revokeObjectURL(url));
@@ -327,17 +305,18 @@ export default function PicocadPage() {
             }
 
             setIsLoading(false);
-            replaceLoadedScene(null);
+            setLoadedScene(null);
             setLoadError(error instanceof Error ? error.message : "Failed to assemble dropped assets.");
         });
 
         return () => {
             cancelled = true;
         };
-    }, [assets, missingAssetLabels, replaceLoadedScene]);
+    }, [assets, missingAssetLabels]);
 
     useEffect(() => {
         const editor = editorRef.current;
+        const previousInjectedScene = injectedSceneRef.current;
 
         if (!editorReady || !editor) {
             return;
@@ -345,7 +324,12 @@ export default function PicocadPage() {
 
         if (!loadedScene) {
             editor.load(EMPTY_PREFAB, { resetHistory: true });
-            setFocusNodeId(null);
+            injectedSceneRef.current = null;
+
+            if (previousInjectedScene) {
+                disposeObject(previousInjectedScene);
+            }
+
             return;
         }
 
@@ -356,17 +340,16 @@ export default function PicocadPage() {
             ...EMPTY_PREFAB,
             name: sceneName,
         }, { resetHistory: true });
-        const node = editor.addModel(editorModelPath, loadedScene, {
+        editor.addModel(editorModelPath, loadedScene, {
             name: sceneName,
             parentId: "root",
-            select: false,
+            select: true,
         });
+        injectedSceneRef.current = loadedScene;
 
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setFocusNodeId(node.id);
-            });
-        });
+        if (previousInjectedScene && previousInjectedScene !== loadedScene) {
+            disposeObject(previousInjectedScene);
+        }
     }, [editorReady, loadedScene, primarySceneAsset]);
 
     function addFiles(files: File[]) {
@@ -514,7 +497,6 @@ export default function PicocadPage() {
                 >
                     <ambientLight intensity={2} />
                     <TransformModeBridge mode={transformMode} />
-                    <FocusNodeBridge nodeId={focusNodeId} />
                     {pixelSize > 0 && (
                         <PixelationEffect pixelSize={pixelSize} normalEdgeStrength={0.3} depthEdgeStrength={0.4} />
                     )}

@@ -13,14 +13,12 @@ interface MapSplatMaterialProps {
 }
 
 export function MapSplatMaterial({ colorTexture, textureScale = 4 }: MapSplatMaterialProps) {
-    // Load splat textures
     const [grassTexture, rockTexture, sandTexture] = useTexture([
         grassTextureUrl,
         rockTextureUrl,
         sandTextureUrl,
     ]);
 
-    // Configure splat textures for tiling
     useEffect(() => {
         [grassTexture, rockTexture, sandTexture].forEach((tex) => {
             tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
@@ -31,55 +29,50 @@ export function MapSplatMaterial({ colorTexture, textureScale = 4 }: MapSplatMat
         });
     }, [grassTexture, rockTexture, sandTexture]);
 
-    // Create TSL material
+    useEffect(() => {
+        if (!colorTexture) return;
+        colorTexture.wrapS = colorTexture.wrapT = THREE.ClampToEdgeWrapping;
+        colorTexture.minFilter = THREE.LinearFilter;
+        colorTexture.magFilter = THREE.LinearFilter;
+        colorTexture.generateMipmaps = false;
+        colorTexture.needsUpdate = true;
+    }, [colorTexture]);
+
     const splatMaterial = useMemo(() => {
         if (!colorTexture) {
-            // Fallback to basic material if no color texture
             return new THREE.MeshStandardMaterial({ color: 'gray' });
         }
 
-        try {
-            const material = new THREE.MeshStandardNodeMaterial();
+        const material = new THREE.MeshStandardNodeMaterial();
+        const colorSample = TSL.texture(colorTexture, TSL.uv());
+        const indexedValue = colorSample.r;
+        const blendWidth = 1.0 / 255.0;
+        const tiledUV = TSL.uv().mul(textureScale);
+        const grassColor = TSL.texture(grassTexture, tiledUV);
+        const rockColor = TSL.texture(rockTexture, tiledUV);
+        const sandColor = TSL.texture(sandTexture, tiledUV);
 
-            // Sample the color texture
-            const colorSample = TSL.texture(colorTexture, TSL.uv());
-            const r = colorSample.r;
+        const toWeight = (target: number) => {
+            const weight = TSL.float(1.0).sub(indexedValue.sub(target).abs().div(blendWidth));
+            return weight.lessThan(0.0).select(TSL.float(0.0), weight);
+        };
 
-            // Use red channel only for texture selection
-            // r = 1/255 (~0.0039) -> grass
-            // r = 2/255 (~0.0078) -> rock
-            // r = 3/255 (~0.0117) -> sand
-            // Otherwise, pass through the original color
+        const grassWeight = toWeight(1.0 / 255.0);
+        const rockWeight = toWeight(2.0 / 255.0);
+        const sandWeight = toWeight(3.0 / 255.0);
+        const totalWeight = grassWeight.add(rockWeight).add(sandWeight);
+        const safeWeight = totalWeight.lessThan(0.0001).select(TSL.float(1.0), totalWeight);
 
-            // Sample splat textures with tiled UVs
-            const tiledUV = TSL.uv().mul(textureScale);
-            const grassColor = TSL.texture(grassTexture, tiledUV);
-            const rockColor = TSL.texture(rockTexture, tiledUV);
-            const sandColor = TSL.texture(sandTexture, tiledUV);
+        const blendedSplat = grassColor.mul(grassWeight)
+            .add(rockColor.mul(rockWeight))
+            .add(sandColor.mul(sandWeight))
+            .div(safeWeight);
 
-            // todo use voronoi to blend textures
+        material.colorNode = totalWeight.lessThan(0.0001).select(colorSample, blendedSplat);
+        material.roughness = 1;
+        material.metalness = 0;
 
-            // Detect specific red channel values (with small tolerance)
-            const tolerance = 0.002;
-            const isGrass = r.sub(1.0 / 255.0).abs().lessThan(tolerance);
-            const isRock = r.sub(2.0 / 255.0).abs().lessThan(tolerance);
-            const isSand = r.sub(3.0 / 255.0).abs().lessThan(tolerance);
-
-            // Build final color with conditional logic
-            // Chain the conditions: sand -> rock -> grass -> original
-            const finalColor = isSand.select(sandColor,
-                isRock.select(rockColor,
-                    isGrass.select(grassColor, colorSample)
-                )
-            );
-
-            material.colorNode = finalColor;
-
-            return material;
-        } catch (error) {
-            console.error("Error creating MapSplatMaterial:", error);
-            return new THREE.MeshStandardMaterial({ color: 'magenta' });
-        }
+        return material;
     }, [colorTexture, grassTexture, rockTexture, sandTexture, textureScale]);
 
     return <primitive object={splatMaterial} attach="material" />;

@@ -2,14 +2,14 @@
 import { GameCanvas } from "react-three-game";
 import { MapProvider, useMap } from "../MapProvider";
 import { MapEditorProvider, useMapEditor } from "./MapEditorProvider";
-import { MapTiles, MapTilesRef } from "../MapTile";
+import { MapTiles } from "../MapTile";
 import { Map2DCanvas } from "./Map2DCanvas";
-import { MapControls, OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
 import { Physics } from "@react-three/rapier";
-import { useCallback, useRef, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import SynchronizedPointer from "./SynchronizedPointer";
-import { CombinedController } from "@/app/react-three-controller";
+import { NeoController } from "@/app/react-three-controller";
 
 
 function PageContent({
@@ -27,20 +27,10 @@ function PageContent({
     tileSizePx: number;
     setTileSizePx: (size: number) => void;
 }) {
-    const { isDrawing, setIsDrawing, clearPreview, brush, setMapTilesRef, paintAt, pointerRef, editorMode, brushMode, setEditorMode } = useMapEditor();
+    const { isDrawing, setIsDrawing, clearPreview, brush, paintAt, pointerRef, previewHeightDataMap, previewColorTextureMap, editorMode, brushMode, setEditorMode, reloadFromSource } = useMapEditor();
     const { loadImage } = useMap();
     const isBrushMode = editorMode === "edit" && brushMode === "brush";
-    const mapTilesRef = useRef<MapTilesRef>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // Calculate from config
-    const gridSize = config.endX - config.startX + 1;
-    const gridStart = config.startX;
-
-    // Register the ref with the editor provider
-    useEffect(() => {
-        setMapTilesRef(mapTilesRef.current);
-    }, [setMapTilesRef]);
 
     const handlePointerMove = useCallback((e: any) => {
         e.stopPropagation();
@@ -106,11 +96,12 @@ function PageContent({
         clearPreview();
     }, [clearPreview, pointerRef]);
 
-    const handleImageLoad = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageLoad = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        loadImage(file);
-    }, [loadImage]);
+        await loadImage(file);
+        await reloadFromSource();
+    }, [loadImage, reloadFromSource]);
 
     return (
         <>
@@ -122,7 +113,6 @@ function PageContent({
 
                     <group position={[-tileSize / 2, 0, -tileSize / 2]}>
                         <MapTiles
-                            ref={mapTilesRef}
                             startX={config.startX}
                             startZ={config.startZ}
                             endX={config.endX}
@@ -131,6 +121,10 @@ function PageContent({
                             tileSize={tileSize}
                             viewRadius={2}
                             paintMode={brush.mode}
+                            showWireframe={editorMode === "edit" && brush.mode === "height"}
+                            showTileBoundaries={editorMode === "edit"}
+                            previewHeightDataMap={editorMode === "edit" ? previewHeightDataMap : undefined}
+                            previewColorTextureMap={editorMode === "edit" ? previewColorTextureMap : undefined}
                             onPointerMove={isBrushMode ? handlePointerMove : undefined}
                             onPointerDown={isBrushMode ? handlePointerDown : undefined}
                             onPointerUp={isBrushMode ? handlePointerUp : undefined}
@@ -147,7 +141,7 @@ function PageContent({
                         </>
                     ) : (
                         <>
-                            <CombinedController mode="first-person" />
+                            <NeoController position={[0, 20, 0]} />
                             <DemoEnvironment />
                         </>
                     )}
@@ -169,18 +163,20 @@ function PageContent({
                 ))}
             </div>
 
-            <MapConfigPanel
-                config={config}
-                setConfig={setConfig}
-                tileSize={tileSize}
-                setTileSize={setTileSize}
-                tileSizePx={tileSizePx}
-                setTileSizePx={setTileSizePx}
-                handleImageLoad={handleImageLoad}
-                fileInputRef={fileInputRef}
-            />
+            <div className="absolute right-3 top-16 z-30 flex w-[calc(100vw-1.5rem)] max-w-[26rem] flex-col gap-3 sm:w-[24rem] md:right-4">
+                <MapConfigPanel
+                    config={config}
+                    setConfig={setConfig}
+                    tileSize={tileSize}
+                    setTileSize={setTileSize}
+                    tileSizePx={tileSizePx}
+                    setTileSizePx={setTileSizePx}
+                    handleImageLoad={handleImageLoad}
+                    fileInputRef={fileInputRef}
+                />
 
-            <Map2DCanvas />
+                <Map2DCanvas />
+            </div>
         </>
     );
 }
@@ -207,29 +203,46 @@ const MapConfigPanel = ({
     const [isOpen, setIsOpen] = useState(false);
     const gridSize = config.endX - config.startX + 1;
     const gridStart = config.startX;
+    const fieldClassName = "w-20 rounded border border-slate-300 px-2 py-1 dark:border-white/15 dark:bg-white/5";
+
+    const updateGridWindow = (start: number, size: number) => {
+        setConfig({
+            startX: start,
+            endX: start + size - 1,
+            startZ: start,
+            endZ: start + size - 1,
+        });
+    };
 
     return (
-        <div className="absolute top-4 right-4 z-30 p-2 dark:bg-black rounded bg-white dark:bg-black ">
+        <div className="overflow-hidden rounded-[1.5rem] border border-white/15 bg-white/92 text-slate-900 shadow-2xl backdrop-blur-md dark:bg-black/92 dark:text-white">
             {!isOpen ? (
-                <button onClick={() => setIsOpen(true)} title="Open settings">
-                    ⚙️
+                <button onClick={() => setIsOpen(true)} title="Open settings" className="flex w-full items-center justify-between px-4 py-3 text-left">
+                    <div>
+                        <div className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-white/45">Map Setup</div>
+                        <div className="text-sm font-medium">Settings</div>
+                    </div>
+                    <div className="rounded-full bg-slate-900/10 px-3 py-1 text-xs dark:bg-white/10">Show</div>
                 </button>
             ) : (
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between mb-2">
-                        <h2 className="text-sm font-semibold">Settings</h2>
+                <div className="flex flex-col gap-2 px-4 pb-4 pt-3">
+                    <div className="mb-2 flex items-center justify-between">
+                        <div>
+                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-white/45">Map Setup</div>
+                            <h2 className="text-sm font-semibold">Settings</h2>
+                        </div>
                         <button
                             onClick={() => setIsOpen(false)}
-                            className="p-1 rounded hover:bg-gray-100 transition-colors"
+                            className="rounded-full bg-slate-900/10 px-3 py-1 text-xs transition-colors hover:bg-slate-900/15 dark:bg-white/10 dark:hover:bg-white/15"
                             title="Close settings"
                         >
-                            X
+                            Hide
                         </button>
                     </div>
 
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="p-1 rounded bg-white/50"
+                        className="rounded-2xl bg-slate-900 px-3 py-3 text-white dark:bg-white dark:text-slate-900"
                     >
                         Load Image
                     </button>
@@ -241,7 +254,7 @@ const MapConfigPanel = ({
                         className="hidden"
                     />
 
-                    <div className="border-t border-gray-300 pt-2 mt-2">
+                    <div className="mt-2 border-t border-slate-300/80 pt-3 dark:border-white/10">
                         <h3 className="text-sm font-s mb-2">Grid Configuration</h3>
 
                         <div className="flex items-center gap-2">
@@ -251,14 +264,9 @@ const MapConfigPanel = ({
                                 value={gridSize}
                                 onChange={(e) => {
                                     const newSize = parseInt(e.target.value) || 1;
-                                    setConfig({
-                                        startX: gridStart,
-                                        endX: gridStart + newSize - 1,
-                                        startZ: gridStart,
-                                        endZ: gridStart + newSize - 1,
-                                    });
+                                    updateGridWindow(gridStart, newSize);
                                 }}
-                                className="w-20 px-2 py-1 border border-gray-300 rounded"
+                                className={fieldClassName}
                                 min="1"
                                 max="10"
                             />
@@ -272,19 +280,14 @@ const MapConfigPanel = ({
                                 value={gridStart}
                                 onChange={(e) => {
                                     const newStart = parseInt(e.target.value) || 0;
-                                    setConfig({
-                                        startX: newStart,
-                                        endX: newStart + gridSize - 1,
-                                        startZ: newStart,
-                                        endZ: newStart + gridSize - 1,
-                                    });
+                                    updateGridWindow(newStart, gridSize);
                                 }}
-                                className="w-20 px-2 py-1 border border-gray-300 rounded"
+                                className={fieldClassName}
                             />
                         </div>
                     </div>
 
-                    <div className="border-t border-gray-300 pt-2 mt-2">
+                    <div className="mt-2 border-t border-slate-300/80 pt-3 dark:border-white/10">
                         <h3 className="text-sm font-semibold mb-2">Tile Configuration</h3>
 
                         <div className="flex items-center gap-2">
@@ -293,7 +296,7 @@ const MapConfigPanel = ({
                                 type="number"
                                 value={tileSize}
                                 onChange={(e) => setTileSize(parseInt(e.target.value) || 100)}
-                                className="w-20 px-2 py-1 border border-gray-300 rounded"
+                                className={fieldClassName}
                                 min="10"
                                 step="10"
                             />
@@ -306,7 +309,7 @@ const MapConfigPanel = ({
                                 type="number"
                                 value={tileSizePx}
                                 onChange={(e) => setTileSizePx(parseInt(e.target.value) || 256)}
-                                className="w-20 px-2 py-1 border border-gray-300 rounded"
+                                className={fieldClassName}
                                 min="64"
                                 step="64"
                             />

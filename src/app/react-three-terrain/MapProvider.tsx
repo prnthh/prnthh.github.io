@@ -30,10 +30,9 @@ interface MapProviderValue {
     getTile(x: number, y: number): MapData;
     sampleHeight(x: number, z: number): number;
     updateTile(x: number, y: number, heightData?: ImageData, colorData?: ImageData): void;
-    loadImage(file: File): void;
+    loadImage(file: File): Promise<void>;
     isLoaded: boolean;
     gridConfig: GridConfig;
-    tileChangeCount: number;
 }
 
 const MapContext = createContext<MapProviderValue | null>(null);
@@ -47,22 +46,10 @@ export const useMap = () => {
 };
 
 export const TILE_RESOLUTION = 32, TILE_SIZE = 100, HEIGHT_SCALE = 20;
-export const tileKey = (x: number, y: number) => `${x},${y}`;
 
-export const buildHeightFieldFromImageData = (hd: ImageData, tileSizePx: number, resolution = TILE_RESOLUTION, scale = HEIGHT_SCALE) => {
-    const gridSize = resolution + 1;
-    const hf = new Float32Array(gridSize * gridSize);
-    for (let gz = 0; gz < gridSize; gz++) {
-        for (let gx = 0; gx < gridSize; gx++) {
-            const sx = Math.floor((gx / resolution) * (tileSizePx - 1));
-            const sz = Math.floor((gz / resolution) * (tileSizePx - 1));
-            hf[gz * gridSize + gx] = (hd.data[(sz * tileSizePx + sx) * 4] / 255) * scale;
-        }
-    }
-    return hf;
-};
+const tileKey = (x: number, y: number) => `${x},${y}`;
 
-export const createTextureFromImageData = (data: ImageData) => {
+const createTextureFromImageData = (data: ImageData) => {
     const canvas = document.createElement("canvas");
     canvas.width = data.width;
     canvas.height = data.height;
@@ -76,37 +63,6 @@ export const createTextureFromImageData = (data: ImageData) => {
     tex.magFilter = LinearFilter;
     tex.generateMipmaps = true;
     return tex;
-};
-
-export const imageToImageData = (img: HTMLImageElement | ImageBitmap | HTMLCanvasElement, size: number) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.drawImage(img as any, 0, 0, size, size);
-    return ctx.getImageData(0, 0, size, size);
-};
-
-export const heightFieldToTexture = (heightField: Float32Array, resolution: number, scale = HEIGHT_SCALE) => {
-    const size = resolution + 1;
-    const canvas = document.createElement('canvas');
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    const imageData = ctx.createImageData(size, size);
-    for (let i = 0; i < heightField.length; i++) {
-        const value = Math.floor((heightField[i] / scale) * 255);
-        const idx = i * 4;
-        imageData.data[idx] = imageData.data[idx + 1] = imageData.data[idx + 2] = value;
-        imageData.data[idx + 3] = 255;
-    }
-    ctx.putImageData(imageData, 0, 0);
-
-    const texture = new Texture(canvas);
-    texture.minFilter = texture.magFilter = LinearFilter;
-    texture.needsUpdate = true;
-    return texture;
 };
 
 const buildHeightField = (img: ImageBitmap, res: number, scale: number) => {
@@ -142,7 +98,6 @@ export function MapProvider({
     const [tiles, setTiles] = useState<Map<string, MapData>>(new Map());
     const [isLoaded, setIsLoaded] = useState(false);
     const [skipDiskLoad, setSkipDiskLoad] = useState(false);
-    const [tileChangeCount, setTileChangeCount] = useState(0);
 
     const blankColormap = useMemo(() => {
         if (typeof ImageData === 'undefined') return null;
@@ -277,44 +232,59 @@ export function MapProvider({
     }, []);
 
     const loadImage = useCallback((file: File) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = canvas.height = tileSizePx;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+        return new Promise<void>((resolve, reject) => {
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
 
-            ctx.drawImage(img, 0, 0, tileSizePx, tileSizePx);
-
-            const texture = new Texture(canvas);
-            texture.wrapS = texture.wrapT = ClampToEdgeWrapping;
-            texture.minFilter = LinearMipMapLinearFilter;
-            texture.magFilter = LinearFilter;
-            texture.generateMipmaps = true;
-            texture.needsUpdate = true;
-
-            const newTiles = new Map<string, MapData>();
-            for (let x = startX; x <= endX; x++) {
-                for (let z = startZ; z <= endZ; z++) {
-                    newTiles.set(tileKey(x, z), {
-                        colormap: (x === 0 && z === 0) ? texture : blankColormap,
-                        heightImage: null,
-                        heightField: new Float32Array((TILE_RESOLUTION + 1) * (TILE_RESOLUTION + 1)).fill(0),
-                        resolution: TILE_RESOLUTION
-                    });
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = tileSizePx;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    URL.revokeObjectURL(objectUrl);
+                    reject(new Error("Could not get 2D context"));
+                    return;
                 }
-            }
 
-            setSkipDiskLoad(true);
-            setTiles(newTiles);
-            setIsLoaded(true);
-            setTileChangeCount(c => c + 1);
-        };
-        img.src = URL.createObjectURL(file);
+                ctx.drawImage(img, 0, 0, tileSizePx, tileSizePx);
+
+                const texture = new Texture(canvas);
+                texture.wrapS = texture.wrapT = ClampToEdgeWrapping;
+                texture.minFilter = LinearMipMapLinearFilter;
+                texture.magFilter = LinearFilter;
+                texture.generateMipmaps = true;
+                texture.needsUpdate = true;
+
+                const newTiles = new Map<string, MapData>();
+                for (let x = startX; x <= endX; x++) {
+                    for (let z = startZ; z <= endZ; z++) {
+                        newTiles.set(tileKey(x, z), {
+                            colormap: (x === 0 && z === 0) ? texture : blankColormap,
+                            heightImage: null,
+                            heightField: new Float32Array((TILE_RESOLUTION + 1) * (TILE_RESOLUTION + 1)).fill(0),
+                            resolution: TILE_RESOLUTION
+                        });
+                    }
+                }
+
+                setSkipDiskLoad(true);
+                setTiles(newTiles);
+                setIsLoaded(true);
+                URL.revokeObjectURL(objectUrl);
+                resolve();
+            };
+
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error("Failed to load image"));
+            };
+
+            img.src = objectUrl;
+        });
     }, [tileSizePx, startX, endX, startZ, endZ, blankColormap]);
 
-    const value = useMemo(() => ({ getTile, sampleHeight, updateTile, loadImage, isLoaded, gridConfig, tileChangeCount }),
-        [getTile, sampleHeight, updateTile, loadImage, isLoaded, gridConfig, tileChangeCount]);
+    const value = useMemo(() => ({ getTile, sampleHeight, updateTile, loadImage, isLoaded, gridConfig }),
+        [getTile, sampleHeight, updateTile, loadImage, isLoaded, gridConfig]);
 
     return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
 }

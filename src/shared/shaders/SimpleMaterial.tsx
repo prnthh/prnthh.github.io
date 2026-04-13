@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import * as THREE from "three";
 
 export default function SimpleMaterial() {
-    const waterNormals = useTexture('/textures/waternormals.jpg');
+    const waterNormals = useTexture('/textures/water/waternormals.jpg');
 
     const waterMaterial = useMemo(() => {
         waterNormals.wrapS = waterNormals.wrapT = THREE.RepeatWrapping;

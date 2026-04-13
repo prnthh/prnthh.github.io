@@ -3,7 +3,6 @@ import { useRef, useState, forwardRef, useImperativeHandle, Suspense } from "rea
 import RigidHumanoidModel from "@/app/react-three-controller/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior from "@/app/react-three-controller/ped/physics/SelfSteeringBehavior";
-import SwipeControls from "../controls/SwipeControls";
 import useInputStore from "../controls/InputStore";
 import FollowCam from "@/shared/cameras/FollowCam";
 import { RigidHumanoidModelRef } from "@/app/react-three-controller/ped/types";

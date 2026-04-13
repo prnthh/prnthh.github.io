@@ -6,7 +6,7 @@ import { WaterMesh } from 'three/examples/jsm/objects/WaterMesh.js';
 import { TextureLoader, RepeatWrapping, Vector3, PlaneGeometry, MathUtils } from 'three';
 
 export default function Ocean({ distortionScale = 3.7, size = 1.0, alpha = 1.0 }: { distortionScale?: number, size?: number, alpha?: number }) {
-    const waterNormals = useLoader(TextureLoader, '/textures/waternormals.jpg');
+    const waterNormals = useLoader(TextureLoader, '/textures/water/waternormals.jpg');
 
     const water = useMemo(() => {
         const waterGeometry = new PlaneGeometry(10000, 10000);

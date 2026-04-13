@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "react-three-game": {
+      "source": "prnthh/react-three-game-skill",
+      "sourceType": "github",
+      "computedHash": "e68ff511c7557a161c718ea3ed887049589be739656c9a57007c0b27b3dc2f1f"
+    }
+  }
+}

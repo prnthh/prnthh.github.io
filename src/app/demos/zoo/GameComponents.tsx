@@ -1,4 +1,4 @@
-import { CombinedController, ModelAttachment, Ped } from "@/app/react-three-controller";
+import { NeoController, ModelAttachment, Ped } from "@/app/react-three-controller";
 import { DemoGroup } from "@/shared/util/DemoGroup";
 import ButtonBox from "@/shared/util/Button";
 import Rain from "@/shared/shaders/rain";
@@ -14,7 +14,6 @@ import Balloon from "@/shared/physics/Balloon";
 import HitBox from "@/shared/physics/HitBox";
 import { useGLTF, } from "@react-three/drei";
 import { createWavingMaterial } from "@/shared/shaders/WavyMaterial";
-import { NeoController } from "@/app/react-three-controller/neo/NeoController";
 
 export default function GameComponents() {
     // const { mode } = useControls({
