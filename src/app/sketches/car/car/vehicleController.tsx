@@ -3,6 +3,7 @@ import { RapierRigidBody, useAfterPhysicsStep, useRapier } from '@react-three/ra
 import { RefObject, useEffect, useRef } from 'react'
 import { Object3D, Quaternion, Vector3 } from 'three'
 
+const WHEEL_FRICTION_SLIP = 2.8
 const up = new Vector3(0, 1, 0)
 
 const _wheelSteeringQuat = new Quaternion()
@@ -46,7 +47,7 @@ export const useVehicleController = (
             vehicle.setWheelSuspensionStiffness(index, wheel.suspensionStiffness)
             vehicle.setWheelMaxSuspensionTravel(index, wheel.maxSuspensionTravel)
         })
-        vehicle.wheelFrictionSlip(1)
+        vehicle.wheelFrictionSlip(WHEEL_FRICTION_SLIP)
 
         vehicleController.current = vehicle
 

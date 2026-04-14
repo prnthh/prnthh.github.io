@@ -56,10 +56,12 @@
               "intensity": 2000,
               "angle": 1.35,
               "castShadow": true,
-              "shadowBias": -0.0005
+              "shadowBias": -0.002,
+              "shadowMapSize": 1024
             }
           }
         },
+        "disabled": false,
         "children": []
       },
       {
@@ -890,9 +892,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                7.31779942298415,
+                6.888648154733908,
                 0.5,
-                -3.825590006235496
+                1.5230843397339195
               ],
               "rotation": [
                 0,
@@ -935,9 +937,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -6.089099834254545,
+                -3.6927525381688544,
                 0.5,
-                -3.281362617694107
+                -8
               ],
               "rotation": [
                 0,
@@ -968,6 +970,35 @@
               "color": "#4ecdc4",
               "transparent": true,
               "opacity": 0.68
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "colliders": "hull",
+              "capsuleRadius": 0.35,
+              "capsuleHalfHeight": 0.45,
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ],
+              "enabledTranslations": [
+                true,
+                true,
+                true
+              ],
+              "enabledRotations": [
+                true,
+                true,
+                true
+              ]
             }
           }
         },

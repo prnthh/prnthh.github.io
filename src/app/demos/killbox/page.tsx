@@ -2,11 +2,12 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
-import { PrefabEditor, registerComponent } from "react-three-game";
+import { PrefabEditor, PrefabEditorMode, registerComponent } from "react-three-game";
 import type { EntityComponent, Prefab, PrefabEditorRef } from "react-three-game";
 import FirstPersonPlayer from "./FirstPersonPlayer";
 import initialWorld from "@public/samples/killbox.json";
 import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
+import Controls from "@/app/react-three-controller/controls/ControlsProvider";
 
 const ORB_SPEED = 1.2;
 const WORLD_BOUNDARY = 8;
@@ -47,12 +48,14 @@ export default function Home() {
     const editorRef = useRef<PrefabEditorRef>(null);
 
     return (
-        <main className="flex h-screen w-screen flex-col items-center justify-between bg-white dark:bg-black sm:items-start">
-            <PrefabEditor ref={editorRef} initialPrefab={initialWorld as Prefab}>
-                <OrbAnimator editorRef={editorRef} />
-                <RenderPipeline />
-            </PrefabEditor>
-        </main>
+        <Controls>
+            <main className="flex h-screen w-screen flex-col items-center justify-between bg-white dark:bg-black sm:items-start">
+                <PrefabEditor mode={PrefabEditorMode.Play} ref={editorRef} initialPrefab={initialWorld as Prefab}>
+                    <OrbAnimator editorRef={editorRef} />
+                    <RenderPipeline />
+                </PrefabEditor>
+            </main>
+        </Controls>
     );
 }
 

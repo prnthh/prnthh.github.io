@@ -1,0 +1,500 @@
+{
+  "id": "63620665-90d2-450e-a8aa-b70c45bf978e",
+  "name": "New Prefab",
+  "root": {
+    "id": "d6fce06a-1a79-40cc-b2d2-f1d2502a4b26",
+    "name": "Root",
+    "components": {
+      "transform": {
+        "type": "Transform",
+        "properties": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "children": [
+      {
+        "id": "906e8cda-f596-4974-bafd-eac6b1529c6e",
+        "name": "room",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                3.99,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "box",
+              "args": [
+                40,
+                8,
+                50
+              ]
+            }
+          },
+          "physics": {
+            "type": "Physics",
+            "properties": {
+              "type": "fixed",
+              "colliders": "trimesh",
+              "capsuleRadius": 0.35,
+              "capsuleHalfHeight": 0.45,
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ],
+              "enabledTranslations": [
+                true,
+                true,
+                true
+              ],
+              "enabledRotations": [
+                true,
+                true,
+                true
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "materialType": "standard",
+              "color": "#ffffff",
+              "toneMapped": true,
+              "wireframe": false,
+              "transparent": false,
+              "opacity": 1,
+              "metalness": 0,
+              "roughness": 1,
+              "side": "BackSide",
+              "texture": "/textures/proto32/checkers_01.png",
+              "repeat": true,
+              "repeatCount": [
+                10,
+                3
+              ]
+            }
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "627617a7-0b87-4a64-9a11-db808687f6a8",
+        "name": "ambient light",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "ambientlight": {
+            "type": "AmbientLight",
+            "properties": {}
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "a7421df5-7986-40b2-9f31-4f5bc7a8182e",
+        "name": "New Node",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                -1.5707963267948966,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane",
+              "args": [
+                40,
+                50
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "materialType": "standard",
+              "color": "#ffffff",
+              "toneMapped": true,
+              "wireframe": false,
+              "transparent": false,
+              "opacity": 1,
+              "metalness": 0,
+              "roughness": 1,
+              "texture": "/textures/road.jpg",
+              "repeat": true,
+              "repeatCount": [
+                1.3,
+                3
+              ]
+            }
+          }
+        },
+        "children": []
+      },
+      {
+        "id": "de67db1f-91b8-413a-a7d7-f06692bd911b",
+        "name": "New Node",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "f19856f9-f254-4df6-8e38-8d164d9558cd",
+            "name": "New Node",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    9,
+                    6.005947966612175,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 200,
+                  "angle": 1,
+                  "penumbra": 0.55
+                }
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "5ea378a3-dbc4-485c-ba65-eaaa35f85beb",
+            "name": "New Node Copy",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -7.5,
+                    6.005947966612175,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 200,
+                  "angle": 1,
+                  "penumbra": 0.55
+                }
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "fc7f6df6-a227-4672-8e48-93881ccbe3ef",
+        "name": "New Node Copy",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                -15
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "a54e4659-1272-43e6-94fa-fac2959f9690",
+            "name": "New Node Copy",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    9,
+                    6.005947966612175,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 200,
+                  "angle": 1,
+                  "penumbra": 0.55
+                }
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "f3ffb400-404b-4ea4-b3f3-28053573d4d3",
+            "name": "New Node Copy Copy",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -7.5,
+                    6.005947966612175,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 200,
+                  "angle": 1,
+                  "penumbra": 0.55
+                }
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "509f7a05-465f-432a-a24d-44887143c40d",
+        "name": "New Node Copy Copy",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                14
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "3d0a5d8a-15dd-45e1-b327-f7449e301877",
+            "name": "New Node Copy Copy",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    9,
+                    6.005947966612175,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 200,
+                  "angle": 1,
+                  "penumbra": 0.55
+                }
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "c2fe1462-15d3-4c47-aba9-836be086f243",
+            "name": "New Node Copy Copy Copy",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    -7.5,
+                    6.005947966612175,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "spotlight": {
+                "type": "SpotLight",
+                "properties": {
+                  "intensity": 200,
+                  "angle": 1,
+                  "penumbra": 0.55
+                }
+              }
+            },
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

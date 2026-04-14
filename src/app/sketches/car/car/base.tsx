@@ -21,6 +21,9 @@ const carDimensions = [0.8, 0.4, 1.8] as const
 const axelZOffset = 0.25
 const axelYOffset = 0.25
 const wheelSize = [0.15, 0.18] as const
+const LINEAR_DAMPING = 0.2
+const ANGULAR_DAMPING = 1.2
+const HAND_BRAKE_FORCE = 0.04
 
 const wheels: WheelInfo[] = [
     // front
@@ -67,9 +70,9 @@ const Vehicle = React.forwardRef<ObjectRef, {
     const { vehicleController } = useVehicleController(chasisBodyRef, wheelsRef as RefObject<THREE.Object3D[]>, wheels)
 
     const { accelerateForce, brakeForce, steerAngle } = {
-        accelerateForce: 1,
-        brakeForce: 0.05,
-        steerAngle: Math.PI / 12,
+        accelerateForce: 1.5,
+        brakeForce: HAND_BRAKE_FORCE,
+        steerAngle: Math.PI / 5,
     }
 
     const ground = useRef<Collider | null>(null)
@@ -116,38 +119,20 @@ const Vehicle = React.forwardRef<ObjectRef, {
             ground.current = collider
         }
 
-        // Get current speed
-        const linvel = chassisRigidBody.linvel();
-        const speed = Math.sqrt(linvel.x * linvel.x + linvel.y * linvel.y + linvel.z * linvel.z);
-        const maxSpeed = 15; // meters per second
-
-        let engineForce = vertical * accelerateForce;
-        // Clamp engine force if above max speed and still accelerating
-        if (speed > maxSpeed && engineForce > 0) {
-            engineForce = 0;
-        }
-
-        let baseSteerAngle = steerAngle;
-        if (speed > maxSpeed / 2) {
-            controller.wheelFrictionSlip(0.2)
-            baseSteerAngle *= 0.5; // Reduce steering angle at high speeds
-        } else {
-            controller.wheelFrictionSlip(1.0)
-        }
+        const engineForce = brake ? 0 : vertical * accelerateForce;
 
         controller.setWheelEngineForce(2, -engineForce)
         controller.setWheelEngineForce(3, -engineForce)
 
-        const wheelBrake = (brake ? 1 : 0) * brakeForce
-        controller.setWheelBrake(0, wheelBrake)
-        controller.setWheelBrake(1, wheelBrake)
+        const wheelBrake = brake ? brakeForce : 0
+        controller.setWheelBrake(0, 0)
+        controller.setWheelBrake(1, 0)
         controller.setWheelBrake(2, wheelBrake)
         controller.setWheelBrake(3, wheelBrake)
 
-        const currentSteering = controller.wheelSteering(0) || 0
         const steerDirection = -horizontal // Invert horizontal for correct steering
 
-        const steering = THREE.MathUtils.lerp(currentSteering, baseSteerAngle * steerDirection, 0.5)
+        const steering = steerAngle * steerDirection
 
         controller.setWheelSteering(0, steering)
         controller.setWheelSteering(1, steering)
@@ -195,6 +180,8 @@ const Vehicle = React.forwardRef<ObjectRef, {
                 colliders={false}
                 position={spawn.position}
                 type="dynamic"
+                linearDamping={LINEAR_DAMPING}
+                angularDamping={ANGULAR_DAMPING}
             >
                 <CuboidCollider args={[carDimensions[0] / 2, carDimensions[1] / 2, carDimensions[2] / 2]} />
 

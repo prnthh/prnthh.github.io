@@ -2,12 +2,14 @@
 
 import { FieldRenderer, useEntityRigidBodyRef, useEntityRuntime } from "react-three-game";
 import type { Component, FieldDefinition } from "react-three-game";
-import { PointerLockControls } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
 import { useBeforePhysicsStep, useRapier } from "@react-three/rapier";
-import { useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { gameEvents } from "react-three-game";
-import { Vector3 } from "three";
+import { MathUtils, Vector3 } from "three";
+import KeyboardControls from "@/app/react-three-controller/controls/KeyboardControls";
+import PointerLockControls from "@/app/react-three-controller/controls/PointerLockControls";
+import useInputStore from "@/app/react-three-controller/controls/InputStore";
 
 const DEFAULT_MAX_SPEED = 7;
 const DEFAULT_GROUND_ACCEL = 60;
@@ -19,6 +21,12 @@ const DEFAULT_FOOTSTEP_MIN_INTERVAL = 0.28;
 const DEFAULT_FOOTSTEP_MAX_INTERVAL = 0.48;
 const DEFAULT_FOOTSTEP_MIN_SPEED = 1.5;
 const GROUND_EPSILON = 0.05;
+const MIN_GROUND_NORMAL_Y = 0.5;
+const MAX_GROUNDED_RISING_SPEED = 0.5;
+const MOUSE_SENSITIVITY = 0.002;
+const LOOK_SENSITIVITY = 2.5;
+const PITCH_MIN = -1.2;
+const PITCH_MAX = 1.2;
 
 type MovementState = {
     forward: boolean;
@@ -27,19 +35,9 @@ type MovementState = {
     right: boolean;
 };
 
-const movementKeys: Record<string, keyof MovementState> = {
-    KeyW: "forward",
-    ArrowUp: "forward",
-    KeyS: "backward",
-    ArrowDown: "backward",
-    KeyA: "left",
-    ArrowLeft: "left",
-    KeyD: "right",
-    ArrowRight: "right",
-};
-
 const bodyPosition = new Vector3();
 const forwardVector = new Vector3();
+const planarVelocity = new Vector3();
 const rightVector = new Vector3();
 const wishVector = new Vector3();
 const worldUp = new Vector3(0, 1, 0);
@@ -74,20 +72,26 @@ function FirstPersonPlayerEditor({ component, onUpdate }: { component: any; onUp
     return <FieldRenderer fields={firstPersonPlayerFields} values={component.properties} onChange={onUpdate} />;
 }
 
+function emitFootstep(eventName: string, speed: number) {
+    gameEvents.emit(eventName, { speed });
+}
+
 function FirstPersonPlayerView({ properties, children }: { properties: FirstPersonPlayerProperties; children?: React.ReactNode }) {
     const { editMode } = useEntityRuntime();
     const rigidBodyRef = useEntityRigidBodyRef();
-    const planarVelocityRef = useRef(new Vector3());
     const footstepTimerRef = useRef(0);
-    const movementRef = useRef<MovementState>({
-        forward: false,
-        backward: false,
-        left: false,
-        right: false,
-    });
+    const wasGroundedRef = useRef<boolean | null>(null);
+    const cameraYaw = useRef(0);
+    const cameraPitch = useRef(0);
     const jumpQueuedRef = useRef(false);
+    const jumpPressedRef = useRef(false);
     const { camera } = useThree();
     const { rapier } = useRapier();
+    const horizontal = useInputStore((state) => state.horizontal);
+    const vertical = useInputStore((state) => state.vertical);
+    const jump = useInputStore((state) => state.jump);
+    const lookHorizontal = useInputStore((state) => state.lookHorizontal);
+    const lookVertical = useInputStore((state) => state.lookVertical);
 
     const maxSpeed = properties.maxSpeed ?? DEFAULT_MAX_SPEED;
     const groundAccel = properties.groundAccel ?? DEFAULT_GROUND_ACCEL;
@@ -100,44 +104,30 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
     const footstepMaxInterval = properties.footstepMaxInterval ?? DEFAULT_FOOTSTEP_MAX_INTERVAL;
     const footstepMinSpeed = properties.footstepMinSpeed ?? DEFAULT_FOOTSTEP_MIN_SPEED;
 
-    useEffect(() => {
-        const setKey = (pressed: boolean) => (event: KeyboardEvent) => {
-            const action = movementKeys[event.code];
-
-            if (event.code === "Space") {
-                if (pressed && !event.repeat) {
-                    jumpQueuedRef.current = true;
-                }
-                return;
-            }
-
-            if (action) {
-                movementRef.current[action] = pressed;
-            }
-        };
-
-        const handleKeyDown = setKey(true);
-        const handleKeyUp = setKey(false);
-        const clearInput = () => {
-            movementRef.current = { forward: false, backward: false, left: false, right: false };
-            jumpQueuedRef.current = false;
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
-        window.addEventListener("blur", clearInput);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("keyup", handleKeyUp);
-            window.removeEventListener("blur", clearInput);
-        };
+    const applyLookDelta = useCallback((dx: number, dy: number) => {
+        cameraYaw.current -= dx * MOUSE_SENSITIVITY;
+        cameraPitch.current = MathUtils.clamp(cameraPitch.current - dy * MOUSE_SENSITIVITY, PITCH_MIN, PITCH_MAX);
     }, []);
 
     useBeforePhysicsStep((world) => {
         const rigidBody = rigidBodyRef.current;
         if (!rigidBody) return;
         const delta = world.timestep;
+
+        if (Math.abs(lookHorizontal) > 0.01) {
+            cameraYaw.current -= lookHorizontal * LOOK_SENSITIVITY * delta;
+        }
+        if (Math.abs(lookVertical) > 0.01) {
+            cameraPitch.current = MathUtils.clamp(cameraPitch.current + lookVertical * LOOK_SENSITIVITY * delta, PITCH_MIN, PITCH_MAX);
+        }
+        camera.rotation.order = "YXZ";
+        camera.rotation.y = cameraYaw.current;
+        camera.rotation.x = cameraPitch.current;
+
+        if (jump && !jumpPressedRef.current) {
+            jumpQueuedRef.current = true;
+        }
+        jumpPressedRef.current = jump;
 
         // Read camera facing for movement direction (read-only)
         camera.getWorldDirection(forwardVector);
@@ -153,14 +143,15 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
 
         wishVector
             .copy(forwardVector)
-            .multiplyScalar(Number(movementRef.current.forward) - Number(movementRef.current.backward))
-            .addScaledVector(rightVector, Number(movementRef.current.right) - Number(movementRef.current.left));
+            .multiplyScalar(vertical)
+            .addScaledVector(rightVector, horizontal);
 
         // Ground check via raycast from the rigid body position
         const translation = rigidBody.translation();
         bodyPosition.set(translation.x, translation.y, translation.z);
 
-        const groundHit = world.castRay(
+        const currentVelocity = rigidBody.linvel();
+        const groundHit = world.castRayAndGetNormal(
             new rapier.Ray(bodyPosition, { x: 0, y: -1, z: 0 }),
             groundProbeOffset,
             true,
@@ -169,15 +160,21 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
             undefined,
             rigidBody
         );
-        const grounded = !!groundHit && groundHit.timeOfImpact <= groundProbeOffset - GROUND_EPSILON;
-        const planarVelocity = planarVelocityRef.current;
-        const currentVelocity = rigidBody.linvel();
+        const grounded =
+            !!groundHit &&
+            groundHit.timeOfImpact <= groundProbeOffset - GROUND_EPSILON &&
+            groundHit.normal.y >= MIN_GROUND_NORMAL_Y &&
+            currentVelocity.y <= MAX_GROUNDED_RISING_SPEED;
+        const wasGrounded = wasGroundedRef.current;
+        planarVelocity.set(currentVelocity.x, 0, currentVelocity.z);
+        const speed = planarVelocity.length();
 
-        if (grounded) {
-            const speed = planarVelocity.length();
-            if (speed > 0) {
-                planarVelocity.multiplyScalar(Math.max(speed - speed * friction * delta, 0) / speed);
-            }
+        if (wasGrounded === false && grounded) {
+            emitFootstep(footstepEventName, speed);
+        }
+
+        if (grounded && speed > 0) {
+            planarVelocity.multiplyScalar(Math.max(speed - speed * friction * delta, 0) / speed);
         }
 
         if (wishVector.lengthSq() > 0) {
@@ -192,10 +189,11 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
         if (grounded && jumpQueuedRef.current) {
             currentVelocity.y = jumpSpeed;
             jumpQueuedRef.current = false;
+            emitFootstep(footstepEventName, planarVelocity.length());
         }
 
-        const speed = planarVelocity.length();
-        const moving = grounded && wishVector.lengthSq() > 0 && speed > footstepMinSpeed;
+        const moveSpeed = planarVelocity.length();
+        const moving = grounded && wishVector.lengthSq() > 0 && moveSpeed > footstepMinSpeed;
 
         if (!moving) {
             footstepTimerRef.current = 0;
@@ -203,14 +201,15 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
             footstepTimerRef.current -= delta;
 
             if (footstepTimerRef.current <= 0) {
-                gameEvents.emit(footstepEventName, { speed });
+                emitFootstep(footstepEventName, moveSpeed);
 
-                const speedAlpha = Math.min(speed / maxSpeed, 1);
+                const speedAlpha = Math.min(moveSpeed / maxSpeed, 1);
                 footstepTimerRef.current = footstepMaxInterval - (footstepMaxInterval - footstepMinInterval) * speedAlpha;
             }
         }
 
         rigidBody.setLinvel({ x: planarVelocity.x, y: currentVelocity.y, z: planarVelocity.z }, true);
+        wasGroundedRef.current = grounded;
     });
 
     if (editMode) {
@@ -223,7 +222,8 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
 
     return (
         <>
-            <PointerLockControls makeDefault />
+            <PointerLockControls onLook={applyLookDelta} />
+            <KeyboardControls />
             {children}
         </>
     );
