@@ -1,28 +1,48 @@
 "use client";
 
-import { useRef } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { FieldRenderer, useEntityRigidBodyRef, useEntityRuntime } from "react-three-game";
+import type { Component, FieldDefinition } from "react-three-game";
 import { PointerLockControls } from "@react-three/drei";
+import { useThree } from "@react-three/fiber";
 import { useBeforePhysicsStep, useRapier } from "@react-three/rapier";
-import { Component, gameEvents, useEntityRigidBodyRef, useEntityRuntime } from "react-three-game";
-import { MathUtils, Vector3 } from "three";
-import KeyboardControls from "@/app/react-three-controller/controls/KeyboardControls";
-import useInputStore from "@/app/react-three-controller/controls/InputStore";
+import { useEffect, useRef } from "react";
+import { gameEvents } from "react-three-game";
+import { Vector3 } from "three";
 
 const DEFAULT_MAX_SPEED = 7;
 const DEFAULT_GROUND_ACCEL = 60;
 const DEFAULT_AIR_ACCEL = 10;
 const DEFAULT_FRICTION = 10;
 const DEFAULT_JUMP_SPEED = 6.5;
-const DEFAULT_GROUND_PROBE_OFFSET = 0.88;
 const DEFAULT_FOOTSTEP_EVENT = "player:footstep";
 const DEFAULT_FOOTSTEP_MIN_INTERVAL = 0.28;
 const DEFAULT_FOOTSTEP_MAX_INTERVAL = 0.48;
 const DEFAULT_FOOTSTEP_MIN_SPEED = 1.5;
-const DEFAULT_LOOK_SENSITIVITY = 0.002;
-const DEFAULT_JOYSTICK_LOOK_SPEED = 2.5;
 const GROUND_EPSILON = 0.05;
-const MIN_INPUT_THRESHOLD = 0.001;
+
+type MovementState = {
+    forward: boolean;
+    backward: boolean;
+    left: boolean;
+    right: boolean;
+};
+
+const movementKeys: Record<string, keyof MovementState> = {
+    KeyW: "forward",
+    ArrowUp: "forward",
+    KeyS: "backward",
+    ArrowDown: "backward",
+    KeyA: "left",
+    ArrowLeft: "left",
+    KeyD: "right",
+    ArrowRight: "right",
+};
+
+const bodyPosition = new Vector3();
+const forwardVector = new Vector3();
+const rightVector = new Vector3();
+const wishVector = new Vector3();
+const worldUp = new Vector3(0, 1, 0);
 
 type FirstPersonPlayerProperties = {
     maxSpeed?: number;
@@ -35,95 +55,91 @@ type FirstPersonPlayerProperties = {
     footstepMinInterval?: number;
     footstepMaxInterval?: number;
     footstepMinSpeed?: number;
-    lookSensitivity?: number;
-    joystickLookSpeed?: number;
 };
 
-const bodyPosition = new Vector3();
-const planarVelocity = new Vector3();
-const forwardVector = new Vector3();
-const rightVector = new Vector3();
-const wishVector = new Vector3();
-const worldUp = new Vector3(0, 1, 0);
+const firstPersonPlayerFields: FieldDefinition[] = [
+    { name: "maxSpeed", type: "number", label: "Max Speed", min: 0.1, step: 0.1 },
+    { name: "groundAccel", type: "number", label: "Ground Accel", min: 0.1, step: 0.1 },
+    { name: "airAccel", type: "number", label: "Air Accel", min: 0.1, step: 0.1 },
+    { name: "friction", type: "number", label: "Friction", min: 0, step: 0.1 },
+    { name: "jumpSpeed", type: "number", label: "Jump Speed", min: 0, step: 0.1 },
+    { name: "groundProbeOffset", type: "number", label: "Ground Probe Offset", min: 0.01, step: 0.01 },
+    { name: "footstepEventName", type: "string", label: "Footstep Event", placeholder: DEFAULT_FOOTSTEP_EVENT },
+    { name: "footstepMinInterval", type: "number", label: "Step Min Interval", min: 0.05, step: 0.01 },
+    { name: "footstepMaxInterval", type: "number", label: "Step Max Interval", min: 0.05, step: 0.01 },
+    { name: "footstepMinSpeed", type: "number", label: "Step Min Speed", min: 0, step: 0.1 },
+];
 
-function FirstPersonPlayerEditor() {
-    return null;
+function FirstPersonPlayerEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
+    return <FieldRenderer fields={firstPersonPlayerFields} values={component.properties} onChange={onUpdate} />;
 }
 
 function FirstPersonPlayerView({ properties, children }: { properties: FirstPersonPlayerProperties; children?: React.ReactNode }) {
     const { editMode } = useEntityRuntime();
     const rigidBodyRef = useEntityRigidBodyRef();
-    const { rapier } = useRapier();
-    const camera = useThree((state) => state.camera);
-    const horizontal = useInputStore((state) => state.horizontal);
-    const vertical = useInputStore((state) => state.vertical);
-    const lookHorizontal = useInputStore((state) => state.lookHorizontal);
-    const lookVertical = useInputStore((state) => state.lookVertical);
-    const jump = useInputStore((state) => state.jump);
-
-    const cameraPitch = useRef(0);
+    const planarVelocityRef = useRef(new Vector3());
     const footstepTimerRef = useRef(0);
-    const jumpReleasedRef = useRef(true);
+    const movementRef = useRef<MovementState>({
+        forward: false,
+        backward: false,
+        left: false,
+        right: false,
+    });
+    const jumpQueuedRef = useRef(false);
+    const { camera } = useThree();
+    const { rapier } = useRapier();
 
     const maxSpeed = properties.maxSpeed ?? DEFAULT_MAX_SPEED;
     const groundAccel = properties.groundAccel ?? DEFAULT_GROUND_ACCEL;
     const airAccel = properties.airAccel ?? DEFAULT_AIR_ACCEL;
     const friction = properties.friction ?? DEFAULT_FRICTION;
     const jumpSpeed = properties.jumpSpeed ?? DEFAULT_JUMP_SPEED;
-    const groundProbeOffset = properties.groundProbeOffset ?? DEFAULT_GROUND_PROBE_OFFSET;
+    const groundProbeOffset = properties.groundProbeOffset ?? 0.88;
     const footstepEventName = properties.footstepEventName ?? DEFAULT_FOOTSTEP_EVENT;
     const footstepMinInterval = properties.footstepMinInterval ?? DEFAULT_FOOTSTEP_MIN_INTERVAL;
     const footstepMaxInterval = properties.footstepMaxInterval ?? DEFAULT_FOOTSTEP_MAX_INTERVAL;
     const footstepMinSpeed = properties.footstepMinSpeed ?? DEFAULT_FOOTSTEP_MIN_SPEED;
-    const lookSensitivity = properties.lookSensitivity ?? DEFAULT_LOOK_SENSITIVITY;
-    const joystickLookSpeed = properties.joystickLookSpeed ?? DEFAULT_JOYSTICK_LOOK_SPEED;
 
-    useFrame((_, delta) => {
-        if (editMode) {
-            return;
-        }
+    useEffect(() => {
+        const setKey = (pressed: boolean) => (event: KeyboardEvent) => {
+            const action = movementKeys[event.code];
 
-        cameraPitch.current = camera.rotation.x;
+            if (event.code === "Space") {
+                if (pressed && !event.repeat) {
+                    jumpQueuedRef.current = true;
+                }
+                return;
+            }
 
-        const hasLookInput = Math.abs(lookHorizontal) > MIN_INPUT_THRESHOLD || Math.abs(lookVertical) > MIN_INPUT_THRESHOLD;
+            if (action) {
+                movementRef.current[action] = pressed;
+            }
+        };
 
-        if (!hasLookInput) {
-            return;
-        }
+        const handleKeyDown = setKey(true);
+        const handleKeyUp = setKey(false);
+        const clearInput = () => {
+            movementRef.current = { forward: false, backward: false, left: false, right: false };
+            jumpQueuedRef.current = false;
+        };
 
-        camera.rotation.y -= lookHorizontal * joystickLookSpeed * delta;
-        cameraPitch.current = MathUtils.clamp(cameraPitch.current - lookVertical * joystickLookSpeed * delta, -Math.PI / 2, Math.PI / 2);
-        camera.rotation.x = cameraPitch.current;
-    });
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+        window.addEventListener("blur", clearInput);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+            window.removeEventListener("blur", clearInput);
+        };
+    }, []);
 
     useBeforePhysicsStep((world) => {
-        if (editMode) {
-            return;
-        }
-
         const rigidBody = rigidBodyRef.current;
-
-        if (!rigidBody) {
-            return;
-        }
-
+        if (!rigidBody) return;
         const delta = world.timestep;
-        const currentVelocity = rigidBody.linvel();
-        const translation = rigidBody.translation();
 
-        bodyPosition.set(translation.x, translation.y, translation.z);
-
-        const groundHit = world.castRay(
-            new rapier.Ray(bodyPosition, { x: 0, y: -1, z: 0 }),
-            groundProbeOffset,
-            true,
-            undefined,
-            undefined,
-            undefined,
-            rigidBody
-        );
-        const grounded = !!groundHit && groundHit.timeOfImpact <= groundProbeOffset - GROUND_EPSILON;
-
+        // Read camera facing for movement direction (read-only)
         camera.getWorldDirection(forwardVector);
         forwardVector.y = 0;
 
@@ -136,43 +152,50 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
         rightVector.crossVectors(forwardVector, worldUp).normalize();
 
         wishVector
-            .set(0, 0, 0)
-            .addScaledVector(forwardVector, vertical)
-            .addScaledVector(rightVector, horizontal);
+            .copy(forwardVector)
+            .multiplyScalar(Number(movementRef.current.forward) - Number(movementRef.current.backward))
+            .addScaledVector(rightVector, Number(movementRef.current.right) - Number(movementRef.current.left));
 
-        planarVelocity.set(currentVelocity.x, 0, currentVelocity.z);
+        // Ground check via raycast from the rigid body position
+        const translation = rigidBody.translation();
+        bodyPosition.set(translation.x, translation.y, translation.z);
+
+        const groundHit = world.castRay(
+            new rapier.Ray(bodyPosition, { x: 0, y: -1, z: 0 }),
+            groundProbeOffset,
+            true,
+            undefined,
+            undefined,
+            undefined,
+            rigidBody
+        );
+        const grounded = !!groundHit && groundHit.timeOfImpact <= groundProbeOffset - GROUND_EPSILON;
+        const planarVelocity = planarVelocityRef.current;
+        const currentVelocity = rigidBody.linvel();
 
         if (grounded) {
             const speed = planarVelocity.length();
-
             if (speed > 0) {
                 planarVelocity.multiplyScalar(Math.max(speed - speed * friction * delta, 0) / speed);
             }
         }
 
-        if (wishVector.lengthSq() > MIN_INPUT_THRESHOLD) {
+        if (wishVector.lengthSq() > 0) {
             wishVector.normalize();
             const accel = grounded ? groundAccel : airAccel;
             const addSpeed = maxSpeed - planarVelocity.dot(wishVector);
-
             if (addSpeed > 0) {
                 planarVelocity.addScaledVector(wishVector, Math.min(accel * delta * maxSpeed, addSpeed));
             }
         }
 
-        let nextVerticalVelocity = currentVelocity.y;
-
-        if (!jump) {
-            jumpReleasedRef.current = true;
-        }
-
-        if (grounded && jump && jumpReleasedRef.current) {
-            nextVerticalVelocity = jumpSpeed;
-            jumpReleasedRef.current = false;
+        if (grounded && jumpQueuedRef.current) {
+            currentVelocity.y = jumpSpeed;
+            jumpQueuedRef.current = false;
         }
 
         const speed = planarVelocity.length();
-        const moving = grounded && wishVector.lengthSq() > MIN_INPUT_THRESHOLD && speed > footstepMinSpeed;
+        const moving = grounded && wishVector.lengthSq() > 0 && speed > footstepMinSpeed;
 
         if (!moving) {
             footstepTimerRef.current = 0;
@@ -187,18 +210,21 @@ function FirstPersonPlayerView({ properties, children }: { properties: FirstPers
             }
         }
 
-        rigidBody.setLinvel({ x: planarVelocity.x, y: nextVerticalVelocity, z: planarVelocity.z }, true);
+        rigidBody.setLinvel({ x: planarVelocity.x, y: currentVelocity.y, z: planarVelocity.z }, true);
     });
 
     if (editMode) {
-        return <>{children}</>;
+        return (
+            <group>
+                {children}
+            </group>
+        );
     }
 
     return (
         <>
+            <PointerLockControls makeDefault />
             {children}
-            <KeyboardControls />
-            <PointerLockControls makeDefault pointerSpeed={lookSensitivity / DEFAULT_LOOK_SENSITIVITY} />
         </>
     );
 }
@@ -213,13 +239,11 @@ const FirstPersonPlayer: Component = {
         airAccel: DEFAULT_AIR_ACCEL,
         friction: DEFAULT_FRICTION,
         jumpSpeed: DEFAULT_JUMP_SPEED,
-        groundProbeOffset: DEFAULT_GROUND_PROBE_OFFSET,
+        groundProbeOffset: 0.88,
         footstepEventName: DEFAULT_FOOTSTEP_EVENT,
         footstepMinInterval: DEFAULT_FOOTSTEP_MIN_INTERVAL,
         footstepMaxInterval: DEFAULT_FOOTSTEP_MAX_INTERVAL,
         footstepMinSpeed: DEFAULT_FOOTSTEP_MIN_SPEED,
-        lookSensitivity: DEFAULT_LOOK_SENSITIVITY,
-        joystickLookSpeed: DEFAULT_JOYSTICK_LOOK_SPEED,
     },
 };
 

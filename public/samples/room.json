@@ -890,7 +890,7 @@
           "environment": {
             "type": "Environment",
             "properties": {
-              "intensity": 0.5
+              "intensity": 0.3
             }
           }
         },
@@ -943,7 +943,9 @@
                   "metalness": 0,
                   "roughness": 1,
                   "texture": "/textures/skybox/skybox1.jpg",
-                  "side": "BackSide"
+                  "side": "BackSide",
+                  "minFilter": "NearestFilter",
+                  "magFilter": "NearestFilter"
                 }
               }
             },
@@ -1028,6 +1030,37 @@
                   "shadowBias": -0.004,
                   "shadowAutoUpdate": false
                 }
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "d44df2d3-dc5b-470c-ad4c-8f3050836d9c",
+            "name": "New Node",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "ambientlight": {
+                "type": "AmbientLight",
+                "properties": {}
               }
             },
             "children": []

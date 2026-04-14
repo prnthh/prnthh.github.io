@@ -24,6 +24,10 @@ const demosConfig: Record<string, ItemConfig> = {
         path: 'demos/scumm2',
         description: 'NavAgent version of SCUMM game demo.'
     },
+    'killbox': {
+        path: 'demos/killbox',
+        description: 'Killbox game demo.'
+    },
     'car': {
         path: 'sketches/car',
         description: 'Simple car physics demo.'

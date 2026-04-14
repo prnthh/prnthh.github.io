@@ -3,11 +3,8 @@ import { useRef, useState, forwardRef, useImperativeHandle, Suspense } from "rea
 import RigidHumanoidModel from "@/app/react-three-controller/ped/physics/RigidHumanoidModel";
 import WawaControls from "../wawa/WawaControls";
 import SteeringBehavior from "@/app/react-three-controller/ped/physics/SelfSteeringBehavior";
-import useInputStore from "../controls/InputStore";
 import FollowCam from "@/shared/cameras/FollowCam";
 import { RigidHumanoidModelRef } from "@/app/react-three-controller/ped/types";
-import FirstPersonControls from "../controls/FirstPersonControls";
-import { FirstPersonArms } from "../firstperson/FirstPersonArms";
 import ModelAttachment from "@/app/react-three-character/ModelAttachment";
 import { Group, Vector3 } from "three";
 import ThirdPersonControls, { ThirdPersonControlsRef } from "../thirdperson/ThirdPersonControls";
@@ -84,21 +81,6 @@ const CombinedController = forwardRef<RigidHumanoidModelRef, { mode: string, tar
                         />
                     </Suspense>
                 </>}
-
-                {mode === 'first-person' && <>
-                    <FirstPersonControls
-                        modelRef={modelRef}
-                        height={modelProps.height}
-                        eyeHeight={modelProps.height * 0.85}
-                        cameraOffset={[0, 0, 0]}
-                        cameraRigRef={cameraRigRef}
-                        setAnimation={setAnimation}
-                    >
-
-                        <FirstPersonArms modelRef={modelRef} gunModel={gunModel} />
-                    </FirstPersonControls>
-                </>}
-
             </RigidHumanoidModel>
 
             {mode === 'third-person' && (
