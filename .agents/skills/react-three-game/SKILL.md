@@ -258,12 +258,11 @@ import { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import {
   FieldRenderer,
-  gameEvents,
   type Component,
   type FieldDefinition,
-  type PhysicsEventPayload,
   useAssetRuntime,
   useEntityRuntime,
+  usePhysicsEvent,
 } from 'react-three-game';
 
 const fields: FieldDefinition[] = [
@@ -276,15 +275,11 @@ function ElevatorMoverView({ properties, children }: { properties: any; children
   const { getRigidBody } = useAssetRuntime();
   const activeRef = useRef(false);
 
-  useEffect(() => {
+  usePhysicsEvent(properties.triggerEventName ?? '', (event) => {
     if (!properties.triggerEventName) return;
-
-    return gameEvents.on(properties.triggerEventName, (payload) => {
-      const event = payload as PhysicsEventPayload;
-      if (event.sourceEntityId !== nodeId) return;
-      if (event.targetEntityId !== 'player') return;
-      activeRef.current = true;
-    });
+    if (event.sourceEntityId !== nodeId) return;
+    if (event.targetEntityId !== 'player') return;
+    activeRef.current = true;
   }, [nodeId, properties.triggerEventName]);
 
   useFrame(() => {
@@ -383,6 +378,8 @@ Values:
 - `loadTexture`
 - `exportGLB`
 - `exportGLBData`
+- `usePhysicsEvent`
+- `useClickEvent`
 - `computeParentWorldMatrix`
 - `ground`
 - `soundManager`
@@ -390,6 +387,7 @@ Values:
 Types:
 
 - `Prefab`
+- `PrefabRootRef`
 - `GameObject`
 - `ComponentData`
 - `Component`

@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { FieldRenderer, useAssetRuntime, useEntityRuntime, useGameEvent } from "react-three-game";
+import { FieldRenderer, useAssetRuntime, useEntityRuntime, usePhysicsEvent } from "react-three-game";
 import type { Component, FieldDefinition, PhysicsEventPayload } from "react-three-game";
 import { useFrame } from "@react-three/fiber";
 
-const DEFAULT_SENSOR_EVENT_NAME = "elevator-sensor:enter";
+const SENSOR_ENTER_EVENT_NAME = "sensor:enter";
 const DEFAULT_TRIGGER_ENTITY_ID = "player";
 const DEFAULT_TRAVEL_DISTANCE = 4;
 const DEFAULT_MOVE_SPEED = 1.6;
@@ -14,7 +14,6 @@ type ElevatorMoverProperties = {
     platformNodeId?: string;
     sensorNodeId?: string;
     rigidBodyNodeIds?: string;
-    sensorEventName?: string;
     triggerEntityId?: string;
     travelDistance?: number;
     moveSpeed?: number;
@@ -25,12 +24,6 @@ const elevatorMoverFields: FieldDefinition[] = [
         name: "platformNodeId",
         type: "node",
         label: "Platform Node",
-    },
-    {
-        name: "sensorEventName",
-        type: "event",
-        label: "Sensor Event",
-        placeholder: DEFAULT_SENSOR_EVENT_NAME,
     },
     {
         name: "sensorNodeId",
@@ -70,18 +63,16 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
         return legacyNodeId ?? nodeId;
     }, [nodeId, properties.platformNodeId, properties.rigidBodyNodeIds]);
 
-    const sensorEventName = properties.sensorEventName ?? DEFAULT_SENSOR_EVENT_NAME;
     const sensorNodeId = properties.sensorNodeId;
     const triggerEntityId = properties.triggerEntityId ?? DEFAULT_TRIGGER_ENTITY_ID;
     const travelDistance = properties.travelDistance ?? DEFAULT_TRAVEL_DISTANCE;
     const moveSpeed = properties.moveSpeed ?? DEFAULT_MOVE_SPEED;
 
-    useGameEvent(sensorEventName, (event) => {
-        if (editMode || !sensorEventName) {
+    usePhysicsEvent(SENSOR_ENTER_EVENT_NAME, (payload: PhysicsEventPayload) => {
+        if (editMode) {
             return;
         }
 
-        const payload = event as PhysicsEventPayload;
         if (sensorNodeId && payload.sourceEntityId !== sensorNodeId) {
             return;
         }
@@ -90,7 +81,7 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
         }
 
         activeRef.current = true;
-    }, [editMode, sensorEventName, sensorNodeId, triggerEntityId]);
+    }, [editMode, sensorNodeId, triggerEntityId]);
 
     useFrame((_, delta) => {
         if (editMode || !activeRef.current) {
@@ -137,7 +128,6 @@ const ElevatorMover: Component = {
     defaultProperties: {
         platformNodeId: "",
         sensorNodeId: "",
-        sensorEventName: DEFAULT_SENSOR_EVENT_NAME,
         triggerEntityId: DEFAULT_TRIGGER_ENTITY_ID,
         travelDistance: DEFAULT_TRAVEL_DISTANCE,
         moveSpeed: DEFAULT_MOVE_SPEED,
