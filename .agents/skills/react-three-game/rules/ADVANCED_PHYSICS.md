@@ -16,7 +16,7 @@ Need physics?
     │
     ├─ Scripted animation (moving platforms, doors)
     │   └─ type: "kinematicPosition"
-    │       └─ Update transform via scene.find(...).getComponent("Transform").set(...)
+    │       └─ Usually drive via rigidBody.setTranslation(...) or scene/component transform updates
     │
     └─ Velocity-driven (conveyor belts, wind zones)
         └─ type: "kinematicVelocity"
@@ -29,16 +29,16 @@ Need physics?
 - **kinematicPosition**: Move via code, push dynamic bodies (elevators, doors)
 - **kinematicVelocity**: Set constant velocity, push dynamic bodies (conveyors)
 
-**Performance tip**: Use `fixed` for anything that never moves - it's cheapest.
+Performance: prefer `fixed` for non-moving bodies.
 
 ## General Player Controller Pattern
 
-Treat a player controller as two layers:
+Two-layer model:
 
 - **Authored entity data** in the prefab: `Transform`, `Physics`, visuals, sounds, sensors, and any controller tuning properties.
 - **Runtime control logic** in a custom component `View`: input, camera coupling, ground checks, velocity changes, jump logic, and gameplay events.
 
-Preferred architecture:
+Architecture:
 
 - Put the player body in prefab data so it can be selected, tuned, and serialized.
 - Attach a custom component such as `FirstPersonPlayer` or `ThirdPersonPlayer` to that same node.
@@ -46,13 +46,13 @@ Preferred architecture:
 - Keep transient state like key presses, timers, and cached velocity in refs, not prefab properties.
 - Keep authored tuning values like `maxSpeed`, `jumpSpeed`, `groundAccel`, and event names in component properties.
 
-Rule of thumb for body type:
+Body type selection:
 
 - Use **dynamic** when the player should behave like a real physics body and interact naturally with forces, slopes, and other moving bodies.
 - Use **kinematicPosition** when the player should feel fully game-authored and you want direct positional control.
 - Avoid mutating `Transform` directly for a dynamic player every frame; drive the rigid body instead.
 
-Typical control loop:
+Control loop:
 
 1. Read input into refs.
 2. Read camera or facing direction.
@@ -61,14 +61,14 @@ Typical control loop:
 5. Apply that motion through rigid body velocity or impulses.
 6. Emit gameplay events like footsteps, landing, dash, or jump.
 
-Keep responsibilities separate:
+Responsibility split:
 
 - **Physics body** decides collision and movement.
 - **Camera** reads from the player, but does not own the player state.
 - **Controller component** translates input into body motion.
 - **Scene/gameplay systems** listen to events instead of reaching into controller internals.
 
-Minimal shape:
+Minimal pattern:
 
 ```tsx
 function PlayerControllerView({ properties, children }: { properties: any; children?: React.ReactNode }) {
@@ -91,11 +91,11 @@ function PlayerControllerView({ properties, children }: { properties: any; child
 }
 ```
 
-This pattern scales to first-person, third-person, top-down, vehicle, and AI-driven actors without changing the underlying prefab/runtime split.
+Applicable to first-person, third-person, top-down, vehicle, and AI-driven actors.
 
-## Physics Material Properties
+## Physics component properties
 
-Complete reference for `Physics` component properties:
+`Physics` component property reference.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -164,11 +164,11 @@ Complete reference for `Physics` component properties:
 }
 ```
 
-Use `linearVelocity` and `angularVelocity` for initial motion that belongs in prefab data. Use a RigidBody ref when velocity needs to change continuously at runtime.
+Use `linearVelocity` and `angularVelocity` for authored initial motion. Use a rigid body ref for runtime velocity changes.
 
 ## Force & Impulse Application
 
-Use the current runtime APIs to access rigid bodies:
+Rigid body access surfaces:
 
 - `editorRef.current?.scene.find(id)?.rigidBody` for authored prefab entities.
 - `prefabRootRef.current?.getRigidBody(id)` when you own a `PrefabRoot` ref directly.
@@ -177,8 +177,15 @@ Use the current runtime APIs to access rigid bodies:
 Preferred order:
 
 - Inside a component `View`: `useEntityRigidBodyRef()`
+- Inside a component `View`, targeting another authored node: `useAssetRuntime().getRigidBody(targetNodeId)`
 - In editor child/controller code: `scene.find(id)?.rigidBody`
 - In pure `PrefabRoot` embedding code: `PrefabRootRef.getRigidBody(id)`
+
+Rules:
+
+- `useEntityRigidBodyRef()` for the current node's own body
+- `useAssetRuntime().getRigidBody(nodeId)` for another authored node from inside a component view
+- `scene.find(id)?.rigidBody` when scripting from outside component views
 
 ### Scene API access
 
@@ -255,9 +262,9 @@ function BoosterView({ children }: { children?: React.ReactNode }) {
 }
 ```
 
-**Alternative: Custom R3F components**
+### Custom R3F physics
 
-For fully custom physics objects, create R3F components with their own RigidBody refs:
+For fully custom physics objects, own the `RigidBody` ref directly.
 
 ```tsx
 import { useRef } from 'react';
@@ -291,9 +298,9 @@ function PhysicsBall() {
 </PrefabEditor>
 ```
 
-**Alternative: Kinematic position updates**
+### Scene-driven kinematic updates
 
-For smooth animated movement without forces, use `kinematicPosition` and update via the Scene API:
+For authored kinematic motion, use `kinematicPosition` and update through the `Scene` API.
 
 ```tsx
 import { useRef } from 'react';
@@ -313,7 +320,21 @@ function KinematicMover({ editorRef }: { editorRef: React.RefObject<PrefabEditor
 }
 ```
 
-**Rapier RigidBody methods**:
+### Authored movement guidance
+
+Authored gameplay bodies: elevators, doors, moving platforms.
+
+- Use `rigidBody.setTranslation(...)` when you want direct authored movement and already know the target position.
+- Use `setLinvel(...)` when the gameplay behavior is naturally velocity-driven.
+- Use Rapier kinematic next-step APIs when you specifically want to model motion through Rapier's kinematic stepping semantics.
+- Use `scene.find(id)?.getComponent('Transform')?.set(...)` when your gameplay system is intentionally expressed as prefab/property mutation rather than raw rigid body control.
+
+Rules:
+
+- Inside a component `View`, direct rigid body mutation is usually the clearest path.
+- Outside component views, `Scene` API transform edits are often the cleanest authored control surface.
+
+Rapier `RigidBody` methods:
 - `applyImpulse(vector, wakeUp)` - Instantaneous velocity change
 - `addForce(vector, wakeUp)` - Continuous force application
 - `applyTorqueImpulse(vector, wakeUp)` - Rotational impulse
@@ -336,7 +357,7 @@ function KinematicMover({ editorRef }: { editorRef: React.RefObject<PrefabEditor
   }
 }
 ```
-Objects will **slide off** the tilted surface.
+Bodies slide off the tilted surface.
 
 ### ✅ Correct Pattern - Perpendicular Walls
 ```json
@@ -387,11 +408,11 @@ Objects will **slide off** the tilted surface.
 }
 ```
 
-**Key principle**: Walls must be **perpendicular to gravity** to contain dynamic objects.
+Constraint: containment walls must be perpendicular to gravity.
 
 ## Instanced Physics
 
-When using `"instanced": true` on models, physics behaves differently than standard objects. Physics instancing is designed for batched `fixed` and `dynamic` bodies, where instances of the same model share an `InstancedRigidBodies` path for better performance.
+`"instanced": true` changes the physics path. Instanced physics batches compatible `fixed` and `dynamic` bodies through `InstancedRigidBodies`.
 
 ### Standard vs Instanced Physics
 
@@ -403,9 +424,9 @@ When using `"instanced": true` on models, physics behaves differently than stand
 | Collider Type | `hull` (dynamic) or `trimesh` (fixed) | Auto-selected by instanced physics path |
 | Performance | One draw call per object | One draw call for all instances |
 
-### Defining Instanced Objects
+### Defining instanced objects
 
-Set `"instanced": true` in the model component. **Instances with the same model path and supported physics type are automatically batched**:
+Set `"instanced": true` in the model component. Instances with the same model path and compatible physics type are batched.
 
 ```json
 {
@@ -418,7 +439,7 @@ Set `"instanced": true` in the model component. **Instances with the same model 
 }
 ```
 
-Add multiple instances - they'll be automatically batched:
+Additional instances of the same compatible model are batched automatically:
 
 ```json
 {
@@ -433,17 +454,17 @@ Add multiple instances - they'll be automatically batched:
 
 ### Force Application on Instanced Objects
 
-**Instanced physics bodies are not individually addressable through the normal node-level rigid body APIs.** For objects requiring force/impulse control, kinematic motion, or stable per-body refs, use non-instanced physics (`"instanced": false` or omit the property).
+Instanced physics bodies are not individually addressable through normal node-level rigid body APIs. For force/impulse control, kinematic motion, or stable per-body refs, use non-instanced physics.
 
 ### When to Use Instanced Physics
 
-✅ **Good for:**
+Recommended for:
 - Many copies of the same static object (trees, rocks, buildings)
 - Large scenes with 100+ similar objects
 - Fixed physics bodies that never move
 - Background props and decorations
 
-❌ **Avoid for:**
+Avoid for:
 - Objects requiring individual force/impulse control
 - Dynamic objects with unique behaviors
 - Objects that need to be individually removed/spawned
@@ -459,11 +480,11 @@ Add multiple instances - they'll be automatically batched:
 
 ## Sensors & Collision Events
 
-Sensors are colliders that detect intersections without generating physical contact forces. Use them for trigger zones, pickup areas, damage zones, and gameplay triggers.
+Sensors detect intersections without physical contact response. Use for trigger zones, pickup areas, damage zones, and gameplay triggers.
 
 ### Creating a Sensor
 
-Set `sensor: true` in the Physics component:
+Set `sensor: true` in the `Physics` component:
 
 ```json
 {
@@ -476,7 +497,7 @@ Set `sensor: true` in the Physics component:
 }
 ```
 
-**Kinematic/Fixed Collision Detection**: By default, sensors only detect `dynamic` bodies. For kinematic sensors (like bullets) or to detect kinematic players, add `"activeCollisionTypes": "all"`:
+Kinematic/fixed collision detection: sensors detect `dynamic` bodies by default. For kinematic sensors or kinematic targets, add `"activeCollisionTypes": "all"`.
 
 ```json
 {
@@ -493,7 +514,7 @@ Set `sensor: true` in the Physics component:
 
 ### Physics Event Payload
 
-All physics events include:
+Physics event payload:
 
 ```typescript
 {
@@ -503,9 +524,20 @@ All physics events include:
 }
 ```
 
+Filter pattern:
+
+```tsx
+useGameEvent('sensor:enter', (payload) => {
+  if (payload.sourceEntityId !== 'elevator-trigger') return;
+  if (payload.targetEntityId !== 'player') return;
+
+  // Activate elevator / door / pickup logic here
+}, []);
+```
+
 `targetEntityId` is `null` when colliding with non-prefab physics bodies (custom R3F components). Use `targetRigidBody` to inspect those.
 
-### Common Sensor Patterns
+### Sensor patterns
 
 **Pickup Item:**
 ```json
@@ -560,7 +592,7 @@ useGameEvent('sensor:enter', ({ sourceEntityId, targetEntityId }) => {
 
 ### Interop with Custom R3F Physics
 
-For custom RigidBody components to participate in the event system, set `userData.entityId`:
+For custom `RigidBody` components to participate in the event system, set `userData.entityId`:
 
 ```tsx
 <RigidBody userData={{ entityId: 'player' }}>

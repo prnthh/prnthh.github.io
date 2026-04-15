@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { PrefabEditor, PrefabEditorMode, registerComponent } from "react-three-game";
 import type { EntityComponent, Prefab, PrefabEditorRef } from "react-three-game";
 import FirstPersonPlayer from "./FirstPersonPlayer";
+import ElevatorMover from "./ElevatorMover";
 import initialWorld from "@public/samples/killbox.json";
 import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
 import Controls from "@/app/react-three-controller/controls/ControlsProvider";
@@ -14,6 +15,7 @@ const WORLD_BOUNDARY = 8;
 const ORB_IDS = ["orb1", "orb2"] as const;
 
 registerComponent(FirstPersonPlayer);
+registerComponent(ElevatorMover);
 
 type Position3 = [number, number, number];
 type TransformProperties = { position?: Position3 };

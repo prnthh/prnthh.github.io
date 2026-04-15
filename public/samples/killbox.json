@@ -892,9 +892,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -1.1333319597114018,
+                3.8135791189065382,
                 0.5,
-                -6.619918711791071
+                -7.662025461596728
               ],
               "rotation": [
                 0,
@@ -937,9 +937,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -4.552886891754096,
+                -0.19881480087447642,
                 0.5,
-                -0.9215082488574721
+                6.51193614323954
               ],
               "rotation": [
                 0,
@@ -1179,6 +1179,17 @@
                 1
               ]
             }
+          },
+          "elevatormover": {
+            "type": "ElevatorMover",
+            "properties": {
+              "platformNodeId": "b31bf4de-524b-494a-bc18-a0812504fbbc",
+              "sensorEventName": "elevator-sensor:enter",
+              "sensorNodeId": "72964d32-2a5c-4395-a6e8-5c72d299c7a2",
+              "triggerEntityId": "player",
+              "travelDistance": 4,
+              "moveSpeed": 1.6
+            }
           }
         },
         "children": [
@@ -1214,7 +1225,8 @@
                     2,
                     0.1,
                     2
-                  ]
+                  ],
+                  "castShadow": false
                 }
               },
               "material": {
@@ -1300,13 +1312,15 @@
                     2,
                     0.5,
                     2
-                  ]
+                  ],
+                  "castShadow": false,
+                  "receiveShadow": false
                 }
               },
               "physics": {
                 "type": "Physics",
                 "properties": {
-                  "type": "dynamic",
+                  "type": "fixed",
                   "colliders": "hull",
                   "capsuleRadius": 0.35,
                   "capsuleHalfHeight": 0.45,

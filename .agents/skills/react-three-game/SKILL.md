@@ -5,9 +5,9 @@ description: react-three-game, a JSON-first 3D game engine built on React Three 
 
 # react-three-game
 
-Use this skill when generating or editing scenes, prefabs, custom components, or runtime scene mutations for `react-three-game`.
+Reference for scenes, prefabs, custom components, and runtime scene mutation in `react-three-game`.
 
-## When to use
+## Scope
 
 - Build JSON prefabs and scene graphs.
 - Render prefabs with `PrefabRoot`.
@@ -15,9 +15,9 @@ Use this skill when generating or editing scenes, prefabs, custom components, or
 - Add custom components with `registerComponent()`.
 - Mutate authored scenes through the `Scene` API.
 
-## Core schema
+## Schema
 
-Scenes are JSON prefabs with a single root node.
+JSON prefab with a single root node.
 
 ```ts
 interface Prefab {
@@ -72,7 +72,7 @@ Example:
 
 ## Rendering model
 
-`PrefabRoot` uses an implicit composition model.
+`PrefabRoot` composition rules:
 
 - `Transform` is applied by the renderer as the node's outer transform.
 - `Geometry` + `Material` are special-cased into the node's primary mesh content.
@@ -81,14 +81,14 @@ Example:
 - Every other component `View` composes around the current subtree by default.
 - A component can opt into `composition: "sibling"` if it must render next to the subtree instead of wrapping it.
 
-Important consequence:
+Implications:
 
 - Components like `Environment` should usually wrap, because `<Environment>{children}</Environment>` uses children to generate the envmap.
 - Do not reintroduce broad special-case composition in custom components when the default wrap behavior is enough.
 
 ## PrefabRoot
 
-Use `PrefabRoot` for pure rendering inside a normal R3F scene.
+Pure prefab rendering inside an R3F scene.
 
 ```tsx
 import { Physics } from '@react-three/rapier';
@@ -101,7 +101,7 @@ import { GameCanvas, PrefabRoot } from 'react-three-game';
 </GameCanvas>
 ```
 
-Current props:
+Props:
 
 - `data?: Prefab`
 - `store?: PrefabStoreApi`
@@ -112,11 +112,11 @@ Current props:
 - `onObjectRefChange?: (id, object) => void`
 - `basePath?: string`
 
-Use `data` for static rendering and `store` when an external Zustand store owns the prefab state.
+Use `data` for static prefab input. Use `store` when state is owned externally.
 
 ## PrefabEditor
 
-Use `PrefabEditor` when you want managed authoring UI, history, selection, inspector editing, and play/edit mode.
+Managed authoring UI with history, selection, inspector editing, and play/edit mode.
 
 ```tsx
 import { PrefabEditor } from 'react-three-game';
@@ -134,7 +134,7 @@ Notes:
 - Physics is enabled in play mode and paused in edit mode.
 - `children` render inside the editor canvas.
 
-Useful editor ref methods:
+Editor ref:
 
 ```ts
 editorRef.current?.save();
@@ -147,7 +147,7 @@ editorRef.current?.scene;
 
 ## Scene API
 
-The editor exposes a live imperative `Scene` handle.
+Live imperative scene handle exposed by `PrefabEditorRef`.
 
 ```tsx
 const scene = editorRef.current?.scene;
@@ -166,45 +166,52 @@ scene?.add(node, { parentId: 'root' });
 scene?.remove('enemy');
 ```
 
-Prefer:
+Preferred mutation surface:
 
 - `component.set(path, value)` for focused property writes.
 - `component.update(fn)` when next state depends on previous state.
 - `scene.update(id, fn)` for whole-node changes.
 
-## API choice guide
+## Runtime access
 
-Prefer the narrowest API that matches the job.
+Use the narrowest surface that matches the operation.
 
 ### 1. Inside a component `View`
 
-Use runtime hooks.
+Runtime hooks.
 
 - `useEntityRuntime()` for `editMode`, `nodeId`, and live getters.
 - `useEntityObjectRef()` when you need the current `Object3D`.
 - `useEntityRigidBodyRef()` when you need raw Rapier body methods.
+- `useAssetRuntime().getObject(nodeId)` or `useAssetRuntime().getRigidBody(nodeId)` when the current component needs to target another authored node in the same prefab.
 
-This is the preferred API inside custom components because it is node-local and does not require reaching back through an editor ref.
+Node-local surface for custom components.
+
+Rules:
+
+- Use `useEntityObjectRef()` / `useEntityRigidBodyRef()` for the current node only.
+- Use `useAssetRuntime()` lookups for authored cross-node gameplay logic like elevators, doors, linked sensors, or moving platforms.
+- Do not use `useEditorContext()` for scene access. It is editor UI state, not runtime scene lookup.
 
 ### 2. Outside component views, but still operating on authored prefab nodes
 
-Use the `Scene` API.
+`Scene` API.
 
 - Use `scene.find(id)?.getComponent(name)` for property edits.
 - Use `scene.update(id, fn)` for whole-node mutations.
 - Use `scene.create()` / `scene.add()` / `scene.remove()` for lifecycle changes.
 
-This is the preferred API for editor children, gameplay controllers, and demo logic.
+Primary surface for editor children, gameplay controllers, and app-level scene logic.
 
 ### 3. Drop to `entity.object` or `entity.rigidBody` only when needed
 
-Use `scene.find(id)?.object` or `scene.find(id)?.rigidBody` only when you need capabilities the component/property API does not expose directly, for example:
+Use `scene.find(id)?.object` or `scene.find(id)?.rigidBody` only for capabilities not exposed by component/property mutation:
 
 - reading world position or world rotation
 - calling raw Rapier methods like `applyImpulse()`
 - integrating with lower-level Three.js APIs
 
-Rule of thumb:
+Rules:
 
 - If you are setting authored component properties, prefer `getComponent().set()` or `update()`.
 - If you need world-space transforms or physics engine methods, use `object` or `rigidBody`.
@@ -212,7 +219,7 @@ Rule of thumb:
 
 ## Custom components
 
-Register custom components before rendering `PrefabRoot` or `PrefabEditor`.
+Register before rendering `PrefabRoot` or `PrefabEditor`.
 
 ```tsx
 import { FieldRenderer, registerComponent, type Component, type FieldDefinition } from 'react-three-game';
@@ -233,7 +240,64 @@ const Rotator: Component = {
 registerComponent(Rotator);
 ```
 
-Composition guidance:
+Field types:
+
+- `number`
+- `string`
+- `boolean`
+- `select`
+- `vector3`
+- `color`
+- `node` for authored node ids with searchable name/id suggestions from the current prefab
+- `event` for event names with built-in and authored event suggestions
+
+Cross-node pattern inside a `View`:
+
+```tsx
+import { useEffect, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import {
+  FieldRenderer,
+  gameEvents,
+  type Component,
+  type FieldDefinition,
+  type PhysicsEventPayload,
+  useAssetRuntime,
+  useEntityRuntime,
+} from 'react-three-game';
+
+const fields: FieldDefinition[] = [
+  { name: 'platformNodeId', type: 'node', label: 'Platform Node' },
+  { name: 'triggerEventName', type: 'event', label: 'Trigger Event' },
+];
+
+function ElevatorMoverView({ properties, children }: { properties: any; children?: React.ReactNode }) {
+  const { nodeId, editMode } = useEntityRuntime();
+  const { getRigidBody } = useAssetRuntime();
+  const activeRef = useRef(false);
+
+  useEffect(() => {
+    if (!properties.triggerEventName) return;
+
+    return gameEvents.on(properties.triggerEventName, (payload) => {
+      const event = payload as PhysicsEventPayload;
+      if (event.sourceEntityId !== nodeId) return;
+      if (event.targetEntityId !== 'player') return;
+      activeRef.current = true;
+    });
+  }, [nodeId, properties.triggerEventName]);
+
+  useFrame(() => {
+    if (editMode || !activeRef.current) return;
+    const rigidBody = getRigidBody(properties.platformNodeId);
+    rigidBody?.setTranslation({ x: 0, y: 4, z: 0 }, true);
+  });
+
+  return <>{children}</>;
+}
+```
+
+Composition:
 
 - The default component behavior is to wrap the current subtree.
 - Only use `composition: "sibling"` when the component truly must render alongside the subtree.
@@ -258,7 +322,7 @@ Composition guidance:
 
 ## Events
 
-Built-in event patterns:
+Built-in event names:
 
 - `click`
 - `sensor:enter`
@@ -274,6 +338,22 @@ Example:
   "sound": { "type": "Sound", "properties": { "eventName": "door:open", "clips": ["/sound/door-open.mp3"] } }
 }
 ```
+
+Built-in physics event payload shape:
+
+```ts
+type PhysicsEventPayload = {
+  sourceEntityId: string;
+  targetEntityId: string | null;
+  targetRigidBody: RapierRigidBody | null | undefined;
+};
+```
+
+Physics event payload fields:
+
+- `sourceEntityId`: the node that owns the sensor or collider
+- `targetEntityId`: the other prefab-authored entity, if available
+- `targetRigidBody`: raw access to the other body when needed
 
 ## Useful exports
 
@@ -325,7 +405,7 @@ Types:
 - `FieldDefinition`
 - `FieldType`
 
-## Working rules for the agent
+## Constraints
 
 - Preserve the JSON-first scene model.
 - Prefer minimal prefab edits over broad rewrites.
