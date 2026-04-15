@@ -892,9 +892,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                6.888648154733908,
+                -1.1333319597114018,
                 0.5,
-                1.5230843397339195
+                -6.619918711791071
               ],
               "rotation": [
                 0,
@@ -937,9 +937,9 @@
             "type": "Transform",
             "properties": {
               "position": [
-                -3.6927525381688544,
+                -4.552886891754096,
                 0.5,
-                -8
+                -0.9215082488574721
               ],
               "rotation": [
                 0,
@@ -1149,6 +1149,202 @@
                   "randomizeVolume": true,
                   "minVolume": 0.2,
                   "maxVolume": 0.32
+                }
+              }
+            },
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "0c5167cc-b08b-4b54-9dd8-ffc83fec8c57",
+        "name": "elevator",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                8.5,
+                0,
+                8
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          }
+        },
+        "children": [
+          {
+            "id": "b31bf4de-524b-494a-bc18-a0812504fbbc",
+            "name": "rigidbody",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "box",
+                  "args": [
+                    2,
+                    0.1,
+                    2
+                  ]
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "materialType": "standard",
+                  "color": "#ffffff",
+                  "toneMapped": true,
+                  "wireframe": false,
+                  "transparent": true,
+                  "opacity": 1,
+                  "metalness": 0,
+                  "roughness": 1,
+                  "texture": "/textures/image1.png",
+                  "repeat": true,
+                  "repeatCount": [
+                    1.2,
+                    3
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "kinematicVelocity",
+                  "colliders": "hull",
+                  "capsuleRadius": 0.35,
+                  "capsuleHalfHeight": 0.45,
+                  "linearVelocity": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "angularVelocity": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "enabledTranslations": [
+                    true,
+                    true,
+                    true
+                  ],
+                  "enabledRotations": [
+                    true,
+                    true,
+                    true
+                  ]
+                }
+              }
+            },
+            "children": []
+          },
+          {
+            "id": "72964d32-2a5c-4395-a6e8-5c72d299c7a2",
+            "name": "sensor",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    0.5,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    1,
+                    1,
+                    1
+                  ]
+                }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "box",
+                  "args": [
+                    2,
+                    0.5,
+                    2
+                  ]
+                }
+              },
+              "physics": {
+                "type": "Physics",
+                "properties": {
+                  "type": "dynamic",
+                  "colliders": "hull",
+                  "capsuleRadius": 0.35,
+                  "capsuleHalfHeight": 0.45,
+                  "linearVelocity": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "angularVelocity": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "enabledTranslations": [
+                    true,
+                    true,
+                    true
+                  ],
+                  "enabledRotations": [
+                    true,
+                    true,
+                    true
+                  ],
+                  "sensor": true,
+                  "sensorEnterEventName": "elevator-sensor:enter"
+                }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "materialType": "basic",
+                  "color": "#ffffff",
+                  "toneMapped": true,
+                  "wireframe": false,
+                  "transparent": true,
+                  "opacity": 0,
+                  "metalness": 0,
+                  "roughness": 1
                 }
               }
             },
