@@ -78,13 +78,11 @@ Example:
 - `Geometry` + `Material` are special-cased into the node's primary mesh content.
 - `Model` is also special-cased as primary content when non-instanced.
 - `Physics` is a renderer-owned outer wrapper.
-- Every other component `View` composes around the current subtree by default.
-- A component can opt into `composition: "sibling"` if it must render next to the subtree instead of wrapping it.
+- Every other component `View` composes by wrapping the current subtree.
 
 Implications:
 
-- Components like `Environment` should usually wrap, because `<Environment>{children}</Environment>` uses children to generate the envmap.
-- Do not reintroduce broad special-case composition in custom components when the default wrap behavior is enough.
+- Components like `Environment` wrap the subtree and use `children` to generate the envmap.
 
 ## PrefabRoot
 
@@ -166,7 +164,7 @@ scene?.add(node, { parentId: 'root' });
 scene?.remove('enemy');
 ```
 
-Preferred mutation surface:
+Mutation surface:
 
 - `component.set(path, value)` for focused property writes.
 - `component.update(fn)` when next state depends on previous state.
@@ -174,7 +172,7 @@ Preferred mutation surface:
 
 ## Runtime access
 
-Use the narrowest surface that matches the operation.
+Use the matching runtime surface for each operation.
 
 ### 1. Inside a component `View`
 
@@ -187,11 +185,11 @@ Runtime hooks.
 
 Node-local surface for custom components.
 
-Rules:
+Guidance:
 
-- Use `useEntityObjectRef()` / `useEntityRigidBodyRef()` for the current node only.
-- Use `useAssetRuntime()` lookups for authored cross-node gameplay logic like elevators, doors, linked sensors, or moving platforms.
-- Do not use `useEditorContext()` for scene access. It is editor UI state, not runtime scene lookup.
+- `useEntityObjectRef()` and `useEntityRigidBodyRef()` access the current node.
+- `useAssetRuntime()` looks up other authored nodes for gameplay logic like elevators, doors, linked sensors, and moving platforms.
+- `useEntityRuntime()` and `useAssetRuntime()` are the runtime lookup surfaces inside component views.
 
 ### 2. Outside component views, but still operating on authored prefab nodes
 
@@ -201,21 +199,20 @@ Rules:
 - Use `scene.update(id, fn)` for whole-node mutations.
 - Use `scene.create()` / `scene.add()` / `scene.remove()` for lifecycle changes.
 
-Primary surface for editor children, gameplay controllers, and app-level scene logic.
+This is the primary surface for editor children, gameplay controllers, and app-level scene logic.
 
-### 3. Drop to `entity.object` or `entity.rigidBody` only when needed
+### 3. Use `entity.object` or `entity.rigidBody` for engine-level access
 
-Use `scene.find(id)?.object` or `scene.find(id)?.rigidBody` only for capabilities not exposed by component/property mutation:
+Use `scene.find(id)?.object` or `scene.find(id)?.rigidBody` for capabilities provided directly by Three.js or Rapier:
 
 - reading world position or world rotation
 - calling raw Rapier methods like `applyImpulse()`
 - integrating with lower-level Three.js APIs
 
-Rules:
+Guidance:
 
-- If you are setting authored component properties, prefer `getComponent().set()` or `update()`.
-- If you need world-space transforms or physics engine methods, use `object` or `rigidBody`.
-- Avoid using raw object/body access when a typed component mutation is enough.
+- `getComponent().set()` and `update()` write authored component properties.
+- `object` and `rigidBody` expose world-space transforms and engine methods.
 
 ## Custom components
 
@@ -295,8 +292,7 @@ function ElevatorMoverView({ properties, children }: { properties: any; children
 Composition:
 
 - The default component behavior is to wrap the current subtree.
-- Only use `composition: "sibling"` when the component truly must render alongside the subtree.
-- Prefer keeping custom `View` implementations structurally naive and letting `PrefabRoot` own geometry/material/model/physics special cases.
+- Custom `View` implementations compose around `children`, while `PrefabRoot` owns transform, geometry/material, model, and physics special cases.
 
 ## Built-in components
 
@@ -361,23 +357,22 @@ Values:
 - `registerComponent`
 - `useEditorContext`
 - `createPrefabStore`
-- `prefabStoreToPrefab`
 - `usePrefabStoreApi`
-- `createScene`
-- `denormalizePrefab`
 - `createModelNode`
 - `createImageNode`
 - `findComponent`
-- `findComponentEntry`
 - `hasComponent`
 - `gameEvents`
 - `useGameEvent`
+- `useAssetRuntime`
+- `useEntityRuntime`
+- `useEntityObjectRef`
+- `useEntityRigidBodyRef`
 - `loadFiles`
 - `loadModel`
 - `loadSound`
 - `loadTexture`
 - `exportGLB`
-- `exportGLBData`
 - `usePhysicsEvent`
 - `useClickEvent`
 - `computeParentWorldMatrix`
@@ -406,9 +401,8 @@ Types:
 ## Constraints
 
 - Preserve the JSON-first scene model.
-- Prefer minimal prefab edits over broad rewrites.
-- Keep custom components simple; let the renderer own transform, geometry/material, model, and physics behavior.
-- Prefer the `Scene` API for targeted live updates instead of rebuilding entire prefabs.
+- Keep custom components simple and let the renderer own transform, geometry/material, model, and physics behavior.
+- Use the `Scene` API for targeted live updates.
 - When documenting or generating examples, use the current API names exactly as exported.
 
 

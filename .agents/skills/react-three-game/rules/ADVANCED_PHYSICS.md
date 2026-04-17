@@ -1,27 +1,14 @@
 # Advanced Physics & Patterns
 
-## Physics Type Decision Tree
+## Physics Type Reference
 
-```
-Need physics?
-├─ No  → Don't add Physics component
-└─ Yes → Does it move?
-    ├─ Never moves (walls, floor, static props)
-    │   └─ type: "fixed"
-    │
-    ├─ Moves via forces/gravity (balls, boxes, ragdolls)
-    │   └─ type: "dynamic"
-    │       ├─ Fast moving? → ccd: true
-    │       └─ Heavy? → mass: 10+
-    │
-    ├─ Scripted animation (moving platforms, doors)
-    │   └─ type: "kinematicPosition"
-    │       └─ Usually drive via rigidBody.setTranslation(...) or scene/component transform updates
-    │
-    └─ Velocity-driven (conveyor belts, wind zones)
-        └─ type: "kinematicVelocity"
-        └─ Set runtime velocity via RigidBody ref
-```
+| Situation | Physics setup | Runtime path |
+|----------|---------------|--------------|
+| No physics behavior needed | Omit the `Physics` component | Render only |
+| Never moves: walls, floors, static props | `type: "fixed"` | Static body |
+| Moves via forces or gravity: balls, boxes, ragdolls | `type: "dynamic"` | Use impulses, forces, velocity, gravity; add `ccd: true` for fast bodies and raise `mass` for heavier bodies |
+| Scripted animation: moving platforms, doors | `type: "kinematicPosition"` | Drive with `rigidBody.setTranslation(...)` or scene/component transform updates |
+| Velocity-driven motion: conveyors, wind zones | `type: "kinematicVelocity"` | Set runtime velocity via the rigid body ref |
 
 **Type descriptions**:
 - **fixed**: Immovable, infinite mass (ground, walls, buildings)
@@ -29,7 +16,7 @@ Need physics?
 - **kinematicPosition**: Move via code, push dynamic bodies (elevators, doors)
 - **kinematicVelocity**: Set constant velocity, push dynamic bodies (conveyors)
 
-Performance: prefer `fixed` for non-moving bodies.
+Performance: `fixed` fits non-moving bodies.
 
 ## General Player Controller Pattern
 
@@ -50,7 +37,7 @@ Body type selection:
 
 - Use **dynamic** when the player should behave like a real physics body and interact naturally with forces, slopes, and other moving bodies.
 - Use **kinematicPosition** when the player should feel fully game-authored and you want direct positional control.
-- Avoid mutating `Transform` directly for a dynamic player every frame; drive the rigid body instead.
+- Drive a dynamic player through the rigid body each frame.
 
 Control loop:
 
@@ -71,12 +58,14 @@ Responsibility split:
 Minimal pattern:
 
 ```tsx
+import { useBeforePhysicsStep } from '@react-three/rapier';
+
 function PlayerControllerView({ properties, children }: { properties: any; children?: React.ReactNode }) {
   const { editMode } = useEntityRuntime();
   const rigidBodyRef = useEntityRigidBodyRef();
   const inputRef = useRef({ forward: false, backward: false, left: false, right: false, jump: false });
 
-  useBeforePhysicsStep((world) => {
+  useBeforePhysicsStep(() => {
     const rigidBody = rigidBodyRef.current;
     if (!rigidBody || editMode) return;
 
@@ -91,6 +80,8 @@ function PlayerControllerView({ properties, children }: { properties: any; child
 }
 ```
 
+Use `useBeforePhysicsStep` from `@react-three/rapier` when a controller needs to run in lockstep with physics stepping. Use `useFrame` for looser per-frame runtime behavior that does not need physics-step timing.
+
 Applicable to first-person, third-person, top-down, vehicle, and AI-driven actors.
 
 ## Physics component properties
@@ -99,7 +90,7 @@ Applicable to first-person, third-person, top-down, vehicle, and AI-driven actor
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `type` | `'dynamic'` \| `'fixed'` \| `'kinematicPosition'` \| `'kinematicVelocity'` | `'dynamic'` | Body type (see decision tree above) |
+| `type` | `'dynamic'` \| `'fixed'` \| `'kinematicPosition'` \| `'kinematicVelocity'` | `'dynamic'` | Body type (see reference table above) |
 | `mass` | `number` | `1` | Body mass (dynamic only) |
 | `restitution` | `number` | `0` | Bounciness (0 = no bounce, 1 = perfect bounce) |
 | `friction` | `number` | `0.5` | Surface friction (0 = ice, 1+ = sticky) |
@@ -174,14 +165,14 @@ Rigid body access surfaces:
 - `prefabRootRef.current?.getRigidBody(id)` when you own a `PrefabRoot` ref directly.
 - `useEntityRigidBodyRef()` inside a component `View` rendered by `PrefabRoot`.
 
-Preferred order:
+Access order:
 
 - Inside a component `View`: `useEntityRigidBodyRef()`
 - Inside a component `View`, targeting another authored node: `useAssetRuntime().getRigidBody(targetNodeId)`
 - In editor child/controller code: `scene.find(id)?.rigidBody`
 - In pure `PrefabRoot` embedding code: `PrefabRootRef.getRigidBody(id)`
 
-Rules:
+Access guidance:
 
 - `useEntityRigidBodyRef()` for the current node's own body
 - `useAssetRuntime().getRigidBody(nodeId)` for another authored node from inside a component view
@@ -329,10 +320,10 @@ Authored gameplay bodies: elevators, doors, moving platforms.
 - Use Rapier kinematic next-step APIs when you specifically want to model motion through Rapier's kinematic stepping semantics.
 - Use `scene.find(id)?.getComponent('Transform')?.set(...)` when your gameplay system is intentionally expressed as prefab/property mutation rather than raw rigid body control.
 
-Rules:
+Guidance:
 
-- Inside a component `View`, direct rigid body mutation is usually the clearest path.
-- Outside component views, `Scene` API transform edits are often the cleanest authored control surface.
+- Inside a component `View`, direct rigid body mutation is the node-local authored control path.
+- Outside component views, `Scene` API transform edits are the authored control surface.
 
 Rapier `RigidBody` methods:
 - `applyImpulse(vector, wakeUp)` - Instantaneous velocity change
@@ -344,9 +335,9 @@ Rapier `RigidBody` methods:
 
 ## Tilted Surfaces & Containment
 
-**⚠️ Tilted walls don't contain objects** - physics objects slide off angled surfaces.
+Tilted walls act like sloped surfaces, so bodies slide along them.
 
-### ❌ Wrong Approach
+### Sloped Wall Example
 ```json
 {
   "id": "tilted-wall",
@@ -357,9 +348,9 @@ Rapier `RigidBody` methods:
   }
 }
 ```
-Bodies slide off the tilted surface.
+This shape behaves like a ramp.
 
-### ✅ Correct Pattern - Perpendicular Walls
+### Containment Wall Pattern
 ```json
 {
   "id": "container",
@@ -408,7 +399,7 @@ Bodies slide off the tilted surface.
 }
 ```
 
-Constraint: containment walls must be perpendicular to gravity.
+Containment walls sit perpendicular to gravity.
 
 ## Instanced Physics
 
@@ -456,7 +447,7 @@ Additional instances of the same compatible model are batched automatically:
 
 Instanced physics bodies are not individually addressable through normal node-level rigid body APIs. For force/impulse control, kinematic motion, or stable per-body refs, use non-instanced physics.
 
-### When to Use Instanced Physics
+### Instanced Physics Fit
 
 Recommended for:
 - Many copies of the same static object (trees, rocks, buildings)
@@ -464,7 +455,7 @@ Recommended for:
 - Fixed physics bodies that never move
 - Background props and decorations
 
-Avoid for:
+Best handled with standard non-instanced physics:
 - Objects requiring individual force/impulse control
 - Dynamic objects with unique behaviors
 - Objects that need to be individually removed/spawned

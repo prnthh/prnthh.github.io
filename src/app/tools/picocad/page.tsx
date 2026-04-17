@@ -8,6 +8,7 @@ import PixelationEffect from "./PixelationEffect";
 
 type SupportedAssetType = "glb" | "gltf" | "bin" | "png";
 type TransformMode = "translate" | "rotate" | "scale";
+type Vec3 = [number, number, number];
 
 type AssetSlots = Partial<Record<SupportedAssetType, File>>;
 
@@ -20,6 +21,7 @@ const ASSET_CONFIG: Array<{ type: SupportedAssetType; label: string; accept: str
 
 const VISIBLE_ASSET_CONFIG = ASSET_CONFIG.filter(config => config.type !== "glb");
 const SAMPLE_NAMES = ["question", "tablet"] as const;
+const DEFAULT_SCALE: Vec3 = [1, 1, 1];
 const EMPTY_PREFAB: Prefab = {
     id: "picocad-editor",
     name: "Picocad Scene",
@@ -192,7 +194,9 @@ export default function PicocadPage() {
     const [loadingSampleName, setLoadingSampleName] = useState<string | null>(null);
     const [pixelSize, setPixelSize] = useState(6);
     const [transformMode, setTransformMode] = useState<TransformMode>("translate");
+    const [uniformScale, setUniformScale] = useState(1);
     const [editorReady, setEditorReady] = useState(false);
+    const [modelNodeId, setModelNodeId] = useState<string | null>(null);
     const editorRef = useRef<PrefabEditorRef | null>(null);
     const injectedSceneRef = useRef<Object3D | null>(null);
     const fileInputRefs = useRef<Record<SupportedAssetType, HTMLInputElement | null>>({
@@ -325,6 +329,8 @@ export default function PicocadPage() {
         if (!loadedScene) {
             editor.load(EMPTY_PREFAB, { resetHistory: true });
             injectedSceneRef.current = null;
+            setModelNodeId(null);
+            setUniformScale(1);
 
             if (previousInjectedScene) {
                 disposeObject(previousInjectedScene);
@@ -340,11 +346,13 @@ export default function PicocadPage() {
             ...EMPTY_PREFAB,
             name: sceneName,
         }, { resetHistory: true });
-        editor.addModel(editorModelPath, loadedScene, {
+        const modelNode = editor.addModel(editorModelPath, loadedScene, {
             name: sceneName,
             parentId: "root",
             select: true,
         });
+        setModelNodeId(modelNode.id);
+        setUniformScale(1);
         injectedSceneRef.current = loadedScene;
 
         if (previousInjectedScene && previousInjectedScene !== loadedScene) {
@@ -456,6 +464,38 @@ export default function PicocadPage() {
         } finally {
             setIsExporting(false);
         }
+    }
+
+    function updateUniformScale(nextScale: number) {
+        setUniformScale(nextScale);
+
+        if (!modelNodeId || !editorRef.current) {
+            return;
+        }
+
+        const entity = editorRef.current.scene.find(modelNodeId);
+
+        if (!entity) {
+            return;
+        }
+
+        const transform = entity.getComponent<{
+            position: Vec3;
+            rotation: Vec3;
+            scale: Vec3;
+        }>("Transform");
+        const scale: Vec3 = [nextScale, nextScale, nextScale];
+
+        if (transform) {
+            transform.set("scale", scale);
+            return;
+        }
+
+        entity.addComponent("Transform", {
+            position: [0, 0, 0],
+            rotation: [0, 0, 0],
+            scale,
+        });
     }
 
     return (
@@ -651,6 +691,25 @@ export default function PicocadPage() {
                                         </button>
                                     ))}
                                 </div>
+
+                                {loadedScene && transformMode === "scale" && (
+                                    <label className="mt-4 flex w-full flex-col items-start gap-2 text-xs font-bold uppercase tracking-[0.14em] text-[#ffd5e8]">
+                                        <div className="flex w-full items-center justify-between">
+                                            <span>Uniform Scale</span>
+                                            <span>{uniformScale.toFixed(2)}x</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="0.1"
+                                            max="4"
+                                            step="0.05"
+                                            value={uniformScale}
+                                            onChange={event => updateUniformScale(Number(event.target.value))}
+                                            className="w-full accent-[#ff1654]"
+                                            aria-label="Uniform model scale"
+                                        />
+                                    </label>
+                                )}
                             </div>
 
 

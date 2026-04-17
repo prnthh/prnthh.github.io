@@ -1,6 +1,6 @@
 # Lighting & Shadows
 
-Prefer the built-in light components unless you need a fully custom light rig.
+The built-in light components cover most authored lighting setups.
 
 ## Built-in light shadow controls
 
@@ -25,7 +25,7 @@ Additional light-specific props:
 For large scenes:
 
 - Keep `castShadow` enabled only on the lights that matter.
-- Prefer one main shadow-casting light over several overlapping shadow casters.
+- Use one main shadow-casting light for the primary shadow pass.
 - Set `shadowAutoUpdate: false` once lighting and static geometry stop changing.
 - Increase `shadowMapSize` only when resolution is the actual problem.
 - Tune `shadowBias` and `shadowNormalBias` before increasing map size.
