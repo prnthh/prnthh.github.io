@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Leva } from "leva";
-import { Prefab, PrefabEditor, registerComponent } from "react-three-game";
+import React, { useEffect, useRef, useState } from "react";
+import { Prefab, PrefabEditor, PrefabEditorRef, registerComponent } from "react-three-game";
+import AgenticEditor from "./AgenticEditor";
 import RotatorComponent from "./plugins/RotatorComponent";
 import HumanoidModelComponent from "./plugins/HumanoidModelComponent";
-import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
-import { PCFShadowMap, PCFSoftShadowMap } from "three";
+import { PCFSoftShadowMap } from "three";
 
 registerComponent(RotatorComponent);
 registerComponent(HumanoidModelComponent);
@@ -26,13 +25,13 @@ async function loadSample(name: SampleName) {
     return await response.json() as Prefab;
 }
 
-export const Toolbar = ({ setSelectedPrefab }: { setSelectedPrefab: React.Dispatch<React.SetStateAction<Prefab | null>> }) => {
+export const Toolbar = ({ onSelectPrefab }: { onSelectPrefab: (prefab: Prefab) => void }) => {
     return <select
         className="bg-white px-2 py-1 text-black"
         defaultValue={DEFAULT_SAMPLE}
         onChange={(e) => {
             void loadSample(e.target.value as SampleName).then((prefab) => {
-                setSelectedPrefab(prefab);
+                onSelectPrefab(prefab);
             });
         }}
     >
@@ -43,12 +42,21 @@ export const Toolbar = ({ setSelectedPrefab }: { setSelectedPrefab: React.Dispat
 }
 
 export default function PrefabEditorPage() {
-    const [selectedPrefab, setSelectedPrefab] = useState<Prefab | null>(null);
+    const [loadedPrefab, setLoadedPrefab] = useState<Prefab | null>(null);
+    const [livePrefab, setLivePrefab] = useState<Prefab | null>(null);
+    const editorRef = useRef<PrefabEditorRef | null>(null);
+
+    const handleSelectPrefab = (prefab: Prefab) => {
+        setLoadedPrefab(prefab);
+        setLivePrefab(prefab);
+        editorRef.current?.load(prefab, { resetHistory: true, notifyChange: true });
+    };
 
     useEffect(() => {
         let cancelled = false;
 
-        setSelectedPrefab(null);
+        setLoadedPrefab(null);
+        setLivePrefab(null);
 
         loadSample(DEFAULT_SAMPLE)
             .then(prefab => {
@@ -56,7 +64,8 @@ export default function PrefabEditorPage() {
                     return;
                 }
 
-                setSelectedPrefab(prefab);
+                setLoadedPrefab(prefab);
+                setLivePrefab(prefab);
             })
             .catch(error => {
                 if (cancelled) {
@@ -64,7 +73,8 @@ export default function PrefabEditorPage() {
                 }
 
                 console.error(`Failed to load prefab sample: ${DEFAULT_SAMPLE}`, error);
-                setSelectedPrefab(null);
+                setLoadedPrefab(null);
+                setLivePrefab(null);
             });
 
         return () => {
@@ -73,11 +83,17 @@ export default function PrefabEditorPage() {
     }, []);
 
     return <div className="relative w-screen h-screen">
-        <Leva collapsed oneLineLabels />
-        {selectedPrefab ? (
-            <PrefabEditor canvasProps={{ shadows: { type: PCFSoftShadowMap } }} uiPlugins={<Toolbar setSelectedPrefab={setSelectedPrefab} />} initialPrefab={selectedPrefab}>
-                {/* <RenderPipeline /> */}
-            </PrefabEditor>
+        {loadedPrefab ? (
+            <>
+                <PrefabEditor
+                    ref={editorRef}
+                    canvasProps={{ shadows: { type: PCFSoftShadowMap } }}
+                    uiPlugins={<Toolbar onSelectPrefab={handleSelectPrefab} />}
+                    initialPrefab={loadedPrefab}
+                    onChange={setLivePrefab}
+                />
+                <AgenticEditor editorRef={editorRef} prefab={livePrefab} />
+            </>
         ) : (
             <div className="flex h-full items-center justify-center bg-black text-sm uppercase tracking-[0.12em] text-white">
                 Loading sample...
