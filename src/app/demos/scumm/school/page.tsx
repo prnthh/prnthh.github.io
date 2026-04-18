@@ -46,7 +46,7 @@ function SchoolScenePage() {
     const [scenePrefab, setScenePrefab] = useState<Prefab | null>(null);
     const [prefabError, setPrefabError] = useState<string | null>(null);
 
-    const handleSurfaceClick = (e: ThreeEvent<MouseEvent>) => {
+    const handleSurfaceClick = (e: ThreeEvent<PointerEvent>) => {
         const { x, y, z } = e.point;
         setTarget([x, y, z]);
         setActiveEntity(null);
@@ -131,13 +131,12 @@ function SchoolScenePage() {
                     <Physics>
                         <RenderPipeline />
                         {scenePrefab && (
-                            <group onClick={handleSurfaceClick}>
-                                <PrefabRoot
-                                    onSelect={(id) => {
-                                        console.log("selected prefab root", id);
-                                    }}
-                                    data={scenePrefab} />
-                            </group>
+                            <PrefabRoot
+                                onClick={handleSurfaceClick}
+                                onSelect={(id) => {
+                                    console.log("selected prefab root", id);
+                                }}
+                                data={scenePrefab} />
                         )}
                         {target && (
                             <Box receiveShadow position={target} args={[0.1, 0.1, 0.1]} castShadow />

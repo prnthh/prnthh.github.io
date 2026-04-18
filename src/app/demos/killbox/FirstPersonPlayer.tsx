@@ -1,11 +1,10 @@
 "use client";
 
-import { FieldRenderer, useEntityRigidBodyRef, useEntityRuntime } from "react-three-game";
+import { FieldRenderer, gameEvents, useEntityRigidBodyRef, useEntityRuntime } from "react-three-game";
 import type { Component, FieldDefinition } from "react-three-game";
 import { useThree } from "@react-three/fiber";
 import { useBeforePhysicsStep, useRapier } from "@react-three/rapier";
 import { useCallback, useRef } from "react";
-import { gameEvents } from "react-three-game";
 import { MathUtils, Vector3 } from "three";
 import KeyboardControls from "@/app/react-three-controller/controls/KeyboardControls";
 import PointerLockControls from "@/app/react-three-controller/controls/PointerLockControls";

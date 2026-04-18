@@ -3,7 +3,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { PrefabEditor, PrefabEditorMode, registerComponent } from "react-three-game";
-import type { EntityComponent, Prefab, PrefabEditorRef } from "react-three-game";
+import type { Prefab, PrefabEditorRef } from "react-three-game";
 import FirstPersonPlayer from "./FirstPersonPlayer";
 import ElevatorMover from "./ElevatorMover";
 import initialWorld from "@public/samples/killbox.json";
@@ -18,13 +18,10 @@ registerComponent(FirstPersonPlayer);
 registerComponent(ElevatorMover);
 
 type Position3 = [number, number, number];
-type TransformProperties = { position?: Position3 };
 type OrbVelocity = { x: number; z: number };
 type OrbId = typeof ORB_IDS[number];
 
-function getPosition(transform: EntityComponent<TransformProperties>): Position3 | null {
-    const position = transform.get<Position3>("position");
-
+function getPosition(position: unknown): Position3 | null {
     if (!Array.isArray(position) || position.length !== 3) {
         return null;
     }
@@ -69,8 +66,8 @@ function OrbAnimator({ editorRef }: { editorRef: React.RefObject<PrefabEditorRef
     const lastVelocityChange = useRef(0);
 
     useFrame((state, delta) => {
-        const scene = editorRef.current?.scene;
-        if (!scene) {
+        const store = editorRef.current?.store;
+        if (!store) {
             return;
         }
 
@@ -89,17 +86,27 @@ function OrbAnimator({ editorRef }: { editorRef: React.RefObject<PrefabEditorRef
         }
 
         for (const orbId of ORB_IDS) {
-            const transform = scene.find(orbId)?.getComponent<TransformProperties>("Transform");
-            if (!transform) {
-                continue;
-            }
-
-            const position = getPosition(transform);
+            const node = store.getState().nodesById[orbId];
+            const position = getPosition(node?.components?.transform?.properties?.position);
             if (!position) {
                 continue;
             }
 
-            transform.set("position", getNextOrbPosition(position, velocities.current[orbId], delta));
+            const nextPosition = getNextOrbPosition(position, velocities.current[orbId], delta);
+
+            store.getState().updateNode(orbId, (currentNode) => ({
+                ...currentNode,
+                components: {
+                    ...currentNode.components,
+                    transform: {
+                        type: "Transform",
+                        properties: {
+                            ...currentNode.components?.transform?.properties,
+                            position: nextPosition,
+                        },
+                    },
+                },
+            }));
         }
     });
 

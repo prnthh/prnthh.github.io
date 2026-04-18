@@ -31,7 +31,7 @@ Architecture:
 - Attach a custom component such as `FirstPersonPlayer` or `ThirdPersonPlayer` to that same node.
 - Inside the component `View`, use `useEntityRigidBodyRef()` for body control and `useEntityRuntime()` for edit/play awareness.
 - Keep transient state like key presses, timers, and cached velocity in refs, not prefab properties.
-- Keep authored tuning values like `maxSpeed`, `jumpSpeed`, `groundAccel`, and event names in component properties.
+- Keep authored tuning values like `maxSpeed`, `jumpSpeed`, and `groundAccel` in component properties.
 
 Body type selection:
 
@@ -46,14 +46,14 @@ Control loop:
 3. Detect grounded state with a raycast or sensor.
 4. Compute desired planar motion.
 5. Apply that motion through rigid body velocity or impulses.
-6. Emit gameplay events like footsteps, landing, dash, or jump.
+6. Trigger direct gameplay code where needed.
 
 Responsibility split:
 
 - **Physics body** decides collision and movement.
 - **Camera** reads from the player, but does not own the player state.
 - **Controller component** translates input into body motion.
-- **Scene/gameplay systems** listen to events instead of reaching into controller internals.
+- **Scene/gameplay systems** should talk to authored nodes through store updates, object refs, or rigid body refs.
 
 Minimal pattern:
 
@@ -109,6 +109,14 @@ Applicable to first-person, third-person, top-down, vehicle, and AI-driven actor
 | `activeCollisionTypes` | `'all'` | - | Enable kinematic/fixed collision detection (default: dynamic only) |
 | `collisionGroups` | `number` | - | Rapier collision groups bitfield |
 | `solverGroups` | `number` | - | Rapier solver groups bitfield |
+| `emitSensorEnterEvent` | `boolean` | `false` | Emit a `gameEvents` sensor-enter event when an intersection starts |
+| `sensorEnterEventName` | `string` | `''` | Event bus name for sensor enter |
+| `emitSensorExitEvent` | `boolean` | `false` | Emit a `gameEvents` sensor-exit event when an intersection ends |
+| `sensorExitEventName` | `string` | `''` | Event bus name for sensor exit |
+| `emitCollisionEnterEvent` | `boolean` | `false` | Emit a `gameEvents` collision-enter event when a collision starts |
+| `collisionEnterEventName` | `string` | `''` | Event bus name for collision enter |
+| `emitCollisionExitEvent` | `boolean` | `false` | Emit a `gameEvents` collision-exit event when a collision ends |
+| `collisionExitEventName` | `string` | `''` | Event bus name for collision exit |
 
 **Example - Bouncy Ball**:
 ```json
@@ -161,7 +169,7 @@ Use `linearVelocity` and `angularVelocity` for authored initial motion. Use a ri
 
 Rigid body access surfaces:
 
-- `editorRef.current?.scene.find(id)?.rigidBody` for authored prefab entities.
+- `editorRef.current?.getRigidBody(id)` for authored prefab entities mounted in `PrefabEditor`.
 - `prefabRootRef.current?.getRigidBody(id)` when you own a `PrefabRoot` ref directly.
 - `useEntityRigidBodyRef()` inside a component `View` rendered by `PrefabRoot`.
 
@@ -169,16 +177,16 @@ Access order:
 
 - Inside a component `View`: `useEntityRigidBodyRef()`
 - Inside a component `View`, targeting another authored node: `useAssetRuntime().getRigidBody(targetNodeId)`
-- In editor child/controller code: `scene.find(id)?.rigidBody`
+- In editor child/controller code: `editorRef.current?.getRigidBody(id)`
 - In pure `PrefabRoot` embedding code: `PrefabRootRef.getRigidBody(id)`
 
 Access guidance:
 
 - `useEntityRigidBodyRef()` for the current node's own body
 - `useAssetRuntime().getRigidBody(nodeId)` for another authored node from inside a component view
-- `scene.find(id)?.rigidBody` when scripting from outside component views
+- `editorRef.current?.getRigidBody(id)` when scripting from outside component views
 
-### Scene API access
+### PrefabEditor ref access
 
 ```tsx
 import { useRef, useEffect } from 'react';
@@ -189,7 +197,7 @@ import type { RapierRigidBody } from '@react-three/rapier';
 function ForceApplier({ editorRef }: { editorRef: React.RefObject<PrefabEditorRef> }) {
   useEffect(() => {
     const interval = setInterval(() => {
-      const rigidBody = editorRef.current?.scene.find('ball')?.rigidBody as RapierRigidBody | null;
+      const rigidBody = editorRef.current?.getRigidBody('ball') as RapierRigidBody | null;
       
       if (rigidBody) {
         rigidBody.applyImpulse({ x: 0, y: 5, z: 0 }, true);
@@ -289,9 +297,9 @@ function PhysicsBall() {
 </PrefabEditor>
 ```
 
-### Scene-driven kinematic updates
+### Store-driven kinematic updates
 
-For authored kinematic motion, use `kinematicPosition` and update through the `Scene` API.
+For authored kinematic motion, use `kinematicPosition` and update through the prefab store.
 
 ```tsx
 import { useRef } from 'react';
@@ -302,9 +310,19 @@ import type { PrefabEditorRef } from 'react-three-game';
 function KinematicMover({ editorRef }: { editorRef: React.RefObject<PrefabEditorRef> }) {
   useFrame(({ clock }) => {
     const y = 2 + Math.sin(clock.elapsedTime * 2) * 3;
-    editorRef.current?.scene.find("platform-id")
-      ?.getComponent("Transform")
-      ?.set("position", [0, y, 0]);
+    editorRef.current?.store.getState().updateNode("platform-id", (node) => ({
+      ...node,
+      components: {
+        ...node.components,
+        transform: {
+          type: "Transform",
+          properties: {
+            ...node.components?.transform?.properties,
+            position: [0, y, 0],
+          },
+        },
+      },
+    }));
   });
   
   return null;
@@ -318,12 +336,12 @@ Authored gameplay bodies: elevators, doors, moving platforms.
 - Use `rigidBody.setTranslation(...)` when you want direct authored movement and already know the target position.
 - Use `setLinvel(...)` when the gameplay behavior is naturally velocity-driven.
 - Use Rapier kinematic next-step APIs when you specifically want to model motion through Rapier's kinematic stepping semantics.
-- Use `scene.find(id)?.getComponent('Transform')?.set(...)` when your gameplay system is intentionally expressed as prefab/property mutation rather than raw rigid body control.
+- Use `editorRef.current?.store.getState().updateNode(...)` when your gameplay system is intentionally expressed as prefab-property mutation.
 
 Guidance:
 
 - Inside a component `View`, direct rigid body mutation is the node-local authored control path.
-- Outside component views, `Scene` API transform edits are the authored control surface.
+- Outside component views, prefab store updates are the authored control surface.
 
 Rapier `RigidBody` methods:
 - `applyImpulse(vector, wakeUp)` - Instantaneous velocity change
@@ -410,7 +428,7 @@ Containment walls sit perpendicular to gravity.
 | Aspect | Standard Physics | Instanced Physics |
 |--------|------------------|-------------------|
 | RigidBody Component | Individual `<RigidBody>` per object | Single `<InstancedRigidBodies>` group per model + supported physics type |
-| Ref Access | `scene.find(nodeId)?.rigidBody` or `PrefabRootRef.getRigidBody(nodeId)` | No stable per-instance rigid body lookup |
+| Ref Access | `editorRef.current?.getRigidBody(nodeId)` or `PrefabRootRef.getRigidBody(nodeId)` | No stable per-instance rigid body lookup |
 | Force Application | Direct per-object | Must access via InstancedRigidBodies ref |
 | Collider Type | `hull` (dynamic) or `trimesh` (fixed) | Auto-selected by instanced physics path |
 | Performance | One draw call per object | One draw call for all instances |
@@ -466,12 +484,14 @@ Best handled with standard non-instanced physics:
 - **Batching**: All instances with the same `filename` and `physics.type` are rendered in a single draw call
 - **Supported body types**: The instanced physics path is intended for `fixed` and `dynamic` bodies; use standard non-instanced physics for kinematic bodies
 - **Scale handling**: Visual scale is applied per-instance, but collider scale may differ
-- **Transform updates**: Use scene API to move instances (triggers re-sync)
+- **Transform updates**: Use prefab store updates to move instances (triggers re-sync)
 - **Memory**: One set of GPU buffers shared across all instances
 
-## Sensors & Collision Events
+## Sensors
 
-Sensors detect intersections without physical contact response. Use for trigger zones, pickup areas, damage zones, and gameplay triggers.
+Sensors detect intersections without physical contact response. Use them when you need trigger volumes, and handle the resulting gameplay logic in your own Rapier or React code.
+
+When you want authored triggers without a custom controller wrapper, you can opt into `gameEvents` emission directly from the `Physics` component by setting the relevant `emit...Event` boolean and event name.
 
 ### Creating a Sensor
 
@@ -503,31 +523,6 @@ Kinematic/fixed collision detection: sensors detect `dynamic` bodies by default.
 }
 ```
 
-### Physics Event Payload
-
-Physics event payload:
-
-```typescript
-{
-  sourceEntityId: string;           // The prefab entity that owns the collider
-  targetEntityId: string | null;    // The other entity (if it's a prefab entity)
-  targetRigidBody: RapierRigidBody; // Direct access to the other RigidBody
-}
-```
-
-Filter pattern:
-
-```tsx
-useGameEvent('sensor:enter', (payload) => {
-  if (payload.sourceEntityId !== 'elevator-trigger') return;
-  if (payload.targetEntityId !== 'player') return;
-
-  // Activate elevator / door / pickup logic here
-}, []);
-```
-
-`targetEntityId` is `null` when colliding with non-prefab physics bodies (custom R3F components). Use `targetRigidBody` to inspect those.
-
 ### Sensor patterns
 
 **Pickup Item:**
@@ -542,14 +537,7 @@ useGameEvent('sensor:enter', (payload) => {
 }
 ```
 
-```tsx
-useGameEvent('sensor:enter', (payload) => {
-  if (payload.sourceEntityId === 'coin' && payload.targetEntityId === 'player') {
-    removeCoin();
-    gameEvents.emit('score:change', { delta: 100, total: score + 100 });
-  }
-}, [score]);
-```
+Handle pickup logic with your own controller code attached to the player, pickup, or surrounding React tree.
 
 **Damage Zone:**
 ```json
@@ -564,26 +552,14 @@ useGameEvent('sensor:enter', (payload) => {
 }
 ```
 
-```tsx
-useGameEvent('sensor:enter', ({ sourceEntityId, targetEntityId }) => {
-  if (sourceEntityId === 'lava') {
-    gameEvents.emit('player:damage', { entityId: targetEntityId, amount: 50 });
-  }
-}, []);
-```
+Handle damage application in your own gameplay code using direct rigid body queries, controller state, or custom Rapier callbacks.
 
 **Level Transition:**
-```tsx
-useGameEvent('sensor:enter', ({ sourceEntityId, targetEntityId }) => {
-  if (sourceEntityId === 'exit-door' && targetEntityId === 'player') {
-    loadNextLevel();
-  }
-}, []);
-```
+Handle transitions in your own gameplay or scene code when your controller determines the player reached the authored trigger.
 
 ### Interop with Custom R3F Physics
 
-For custom `RigidBody` components to participate in the event system, set `userData.entityId`:
+For custom `RigidBody` components that need to coordinate with authored prefab nodes, set `userData.entityId` so your own logic can identify them consistently:
 
 ```tsx
 <RigidBody userData={{ entityId: 'player' }}>
@@ -591,13 +567,9 @@ For custom `RigidBody` components to participate in the event system, set `userD
 </RigidBody>
 ```
 
-Now when prefab sensors detect this body, `targetEntityId` will be `'player'`.
-
 ### Tips
 
-- Sensors fire events for **all** intersecting bodies - filter by ID
-- `sensor:exit` fires when something leaves a sensor zone
-- `collision:enter/exit` fires for non-sensor physics bodies
-- Entity IDs stored in `RigidBody.userData.entityId`
-- Let the component that causes the action choose the event name.
-- Let other components listen to that event name instead of inventing their own meaning for it.
+- Sensors may overlap multiple bodies at once, so keep your own filtering logic explicit.
+- Entity IDs can still live in `RigidBody.userData.entityId` when that helps your own controller code correlate bodies.
+- Prefer direct React callbacks, store mutations, raw Rapier methods, and the shared `gameEvents` bus for authored trigger flow.
+- Physics event payloads include both legacy-style ids and current runtime references: `sourceEntityId`, `sourceNodeId`, `sourceObject`, `sourceRigidBody`, `targetEntityId`, `targetNodeId`, `targetObject`, `targetRigidBody`, and `rapierEvent`.

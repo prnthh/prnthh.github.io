@@ -32,19 +32,28 @@ For large scenes:
 
 ## One-shot shadow refreshes
 
-The built-in light components already call `shadow.needsUpdate = true` when shadow-related props change. That means a one-shot refresh can be triggered by updating a relevant light property through prefab data or the Scene API.
+The built-in light components already call `shadow.needsUpdate = true` when shadow-related props change. That means a one-shot refresh can be triggered by updating a relevant light property through prefab data or the prefab store.
 
 Typical pattern:
 
 ```tsx
-editorRef.current?.scene.find('sun')?.getComponent('DirectionalLight')?.update(props => ({
-	...props,
-	shadowAutoUpdate: false,
-	shadowBias: props.shadowBias ?? 0,
+editorRef.current?.store.getState().updateNode('sun', (node) => ({
+	...node,
+	components: {
+		...node.components,
+		directionalLight: {
+			type: 'DirectionalLight',
+			properties: {
+				...node.components?.directionalLight?.properties,
+				shadowAutoUpdate: false,
+				shadowBias: node.components?.directionalLight?.properties?.shadowBias ?? 0,
+			},
+		},
+	},
 }));
 ```
 
-If you are using a custom R3F light ref instead of the built-in light components, then the manual pattern is still valid:
+If you are using a custom R3F light ref, this manual pattern is still valid:
 
 ```tsx
 directionalLight.current.shadow.autoUpdate = false;

@@ -24,7 +24,7 @@ export default function Home() {
     const characterRef = useRef<any>(null);
     const [activeEntity, setActiveEntity] = useState<string | null>(null);
 
-    const handleSurfaceClick = (e: ThreeEvent<MouseEvent>) => {
+    const handleSurfaceClick = (e: ThreeEvent<PointerEvent>) => {
         const { x, y, z } = e.point;
         setTarget([x, y, z]);
         setActiveEntity(null);
@@ -35,13 +35,12 @@ export default function Home() {
             <div className="w-full" style={{ height: "100vh" }}>
                 <GameCanvas>
                     <Physics>
-                        <group onClick={handleSurfaceClick}>
-                            <PrefabRoot
-                                onSelect={(id) => {
-                                    console.log("selected prefab root", id);
-                                }}
-                                data={room} />
-                        </group>
+                        <PrefabRoot
+                            onClick={handleSurfaceClick}
+                            onSelect={(id) => {
+                                console.log("selected prefab root", id);
+                            }}
+                            data={room} />
                         <ambientLight intensity={1.5} />
 
                         {target && (

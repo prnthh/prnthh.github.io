@@ -69,14 +69,14 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
     const moveSpeed = properties.moveSpeed ?? DEFAULT_MOVE_SPEED;
 
     usePhysicsEvent(SENSOR_ENTER_EVENT_NAME, (payload: PhysicsEventPayload) => {
-        if (editMode) {
+        if (editMode || !payload) {
             return;
         }
 
-        if (sensorNodeId && payload.sourceEntityId !== sensorNodeId) {
+        if (sensorNodeId && payload.sourceNodeId !== sensorNodeId) {
             return;
         }
-        if (triggerEntityId && payload.targetEntityId !== triggerEntityId) {
+        if (triggerEntityId && payload.targetNodeId !== triggerEntityId) {
             return;
         }
 

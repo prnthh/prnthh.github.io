@@ -1344,6 +1344,7 @@
                     true
                   ],
                   "sensor": true,
+                  "emitSensorEnterEvent": true,
                   "sensorEnterEventName": "sensor:enter"
                 }
               },
