@@ -1,14 +1,18 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { FieldRenderer, useAssetRuntime, useEntityRuntime, usePhysicsEvent } from "react-three-game";
-import type { Component, FieldDefinition, PhysicsEventPayload } from "react-three-game";
+import { FieldRenderer, useAssetRuntime, useCurrentNode, useGameEvent } from "react-three-game";
+import type { Component, ContactEventPayload, FieldDefinition } from "react-three-game";
 import { useFrame } from "@react-three/fiber";
 
 const SENSOR_ENTER_EVENT_NAME = "sensor:enter";
 const DEFAULT_TRIGGER_ENTITY_ID = "player";
 const DEFAULT_TRAVEL_DISTANCE = 4;
 const DEFAULT_MOVE_SPEED = 1.6;
+const DEFAULT_RETURN_DELAY = 1;
+const DEFAULT_RETURN_DURATION = 2.5;
+
+type ElevatorPhase = "idle" | "ascending" | "waiting" | "descending";
 
 type ElevatorMoverProperties = {
     platformNodeId?: string;
@@ -17,6 +21,8 @@ type ElevatorMoverProperties = {
     triggerEntityId?: string;
     travelDistance?: number;
     moveSpeed?: number;
+    returnDelay?: number;
+    returnDuration?: number;
 };
 
 const elevatorMoverFields: FieldDefinition[] = [
@@ -38,6 +44,8 @@ const elevatorMoverFields: FieldDefinition[] = [
     },
     { name: "travelDistance", type: "number", label: "Travel Distance", step: 0.1 },
     { name: "moveSpeed", type: "number", label: "Move Speed", min: 0.01, step: 0.1 },
+    { name: "returnDelay", type: "number", label: "Return Delay", min: 0, step: 0.1 },
+    { name: "returnDuration", type: "number", label: "Return Duration", min: 0.01, step: 0.1 },
 ];
 
 function ElevatorMoverEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
@@ -45,9 +53,10 @@ function ElevatorMoverEditor({ component, onUpdate }: { component: any; onUpdate
 }
 
 function ElevatorMoverView({ properties, children }: { properties: ElevatorMoverProperties; children?: React.ReactNode }) {
-    const { editMode, nodeId } = useEntityRuntime();
+    const { editMode, nodeId } = useCurrentNode();
     const assetRuntime = useAssetRuntime();
-    const activeRef = useRef(false);
+    const phaseRef = useRef<ElevatorPhase>("idle");
+    const waitTimerRef = useRef(0);
     const startHeightsRef = useRef<Record<string, number>>({});
 
     const platformNodeId = useMemo(() => {
@@ -67,8 +76,10 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
     const triggerEntityId = properties.triggerEntityId ?? DEFAULT_TRIGGER_ENTITY_ID;
     const travelDistance = properties.travelDistance ?? DEFAULT_TRAVEL_DISTANCE;
     const moveSpeed = properties.moveSpeed ?? DEFAULT_MOVE_SPEED;
+    const returnDelay = properties.returnDelay ?? DEFAULT_RETURN_DELAY;
+    const returnDuration = properties.returnDuration ?? DEFAULT_RETURN_DURATION;
 
-    usePhysicsEvent(SENSOR_ENTER_EVENT_NAME, (payload: PhysicsEventPayload) => {
+    useGameEvent(SENSOR_ENTER_EVENT_NAME, (payload: ContactEventPayload) => {
         if (editMode || !payload) {
             return;
         }
@@ -80,22 +91,25 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
             return;
         }
 
-        activeRef.current = true;
+        if (phaseRef.current === "idle" || phaseRef.current === "descending") {
+            phaseRef.current = "ascending";
+            waitTimerRef.current = 0;
+        }
     }, [editMode, sensorNodeId, triggerEntityId]);
 
     useFrame((_, delta) => {
-        if (editMode || !activeRef.current) {
+        if (editMode || phaseRef.current === "idle") {
             return;
         }
 
-        const rigidBody = assetRuntime.getRigidBody(platformNodeId);
-        if (!rigidBody || typeof rigidBody.translation !== "function" || typeof rigidBody.setTranslation !== "function") {
-            activeRef.current = false;
+        const platformObject = assetRuntime.getNodeObject(platformNodeId);
+        if (!platformObject) {
+            phaseRef.current = "idle";
+            waitTimerRef.current = 0;
             return;
         }
 
-        const translation = rigidBody.translation();
-        const currentY = translation.y;
+        const currentY = platformObject.position.y;
 
         if (startHeightsRef.current[platformNodeId] === undefined) {
             startHeightsRef.current[platformNodeId] = currentY;
@@ -103,19 +117,41 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
 
         const startY = startHeightsRef.current[platformNodeId];
         const targetY = startY + travelDistance;
+        const returnSpeed = travelDistance / Math.max(returnDuration, 0.01);
 
-        if (currentY >= targetY) {
-            rigidBody.setTranslation({ x: translation.x, y: targetY, z: translation.z }, true);
-            if (typeof rigidBody.setLinvel === "function") {
-                rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        if (phaseRef.current === "waiting") {
+            waitTimerRef.current -= delta;
+            if (waitTimerRef.current <= 0) {
+                phaseRef.current = "descending";
             }
-            activeRef.current = false;
             return;
         }
 
-        const nextY = Math.min(currentY + moveSpeed * delta, targetY);
+        if (phaseRef.current === "ascending") {
+            if (currentY >= targetY) {
+                platformObject.position.y = targetY;
+                platformObject.updateMatrixWorld(true);
+                phaseRef.current = "waiting";
+                waitTimerRef.current = returnDelay;
+                return;
+            }
 
-        rigidBody.setTranslation({ x: translation.x, y: nextY, z: translation.z }, true);
+            const nextY = Math.min(currentY + moveSpeed * delta, targetY);
+
+            platformObject.position.y = nextY;
+            platformObject.updateMatrixWorld(true);
+            return;
+        }
+
+        const nextY = Math.max(currentY - returnSpeed * delta, startY);
+
+        platformObject.position.y = nextY;
+        platformObject.updateMatrixWorld(true);
+
+        if (nextY <= startY) {
+            phaseRef.current = "idle";
+            waitTimerRef.current = 0;
+        }
     });
 
     return <>{children}</>;
@@ -131,6 +167,8 @@ const ElevatorMover: Component = {
         triggerEntityId: DEFAULT_TRIGGER_ENTITY_ID,
         travelDistance: DEFAULT_TRAVEL_DISTANCE,
         moveSpeed: DEFAULT_MOVE_SPEED,
+        returnDelay: DEFAULT_RETURN_DELAY,
+        returnDuration: DEFAULT_RETURN_DURATION,
     },
 };
 

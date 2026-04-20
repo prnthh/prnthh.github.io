@@ -4,11 +4,11 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { PrefabEditor, PrefabEditorMode, registerComponent } from "react-three-game";
 import type { Prefab, PrefabEditorRef } from "react-three-game";
-import FirstPersonPlayer from "./FirstPersonPlayer";
+import FirstPersonPlayer, { KillboxFirstPersonController } from "./FirstPersonPlayer";
 import ElevatorMover from "./ElevatorMover";
 import initialWorld from "@public/samples/killbox.json";
 import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
-import Controls from "@/app/react-three-controller/controls/ControlsProvider";
+import { CrashcatRuntime, type CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
 
 const ORB_SPEED = 1.2;
 const WORLD_BOUNDARY = 8;
@@ -20,14 +20,6 @@ registerComponent(ElevatorMover);
 type Position3 = [number, number, number];
 type OrbVelocity = { x: number; z: number };
 type OrbId = typeof ORB_IDS[number];
-
-function getPosition(position: unknown): Position3 | null {
-    if (!Array.isArray(position) || position.length !== 3) {
-        return null;
-    }
-
-    return position as Position3;
-}
 
 function clampToWorldBounds(value: number) {
     return Math.max(-WORLD_BOUNDARY, Math.min(WORLD_BOUNDARY, value));
@@ -45,16 +37,17 @@ function getNextOrbPosition(position: Position3, velocity: OrbVelocity, delta: n
 
 export default function Home() {
     const editorRef = useRef<PrefabEditorRef>(null);
+    const runtimeRef = useRef<CrashcatRuntimeRef>(null);
 
     return (
-        <Controls>
-            <main className="flex h-screen w-screen flex-col items-center justify-between bg-white dark:bg-black sm:items-start">
-                <PrefabEditor mode={PrefabEditorMode.Play} ref={editorRef} initialPrefab={initialWorld as Prefab}>
-                    <OrbAnimator editorRef={editorRef} />
-                    <RenderPipeline />
-                </PrefabEditor>
-            </main>
-        </Controls>
+        <main className="flex h-screen w-screen flex-col items-center justify-between bg-white dark:bg-black sm:items-start">
+            <PrefabEditor mode={PrefabEditorMode.Play} ref={editorRef} initialPrefab={initialWorld as Prefab}>
+                <KillboxFirstPersonController editorRef={editorRef} runtimeRef={runtimeRef} />
+                <OrbAnimator editorRef={editorRef} />
+                <CrashcatRuntime ref={runtimeRef} editorRef={editorRef} debug />
+                <RenderPipeline />
+            </PrefabEditor>
+        </main>
     );
 }
 
@@ -66,48 +59,31 @@ function OrbAnimator({ editorRef }: { editorRef: React.RefObject<PrefabEditorRef
     const lastVelocityChange = useRef(0);
 
     useFrame((state, delta) => {
-        const store = editorRef.current?.store;
-        if (!store) {
+        const editor = editorRef.current;
+        if (!editor) {
             return;
         }
 
         const time = state.clock.getElapsedTime();
-
         if (time - lastVelocityChange.current > 1 + Math.random()) {
             lastVelocityChange.current = time;
-            velocities.current.orb1 = {
-                x: (Math.random() - 0.5) * 2,
-                z: (Math.random() - 0.5) * 2,
-            };
-            velocities.current.orb2 = {
-                x: (Math.random() - 0.5) * 2,
-                z: (Math.random() - 0.5) * 2,
+            velocities.current = {
+                orb1: { x: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 2 },
+                orb2: { x: (Math.random() - 0.5) * 2, z: (Math.random() - 0.5) * 2 },
             };
         }
 
-        for (const orbId of ORB_IDS) {
-            const node = store.getState().nodesById[orbId];
-            const position = getPosition(node?.components?.transform?.properties?.position);
-            if (!position) {
-                continue;
+        ORB_IDS.forEach((orbId) => {
+            const orb = editor.getNodeObject(orbId);
+            if (!orb) {
+                return;
             }
 
+            const position = [orb.position.x, orb.position.y, orb.position.z] as Position3;
             const nextPosition = getNextOrbPosition(position, velocities.current[orbId], delta);
-
-            store.getState().updateNode(orbId, (currentNode) => ({
-                ...currentNode,
-                components: {
-                    ...currentNode.components,
-                    transform: {
-                        type: "Transform",
-                        properties: {
-                            ...currentNode.components?.transform?.properties,
-                            position: nextPosition,
-                        },
-                    },
-                },
-            }));
-        }
+            orb.position.set(nextPosition[0], nextPosition[1], nextPosition[2]);
+            orb.updateMatrixWorld(true);
+        });
     });
 
     return null;
