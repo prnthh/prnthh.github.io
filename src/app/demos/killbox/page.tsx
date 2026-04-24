@@ -4,17 +4,21 @@ import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { PrefabEditor, PrefabEditorMode, registerComponent } from "react-three-game";
 import type { Prefab, PrefabEditorRef } from "react-three-game";
+
+import { CrashcatRuntime, type CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
+import CrashcatPhysics from "./CrashcatPhysics";
 import FirstPersonPlayer, { KillboxFirstPersonController } from "./FirstPersonPlayer";
 import ElevatorMover from "./ElevatorMover";
+
 import initialWorld from "@public/samples/killbox.json";
 import RenderPipeline from "@/shared/shaders/PostProcessingEffects";
-import { CrashcatRuntime, type CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
 
 const ORB_SPEED = 1.2;
 const WORLD_BOUNDARY = 8;
 const ORB_IDS = ["orb1", "orb2"] as const;
 
 registerComponent(FirstPersonPlayer);
+registerComponent(CrashcatPhysics);
 registerComponent(ElevatorMover);
 
 type Position3 = [number, number, number];

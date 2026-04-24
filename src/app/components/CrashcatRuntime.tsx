@@ -59,13 +59,9 @@ type PhysicsProperties = {
     angularVelocity?: [number, number, number];
     capsuleRadius?: number;
     capsuleHalfHeight?: number;
-    emitCollisionEnterEvent?: boolean;
     collisionEnterEventName?: string;
-    emitCollisionExitEvent?: boolean;
     collisionExitEventName?: string;
-    emitSensorEnterEvent?: boolean;
     sensorEnterEventName?: string;
-    emitSensorExitEvent?: boolean;
     sensorExitEventName?: string;
 };
 
@@ -113,9 +109,17 @@ function isPhysicsProperties(value: unknown): value is PhysicsProperties {
     return Boolean(value) && typeof value === "object";
 }
 
-function readCrashcatProperties(object: Object3D | null | undefined): PhysicsProperties | null {
-    const crashcat = object?.userData?.crashcat;
-    return isPhysicsProperties(crashcat) ? crashcat : null;
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function readCrashcatProperties(node: PrefabNodeLike | null): PhysicsProperties | null {
+    const physics = getNodeComponent(node, "CrashcatPhysics")?.properties;
+    if (!isRecord(physics)) {
+        return null;
+    }
+
+    return isPhysicsProperties(physics) ? physics : null;
 }
 
 function getNodeComponent(node: PrefabNodeLike | null, type: string) {
@@ -159,10 +163,10 @@ function toMotionQuality(physics: PhysicsProperties) {
 
 function toBodyEvents(physics: PhysicsProperties): BodyEvents {
     return {
-        collisionEnter: physics.emitCollisionEnterEvent ? physics.collisionEnterEventName : undefined,
-        collisionExit: physics.emitCollisionExitEvent ? physics.collisionExitEventName : undefined,
-        sensorEnter: physics.emitSensorEnterEvent ? physics.sensorEnterEventName : undefined,
-        sensorExit: physics.emitSensorExitEvent ? physics.sensorExitEventName : undefined,
+        collisionEnter: physics.collisionEnterEventName,
+        collisionExit: physics.collisionExitEventName,
+        sensorEnter: physics.sensorEnterEventName,
+        sensorExit: physics.sensorExitEventName,
     };
 }
 
@@ -471,7 +475,8 @@ export const CrashcatRuntime = forwardRef<CrashcatRuntimeRef, {
             seenNodeIds.add(nodeId);
 
             const object = editor.getNodeObject(nodeId) ?? candidate;
-            const physics = readCrashcatProperties(object);
+            const node = editor.getNode(nodeId) as PrefabNodeLike | null;
+            const physics = readCrashcatProperties(node);
             if (!physics) {
                 return;
             }

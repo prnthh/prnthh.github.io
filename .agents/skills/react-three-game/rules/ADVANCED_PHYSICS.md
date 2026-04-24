@@ -24,9 +24,11 @@ Use the matching surface for the integration point:
 | Custom component wants to expose a handle | `useAssetRuntime().registerNodeHandle(nodeId, kind, handle)` | Publish runtime state back into the tree |
 | Custom component targets another authored node | `useAssetRuntime().getNodeObject(id)` or `getNodeHandle(id, kind)` | Cross-node runtime coordination |
 
-## Authored metadata pattern
+## Authored physics pattern
 
-Author runtime config in `Data.properties.data`. It becomes `object.userData` on the mounted node.
+Author physics and collider config in dedicated custom components, not in `Data` blobs mirrored into `object.userData`.
+
+Use `Data` only for generic app metadata that is not worth a first-class component.
 
 Example:
 
@@ -48,17 +50,11 @@ Example:
         "args": [4, 2, 0.4]
       }
     },
-    "data": {
-      "type": "Data",
+    "crashcatPhysics": {
+      "type": "CrashcatPhysics",
       "properties": {
-        "data": {
-          "crashcat": {
-            "collider": {
-              "shape": "autoBox",
-              "motionType": "static"
-            }
-          }
-        }
+        "shape": "autoBox",
+        "motionType": "static"
       }
     }
   }
@@ -67,9 +63,10 @@ Example:
 
 Guidance:
 
-- Put authored runtime metadata on the same node as the rendered object when possible.
-- Prefer stable ids and metadata over name-based lookups.
-- Use `Data` for runtime tags, collision settings, controller tuning, and game-specific config.
+- Put authored runtime config on the same node as the rendered object when possible.
+- Prefer dedicated authored components like `CrashcatPhysics` for gameplay-facing systems.
+- Prefer stable ids and authored component data over name-based lookups.
+- Do not teach or rely on writing physics config into `object.userData` from component `View`s.
 
 ## External runtime mounted beside `PrefabEditor`
 
@@ -100,9 +97,9 @@ function RuntimeBinding({ editorRef }: { editorRef: React.RefObject<PrefabEditor
       const nodeId = object.userData?.prefabNodeId;
       if (typeof nodeId !== 'string') return;
 
-      const mounted = editor.getNodeObject(nodeId);
-      const config = mounted?.userData?.crashcat;
-      void config;
+      const node = editor.getNode(nodeId);
+      const crashcatPhysics = node?.components?.crashcatPhysics;
+      void crashcatPhysics;
     });
   });
 
@@ -114,7 +111,8 @@ Guidance:
 
 - Rebuild derived runtime state on `onSceneChange`, not every edit-mode frame.
 - Keep steady-state play mode free of edit-time polling when possible.
-- Treat the mounted Three scene as the canonical runtime source of truth for transforms and `userData`.
+- Treat the mounted Three scene as the canonical runtime source of truth for transforms.
+- Treat authored prefab components as the canonical source of truth for physics and gameplay config.
 
 ## Node-local handle pattern
 

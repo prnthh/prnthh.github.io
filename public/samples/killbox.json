@@ -117,15 +117,11 @@
               ]
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "fixed",
-                  "colliders": "trimesh"
-                }
-              }
+              "type": "fixed",
+              "colliders": "trimesh"
             }
           }
         },
@@ -273,37 +269,21 @@
               ]
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "fixed",
-                  "colliders": "cuboid",
-                  "capsuleRadius": 0.35,
-                  "capsuleHalfHeight": 0.45,
-                  "linearVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "angularVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "enabledTranslations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "enabledRotations": [
-                    true,
-                    true,
-                    true
-                  ]
-                }
-              }
+              "type": "fixed",
+              "colliders": "cuboid",
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -363,37 +343,21 @@
               ]
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "fixed",
-                  "colliders": "cuboid",
-                  "capsuleRadius": 0.35,
-                  "capsuleHalfHeight": 0.45,
-                  "linearVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "angularVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "enabledTranslations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "enabledRotations": [
-                    true,
-                    true,
-                    true
-                  ]
-                }
-              }
+              "type": "fixed",
+              "colliders": "cuboid",
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -453,37 +417,21 @@
               ]
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "fixed",
-                  "colliders": "cuboid",
-                  "capsuleRadius": 0.35,
-                  "capsuleHalfHeight": 0.45,
-                  "linearVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "angularVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "enabledTranslations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "enabledRotations": [
-                    true,
-                    true,
-                    true
-                  ]
-                }
-              }
+              "type": "fixed",
+              "colliders": "cuboid",
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -543,37 +491,21 @@
               ]
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "fixed",
-                  "colliders": "cuboid",
-                  "capsuleRadius": 0.35,
-                  "capsuleHalfHeight": 0.45,
-                  "linearVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "angularVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "enabledTranslations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "enabledRotations": [
-                    true,
-                    true,
-                    true
-                  ]
-                }
-              }
+              "type": "fixed",
+              "colliders": "cuboid",
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -633,37 +565,21 @@
               ]
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "fixed",
-                  "colliders": "cuboid",
-                  "capsuleRadius": 0.35,
-                  "capsuleHalfHeight": 0.45,
-                  "linearVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "angularVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "enabledTranslations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "enabledRotations": [
-                    true,
-                    true,
-                    true
-                  ]
-                }
-              }
+              "type": "fixed",
+              "colliders": "cuboid",
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ]
             }
           }
         },
@@ -795,37 +711,21 @@
                   "roughness": 1
                 }
               },
-              "data": {
-                "type": "Data",
+              "crashcatPhysics": {
+                "type": "CrashcatPhysics",
                 "properties": {
-                  "data": {
-                    "crashcat": {
-                      "type": "fixed",
-                      "colliders": "cuboid",
-                      "capsuleRadius": 0.35,
-                      "capsuleHalfHeight": 0.45,
-                      "linearVelocity": [
-                        0,
-                        0,
-                        0
-                      ],
-                      "angularVelocity": [
-                        0,
-                        0,
-                        0
-                      ],
-                      "enabledTranslations": [
-                        true,
-                        true,
-                        true
-                      ],
-                      "enabledRotations": [
-                        true,
-                        true,
-                        true
-                      ]
-                    }
-                  }
+                  "type": "fixed",
+                  "colliders": "cuboid",
+                  "linearVelocity": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "angularVelocity": [
+                    0,
+                    0,
+                    0
+                  ]
                 }
               }
             },
@@ -879,37 +779,21 @@
                   "roughness": 1
                 }
               },
-              "data": {
-                "type": "Data",
+              "crashcatPhysics": {
+                "type": "CrashcatPhysics",
                 "properties": {
-                  "data": {
-                    "crashcat": {
-                      "type": "fixed",
-                      "colliders": "cuboid",
-                      "capsuleRadius": 0.35,
-                      "capsuleHalfHeight": 0.45,
-                      "linearVelocity": [
-                        0,
-                        0,
-                        0
-                      ],
-                      "angularVelocity": [
-                        0,
-                        0,
-                        0
-                      ],
-                      "enabledTranslations": [
-                        true,
-                        true,
-                        true
-                      ],
-                      "enabledRotations": [
-                        true,
-                        true,
-                        true
-                      ]
-                    }
-                  }
+                  "type": "fixed",
+                  "colliders": "cuboid",
+                  "linearVelocity": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "angularVelocity": [
+                    0,
+                    0,
+                    0
+                  ]
                 }
               }
             },
@@ -978,39 +862,22 @@
               "randomizeVolume": false
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "kinematicPosition",
-                  "colliders": "ball",
-                  "activeCollisionTypes": "all",
-                  "linearVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "angularVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "enabledTranslations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "enabledRotations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "ccd": true,
-                  "emitCollisionEnterEvent": true,
-                  "collisionEnterEventName": "orb:collision"
-                }
-              }
+              "type": "kinematicPosition",
+              "colliders": "ball",
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ],
+              "collisionEnterEventName": "orb:collision"
             }
           }
         },
@@ -1077,39 +944,22 @@
               "randomizeVolume": false
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "kinematicPosition",
-                  "colliders": "ball",
-                  "activeCollisionTypes": "all",
-                  "linearVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "angularVelocity": [
-                    0,
-                    0,
-                    0
-                  ],
-                  "enabledTranslations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "enabledRotations": [
-                    true,
-                    true,
-                    true
-                  ],
-                  "ccd": true,
-                  "emitCollisionEnterEvent": true,
-                  "collisionEnterEventName": "orb:collision"
-                }
-              }
+              "type": "kinematicPosition",
+              "colliders": "ball",
+              "linearVelocity": [
+                0,
+                0,
+                0
+              ],
+              "angularVelocity": [
+                0,
+                0,
+                0
+              ],
+              "collisionEnterEventName": "orb:collision"
             }
           }
         },
@@ -1138,24 +988,14 @@
               ]
             }
           },
-          "data": {
-            "type": "Data",
+          "crashcatPhysics": {
+            "type": "CrashcatPhysics",
             "properties": {
-              "data": {
-                "crashcat": {
-                  "type": "dynamic",
-                  "colliders": "capsule",
-                  "capsuleRadius": 0.35,
-                  "capsuleHalfHeight": 0.45,
-                  "canSleep": false,
-                  "friction": 0,
-                  "enabledRotations": [
-                    false,
-                    false,
-                    false
-                  ]
-                }
-              }
+              "type": "dynamic",
+              "colliders": "capsule",
+              "capsuleRadius": 0.35,
+              "capsuleHalfHeight": 0.45,
+              "friction": 0
             }
           },
           "firstpersonplayer": {
@@ -1364,37 +1204,21 @@
                   ]
                 }
               },
-              "data": {
-                "type": "Data",
+              "crashcatPhysics": {
+                "type": "CrashcatPhysics",
                 "properties": {
-                  "data": {
-                    "crashcat": {
-                      "type": "kinematicVelocity",
-                      "colliders": "hull",
-                      "capsuleRadius": 0.35,
-                      "capsuleHalfHeight": 0.45,
-                      "linearVelocity": [
-                        0,
-                        0,
-                        0
-                      ],
-                      "angularVelocity": [
-                        0,
-                        0,
-                        0
-                      ],
-                      "enabledTranslations": [
-                        true,
-                        true,
-                        true
-                      ],
-                      "enabledRotations": [
-                        true,
-                        true,
-                        true
-                      ]
-                    }
-                  }
+                  "type": "kinematicVelocity",
+                  "colliders": "hull",
+                  "linearVelocity": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "angularVelocity": [
+                    0,
+                    0,
+                    0
+                  ]
                 }
               }
             },
@@ -1436,40 +1260,23 @@
                       "receiveShadow": false
                     }
                   },
-                  "data": {
-                    "type": "Data",
+                  "crashcatPhysics": {
+                    "type": "CrashcatPhysics",
                     "properties": {
-                      "data": {
-                        "crashcat": {
-                          "type": "fixed",
-                          "colliders": "hull",
-                          "capsuleRadius": 0.35,
-                          "capsuleHalfHeight": 0.45,
-                          "linearVelocity": [
-                            0,
-                            0,
-                            0
-                          ],
-                          "angularVelocity": [
-                            0,
-                            0,
-                            0
-                          ],
-                          "enabledTranslations": [
-                            true,
-                            true,
-                            true
-                          ],
-                          "enabledRotations": [
-                            true,
-                            true,
-                            true
-                          ],
-                          "sensor": true,
-                          "emitSensorEnterEvent": true,
-                          "sensorEnterEventName": "sensor:enter"
-                        }
-                      }
+                      "type": "fixed",
+                      "colliders": "hull",
+                      "linearVelocity": [
+                        0,
+                        0,
+                        0
+                      ],
+                      "angularVelocity": [
+                        0,
+                        0,
+                        0
+                      ],
+                      "sensor": true,
+                      "sensorEnterEventName": "sensor:enter"
                     }
                   },
                   "material": {
