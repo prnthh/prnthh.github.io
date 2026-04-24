@@ -72,6 +72,10 @@ type BodyEvents = {
     sensorExit?: string;
 };
 
+type ContactEventExtra = {
+    collisionNormal?: [number, number, number];
+};
+
 type BodyMeta = {
     nodeId: string;
     motionType: MotionType;
@@ -170,7 +174,7 @@ function toBodyEvents(physics: PhysicsProperties): BodyEvents {
     };
 }
 
-function emitEvent(eventName: string | undefined, sourceNodeId: string, targetNodeId: string | null) {
+function emitEvent(eventName: string | undefined, sourceNodeId: string, targetNodeId: string | null, extra?: ContactEventExtra) {
     const trimmed = eventName?.trim();
     if (!trimmed) {
         return;
@@ -181,6 +185,7 @@ function emitEvent(eventName: string | undefined, sourceNodeId: string, targetNo
         sourceNodeId,
         targetEntityId: targetNodeId,
         targetNodeId,
+        ...extra,
     });
 }
 
@@ -347,15 +352,28 @@ export const CrashcatRuntime = forwardRef<CrashcatRuntimeRef, {
     }
 
     const listener = useMemo<Listener>(() => ({
-        onContactAdded: (bodyA, bodyB) => {
+        onContactAdded: (bodyA, bodyB, manifold) => {
             const metaA = bodyMetaByIdRef.current.get(Number(bodyA.id));
             const metaB = bodyMetaByIdRef.current.get(Number(bodyB.id));
+            const collisionNormal = manifold?.worldSpaceNormal
+                ? [manifold.worldSpaceNormal[0], manifold.worldSpaceNormal[1], manifold.worldSpaceNormal[2]] as [number, number, number]
+                : undefined;
+            const aExtra = collisionNormal
+                ? {
+                    collisionNormal,
+                }
+                : undefined;
+            const bExtra = collisionNormal
+                ? {
+                    collisionNormal: [-collisionNormal[0], -collisionNormal[1], -collisionNormal[2]] as [number, number, number],
+                }
+                : undefined;
 
             if (metaA) {
-                emitEvent(metaA.sensor ? metaA.events.sensorEnter : metaA.events.collisionEnter, metaA.nodeId, metaB?.nodeId ?? null);
+                emitEvent(metaA.sensor ? metaA.events.sensorEnter : metaA.events.collisionEnter, metaA.nodeId, metaB?.nodeId ?? null, aExtra);
             }
             if (metaB) {
-                emitEvent(metaB.sensor ? metaB.events.sensorEnter : metaB.events.collisionEnter, metaB.nodeId, metaA?.nodeId ?? null);
+                emitEvent(metaB.sensor ? metaB.events.sensorEnter : metaB.events.collisionEnter, metaB.nodeId, metaA?.nodeId ?? null, bExtra);
             }
         },
         onContactRemoved: (bodyIdA, bodyIdB) => {

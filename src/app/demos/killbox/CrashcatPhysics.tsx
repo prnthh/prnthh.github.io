@@ -49,24 +49,17 @@ const crashcatPhysicsFields: FieldDefinition[] = [
     { name: "capsuleHalfHeight", type: "number", label: "Capsule Half Height", step: 0.05 },
 ];
 
-function CrashcatPhysicsEditor({ component, onUpdate }: { component: { properties: CrashcatPhysicsProperties }; onUpdate: (newComp: { properties: CrashcatPhysicsProperties }) => void }) {
-    const handleFieldChange = (values: Record<string, any>) => {
-        onUpdate({
-            ...component,
-            properties: values as CrashcatPhysicsProperties,
-        });
-    };
-
+function CrashcatPhysicsEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <FieldRenderer fields={crashcatPhysicsFields} values={component.properties} onChange={handleFieldChange} />
-            <BooleanField name="sensor" label="Sensor" values={component.properties} onChange={handleFieldChange} fallback={false} />
-            <Vector3Field name="linearVelocity" label="Linear Velocity" values={component.properties} onChange={handleFieldChange} fallback={[0, 0, 0]} />
-            <Vector3Field name="angularVelocity" label="Angular Velocity" values={component.properties} onChange={handleFieldChange} fallback={[0, 0, 0]} />
-            <StringField name="collisionEnterEventName" label="Collision Enter" values={component.properties} onChange={handleFieldChange} fallback="" />
-            <StringField name="collisionExitEventName" label="Collision Exit" values={component.properties} onChange={handleFieldChange} fallback="" />
-            <StringField name="sensorEnterEventName" label="Sensor Enter" values={component.properties} onChange={handleFieldChange} fallback="" />
-            <StringField name="sensorExitEventName" label="Sensor Exit" values={component.properties} onChange={handleFieldChange} fallback="" />
+            <FieldRenderer fields={crashcatPhysicsFields} values={component.properties} onChange={onUpdate} />
+            <BooleanField name="sensor" label="Sensor" values={component.properties} onChange={onUpdate} fallback={false} />
+            <Vector3Field name="linearVelocity" label="Linear Velocity" values={component.properties} onChange={onUpdate} fallback={[0, 0, 0]} />
+            <Vector3Field name="angularVelocity" label="Angular Velocity" values={component.properties} onChange={onUpdate} fallback={[0, 0, 0]} />
+            <StringField name="collisionEnterEventName" label="Collision Enter" values={component.properties} onChange={onUpdate} fallback="" />
+            <StringField name="collisionExitEventName" label="Collision Exit" values={component.properties} onChange={onUpdate} fallback="" />
+            <StringField name="sensorEnterEventName" label="Sensor Enter" values={component.properties} onChange={onUpdate} fallback="" />
+            <StringField name="sensorExitEventName" label="Sensor Exit" values={component.properties} onChange={onUpdate} fallback="" />
         </div>
     );
 }

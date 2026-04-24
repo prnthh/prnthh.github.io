@@ -1,13 +1,12 @@
 "use client";
 
-import { PointerLockControls } from "@react-three/drei";
-import { useFrame, useThree } from "@react-three/fiber";
-import { capsule, filter, kcc, type Filter } from "crashcat";
-import { useEffect, useRef } from "react";
-import { FieldRenderer, gameEvents, PrefabEditorMode, useCurrentNode, useEditorContext, type PrefabEditorRef } from "react-three-game";
-import type { Component, FieldDefinition } from "react-three-game";
+import { PerspectiveCamera, PointerLockControls } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import { capsule, filter, kcc, rigidBody, MotionType, type Filter, type RigidBody } from "crashcat";
+import { forwardRef, useEffect, useImperativeHandle, useRef, type RefObject } from "react";
+import { gameEvents, PrefabEditorMode, useEditorContext } from "react-three-game";
 import type { CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
-import { Vector3 } from "three";
+import { Group, Quaternion, Vector3 } from "three";
 
 const DEFAULT_MAX_SPEED = 7;
 const DEFAULT_GROUND_ACCEL = 18;
@@ -18,9 +17,12 @@ const DEFAULT_FOOTSTEP_EVENT = "player:footstep";
 const DEFAULT_FOOTSTEP_MIN_INTERVAL = 0.28;
 const DEFAULT_FOOTSTEP_MAX_INTERVAL = 0.48;
 const DEFAULT_FOOTSTEP_MIN_SPEED = 1.5;
+const FOOTSTEP_CLIPS = ["/sound/hit.mp3", "/sound/hit2.mp3"] as const;
 const DEFAULT_RADIUS = 0.35;
 const DEFAULT_HALF_HEIGHT = 0.45;
+const DEFAULT_CAMERA_HEIGHT = 0.54;
 const GRAVITY: [number, number, number] = [0, -9.81, 0];
+const PLAYER_ID = "player";
 
 const forwardKeys = new Set(["KeyW", "ArrowUp"]);
 const backwardKeys = new Set(["KeyS", "ArrowDown"]);
@@ -30,11 +32,13 @@ const rightKeys = new Set(["KeyD", "ArrowRight"]);
 const forwardVector = new Vector3();
 const rightVector = new Vector3();
 const wishVector = new Vector3();
+const planarVelocityVector = new Vector3();
 const worldUp = new Vector3(0, 1, 0);
-const worldPosition = new Vector3();
-const localPosition = new Vector3();
+const groupPosition = new Vector3();
+const identityQuaternion = new Quaternion();
 
-export type FirstPersonPlayerProperties = {
+export type FirstPersonPlayerProps = {
+    runtimeRef: RefObject<CrashcatRuntimeRef | null>;
     radius?: number;
     halfHeightOfCylinder?: number;
     maxSpeed?: number;
@@ -46,30 +50,12 @@ export type FirstPersonPlayerProperties = {
     footstepMinInterval?: number;
     footstepMaxInterval?: number;
     footstepMinSpeed?: number;
+    cameraHeight?: number;
+    spawnPosition?: [number, number, number];
 };
 
-const firstPersonPlayerFields: FieldDefinition[] = [
-    { name: "radius", type: "number", label: "Radius", min: 0.05, step: 0.01 },
-    { name: "halfHeightOfCylinder", type: "number", label: "Half Height", min: 0.05, step: 0.01 },
-    { name: "maxSpeed", type: "number", label: "Max Speed", min: 0.1, step: 0.1 },
-    { name: "groundAccel", type: "number", label: "Ground Accel", min: 0.1, step: 0.1 },
-    { name: "airAccel", type: "number", label: "Air Accel", min: 0.1, step: 0.1 },
-    { name: "friction", type: "number", label: "Friction", min: 0, step: 0.1 },
-    { name: "jumpSpeed", type: "number", label: "Jump Speed", min: 0, step: 0.1 },
-    { name: "footstepEventName", type: "string", label: "Footstep Event", placeholder: DEFAULT_FOOTSTEP_EVENT },
-    { name: "footstepMinInterval", type: "number", label: "Step Min Interval", min: 0.05, step: 0.01 },
-    { name: "footstepMaxInterval", type: "number", label: "Step Max Interval", min: 0.05, step: 0.01 },
-    { name: "footstepMinSpeed", type: "number", label: "Step Min Speed", min: 0, step: 0.1 },
-];
-
-function FirstPersonPlayerEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
-    return <FieldRenderer fields={firstPersonPlayerFields} values={component.properties} onChange={onUpdate} />;
-}
-
-function FirstPersonPlayerView({ properties, children }: { properties: FirstPersonPlayerProperties; children?: React.ReactNode }) {
-    const { editMode } = useCurrentNode();
-
-    return editMode ? <group>{children}</group> : <>{children}</>;
+export interface FirstPersonPlayerRef {
+    getBody: () => RigidBody | null;
 }
 
 function moveToward(current: number, target: number, maxDelta: number) {
@@ -87,45 +73,24 @@ function hasPressedKey(pressedKeys: Set<string>, keys: Set<string>) {
     return false;
 }
 
-function readPlayerSettings(editor: PrefabEditorRef | null, playerId: string): Required<FirstPersonPlayerProperties> {
-    const componentMap = (editor?.getNode(playerId) as { components?: Record<string, { type?: string; properties?: FirstPersonPlayerProperties } | undefined> } | null)
-        ?.components;
-
-    let properties: FirstPersonPlayerProperties = {};
-    if (componentMap) {
-        for (const component of Object.values(componentMap)) {
-            if (component?.type === "FirstPersonPlayer") {
-                properties = component.properties ?? {};
-                break;
-            }
-        }
-    }
-
-    return {
-        radius: properties.radius ?? DEFAULT_RADIUS,
-        halfHeightOfCylinder: properties.halfHeightOfCylinder ?? DEFAULT_HALF_HEIGHT,
-        maxSpeed: properties.maxSpeed ?? DEFAULT_MAX_SPEED,
-        groundAccel: properties.groundAccel ?? DEFAULT_GROUND_ACCEL,
-        airAccel: properties.airAccel ?? DEFAULT_AIR_ACCEL,
-        friction: properties.friction ?? DEFAULT_FRICTION,
-        jumpSpeed: properties.jumpSpeed ?? DEFAULT_JUMP_SPEED,
-        footstepEventName: properties.footstepEventName ?? DEFAULT_FOOTSTEP_EVENT,
-        footstepMinInterval: properties.footstepMinInterval ?? DEFAULT_FOOTSTEP_MIN_INTERVAL,
-        footstepMaxInterval: properties.footstepMaxInterval ?? DEFAULT_FOOTSTEP_MAX_INTERVAL,
-        footstepMinSpeed: properties.footstepMinSpeed ?? DEFAULT_FOOTSTEP_MIN_SPEED,
-    };
-}
-
-export function KillboxFirstPersonController({
-    editorRef,
+const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProps>(function FirstPersonPlayer({
     runtimeRef,
-    playerId = "player",
-}: {
-    editorRef: React.RefObject<PrefabEditorRef | null>;
-    runtimeRef: React.RefObject<CrashcatRuntimeRef | null>;
-    playerId?: string;
-}) {
+    radius = DEFAULT_RADIUS,
+    halfHeightOfCylinder = DEFAULT_HALF_HEIGHT,
+    maxSpeed = DEFAULT_MAX_SPEED,
+    groundAccel = DEFAULT_GROUND_ACCEL,
+    airAccel = DEFAULT_AIR_ACCEL,
+    friction = DEFAULT_FRICTION,
+    jumpSpeed = DEFAULT_JUMP_SPEED,
+    footstepEventName = DEFAULT_FOOTSTEP_EVENT,
+    footstepMinInterval = DEFAULT_FOOTSTEP_MIN_INTERVAL,
+    footstepMaxInterval = DEFAULT_FOOTSTEP_MAX_INTERVAL,
+    footstepMinSpeed = DEFAULT_FOOTSTEP_MIN_SPEED,
+    cameraHeight = DEFAULT_CAMERA_HEIGHT,
+    spawnPosition = [0, 1.3, 6],
+}, ref) {
     const { mode } = useEditorContext();
+    const playerGroupRef = useRef<Group>(null);
     const planarVelocityRef = useRef(new Vector3());
     const footstepTimerRef = useRef(0);
     const characterRef = useRef<ReturnType<typeof kcc.create> | null>(null);
@@ -133,7 +98,12 @@ export function KillboxFirstPersonController({
     const pressedKeysRef = useRef(new Set<string>());
     const jumpQueuedRef = useRef(false);
     const characterFilterRef = useRef<Filter | null>(null);
-    const { camera } = useThree();
+    const playerBodyRef = useRef<RigidBody | null>(null);
+    const footstepAudioRefs = useRef<HTMLAudioElement[]>([]);
+
+    useImperativeHandle(ref, () => ({
+        getBody: () => playerBodyRef.current,
+    }), []);
 
     useEffect(() => {
         const setKey = (pressed: boolean) => (event: KeyboardEvent) => {
@@ -189,20 +159,82 @@ export function KillboxFirstPersonController({
         pressedKeysRef.current.clear();
     }, [mode]);
 
-    useFrame((_, delta) => {
-        if (mode !== PrefabEditorMode.Play) return;
+    useEffect(() => {
+        footstepAudioRefs.current = FOOTSTEP_CLIPS.map((clip) => {
+            const audio = new Audio(clip);
+            audio.preload = "auto";
+            return audio;
+        });
 
-        const editor = editorRef.current;
+        return () => {
+            footstepAudioRefs.current.forEach((audio) => {
+                audio.pause();
+                audio.src = "";
+            });
+            footstepAudioRefs.current = [];
+        };
+    }, []);
+
+    const playFootstepSound = () => {
+        const clips = footstepAudioRefs.current;
+        if (clips.length === 0) {
+            return;
+        }
+
+        const source = clips[Math.floor(Math.random() * clips.length)];
+        const audio = source.cloneNode() as HTMLAudioElement;
+        audio.volume = 0.2 + Math.random() * 0.12;
+        audio.playbackRate = 0.9 + Math.random() * 0.14;
+        void audio.play().catch(() => { });
+    };
+
+    useEffect(() => {
+        if (mode !== PrefabEditorMode.Play) {
+            return;
+        }
+
+        const runtime = runtimeRef.current;
+        const world = runtime?.world;
+        if (!world || playerBodyRef.current) {
+            return;
+        }
+
+        playerBodyRef.current = rigidBody.create(world, {
+            shape: capsule.create({
+                radius,
+                halfHeightOfCylinder,
+            }),
+            motionType: MotionType.KINEMATIC,
+            objectLayer: runtime.movingObjectLayer,
+            position: spawnPosition,
+            quaternion: [0, 0, 0, 1],
+            collideKinematicVsNonDynamic: true,
+            friction: 0,
+            userData: { nodeId: PLAYER_ID },
+        });
+
+        return () => {
+            if (!playerBodyRef.current) {
+                return;
+            }
+
+            rigidBody.remove(world, playerBodyRef.current);
+            playerBodyRef.current = null;
+        };
+    }, [halfHeightOfCylinder, mode, radius, runtimeRef, spawnPosition]);
+
+    useFrame((state, delta) => {
+        if (mode !== PrefabEditorMode.Play) {
+            return;
+        }
+
         const runtime = runtimeRef.current;
         const world = runtime?.world;
         const baseQueryFilter = runtime?.queryFilter;
-        if (!editor || !world || !baseQueryFilter) return;
-
-        const playerObject = editor.getNodeObject(playerId);
-        if (!playerObject) return;
-
-        const settings = readPlayerSettings(editor, playerId);
-        playerObject.getWorldPosition(worldPosition);
+        const playerGroup = playerGroupRef.current;
+        if (!world || !baseQueryFilter || !playerGroup) {
+            return;
+        }
 
         if (!characterRef.current) {
             planarVelocityRef.current.set(0, 0, 0);
@@ -210,12 +242,12 @@ export function KillboxFirstPersonController({
             jumpQueuedRef.current = false;
             characterRef.current = kcc.create({
                 shape: capsule.create({
-                    radius: settings.radius,
-                    halfHeightOfCylinder: settings.halfHeightOfCylinder,
+                    radius,
+                    halfHeightOfCylinder,
                 }),
                 maxSlopeAngle: Math.PI / 3,
                 characterPadding: 0.02,
-            }, [worldPosition.x, worldPosition.y, worldPosition.z], [0, 0, 0, 1]);
+            }, spawnPosition, [0, 0, 0, 1]);
         }
 
         if (!characterFilterRef.current) {
@@ -225,14 +257,13 @@ export function KillboxFirstPersonController({
         const character = characterRef.current;
         const characterFilter = characterFilterRef.current;
         filter.copy(characterFilter, baseQueryFilter);
-        const playerBody = runtime.getBody(playerId);
-        characterFilter.bodyFilter = playerBody ? (body) => body !== playerBody : undefined;
+        characterFilter.bodyFilter = playerBodyRef.current ? (body) => body !== playerBodyRef.current : undefined;
 
         const pressedKeys = pressedKeysRef.current;
         const forwardInput = Number(hasPressedKey(pressedKeys, forwardKeys)) - Number(hasPressedKey(pressedKeys, backwardKeys));
         const rightInput = Number(hasPressedKey(pressedKeys, rightKeys)) - Number(hasPressedKey(pressedKeys, leftKeys));
 
-        camera.getWorldDirection(forwardVector);
+        state.camera.getWorldDirection(forwardVector);
         forwardVector.y = 0;
 
         if (forwardVector.lengthSq() < 1e-6) {
@@ -255,10 +286,10 @@ export function KillboxFirstPersonController({
         const currentVelocityY = character.linearVelocity[1];
 
         const desiredPlanarSpeed = wishVector.lengthSq() > 0
-            ? wishVector.normalize().multiplyScalar(settings.maxSpeed)
+            ? wishVector.normalize().multiplyScalar(maxSpeed)
             : wishVector.set(0, 0, 0);
 
-        const accel = grounded ? settings.groundAccel : settings.airAccel;
+        const accel = grounded ? groundAccel : airAccel;
         const maxDelta = accel * delta;
         planarVelocity.set(
             moveToward(planarVelocity.x, desiredPlanarSpeed.x, maxDelta),
@@ -267,12 +298,12 @@ export function KillboxFirstPersonController({
         );
 
         if (grounded && planarVelocity.lengthSq() > 0 && desiredPlanarSpeed.lengthSq() === 0) {
-            const damping = Math.max(0, 1 - settings.friction * delta * 0.1);
+            const damping = Math.max(0, 1 - friction * delta * 0.1);
             planarVelocity.multiplyScalar(damping);
         }
 
         if (grounded && jumpQueuedRef.current) {
-            character.linearVelocity[1] = settings.jumpSpeed;
+            character.linearVelocity[1] = jumpSpeed;
             jumpQueuedRef.current = false;
         } else {
             character.linearVelocity[1] = grounded
@@ -286,7 +317,7 @@ export function KillboxFirstPersonController({
         kcc.update(world, character, stepDelta, GRAVITY, updateSettingsRef.current, undefined, characterFilter);
 
         const speed = planarVelocity.length();
-        const moving = grounded && desiredPlanarSpeed.lengthSq() > 0 && speed > settings.footstepMinSpeed;
+        const moving = grounded && desiredPlanarSpeed.lengthSq() > 0 && speed > footstepMinSpeed;
 
         if (!moving) {
             footstepTimerRef.current = 0;
@@ -294,49 +325,41 @@ export function KillboxFirstPersonController({
             footstepTimerRef.current -= delta;
 
             if (footstepTimerRef.current <= 0) {
-                gameEvents.emit(settings.footstepEventName, {
-                    nodeId: "player-footsteps",
-                    sourceEntityId: playerId,
-                    sourceNodeId: playerId,
+                gameEvents.emit(footstepEventName, {
+                    sourceEntityId: PLAYER_ID,
+                    sourceNodeId: PLAYER_ID,
                     speed,
                 });
+                playFootstepSound();
 
-                const speedAlpha = Math.min(speed / settings.maxSpeed, 1);
-                footstepTimerRef.current = settings.footstepMaxInterval - (settings.footstepMaxInterval - settings.footstepMinInterval) * speedAlpha;
+                const speedAlpha = Math.min(speed / maxSpeed, 1);
+                footstepTimerRef.current = footstepMaxInterval - (footstepMaxInterval - footstepMinInterval) * speedAlpha;
             }
         }
 
-        worldPosition.set(character.position[0], character.position[1], character.position[2]);
-        if (playerObject.parent) {
-            localPosition.copy(worldPosition);
-            playerObject.parent.worldToLocal(localPosition);
-            playerObject.position.copy(localPosition);
-        } else {
-            playerObject.position.copy(worldPosition);
+        groupPosition.set(character.position[0], character.position[1], character.position[2]);
+        playerGroup.position.copy(groupPosition);
+        playerGroup.quaternion.copy(identityQuaternion);
+        playerGroup.updateMatrixWorld(true);
+
+        if (playerBodyRef.current) {
+            rigidBody.setPosition(world, playerBodyRef.current, [groupPosition.x, groupPosition.y, groupPosition.z], true);
+            rigidBody.setQuaternion(world, playerBodyRef.current, [0, 0, 0, 1], true);
+            planarVelocityVector.set(character.linearVelocity[0], character.linearVelocity[1], character.linearVelocity[2]);
+            rigidBody.setLinearVelocity(world, playerBodyRef.current, [planarVelocityVector.x, planarVelocityVector.y, planarVelocityVector.z]);
         }
-        playerObject.updateMatrixWorld(true);
     });
 
-    return mode === PrefabEditorMode.Play ? <PointerLockControls makeDefault /> : null;
-}
+    if (mode !== PrefabEditorMode.Play) {
+        return null;
+    }
 
-const FirstPersonPlayer: Component = {
-    name: "FirstPersonPlayer",
-    Editor: FirstPersonPlayerEditor,
-    View: FirstPersonPlayerView,
-    defaultProperties: {
-        radius: DEFAULT_RADIUS,
-        halfHeightOfCylinder: DEFAULT_HALF_HEIGHT,
-        maxSpeed: DEFAULT_MAX_SPEED,
-        groundAccel: DEFAULT_GROUND_ACCEL,
-        airAccel: DEFAULT_AIR_ACCEL,
-        friction: DEFAULT_FRICTION,
-        jumpSpeed: DEFAULT_JUMP_SPEED,
-        footstepEventName: DEFAULT_FOOTSTEP_EVENT,
-        footstepMinInterval: DEFAULT_FOOTSTEP_MIN_INTERVAL,
-        footstepMaxInterval: DEFAULT_FOOTSTEP_MAX_INTERVAL,
-        footstepMinSpeed: DEFAULT_FOOTSTEP_MIN_SPEED,
-    },
-};
+    return (
+        <group ref={playerGroupRef} position={spawnPosition}>
+            <PerspectiveCamera makeDefault position={[0, cameraHeight, 0]} fov={90} near={0.1} far={1000} />
+            <PointerLockControls makeDefault />
+        </group>
+    );
+});
 
 export default FirstPersonPlayer;

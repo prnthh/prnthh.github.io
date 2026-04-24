@@ -1,7 +1,7 @@
 
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo } from "react";
-import { PostProcessing, WebGPURenderer } from "three/webgpu";
+import { RenderPipeline, WebGPURenderer } from "three/webgpu";
 import { pass, mrt, output, directionToColor, normalView, vec4 } from "three/tsl";
 import { ao } from "three/addons/tsl/display/GTAONode.js";
 import { denoise } from "three/addons/tsl/display/DenoiseNode.js";
@@ -22,7 +22,7 @@ type RenderPipelineProps = {
     aoPower?: number;
 };
 
-const RenderPipeline = ({
+const MyRenderPipeline = ({
     aoResolutionScale = 1,
     aoRadius = 0.18,
     aoScale = 1,
@@ -40,7 +40,7 @@ const RenderPipeline = ({
     const { gl, scene, camera } = useThree();
 
     const postProcessing = useMemo(() => {
-        const pipeline = new PostProcessing(gl as unknown as WebGPURenderer);
+        const pipeline = new RenderPipeline(gl as unknown as WebGPURenderer);
         const scenePass = pass(scene, camera);
 
         scenePass.setMRT(mrt({
@@ -108,4 +108,4 @@ const RenderPipeline = ({
     return null;
 };
 
-export default RenderPipeline;
+export default MyRenderPipeline;

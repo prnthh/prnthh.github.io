@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react"
-import { useGameStateStore } from "../core/GameStateStore"
+// import { useGameStateStore } from "../core/GameStateStore"
 import { LobbyRoom } from "./LobbyRoom"
 import { GameRoom } from "./GameRoom"
 import { FPSRoom } from "./FPSRoom"
@@ -44,12 +44,12 @@ function useRoom<T extends GameRoom<any, any>>(
             // Skip if already in this room
             if (currentRoomIdRef.current === targetRoomId) return
 
-            const store = useGameStateStore.getState()
+            // const store = useGameStateStore.getState()
             const newRoom = new RoomClass(
                 appId, PASSWORD, targetRoomId,
-                (id: string, state: any) => syncEntity && store.updateEntity(id, state),
-                (id: string) => syncEntity && newRoom.syncPeer(id, useGameStateStore.getState().localEntity),
-                (id: string) => syncEntity && store.removeEntity(id)
+                // (id: string, state: any) => syncEntity && store.updateEntity(id, state),
+                // (id: string) => syncEntity && newRoom.syncPeer(id, useGameStateStore.getState().localEntity),
+                // (id: string) => syncEntity && store.removeEntity(id)
             )
 
             if (newRoom instanceof FPSRoom && isHost) newRoom.becomeHost()
