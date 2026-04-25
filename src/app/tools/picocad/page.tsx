@@ -530,7 +530,6 @@ export default function PicocadPage() {
                 <PrefabEditor
                     ref={handleEditorRef}
                     initialPrefab={EMPTY_PREFAB}
-                    physics={false}
                     showUI={false}
                     enableWindowDrop={false}
                     canvasProps={{
