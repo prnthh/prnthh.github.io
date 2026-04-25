@@ -2,8 +2,8 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { FieldRenderer, useAssetRuntime, useCurrentNode, useGameEvent } from "react-three-game";
-import type { Component, ContactEventPayload, FieldDefinition } from "react-three-game";
+import { FieldRenderer, useNode, useScene, useGameEvent } from "react-three-game";
+import type { Component, ComponentViewProps, ContactEventPayload, FieldDefinition } from "react-three-game";
 
 const DEFAULT_SPEED = 1.2;
 const COLLISION_EVENT_NAME = "orb:collision";
@@ -59,9 +59,9 @@ function isOrbCollisionPayload(value: unknown): value is OrbCollisionPayload {
     return value != null && typeof value === "object" && "sourceNodeId" in value;
 }
 
-function OrbMoverView({ properties, children }: { properties: OrbMoverProperties; children?: React.ReactNode }) {
-    const { editMode, nodeId } = useCurrentNode();
-    const assetRuntime = useAssetRuntime();
+function OrbMoverView({ properties, children }: ComponentViewProps<OrbMoverProperties>) {
+    const { editMode, nodeId } = useNode();
+    const scene = useScene();
     const velocityRef = useRef<OrbVelocity>(normalizeVelocity(properties.velocityX ?? 1, properties.velocityZ ?? 0));
 
     const speed = properties.speed ?? DEFAULT_SPEED;
@@ -106,7 +106,7 @@ function OrbMoverView({ properties, children }: { properties: OrbMoverProperties
             return;
         }
 
-        const orb = assetRuntime.getNodeObject(nodeId);
+        const orb = scene.getObject(nodeId);
         if (!orb) {
             return;
         }

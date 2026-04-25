@@ -1,31 +1,20 @@
 ---
 name: react-three-game
-description: react-three-game, a JSON-first prefab mounting and authoring library built on React Three Fiber and external runtime integrations.
+description: A JSON-first scene mounting and authoring library on React Three Fiber. Prefabs, an editor, and a small Scene runtime API.
 ---
 
 # react-three-game
 
-Reference for prefabs, prefab mounting, custom components, and direct mounted Three.js object access in `react-three-game`.
+JSON-first prefabs. Mount with `PrefabRoot`, author with `PrefabEditor`, register custom components with `registerComponent()`, and reach into the live scene with `useScene()`, `useNode()`, or `useEditorRef()`.
 
 ## Scope
 
-- Build JSON prefabs and node trees.
-- Render prefabs with `PrefabRoot`.
-- Edit prefabs with `PrefabEditor`.
-- Add custom components with `registerComponent()`.
-- Mutate authored prefabs through the editor ref.
-- Integrate external runtimes through prefab refs, handles, and `onSceneChange` subscriptions.
-
-## Repo workflow
-
-- `/src` contains the published library source.
-- `/docs` is the Next.js docs app and consumes the library via the local package link.
-- `npm run dev` runs TypeScript watch for the library and the docs app together.
-- `npm run build` emits the library to `/dist`.
+- Author scenes as JSON `Prefab` trees.
+- Mount with `PrefabRoot` or edit with `PrefabEditor`.
+- Add custom logic by registering `Component`s and rendering normal R3F children inside the editor canvas.
+- Read and mutate the live scene through one consistent surface: the `Scene` interface, exposed as `useScene()` (children of `PrefabEditor` / `PrefabRoot`) and `editorRef.current` (which extends `Scene`).
 
 ## Schema
-
-JSON prefab with a single root node.
 
 ```ts
 interface Prefab {
@@ -39,26 +28,24 @@ interface GameObject {
   name?: string;
   disabled?: boolean;
   locked?: boolean;
+  hidden?: boolean;
   children?: GameObject[];
   components?: Record<string, ComponentData | undefined>;
 }
 
 interface ComponentData {
-  type: string;
+  type: string;                       // TitleCase, e.g. "Transform"
   properties: Record<string, any>;
 }
 ```
 
 Conventions:
 
-- Component keys are lowercase in JSON.
-- Component `type` names are TitleCase.
-- Transforms are local to the parent.
-- Rotations use radians.
+- Component map keys are camelCase (e.g. `transform`, `directionalLight`, `crashcatPhysics`).
+- `type` is TitleCase and matches the registered `Component.name`.
+- Transforms are local to the parent. Rotations are radians.
 - Asset paths are relative to `/public`.
-- Use `crypto.randomUUID()` for new node ids.
-
-Example:
+- New ids: `crypto.randomUUID()`.
 
 ```json
 {
@@ -78,132 +65,230 @@ Example:
 }
 ```
 
-## Rendering model
+## Mounting
 
-`PrefabRoot` composition rules:
-
-- `Transform` is applied by the renderer as the node's outer transform.
-- `Geometry` or `BufferGeometry` + `Material` are special-cased into the node's primary mesh content.
-- `Model` is also special-cased as primary content when non-instanced.
-- Every other component `View` composes by wrapping the current subtree.
-
-Implications:
-
-- Components like `Environment` wrap the subtree and use `children` to generate the envmap.
-- Renderer-owned transforms and primary mesh content should stay in `PrefabRoot`, not be reimplemented in custom components.
-
-## PrefabRoot
-
-Pure prefab rendering inside an R3F scene.
+### PrefabRoot — pure render
 
 ```tsx
 import { GameCanvas, PrefabRoot } from 'react-three-game';
 
 <GameCanvas>
-  <PrefabRoot data={prefabData} />
+  <PrefabRoot data={prefab} />
 </GameCanvas>
 ```
 
-Props:
+Props: `data`, `editMode`, `selectedId`, `onSelect`, `onClick`, `onEditNodeClick`, `basePath`, `children`. `children` render inside the same scene context, so they can call `useScene()`.
 
-- `data?: Prefab`
-- `editMode?: boolean`
-- `selectedId?: string | null`
-- `onSelect?: (id: string | null) => void`
-- `onClick?: (event, node) => void` for play/runtime clicks
-- `onEditNodeClick?: (event, node) => void` for edit-mode clicks
-- `basePath?: string`
-
-Use `data` for static prefab input.
-
-Native hooks:
-
-- Components rendered under the same `Canvas` can use `useThree()` and `useFrame()`.
-- Use `react-three-game` runtime helpers for authored-node lookup by prefab id.
-- Use native hooks for camera access, scene state, viewport size, and render-loop work.
-
-PrefabRoot ref:
+### PrefabEditor — authoring UI
 
 ```tsx
-import { useRef } from 'react';
-import { GameCanvas, PrefabRoot, type PrefabRootRef } from 'react-three-game';
+import { PrefabEditor, PrefabEditorMode } from 'react-three-game';
 
-function PrefabView() {
-  const prefabRootRef = useRef<PrefabRootRef>(null);
+<PrefabEditor
+  initialPrefab={prefab}
+  mode={PrefabEditorMode.Edit}
+  onChange={setPrefab}
+>
+  {/* Optional R3F children that share the scene */}
+</PrefabEditor>
+```
 
-  const root = prefabRootRef.current?.root;
-  const playerObject = prefabRootRef.current?.getNodeObject('player');
-  const runtimeHandle = prefabRootRef.current?.getNodeHandle('player', 'runtime');
+Common props: `initialPrefab`, `mode`, `onChange`, `basePath`, `showUI`, `enableWindowDrop`, `canvasProps`, `uiPlugins`, `children`.
 
-  return (
-    <GameCanvas>
-      <PrefabRoot ref={prefabRootRef} data={prefabData} />
-    </GameCanvas>
-  );
+## The Scene API — one surface for everything
+
+`Scene` is the runtime contract for both mounting components. It is exposed three ways:
+
+| Where you are | How to get it |
+|---|---|
+| Inside `<PrefabEditor>` / `<PrefabRoot>` children | `const scene = useScene()` |
+| Inside a registered component's `View` | `useScene()` (and `useNode()` for current-node sugar) |
+| Outside the canvas, holding an editor ref | `editorRef.current` (extends `Scene`) |
+
+```ts
+interface Scene {
+  // Reads
+  root: Object3D | null;
+  mode: PrefabEditorMode;
+  get(id: string): GameObject | null;
+  getObject(id: string): Object3D | null;
+  getHandle<T = unknown>(id: string, kind: string): T | null;
+
+  // Mutations
+  add(node: GameObject, parentId?: string): GameObject;
+  update(id: string, fn: (node: PrefabNode) => PrefabNode): void;
+  remove(id: string): void;
+  duplicate(id: string): string | null;
+  move(draggedId: string, targetId: string, position: 'before' | 'inside'): void;
+  replace(prefab: Prefab): void;
+
+  // Asset injection
+  addModel(path: string, model: Object3D): void;
+  addTexture(path: string, texture: Texture): void;
+  addSound(path: string, sound: AudioBuffer): void;
+}
+```
+
+`PrefabEditorRef` adds: `save()`, `load(prefab, { resetHistory?, notifyChange? })`, `undo()`, `redo()`, `screenshot()`, `exportGLB()`, `exportGLBData()`, `clearSelection()`.
+
+Examples:
+
+```tsx
+// As an editor ref outside the canvas
+const editorRef = useRef<PrefabEditorRef>(null);
+
+editorRef.current?.add({
+  id: crypto.randomUUID(),
+  components: {
+    transform: { type: 'Transform', properties: { position: [0, 1, 0] } },
+    geometry: { type: 'Geometry', properties: { geometryType: 'box' } },
+  },
+});
+
+editorRef.current?.update('player', (node) => ({
+  ...node,
+  components: {
+    ...node.components,
+    transform: {
+      type: 'Transform',
+      properties: {
+        ...node.components?.transform?.properties,
+        position: [5, 0, 0],
+      },
+    },
+  },
+}));
+
+const playerObject = editorRef.current?.getObject('player');
+const playerHandle = editorRef.current?.getHandle('player', 'runtime');
+```
+
+```tsx
+// As a hook inside a child of <PrefabEditor>
+function FollowPlayerCamera() {
+  const scene = useScene();
+  useFrame(() => {
+    const player = scene.getObject('player');
+    if (player) console.log(player.position);
+  });
+  return null;
 }
 ```
 
 Guidance:
 
-- Use a normal React `ref` to get the `PrefabRootRef` handle.
-- `root` is the mounted Three `Group` for traversal and scene-native queries.
-- `getNodeObject(id)` returns the canonical Three `Object3D` for an authored node.
-- `getNodeHandle(id, kind)` returns a runtime-owned handle registered for that node and kind.
+- Reach for `update()` when you want a change serialized into prefab JSON (snap to grid, gameplay-driven moves that should appear in `onChange`).
+- Reach for `getObject()` for raw Three.js mutation that lives only at runtime (controllers, particle FX, debug overlays) — much cheaper than roundtripping through JSON every frame.
+- Reach for `getHandle(id, kind)` to read another component's runtime-owned state.
+- `replace()` and `editorRef.load()` swap the whole prefab; `replace()` skips history, `load({ resetHistory: true })` clears history.
 
-Custom authored mesh example:
+## Custom components
 
-```json
-{
-  "id": "triangle",
-  "components": {
-    "bufferGeometry": {
-      "type": "BufferGeometry",
-      "properties": {
-        "positions": [0, 0, 0, 1, 0, 0, 0, 1, 0],
-        "indices": [0, 1, 2],
-        "uvs": [0, 0, 1, 0, 0, 1]
-      }
-    },
-    "material": {
-      "type": "Material",
-      "properties": {
-        "texture": "textures/proto32/grid.png",
-        "repeat": true,
-        "repeatCount": [2, 2],
-        "offset": [0, 0],
-        "animateOffset": true,
-        "offsetSpeed": [0.25, 0]
-      }
-    }
-  }
+Register before mounting `PrefabRoot` / `PrefabEditor`. A `Component` has a name, an `Editor` (inspector UI), an optional `View` (runtime), and `defaultProperties`.
+
+```tsx
+import { useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
+import {
+  FieldRenderer,
+  registerComponent,
+  useNode,
+  type Component,
+  type ComponentViewProps,
+  type FieldDefinition,
+} from 'react-three-game';
+
+type RotatorProps = { speed?: number };
+
+const fields: FieldDefinition[] = [
+  { name: 'speed', type: 'number', label: 'Speed', step: 0.1 },
+];
+
+function RotatorView({ properties, children }: ComponentViewProps<RotatorProps>) {
+  const { getObject, editMode } = useNode();
+  useFrame((_, dt) => {
+    if (editMode) return;
+    getObject()?.rotateY((properties.speed ?? 1) * dt);
+  });
+  return <>{children}</>;
+}
+
+const Rotator: Component = {
+  name: 'Rotator',
+  Editor: ({ component, onUpdate }) => (
+    <FieldRenderer fields={fields} values={component.properties} onChange={onUpdate} />
+  ),
+  View: RotatorView,
+  defaultProperties: { speed: 1 },
+};
+
+registerComponent(Rotator);
+```
+
+`ComponentViewProps<P>` gives you `{ properties, children, position?, rotation?, scale? }`. The `position`/`rotation`/`scale` props are the node's local transform — useful if you want to render your own primary mesh instead of relying on the renderer's special-cased Geometry/Material/Model path.
+
+### Composition rules
+
+`PrefabRoot` owns the wrapper transform plus three primary-content special cases (`Geometry`/`BufferGeometry` + `Material`, and non-instanced `Model`). Every other `View` composes by **wrapping the current subtree**: the `children` prop you receive contains everything below your component in the composition order. Render `<>{children}</>` (or wrap them in a `<group>`) so the subtree mounts.
+
+### Field types
+
+`number`, `string`, `boolean`, `select`, `vector3`, `color`, `node` (searchable picker over the current prefab's nodes).
+
+### Cross-node access
+
+```tsx
+function ElevatorView({ properties }: ComponentViewProps<{ platformId: string }>) {
+  const scene = useScene();
+  useFrame(() => {
+    scene.getObject(properties.platformId)?.position.set(0, 4, 0);
+  });
+  return null;
 }
 ```
 
-## Sound component
+### Per-node imperative handles
 
-Use the built-in `Sound` component in prefab JSON when you want authored sound playback.
+Expose a runtime handle so other code can drive the node without scene traversal:
 
-Supports:
+```tsx
+function SpinnerView({ properties, children }: ComponentViewProps<{}>) {
+  const { nodeId } = useNode();
+  const { registerHandle } = useAssetRuntime();
 
-- `clips`: one or more sound asset paths.
-- `eventName`: play from a game event.
-- `autoplay`: start playback automatically in play mode.
-- `loop`: keep the clip looping.
-- `positional`: enable spatial playback attached to the node.
-- `clipMode`: `single`, `random`, or `sequence` clip selection.
-- `pitch` / `volume`: fixed playback tuning.
-- `randomizePitch` / `randomizeVolume`: variation ranges for one-shots or autoplay start.
+  useEffect(() => {
+    const handle = { setSpeed(n: number) { /* ... */ } };
+    registerHandle(nodeId, 'spinner', handle);
+    return () => registerHandle(nodeId, 'spinner', null);
+  }, [nodeId, registerHandle]);
 
-Notes:
+  return <>{children}</>;
+}
 
-- Sound assets should be relative to `/public`, for example `/sound/hit.mp3`.
-- Sound clips are discovered through prefab asset refs and loaded by `PrefabRoot`'s asset layer before playback.
-- Positional mode uses a `PositionalAudio` node attached to the authored object.
-- Non-positional mode still uses the same playback path, but with flat attenuation settings.
-- `eventName` is good for one-shots like footsteps, hits, and triggers.
-- `autoplay` + `loop` is good for ambient beds, machinery, water, and room tone.
+// elsewhere:
+const handle = scene.getHandle<{ setSpeed(n: number): void }>('spinner-1', 'spinner');
+handle?.setSpeed(2);
+```
 
-Example:
+### Hook reference (inside a `View`)
+
+| Hook | Returns |
+|---|---|
+| `useNode()` | `{ nodeId, editMode, isSelected, getObject<T>(), getHandle<T>(kind) }` |
+| `useNodeObject<T>()` | `LiveRef<T>` for the current node's `Object3D` (read as `ref.current`) |
+| `useNodeHandle<T>(kind)` | `LiveRef<T>` for a runtime handle on the current node |
+| `useScene()` | The full `Scene` (use for cross-node work, mutations, asset injection) |
+| `useAssetRuntime()` | `{ registerHandle, getHandle, getObject, getModel, getTexture, getSound, getAssetRevision }` |
+| `useEditorRef()` | The full `PrefabEditorRef` if mounted under `<PrefabEditor>` |
+| `useFrame`, `useThree` | Native R3F |
+
+## Built-in components
+
+`Transform`, `Data`, `Geometry`, `BufferGeometry`, `Material`, `Model`, `AmbientLight`, `PointLight`, `SpotLight`, `DirectionalLight`, `Environment`, `Camera`, `Text`, `Sound`.
+
+`Data` merges `properties.data` into the mounted `Object3D.userData` (reserved keys like `prefabNodeId` and `prefabNodeName` are protected). Use it for small bits of authored metadata; prefer first-class custom components for systems with their own behavior.
+
+## Sound
 
 ```json
 {
@@ -225,438 +310,54 @@ Example:
 }
 ```
 
-## PrefabEditor
+Properties: `clips`, `eventName`, `autoplay`, `loop`, `positional`, `clipMode` (`single` | `random` | `sequence`), `pitch`, `volume`, `randomizePitch`, `randomizeVolume`, `refDistance`, `maxDistance`, `rolloffFactor`, `distanceModel`.
 
-Managed authoring UI with history, selection, inspector editing, and play/edit mode.
+When `eventName` is set, the component subscribes to `gameEvents[eventName]` and plays one shot. Routing fields on the payload (`nodeId`, `sourceEntityId`, `sourceNodeId`, `targetEntityId`, `targetNodeId`, `instanceEntityId`) act as a filter: include the Sound component's own node id to target it directly, or omit all routing fields to broadcast to every listener.
 
-```tsx
-import { PrefabEditor } from 'react-three-game';
+## Events
 
-<PrefabEditor
-  initialPrefab={prefabData}
-  onChange={setPrefabData}
-/>
-```
-
-Notes:
-
-- Use `onChange` to receive prefab updates.
-- `mode` is `edit` or `play`.
-- `children` render inside the editor canvas.
-
-Editor ref:
-
-```ts
-editorRef.current?.root;
-editorRef.current?.getNodeObject('player');
-editorRef.current?.getNodeHandle('player', 'runtime');
-editorRef.current?.onSceneChange((revision) => console.log(revision));
-editorRef.current?.addNode(node, { parentId: 'root' });
-editorRef.current?.updateNode('player', update);
-editorRef.current?.updateNodes(updates);
-editorRef.current?.save();
-editorRef.current?.load(prefab, { resetHistory: true });
-editorRef.current?.exportGLB();
-editorRef.current?.exportGLBData();
-editorRef.current?.screenshot();
-```
-
-## Direct runtime access
-
-Use the surface that matches where you are operating.
+`gameEvents` is the in-app event bus. Components and runtime systems publish and subscribe through it.
 
 ```tsx
-const root = editorRef.current?.root;
-const object = editorRef.current?.getNodeObject('player');
-const runtime = editorRef.current?.getNodeHandle('player', 'runtime');
-const playerByName = root?.getObjectByName('Player');
-const playerByMetadata = root?.getObjectByProperty('userData.prefabNodeId', 'player');
-
-editorRef.current?.updateNode('player', (node) => ({
-  ...node,
-  components: {
-    ...node.components,
-    transform: {
-      type: 'Transform',
-      properties: {
-        ...node.components?.transform?.properties,
-        position: [5, 0, 0],
-      },
-    },
-  },
-}));
-
-editorRef.current?.addNode({
-  id: crypto.randomUUID(),
-  name: 'Cube',
-  components: {
-    transform: { type: 'Transform', properties: { position: [0, 1, 0] } },
-    geometry: { type: 'Geometry', properties: { geometryType: 'box' } },
-  },
-});
-
-prefabRootRef.current?.getNodeObject('player')?.position.set(0, 2, 0);
-void runtime;
-```
-
-Guidance:
-
-- Use `updateNode()` or `updateNodes()` when you want authored data changes that stay serializable.
-- Use `getNodeObject()` when you want raw Three.js methods.
-- Use `getNodeHandle()` when an external runtime has registered a node-local handle.
-- Use `addNode()` for spawning authored nodes into the current prefab.
-- Mounted wrapper `Object3D`s mirror authored metadata: `GameObject.id` -> `object.userData.prefabNodeId`, and `GameObject.name` -> `object.name` plus `object.userData.prefabNodeName`.
-- A `Data` component can author extra `object.userData` fields through `properties.data`.
-- Native traversal like `root.getObjectByName(name)` is convenient, but names are not guaranteed unique; prefer `getNodeObject(id)` or `root.getObjectByProperty('userData.prefabNodeId', id)` when you need a stable authored-node reference.
-
-`onSceneChange` subscriptions:
-
-- `onSceneChange(listener)` is the clearest editor-side signal for authored edits.
-- Use it for edit-mode runtime re-sync work like rebuilding external colliders or refresh-once derived data.
-- Keep heavy rebuilds event-driven instead of polling every frame.
-
-Runtime-handle example:
-
-```tsx
-import { useEffect } from 'react';
-import {
-  useAssetRuntime,
-  useCurrentNodeHandle,
-  useCurrentNode,
-} from 'react-three-game';
-
-function SpinnerView({ children }: { children?: React.ReactNode }) {
-  const { nodeId } = useCurrentNode();
-  const { registerNodeHandle } = useAssetRuntime();
-
-  useEffect(() => {
-    const handle = {
-      setSpeed(next: number) {
-        console.log('speed', next);
-      },
-    };
-
-    registerNodeHandle(nodeId, 'spinner', handle);
-    return () => registerNodeHandle(nodeId, 'spinner', null);
-  }, [nodeId, registerNodeHandle]);
-
-  return <>{children}</>;
-}
-
-function SpinnerStatus() {
-  const spinnerRef = useCurrentNodeHandle<{ setSpeed: (next: number) => void }>('spinner');
-
-  useEffect(() => {
-    spinnerRef.current?.setSpeed(2);
-  }, [spinnerRef]);
-
-  return null;
-}
-```
-
-## Runtime access
-
-Use the matching runtime surface for each operation.
-
-### 1. Inside a component `View`
-
-Runtime hooks.
-
-- `useCurrentNode()` for `editMode`, `nodeId`, and live getters.
-- `useCurrentNodeObject()` when you need the current node's mounted `Object3D`.
-- `useCurrentNodeHandle(kind)` when you need a live handle registered for the current node.
-- `useAssetRuntime().getNodeObject(nodeId)` or `useAssetRuntime().getNodeHandle(nodeId, kind)` when the current component needs to target another authored node in the same prefab.
-- `useAssetRuntime().registerNodeHandle(nodeId, kind, handle)` when a component needs to expose runtime state back to the tree.
-
-Node-local surface for custom components.
-
-Guidance:
-
-- `useCurrentNodeObject()` and `useCurrentNodeHandle()` access the current node.
-- Both hooks return live ref-like objects, so read them as `objectRef.current` and `handleRef.current`.
-- `useCurrentNodeObject<T>()` is generic. Use `useCurrentNodeObject<Mesh>()` when you want mesh methods and mesh-specific properties on the current node object.
-- `useAssetRuntime()` looks up other authored nodes for gameplay logic like elevators, doors, linked sensors, and moving platforms.
-- `useCurrentNode()` and `useAssetRuntime()` are the runtime lookup surfaces inside component views.
-- `useThree()` is the right tool for camera, scene, viewport, pointer, raycaster, and renderer state.
-
-Current node object and handle refs:
-
-```tsx
-import { useFrame } from '@react-three/fiber';
-import { Mesh } from 'three';
-import { useCurrentNode, useCurrentNodeHandle, useCurrentNodeObject } from 'react-three-game';
-
-function BounceView({ children }: { children?: React.ReactNode }) {
-  const meshRef = useCurrentNodeObject<Mesh>();
-  const runtimeHandleRef = useCurrentNodeHandle<{ active: boolean }>('runtime');
-  const { editMode } = useCurrentNode();
-
-  useFrame(() => {
-    if (editMode) return;
-
-    meshRef.current?.rotateY(0.02);
-    void runtimeHandleRef.current;
-  });
-
-  return <>{children}</>;
-}
-```
-
-Ref selection rule:
-
-- Use `useCurrentNodeObject()` for the mounted Three object of the current authored node.
-- Use `useCurrentNodeHandle()` for the current authored node's runtime handle.
-- If the node renders a mesh, type the object ref as `Mesh`.
-- If you need another authored node instead of the current one, use `useAssetRuntime().getNodeObject(id)` or `useAssetRuntime().getNodeHandle(id, kind)`.
-
-Native hooks example inside a custom component:
-
-```tsx
-import { useFrame, useThree } from '@react-three/fiber';
-import { useCurrentNode, useCurrentNodeObject } from 'react-three-game';
-
-function LookAtCameraView({ children }: { children?: React.ReactNode }) {
-  const { camera } = useThree();
-  const objectRef = useCurrentNodeObject();
-  const { editMode } = useCurrentNode();
-
-  useFrame(() => {
-    if (editMode) return;
-    objectRef.current?.lookAt(camera.position);
-  });
-
-  return <>{children}</>;
-}
-```
-
-### 2. Outside component views, while operating on authored prefab nodes
-
-Use the `PrefabEditorRef` or `PrefabRootRef` directly.
-
-- Use `editorRef.current?.updateNode()` or `updateNodes()` for authored prefab mutations.
-- Use `editorRef.current?.addNode()` for lifecycle changes.
-- Use `editorRef.current?.getNodeObject(id)` and `getNodeHandle(id, kind)` for runtime access.
-- Use `prefabRootRef.current?.getNodeObject(id)` and `getNodeHandle(id, kind)` when you are mounting with `PrefabRoot` only.
-
-### 3. Use native Three.js objects and external runtime handles directly
-
-Use `getNodeObject(id)` or `getNodeHandle(id, kind)` for capabilities provided directly by Three.js or your runtime:
-
-- reading world position or world rotation
-- syncing authored nodes into an external runtime
-- integrating with lower-level Three.js APIs
-
-Guidance:
-
-- Store mutations write authored component properties.
-- `object` is the canonical Three.js scene object for the node.
-- `handle` is the runtime-owned imperative surface for a node when one is registered.
-- This split keeps lower-level integrations straightforward: custom raycasts, runtime sync, and traversal-based tagging can work directly on normal Three objects without engine-owned wrappers getting in the way.
-
-## Custom components
-
-Register before rendering `PrefabRoot` or `PrefabEditor`.
-
-```tsx
-import { FieldRenderer, registerComponent, type Component, type FieldDefinition } from 'react-three-game';
-
-const fields: FieldDefinition[] = [
-  { name: 'speed', type: 'number', label: 'Speed', step: 0.1 },
-];
-
-const Rotator: Component = {
-  name: 'Rotator',
-  Editor: ({ component, onUpdate }) => (
-    <FieldRenderer fields={fields} values={component.properties} onChange={onUpdate} />
-  ),
-  View: ({ children }) => <group>{children}</group>,
-  defaultProperties: { speed: 1 },
-};
-
-registerComponent(Rotator);
-```
-
-Field types:
-
-- `number`
-- `string`
-- `boolean`
-- `select`
-- `vector3`
-- `color`
-- `node` for authored node ids with searchable name/id suggestions from the current prefab
-
-Cross-node pattern inside a `View`:
-
-```tsx
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
-import {
-  FieldRenderer,
-  type Component,
-  type FieldDefinition,
-  useAssetRuntime,
-  useCurrentNode,
-} from 'react-three-game';
-
-const fields: FieldDefinition[] = [
-  { name: 'platformNodeId', type: 'node', label: 'Platform Node' },
-];
-
-function ElevatorMoverView({ properties, children }: { properties: any; children?: React.ReactNode }) {
-  const { editMode } = useCurrentNode();
-  const { getNodeObject } = useAssetRuntime();
-  const activeRef = useRef(true);
-
-  useFrame(() => {
-    if (editMode || !activeRef.current) return;
-    const platform = getNodeObject(properties.platformNodeId);
-    platform?.position.set(0, 4, 0);
-  });
-
-  return <>{children}</>;
-}
-```
-
-Composition:
-
-- The default component behavior is to wrap the current subtree.
-- Custom `View` implementations compose around `children`, while `PrefabRoot` owns transform, geometry/material, and model special cases.
-
-## Built-in components
-
-- `Transform`: local `position`, `rotation`, `scale`
-- `Data`: authored metadata merged onto `object.userData`
-- `Geometry`: `geometryType`, `args`
-- `BufferGeometry`: custom `positions`, `indices`, optional `normals`, `uvs`; default triangle includes UVs
-- `Material`: `color`, `texture`, `metalness`, `roughness`, `repeat`, `repeatCount`, `offset`, `animateOffset`, `offsetSpeed`, normal map options
-- `Model`: `filename`, `instanced`, repeat axes
-- `AmbientLight`
-- `PointLight`
-- `SpotLight`
-- `DirectionalLight`
-- `Environment`
-- `Camera`
-- `Text`
-- `Sound`: clips and playback settings, optional `gameEvents` listener via `eventName`
-
-## Contributor notes
-
-- WebGPU materials should use node materials like `MeshStandardNodeMaterial` or `MeshBasicNodeMaterial`, not classic `MeshStandardMaterial`.
-- Public exports in `src/index.ts` stay explicit; avoid `export *` from the package entrypoint.
-- Asset paths in authored prefab data are relative to `/public`.
-- `usePrefabNode(id)` and `usePrefabChildIds(id)` are the per-node subscription pattern inside renderer code.
-- New components should be added by creating the file, exporting it from `components/index.ts`, and then relying on the registry path already used by `PrefabRoot`.
-
-## Event bus
-
-Renderable and authored components emit through the shared `gameEvents` bus.
-
-- `Geometry` and `BufferGeometry` can emit named click events through `gameEvents`.
-- `Sound` can subscribe to an event name and play when that bus event fires.
-- `useGameEvent()` and `useClickEvent()` are the standard React subscription surfaces.
-- For custom interaction models like center-screen raycasts or look-to-interact, prefer extending normal Three scene objects and emitting through `gameEvents` from that code rather than routing through browser globals.
-
-Raycast guidance:
-
-- Use `editorRef.current?.root` or `prefabRootRef.current?.root` as the traversal root.
-- Use `object.userData.prefabNodeId` to map a hit `Object3D` back to authored data.
-- Add your own tags or interaction metadata through the `Data` component so raycast code can stay scene-native.
-
-Example authored click event on geometry:
-
-```json
-{
-  "geometry": {
-    "type": "Geometry",
-    "properties": {
-      "geometryType": "cylinder",
-      "args": [0.45, 0.28, 1.8, 24],
-      "emitClickEvent": true,
-      "clickEventName": "cannon:fire"
-    }
-  }
-}
-```
-
-Listening from React:
-
-```tsx
-import { useClickEvent } from 'react-three-game';
+import { gameEvents, useGameEvent, useClickEvent } from 'react-three-game';
 
 useClickEvent('cannon:fire', (payload) => {
   console.log('fire', payload.sourceEntityId);
 }, []);
+
+const stop = gameEvents.on('target:hit', (payload) => { /* ... */ });
 ```
 
-Direct subscription outside React:
+`Geometry`, `BufferGeometry`, and `Model` accept `emitClickEvent: true` + `clickEventName: "..."` to publish click events with a standard `ClickEventPayload`.
 
-```ts
-import { gameEvents } from 'react-three-game';
+## Direct store access
 
-const stop = gameEvents.on('target:hit', (payload) => {
-  console.log(payload.sourceEntityId, payload.targetEntityId);
-});
+For UI/state outside the canvas that needs to react to authored data:
 
-stop();
+```tsx
+import { usePrefabStore, usePrefabStoreApi } from 'react-three-game';
+
+const selected = usePrefabStore(s => s.nodesById['player']);
+const store = usePrefabStoreApi();
+const unsub = store.subscribe(s => s.nodesById['player'], () => { /* ... */ });
 ```
+
+## Repo workflow
+
+- `/src` — published library.
+- `/docs` — Next.js docs app, links the local library.
+- `npm run dev` — TypeScript watch + docs dev server.
+- `npm run build` — emit `/dist`.
 
 ## Useful exports
 
-Values:
+Values: `GameCanvas`, `PrefabRoot`, `PrefabEditor`, `PrefabEditorMode`, `registerComponent`, `gameEvents`, `useGameEvent`, `useClickEvent`, `useScene`, `useNode`, `useNodeObject`, `useNodeHandle`, `useAssetRuntime`, `useEditorRef`, `useEditorContext`, `usePrefabStore`, `usePrefabStoreApi`, `FieldRenderer`, `Vector3Field`, `NumberField`, `StringField`, `BooleanField`, `SelectField`, `ColorField`, `loadFiles`, `loadModel`, `loadSound`, `loadTexture`, `exportGLB`, `exportGLBData`, `regenerateIds`, `computeParentWorldMatrix`, `findComponent`, `findComponentEntry`, `hasComponent`, `createModelNode`, `createImageNode`, `denormalizePrefab`, `ground`, `soundManager`.
 
-- `GameCanvas`
-- `PrefabRoot`
-- `PrefabEditor`
-- `PrefabEditorMode`
-- `registerComponent`
-- `gameEvents`
-- `useGameEvent`
-- `useClickEvent`
-- `useEditorContext`
-- `createModelNode`
-- `createImageNode`
-- `findComponent`
-- `hasComponent`
-- `useAssetRuntime`
-- `useCurrentNode`
-- `useCurrentNodeObject`
-- `useCurrentNodeHandle`
-- `loadFiles`
-- `loadModel`
-- `loadSound`
-- `loadTexture`
-- `exportGLB`
-- `computeParentWorldMatrix`
-- `ground`
-- `soundManager`
+Types: `Prefab`, `GameObject`, `ComponentData`, `PrefabNode`, `PrefabEditorRef`, `PrefabEditorProps`, `PrefabRootProps`, `Scene`, `Component`, `ComponentViewProps`, `FieldDefinition`, `FieldType`, `NodeApi`, `LiveRef`, `AssetRuntime`, `PrefabStoreState`, `PrefabStoreApi`, `GameEventMap`, `ClickEventPayload`, `ContactEventPayload`, `LoadedModels`, `LoadedTextures`, `LoadedSounds`.
 
-Types:
+## Style
 
-- `Prefab`
-- `PrefabNode`
-- `PrefabEditorRef`
-- `PrefabRootRef`
-- `GameObject`
-- `ComponentData`
-- `SpawnOptions`
-- `CurrentNodeRuntime`
-- `AssetRuntime`
-- `GameEventMap`
-- `ContactEventPayload`
-- `ClickEventPayload`
-- `Component`
-- `ComponentViewProps`
-- `PrefabRootProps`
-- `PrefabEditorProps`
-- `FieldDefinition`
-- `FieldType`
-
-## Constraints
-
-- Preserve the JSON-first prefab model.
-- Keep custom components simple and let the renderer own transform, geometry/material, and model behavior.
-- Prefer editor mutations for authored state and native object or handle refs for raw runtime control.
-- When documenting or generating examples, use the current API names exactly as exported.
-
-
+- Stay JSON-first. Authored state lives in prefab components; runtime state lives in component `View`s, registered handles, or external systems mounted as children of the editor.
+- Let the renderer own the wrapper transform and the Geometry/Material/Model special-case content.
+- Reach for `useScene()` and `editorRef` for authored-node lookup; they are faster and more direct than scene traversal.
+- Hook names follow the `useNode*` family, and mutations live on `Scene` as `add` / `update` / `remove` / `duplicate` / `move` / `replace`.

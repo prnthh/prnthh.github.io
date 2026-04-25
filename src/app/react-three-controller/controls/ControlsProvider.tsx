@@ -5,7 +5,7 @@
  * file in the root directory of this source tree.
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Joystick, Button } from './TouchscreenControls';
 import KeyboardInput from './KeyboardControls';
 import PointerLockControls from './PointerLockControls';
@@ -14,6 +14,7 @@ type LookHandler = (dx: number, dy: number) => void;
 
 type ControlsContextValue = {
     setLookHandler: (handler: LookHandler | null) => void;
+    setEnabled: (enabled: boolean) => void;
 };
 
 const ControlsContext = createContext<ControlsContextValue | null>(null);
@@ -41,6 +42,7 @@ function isMobileDevice() {
 
 function Controls({ children }: { children: React.ReactNode }) {
     const [isMobile, setIsMobile] = useState(false);
+    const [enabled, setEnabled] = useState(true);
     const lookHandlerRef = useRef<LookHandler | null>(null);
 
     useEffect(() => {
@@ -64,18 +66,23 @@ function Controls({ children }: { children: React.ReactNode }) {
         lookHandlerRef.current = handler;
     }, []);
 
+    const handleSetEnabled = useCallback((nextEnabled: boolean) => {
+        setEnabled(nextEnabled);
+    }, []);
+
     const controlsContextValue = useMemo<ControlsContextValue>(() => ({
         setLookHandler,
-    }), [setLookHandler]);
+        setEnabled: handleSetEnabled,
+    }), [handleSetEnabled, setLookHandler]);
 
     return (
         <ControlsContext.Provider value={controlsContextValue}>
             <div className='contents' onClick={handleTap}>
-                <KeyboardInput />
-                <PointerLockControls onLook={(dx, dy) => lookHandlerRef.current?.(dx, dy)} />
                 {children}
-                {isMobile && (
-                    <>
+                {enabled && <>
+                    <KeyboardInput />
+                    <PointerLockControls onLook={(dx, dy) => lookHandlerRef.current?.(dx, dy)} />
+                    {isMobile && (<>
                         <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
                             <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
                         </div>
@@ -88,8 +95,8 @@ function Controls({ children }: { children: React.ReactNode }) {
                             <Button button="fire" />
                             <Button button="jump" />
                         </div>
-                    </>
-                )}
+                    </>)}
+                </>}
             </div>
         </ControlsContext.Provider>
     );

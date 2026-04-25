@@ -24,20 +24,20 @@ Additional light-specific props:
 
 For large scenes:
 
-- Keep `castShadow` enabled only on the lights that matter.
-- Use one main shadow-casting light for the primary shadow pass.
-- Set `shadowAutoUpdate: false` once lighting and static geometry stop changing.
-- Increase `shadowMapSize` only when resolution is the actual problem.
-- Tune `shadowBias` and `shadowNormalBias` before increasing map size.
+- Enable `castShadow` on the lights that actually shape the scene.
+- Lean on one main shadow-casting light for the primary shadow pass.
+- Set `shadowAutoUpdate: false` once lighting and static geometry have settled.
+- Bump `shadowMapSize` when resolution is the bottleneck.
+- Tune `shadowBias` and `shadowNormalBias` first; reach for a larger map size second.
 
 ## One-shot shadow refreshes
 
-The built-in light components already call `shadow.needsUpdate = true` when shadow-related props change. That means a one-shot refresh can be triggered by updating a relevant light property through prefab data or the prefab store.
+The built-in light components already call `shadow.needsUpdate = true` when shadow-related props change. A one-shot refresh just means updating a relevant light property through the `Scene` API.
 
 Typical pattern:
 
 ```tsx
-editorRef.current?.store.getState().updateNode('sun', (node) => ({
+editorRef.current?.update('sun', (node) => ({
 	...node,
 	components: {
 		...node.components,
@@ -53,7 +53,7 @@ editorRef.current?.store.getState().updateNode('sun', (node) => ({
 }));
 ```
 
-If you are using a custom R3F light ref, this manual pattern is still valid:
+If you are driving a custom R3F light ref directly, the manual pattern still works:
 
 ```tsx
 directionalLight.current.shadow.autoUpdate = false;
@@ -62,14 +62,14 @@ directionalLight.current.shadow.needsUpdate = true;
 
 ## Practical defaults
 
-- Use `DirectionalLight` for the main outdoor shadow caster.
-- Use `SpotLight` for focused pools of light and authored targets.
-- Use `PointLight` sparingly when shadows are enabled.
-- Use `AmbientLight` to lift dark scenes, but it does not cast shadows.
+- `DirectionalLight` for the main outdoor shadow caster.
+- `SpotLight` for focused pools of light and authored targets.
+- `PointLight` works well when shadows stay off; enable shadows on it sparingly.
+- `AmbientLight` lifts dark scenes (it is non-directional and shadow-free by design).
 
 ## Shadow authoring notes
 
-- Only meshes with `castShadow` contribute to shadow casting.
-- Only meshes with `receiveShadow` show received shadows.
+- Meshes contribute to shadow casting when `castShadow` is set.
+- Meshes show received shadows when `receiveShadow` is set.
 - `Geometry` primary content in `PrefabRoot` is rendered with both enabled.
-- Imported models should still be checked visually, especially when mixing instancing and custom materials.
+- Imported models are worth a quick visual check, especially when mixing instancing and custom materials.

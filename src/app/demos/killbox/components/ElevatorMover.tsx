@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { FieldRenderer, useAssetRuntime, useCurrentNode, useGameEvent } from "react-three-game";
-import type { Component, ContactEventPayload, FieldDefinition } from "react-three-game";
+import { FieldRenderer, useNode, useScene, useGameEvent } from "react-three-game";
+import type { Component, ComponentViewProps, ContactEventPayload, FieldDefinition } from "react-three-game";
 import { useFrame } from "@react-three/fiber";
 
 const SENSOR_ENTER_EVENT_NAME = "sensor:enter";
@@ -40,13 +40,18 @@ const elevatorMoverFields: FieldDefinition[] = [
     { name: "returnDuration", type: "number", label: "Return Duration", min: 0.01, step: 0.1 },
 ];
 
-function ElevatorMoverEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
+type ElevatorMoverEditorProps = {
+    component: { properties: ElevatorMoverProperties };
+    onUpdate: (values: ElevatorMoverProperties) => void;
+};
+
+function ElevatorMoverEditor({ component, onUpdate }: ElevatorMoverEditorProps) {
     return <FieldRenderer fields={elevatorMoverFields} values={component.properties} onChange={onUpdate} />;
 }
 
-function ElevatorMoverView({ properties, children }: { properties: ElevatorMoverProperties; children?: React.ReactNode }) {
-    const { editMode, nodeId } = useCurrentNode();
-    const assetRuntime = useAssetRuntime();
+function ElevatorMoverView({ properties, children }: ComponentViewProps<ElevatorMoverProperties>) {
+    const { editMode, nodeId } = useNode();
+    const scene = useScene();
     const phaseRef = useRef<ElevatorPhase>("idle");
     const waitTimerRef = useRef(0);
     const startHeightsRef = useRef<Record<string, number>>({});
@@ -90,7 +95,7 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
             return;
         }
 
-        const platformObject = assetRuntime.getNodeObject(platformNodeId);
+        const platformObject = scene.getObject(platformNodeId);
         if (!platformObject) {
             phaseRef.current = "idle";
             waitTimerRef.current = 0;
