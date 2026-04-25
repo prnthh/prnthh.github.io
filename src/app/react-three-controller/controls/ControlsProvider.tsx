@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Joystick, Button } from './TouchscreenControls';
+import KeyboardInput from './KeyboardControls';
 
 function isMobileDevice() {
     if (typeof navigator === 'undefined') return false;
@@ -43,6 +44,7 @@ function Controls({ children }: { children: React.ReactNode }) {
 
     return (
         <div className='contents' onClick={handleTap}>
+            <KeyboardInput />
             {children}
             {isMobile && (
                 <>

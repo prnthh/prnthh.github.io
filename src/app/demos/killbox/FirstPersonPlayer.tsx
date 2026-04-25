@@ -6,6 +6,7 @@ import { capsule, filter, kcc, rigidBody, MotionType, type Filter, type RigidBod
 import { forwardRef, useEffect, useImperativeHandle, useRef, type RefObject } from "react";
 import { gameEvents, PrefabEditorMode, useEditorContext } from "react-three-game";
 import type { CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
+import useInputStore from "@/app/react-three-controller/controls/InputStore";
 import { Group, Quaternion, Vector3 } from "three";
 
 const DEFAULT_MAX_SPEED = 7;
@@ -23,11 +24,6 @@ const DEFAULT_HALF_HEIGHT = 0.45;
 const DEFAULT_CAMERA_HEIGHT = 0.54;
 const GRAVITY: [number, number, number] = [0, -9.81, 0];
 const PLAYER_ID = "player";
-
-const forwardKeys = new Set(["KeyW", "ArrowUp"]);
-const backwardKeys = new Set(["KeyS", "ArrowDown"]);
-const leftKeys = new Set(["KeyA", "ArrowLeft"]);
-const rightKeys = new Set(["KeyD", "ArrowRight"]);
 
 const forwardVector = new Vector3();
 const rightVector = new Vector3();
@@ -64,15 +60,6 @@ function moveToward(current: number, target: number, maxDelta: number) {
     return current;
 }
 
-function hasPressedKey(pressedKeys: Set<string>, keys: Set<string>) {
-    for (const key of keys) {
-        if (pressedKeys.has(key)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProps>(function FirstPersonPlayer({
     runtimeRef,
     radius = DEFAULT_RADIUS,
@@ -90,13 +77,16 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
     spawnPosition = [0, 1.3, 6],
 }, ref) {
     const { mode } = useEditorContext();
+    const horizontalInput = useInputStore((state) => state.horizontal);
+    const verticalInput = useInputStore((state) => state.vertical);
+    const jumpPressed = useInputStore((state) => state.jump);
     const playerGroupRef = useRef<Group>(null);
     const planarVelocityRef = useRef(new Vector3());
     const footstepTimerRef = useRef(0);
     const characterRef = useRef<ReturnType<typeof kcc.create> | null>(null);
     const updateSettingsRef = useRef(kcc.createDefaultUpdateSettings());
-    const pressedKeysRef = useRef(new Set<string>());
     const jumpQueuedRef = useRef(false);
+    const jumpPressedLastFrameRef = useRef(false);
     const characterFilterRef = useRef<Filter | null>(null);
     const playerBodyRef = useRef<RigidBody | null>(null);
     const footstepAudioRefs = useRef<HTMLAudioElement[]>([]);
@@ -104,47 +94,6 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
     useImperativeHandle(ref, () => ({
         getBody: () => playerBodyRef.current,
     }), []);
-
-    useEffect(() => {
-        const setKey = (pressed: boolean) => (event: KeyboardEvent) => {
-            if (event.code === "Space") {
-                if (pressed && !event.repeat) {
-                    jumpQueuedRef.current = true;
-                }
-                return;
-            }
-
-            if (!forwardKeys.has(event.code)
-                && !backwardKeys.has(event.code)
-                && !leftKeys.has(event.code)
-                && !rightKeys.has(event.code)) {
-                return;
-            }
-
-            if (pressed) {
-                pressedKeysRef.current.add(event.code);
-            } else {
-                pressedKeysRef.current.delete(event.code);
-            }
-        };
-
-        const handleKeyDown = setKey(true);
-        const handleKeyUp = setKey(false);
-        const clearInput = () => {
-            pressedKeysRef.current.clear();
-            jumpQueuedRef.current = false;
-        };
-
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
-        window.addEventListener("blur", clearInput);
-
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-            window.removeEventListener("keyup", handleKeyUp);
-            window.removeEventListener("blur", clearInput);
-        };
-    }, []);
 
     useEffect(() => {
         if (mode === PrefabEditorMode.Play) {
@@ -156,7 +105,7 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
         planarVelocityRef.current.set(0, 0, 0);
         footstepTimerRef.current = 0;
         jumpQueuedRef.current = false;
-        pressedKeysRef.current.clear();
+        jumpPressedLastFrameRef.current = false;
     }, [mode]);
 
     useEffect(() => {
@@ -228,6 +177,11 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
             return;
         }
 
+        if (jumpPressed && !jumpPressedLastFrameRef.current) {
+            jumpQueuedRef.current = true;
+        }
+        jumpPressedLastFrameRef.current = jumpPressed;
+
         const runtime = runtimeRef.current;
         const world = runtime?.world;
         const baseQueryFilter = runtime?.queryFilter;
@@ -240,6 +194,7 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
             planarVelocityRef.current.set(0, 0, 0);
             footstepTimerRef.current = 0;
             jumpQueuedRef.current = false;
+            jumpPressedLastFrameRef.current = jumpPressed;
             characterRef.current = kcc.create({
                 shape: capsule.create({
                     radius,
@@ -259,9 +214,8 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
         filter.copy(characterFilter, baseQueryFilter);
         characterFilter.bodyFilter = playerBodyRef.current ? (body) => body !== playerBodyRef.current : undefined;
 
-        const pressedKeys = pressedKeysRef.current;
-        const forwardInput = Number(hasPressedKey(pressedKeys, forwardKeys)) - Number(hasPressedKey(pressedKeys, backwardKeys));
-        const rightInput = Number(hasPressedKey(pressedKeys, rightKeys)) - Number(hasPressedKey(pressedKeys, leftKeys));
+        const forwardInput = verticalInput;
+        const rightInput = horizontalInput;
 
         state.camera.getWorldDirection(forwardVector);
         forwardVector.y = 0;

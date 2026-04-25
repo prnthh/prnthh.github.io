@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { PrefabEditor, PrefabEditorMode, registerComponent } from "react-three-game";
 import type { Prefab, PrefabEditorRef } from "react-three-game";
+import Controls from "@/app/react-three-controller/controls/ControlsProvider";
 
 import { CrashcatRuntime, type CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
 import CrashcatPhysics from "./CrashcatPhysics";
@@ -24,11 +25,13 @@ export default function Home() {
 
     return (
         <main className="flex h-screen w-screen flex-col items-center justify-between bg-white dark:bg-black sm:items-start">
-            <PrefabEditor mode={PrefabEditorMode.Play} ref={editorRef} initialPrefab={initialWorld as Prefab}>
-                <FirstPersonPlayer ref={playerRef} runtimeRef={runtimeRef} />
-                <CrashcatRuntime ref={runtimeRef} editorRef={editorRef} debug />
-                <RenderPipeline />
-            </PrefabEditor>
+            <Controls>
+                <PrefabEditor mode={PrefabEditorMode.Play} ref={editorRef} initialPrefab={initialWorld as Prefab}>
+                    <FirstPersonPlayer ref={playerRef} runtimeRef={runtimeRef} />
+                    <CrashcatRuntime ref={runtimeRef} editorRef={editorRef} debug />
+                    <RenderPipeline />
+                </PrefabEditor>
+            </Controls>
         </main>
     );
 }
