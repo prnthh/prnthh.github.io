@@ -473,28 +473,35 @@ export default function PicocadPage() {
             return;
         }
 
-        const entity = editorRef.current.scene.find(modelNodeId);
+        const node = editorRef.current.getNode(modelNodeId);
 
-        if (!entity) {
+        if (!node) {
             return;
         }
 
-        const transform = entity.getComponent<{
-            position: Vec3;
-            rotation: Vec3;
-            scale: Vec3;
-        }>("Transform");
         const scale: Vec3 = [nextScale, nextScale, nextScale];
 
-        if (transform) {
-            transform.set("scale", scale);
-            return;
-        }
+        editorRef.current.updateNode(modelNodeId, currentNode => {
+            const transformComponent = currentNode.components?.transform;
 
-        entity.addComponent("Transform", {
-            position: [0, 0, 0],
-            rotation: [0, 0, 0],
-            scale,
+            return {
+                ...currentNode,
+                components: {
+                    ...currentNode.components,
+                    transform: {
+                        type: "Transform",
+                        properties: {
+                            position: transformComponent?.type === "Transform"
+                                ? (transformComponent.properties.position as Vec3 | undefined) ?? [0, 0, 0]
+                                : [0, 0, 0],
+                            rotation: transformComponent?.type === "Transform"
+                                ? (transformComponent.properties.rotation as Vec3 | undefined) ?? [0, 0, 0]
+                                : [0, 0, 0],
+                            scale,
+                        },
+                    },
+                },
+            };
         });
     }
 
