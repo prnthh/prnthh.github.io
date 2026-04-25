@@ -38,7 +38,7 @@ const scratchVertex = new Vector3();
 const scratchScale = new Vector3();
 const scratchBoundsSize = new Vector3();
 
-const SLEEP_TIME_BEFORE_REST = 0.2;
+const SLEEP_TIME_BEFORE_REST = 0.1;
 const SLEEP_POINT_VELOCITY_THRESHOLD = 0.06;
 
 let didRegisterCrashcat = false;
