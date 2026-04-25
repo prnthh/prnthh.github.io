@@ -1,13 +1,14 @@
 "use client";
 
-import { PerspectiveCamera, PointerLockControls } from "@react-three/drei";
+import { PerspectiveCamera, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { capsule, filter, kcc, rigidBody, MotionType, type Filter, type RigidBody } from "crashcat";
-import { forwardRef, useEffect, useImperativeHandle, useRef, type RefObject } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, type RefObject } from "react";
 import { gameEvents, PrefabEditorMode, useEditorContext } from "react-three-game";
 import type { CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
+import { useControls } from "@/app/react-three-controller/controls/ControlsProvider";
 import useInputStore from "@/app/react-three-controller/controls/InputStore";
-import { Group, Quaternion, Vector3 } from "three";
+import { Group, MathUtils, Quaternion, Raycaster, Vector2, Vector3, type Object3D } from "three";
 
 const DEFAULT_MAX_SPEED = 7;
 const DEFAULT_GROUND_ACCEL = 18;
@@ -22,8 +23,20 @@ const FOOTSTEP_CLIPS = ["/sound/hit.mp3", "/sound/hit2.mp3"] as const;
 const DEFAULT_RADIUS = 0.35;
 const DEFAULT_HALF_HEIGHT = 0.45;
 const DEFAULT_CAMERA_HEIGHT = 0.54;
+const DEFAULT_GRAB_DISTANCE = 2.75;
+const DEFAULT_GRAB_RANGE = 8;
+const DEFAULT_GRAB_STRENGTH = 18;
+const DEFAULT_GRAB_MAX_SPEED = 14;
+const DEFAULT_LAUNCH_SPEED = 18;
+const MOUSE_SENSITIVITY = 0.002;
+const JOYSTICK_SENSITIVITY = 1.8;
+const CAMERA_SWAY_AMOUNT = 0.045;
+const CAMERA_SWAY_LERP = 10;
+const PITCH_MIN = -1.45;
+const PITCH_MAX = 1.45;
 const GRAVITY: [number, number, number] = [0, -9.81, 0];
 const PLAYER_ID = "player";
+const HAND_MODEL_URL = "/models/environment/picocad/hand1.glb";
 
 const forwardVector = new Vector3();
 const rightVector = new Vector3();
@@ -32,6 +45,13 @@ const planarVelocityVector = new Vector3();
 const worldUp = new Vector3(0, 1, 0);
 const groupPosition = new Vector3();
 const identityQuaternion = new Quaternion();
+const centerScreen = new Vector2(0, 0);
+const raycaster = new Raycaster();
+const grabTargetPosition = new Vector3();
+const grabBodyPosition = new Vector3();
+const grabVelocity = new Vector3();
+const grabQuaternion = new Quaternion();
+const cameraWorldQuaternion = new Quaternion();
 
 export type FirstPersonPlayerProps = {
     runtimeRef: RefObject<CrashcatRuntimeRef | null>;
@@ -60,6 +80,34 @@ function moveToward(current: number, target: number, maxDelta: number) {
     return current;
 }
 
+function getPrefabNodeId(object: Object3D | null | undefined) {
+    let current: Object3D | null | undefined = object;
+
+    while (current) {
+        if (typeof current.userData?.prefabNodeId === "string") {
+            return current.userData.prefabNodeId;
+        }
+
+        current = current.parent;
+    }
+
+    return null;
+}
+
+function HandViewModel() {
+    const { scene: handScene } = useGLTF(HAND_MODEL_URL);
+    const handModel = useMemo(() => handScene.clone(), [handScene]);
+
+    return (
+        <primitive
+            object={handModel}
+            position={[0.2, -0.15, -0.28]}
+            rotation={[0, -Math.PI / 1.8, 0.2]}
+            scale={0.025}
+        />
+    );
+}
+
 const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProps>(function FirstPersonPlayer({
     runtimeRef,
     radius = DEFAULT_RADIUS,
@@ -77,19 +125,32 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
     spawnPosition = [0, 1.3, 6],
 }, ref) {
     const { mode } = useEditorContext();
+    const { setLookHandler } = useControls();
     const horizontalInput = useInputStore((state) => state.horizontal);
     const verticalInput = useInputStore((state) => state.vertical);
+    const lookHorizontal = useInputStore((state) => state.lookHorizontal);
+    const lookVertical = useInputStore((state) => state.lookVertical);
     const jumpPressed = useInputStore((state) => state.jump);
     const playerGroupRef = useRef<Group>(null);
+    const cameraRigRef = useRef<Group>(null);
+    const cameraSwayRef = useRef<Group>(null);
     const planarVelocityRef = useRef(new Vector3());
     const footstepTimerRef = useRef(0);
     const characterRef = useRef<ReturnType<typeof kcc.create> | null>(null);
     const updateSettingsRef = useRef(kcc.createDefaultUpdateSettings());
+    const cameraYawRef = useRef(0);
+    const cameraPitchRef = useRef(0);
     const jumpQueuedRef = useRef(false);
     const jumpPressedLastFrameRef = useRef(false);
     const characterFilterRef = useRef<Filter | null>(null);
     const playerBodyRef = useRef<RigidBody | null>(null);
     const footstepAudioRefs = useRef<HTMLAudioElement[]>([]);
+    const grabbedNodeIdRef = useRef<string | null>(null);
+    const grabbedRotationOffsetRef = useRef(new Quaternion());
+    const lastFirePressedRef = useRef(false);
+    const lastAimPressedRef = useRef(false);
+    const firePressed = useInputStore((state) => state.fire);
+    const aimPressed = useInputStore((state) => state.aim);
 
     useImperativeHandle(ref, () => ({
         getBody: () => playerBodyRef.current,
@@ -106,6 +167,41 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
         footstepTimerRef.current = 0;
         jumpQueuedRef.current = false;
         jumpPressedLastFrameRef.current = false;
+        grabbedNodeIdRef.current = null;
+        grabbedRotationOffsetRef.current.identity();
+        cameraYawRef.current = 0;
+        cameraPitchRef.current = 0;
+        lastFirePressedRef.current = false;
+        lastAimPressedRef.current = false;
+    }, [mode]);
+
+    const applyLookDelta = useCallback((dx: number, dy: number) => {
+        cameraYawRef.current -= dx * MOUSE_SENSITIVITY;
+        cameraPitchRef.current = MathUtils.clamp(cameraPitchRef.current - dy * MOUSE_SENSITIVITY, PITCH_MIN, PITCH_MAX);
+    }, []);
+
+    useEffect(() => {
+        setLookHandler(applyLookDelta);
+
+        return () => {
+            setLookHandler(null);
+        };
+    }, [applyLookDelta, setLookHandler]);
+
+    useEffect(() => {
+        if (mode !== PrefabEditorMode.Play) {
+            return;
+        }
+
+        const handleContextMenu = (event: MouseEvent) => {
+            event.preventDefault();
+        };
+
+        window.addEventListener("contextmenu", handleContextMenu);
+
+        return () => {
+            window.removeEventListener("contextmenu", handleContextMenu);
+        };
     }, [mode]);
 
     useEffect(() => {
@@ -177,6 +273,29 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
             return;
         }
 
+        if (Math.abs(lookHorizontal) > 0.01) {
+            cameraYawRef.current += lookHorizontal * JOYSTICK_SENSITIVITY * delta;
+        }
+        if (Math.abs(lookVertical) > 0.01) {
+            cameraPitchRef.current = MathUtils.clamp(cameraPitchRef.current - lookVertical * JOYSTICK_SENSITIVITY * delta, PITCH_MIN, PITCH_MAX);
+        }
+
+        const cameraRig = cameraRigRef.current;
+        if (cameraRig) {
+            cameraRig.rotation.order = "YXZ";
+            cameraRig.rotation.y = cameraYawRef.current;
+            cameraRig.rotation.x = cameraPitchRef.current;
+            cameraRig.rotation.z = 0;
+        }
+
+        const cameraSway = cameraSwayRef.current;
+        if (cameraSway) {
+            const targetSway = -horizontalInput * CAMERA_SWAY_AMOUNT;
+            cameraSway.rotation.z = MathUtils.lerp(cameraSway.rotation.z, targetSway, Math.min(1, CAMERA_SWAY_LERP * delta));
+        }
+
+        state.camera.updateMatrixWorld();
+
         if (jumpPressed && !jumpPressedLastFrameRef.current) {
             jumpQueuedRef.current = true;
         }
@@ -189,6 +308,71 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
         if (!world || !baseQueryFilter || !playerGroup) {
             return;
         }
+
+        const tryGrabTarget = () => {
+            raycaster.setFromCamera(centerScreen, state.camera);
+
+            const intersections = raycaster.intersectObjects(state.scene.children, true);
+            for (const intersection of intersections) {
+                const nodeId = getPrefabNodeId(intersection.object);
+                if (!nodeId) {
+                    continue;
+                }
+
+                const body = runtime?.getBody(nodeId);
+                if (!body || body.motionType !== MotionType.DYNAMIC || nodeId === PLAYER_ID) {
+                    continue;
+                }
+
+                if (intersection.distance > DEFAULT_GRAB_RANGE) {
+                    return;
+                }
+
+                grabbedNodeIdRef.current = nodeId;
+                grabQuaternion.set(body.quaternion[0], body.quaternion[1], body.quaternion[2], body.quaternion[3]);
+                state.camera.getWorldQuaternion(cameraWorldQuaternion);
+                grabbedRotationOffsetRef.current.copy(cameraWorldQuaternion).invert().multiply(grabQuaternion);
+                rigidBody.setAngularVelocity(world, body, [0, 0, 0]);
+                return;
+            }
+        };
+
+        const releaseGrabbed = (launch = false) => {
+            const grabbedNodeId = grabbedNodeIdRef.current;
+            if (!grabbedNodeId) {
+                return;
+            }
+
+            const body = runtime?.getBody(grabbedNodeId);
+            if (body && launch) {
+                state.camera.getWorldDirection(forwardVector);
+                forwardVector.normalize();
+                grabVelocity.copy(forwardVector).multiplyScalar(DEFAULT_LAUNCH_SPEED);
+                grabVelocity.add(planarVelocityVector);
+                rigidBody.setAngularVelocity(world, body, [0, 0, 0]);
+                rigidBody.setLinearVelocity(world, body, [grabVelocity.x, grabVelocity.y, grabVelocity.z]);
+            }
+
+            grabbedNodeIdRef.current = null;
+        };
+
+        const aimPressedThisFrame = aimPressed && !lastAimPressedRef.current;
+        const firePressedThisFrame = firePressed && !lastFirePressedRef.current;
+
+        if (aimPressedThisFrame) {
+            if (grabbedNodeIdRef.current) {
+                releaseGrabbed(false);
+            } else {
+                tryGrabTarget();
+            }
+        }
+
+        if (firePressedThisFrame && grabbedNodeIdRef.current) {
+            releaseGrabbed(true);
+        }
+
+        lastAimPressedRef.current = aimPressed;
+        lastFirePressedRef.current = firePressed;
 
         if (!characterRef.current) {
             planarVelocityRef.current.set(0, 0, 0);
@@ -302,6 +486,43 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
             planarVelocityVector.set(character.linearVelocity[0], character.linearVelocity[1], character.linearVelocity[2]);
             rigidBody.setLinearVelocity(world, playerBodyRef.current, [planarVelocityVector.x, planarVelocityVector.y, planarVelocityVector.z]);
         }
+
+        const grabbedNodeId = grabbedNodeIdRef.current;
+        if (!grabbedNodeId) {
+            return;
+        }
+
+        const grabbedBody = runtime?.getBody(grabbedNodeId);
+        if (!grabbedBody || grabbedBody.motionType !== MotionType.DYNAMIC) {
+            grabbedNodeIdRef.current = null;
+            return;
+        }
+
+        state.camera.getWorldPosition(grabTargetPosition);
+        state.camera.getWorldDirection(forwardVector);
+        forwardVector.normalize();
+        grabTargetPosition.addScaledVector(forwardVector, DEFAULT_GRAB_DISTANCE);
+        state.camera.getWorldQuaternion(cameraWorldQuaternion);
+        grabQuaternion.copy(cameraWorldQuaternion).multiply(grabbedRotationOffsetRef.current);
+
+        grabBodyPosition.set(grabbedBody.position[0], grabbedBody.position[1], grabbedBody.position[2]);
+        if (grabBodyPosition.distanceToSquared(grabTargetPosition) > DEFAULT_GRAB_RANGE * DEFAULT_GRAB_RANGE * 2.25) {
+            grabbedNodeIdRef.current = null;
+            return;
+        }
+
+        grabVelocity
+            .copy(grabTargetPosition)
+            .sub(grabBodyPosition)
+            .multiplyScalar(DEFAULT_GRAB_STRENGTH);
+
+        if (grabVelocity.lengthSq() > DEFAULT_GRAB_MAX_SPEED * DEFAULT_GRAB_MAX_SPEED) {
+            grabVelocity.setLength(DEFAULT_GRAB_MAX_SPEED);
+        }
+
+        rigidBody.setAngularVelocity(world, grabbedBody, [0, 0, 0]);
+        rigidBody.setQuaternion(world, grabbedBody, [grabQuaternion.x, grabQuaternion.y, grabQuaternion.z, grabQuaternion.w], true);
+        rigidBody.setLinearVelocity(world, grabbedBody, [grabVelocity.x, grabVelocity.y, grabVelocity.z]);
     });
 
     if (mode !== PrefabEditorMode.Play) {
@@ -309,11 +530,19 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
     }
 
     return (
-        <group ref={playerGroupRef} position={spawnPosition}>
-            <PerspectiveCamera makeDefault position={[0, cameraHeight, 0]} fov={90} near={0.1} far={1000} />
-            <PointerLockControls makeDefault />
-        </group>
+        <>
+            <group ref={playerGroupRef} position={spawnPosition}>
+                <group ref={cameraRigRef} position={[0, cameraHeight, 0]}>
+                    <HandViewModel />
+                    <group ref={cameraSwayRef}>
+                        <PerspectiveCamera makeDefault fov={90} near={0.1} far={1000} />
+                    </group>
+                </group>
+            </group>
+        </>
     );
 });
+
+useGLTF.preload(HAND_MODEL_URL);
 
 export default FirstPersonPlayer;

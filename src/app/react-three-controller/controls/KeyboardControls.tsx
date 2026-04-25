@@ -10,6 +10,8 @@ const keyMapping = {
     KeyS: { axis: 'vertical' as const, value: -1 },
     KeyA: { axis: 'horizontal' as const, value: -1 },
     KeyD: { axis: 'horizontal' as const, value: 1 },
+    KeyQ: { button: 'use' as const },
+    KeyE: { button: 'altUse' as const },
 
     // Look
     ArrowUp: { axis: 'lookVertical' as const, value: 1 },
@@ -21,10 +23,6 @@ const keyMapping = {
     Space: { button: 'jump' as const },
     ShiftLeft: { button: 'sprint' as const },
     ShiftRight: { button: 'sprint' as const },
-    KeyE: { button: 'use' as const },
-    Mouse0: { button: 'use' as const },
-    KeyQ: { button: 'altUse' as const },
-    Mouse2: { button: 'altUse' as const },
 };
 
 type AxisName = 'horizontal' | 'vertical' | 'lookHorizontal' | 'lookVertical';
@@ -95,6 +93,8 @@ export default function KeyboardInput() {
             store.setButton('sprint', false);
             store.setButton('use', false);
             store.setButton('altUse', false);
+            store.setButton('aim', false);
+            store.setButton('fire', false);
         };
 
         window.addEventListener('keydown', handleKeyDown);

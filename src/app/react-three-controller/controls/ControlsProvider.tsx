@@ -5,9 +5,26 @@
  * file in the root directory of this source tree.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Joystick, Button } from './TouchscreenControls';
 import KeyboardInput from './KeyboardControls';
+import PointerLockControls from './PointerLockControls';
+
+type LookHandler = (dx: number, dy: number) => void;
+
+type ControlsContextValue = {
+    setLookHandler: (handler: LookHandler | null) => void;
+};
+
+const ControlsContext = createContext<ControlsContextValue | null>(null);
+
+export function useControls() {
+    const context = useContext(ControlsContext);
+    if (!context) {
+        throw new Error('useControls must be used within Controls');
+    }
+    return context;
+}
 
 function isMobileDevice() {
     if (typeof navigator === 'undefined') return false;
@@ -24,6 +41,7 @@ function isMobileDevice() {
 
 function Controls({ children }: { children: React.ReactNode }) {
     const [isMobile, setIsMobile] = useState(false);
+    const lookHandlerRef = useRef<LookHandler | null>(null);
 
     useEffect(() => {
         setIsMobile(isMobileDevice());
@@ -42,26 +60,38 @@ function Controls({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const setLookHandler = useCallback((handler: LookHandler | null) => {
+        lookHandlerRef.current = handler;
+    }, []);
+
+    const controlsContextValue = useMemo<ControlsContextValue>(() => ({
+        setLookHandler,
+    }), [setLookHandler]);
+
     return (
-        <div className='contents' onClick={handleTap}>
-            <KeyboardInput />
-            {children}
-            {isMobile && (
-                <>
-                    <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
-                        <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
-                    </div>
-                    <div className='absolute bottom-10 right-10 z-50 grid grid-cols-2 gap-4 text-white select-none'>
-                        {/* twin stick */}
-                        {/* <Joystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
-                        <Button button="action" />
-                        <Button button="altAction" />
-                        <Button button="fire" />
-                        <Button button="jump" />
-                    </div>
-                </>
-            )}
-        </div>
+        <ControlsContext.Provider value={controlsContextValue}>
+            <div className='contents' onClick={handleTap}>
+                <KeyboardInput />
+                {!isMobile && <PointerLockControls onLook={(dx, dy) => lookHandlerRef.current?.(dx, dy)} />}
+                {children}
+                {isMobile && (
+                    <>
+                        <div className='absolute bottom-10 left-10 z-50 text-white select-none'>
+                            <Joystick horizontalAxis='horizontal' verticalAxis='vertical' />
+                        </div>
+                        <div className='absolute bottom-10 right-10 z-50 grid grid-cols-2 gap-4 text-white select-none'>
+                            {/* twin stick */}
+                            {/* <Joystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
+                            <Button button="action" />
+                            <Button button="altAction" />
+                            <Button button="aim" />
+                            <Button button="fire" />
+                            <Button button="jump" />
+                        </div>
+                    </>
+                )}
+            </div>
+        </ControlsContext.Provider>
     );
 }
 

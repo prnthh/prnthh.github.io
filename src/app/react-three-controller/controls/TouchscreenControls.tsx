@@ -201,14 +201,14 @@ export const Joystick: React.FC<JoystickProps> = ({
 export const Button = ({
     button,
 }: {
-    button: 'jump' | 'sprint' | 'action' | 'altAction' | 'fire';
+    button: 'jump' | 'sprint' | 'action' | 'altAction' | 'aim' | 'fire';
 }) => {
     const setButton = useInputStore(state => state.setButton);
     const pressing = useRef(false);
     const [isPressed, setIsPressed] = useState(false);
 
-    type PublicButton = 'jump' | 'sprint' | 'action' | 'altAction' | 'fire';
-    type StoreButton = 'jump' | 'sprint' | 'use' | 'altUse' | 'fire';
+    type PublicButton = 'jump' | 'sprint' | 'action' | 'altAction' | 'aim' | 'fire';
+    type StoreButton = 'jump' | 'sprint' | 'use' | 'altUse' | 'aim' | 'fire';
 
     const mapToStoreButton = (b: PublicButton): StoreButton => {
         // Map public "action" to the store's "use" button
@@ -217,11 +217,16 @@ export const Button = ({
         return b;
     };
 
-    const label = button === 'action'
-        ? 'Use'
-        : button === 'altAction'
-            ? 'Alt'
-            : button.charAt(0).toUpperCase() + button.slice(1);
+    const buttonLabels: Record<PublicButton, string> = {
+        jump: 'Jump',
+        sprint: 'Sprint',
+        action: 'Use',
+        altAction: 'Alt',
+        aim: 'Aim',
+        fire: 'Fire',
+    };
+
+    const label = buttonLabels[button];
 
     return (
         <div

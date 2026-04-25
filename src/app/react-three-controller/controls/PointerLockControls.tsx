@@ -6,17 +6,20 @@ const PINCH_ZOOM_STEP = 0.02;
 const PointerLockControls = ({
     onLook,
     onClick,
+    onClickUp,
     onZoom,
     onRightClickDown,
     onRightClickUp
 }: {
     onLook?: (dx: number, dy: number) => void,
     onClick?: () => void,
+    onClickUp?: () => void,
     onZoom?: (delta: number) => void,
     onRightClickDown?: () => void,
     onRightClickUp?: () => void
 }) => {
     const [isLocked, setIsLocked] = useState(false);
+    const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
     const lastTouch = useRef<{ id: number; x: number; y: number } | null>(null);
     const isPointerLocked = useRef<boolean>(false);
     const rightClickActive = useRef<boolean>(false);
@@ -25,7 +28,33 @@ const PointerLockControls = ({
     const { setButton } = useInputStore();
 
     useEffect(() => {
-        const canvas = document.querySelector('canvas');
+        const existingCanvas = document.querySelector("canvas");
+        if (existingCanvas instanceof HTMLCanvasElement) {
+            setCanvas(existingCanvas);
+            return;
+        }
+
+        const observer = new MutationObserver(() => {
+            const nextCanvas = document.querySelector("canvas");
+            if (!(nextCanvas instanceof HTMLCanvasElement)) {
+                return;
+            }
+
+            setCanvas(nextCanvas);
+            observer.disconnect();
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+        });
+
+        return () => {
+            observer.disconnect();
+        };
+    }, []);
+
+    useEffect(() => {
         if (!canvas) return;
 
         // --- Pointer lock setup ---
@@ -52,6 +81,11 @@ const PointerLockControls = ({
 
         // --- Mouse button handlers ---
         const onMouseButtonDown = (e: MouseEvent) => {
+            const isCanvasEvent = e.target === canvas;
+            if (!isPointerLocked.current && !isCanvasEvent) {
+                return;
+            }
+
             // Handle right-click first
             if (e.button === 2) {
                 rightClickActive.current = true;
@@ -72,6 +106,10 @@ const PointerLockControls = ({
         };
 
         const onMouseButtonUp = (e: MouseEvent) => {
+            if (!isPointerLocked.current && e.target !== canvas) {
+                return;
+            }
+
             if (e.button === 2) {
                 setButton('aim', false);
                 if (onRightClickUp) onRightClickUp();
@@ -81,6 +119,9 @@ const PointerLockControls = ({
                 }, 10);
             } else if (e.button === 0) {
                 setButton('fire', false);
+                if (onClickUp) {
+                    onClickUp();
+                }
             }
         };
 
@@ -97,7 +138,7 @@ const PointerLockControls = ({
             canvas.removeEventListener("mouseup", onMouseButtonUp);
             canvas.removeEventListener("contextmenu", onContextMenu);
         };
-    }, [onClick, onRightClickDown, onRightClickUp]);
+    }, [canvas, onClick, onClickUp, onRightClickDown, onRightClickUp]);
 
     // Mouse handling
     useEffect(() => {
@@ -118,7 +159,6 @@ const PointerLockControls = ({
     useEffect(() => {
         if (!onLook && !onZoom) return;
 
-        const canvas = document.querySelector('canvas');
         if (!canvas) return;
 
         const isCanvasTouch = (touch: Touch) => (touch.target as HTMLElement) === canvas;
@@ -231,7 +271,7 @@ const PointerLockControls = ({
             canvas.removeEventListener("touchcancel", onTouchEnd);
             canvas.removeEventListener("wheel", onWheel);
         };
-    }, [onLook, onZoom]);
+    }, [canvas, onLook, onZoom]);
 
     return null;
 }
