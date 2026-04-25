@@ -6,7 +6,6 @@ import type { Component, ContactEventPayload, FieldDefinition } from "react-thre
 import { useFrame } from "@react-three/fiber";
 
 const SENSOR_ENTER_EVENT_NAME = "sensor:enter";
-const DEFAULT_TRIGGER_ENTITY_ID = "player";
 const DEFAULT_TRAVEL_DISTANCE = 4;
 const DEFAULT_MOVE_SPEED = 1.6;
 const DEFAULT_RETURN_DELAY = 1;
@@ -18,7 +17,6 @@ type ElevatorMoverProperties = {
     platformNodeId?: string;
     sensorNodeId?: string;
     rigidBodyNodeIds?: string;
-    triggerEntityId?: string;
     travelDistance?: number;
     moveSpeed?: number;
     returnDelay?: number;
@@ -35,12 +33,6 @@ const elevatorMoverFields: FieldDefinition[] = [
         name: "sensorNodeId",
         type: "node",
         label: "Sensor Node",
-    },
-    {
-        name: "triggerEntityId",
-        type: "string",
-        label: "Trigger Entity ID",
-        placeholder: DEFAULT_TRIGGER_ENTITY_ID,
     },
     { name: "travelDistance", type: "number", label: "Travel Distance", step: 0.1 },
     { name: "moveSpeed", type: "number", label: "Move Speed", min: 0.01, step: 0.1 },
@@ -73,7 +65,6 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
     }, [nodeId, properties.platformNodeId, properties.rigidBodyNodeIds]);
 
     const sensorNodeId = properties.sensorNodeId;
-    const triggerEntityId = properties.triggerEntityId ?? DEFAULT_TRIGGER_ENTITY_ID;
     const travelDistance = properties.travelDistance ?? DEFAULT_TRAVEL_DISTANCE;
     const moveSpeed = properties.moveSpeed ?? DEFAULT_MOVE_SPEED;
     const returnDelay = properties.returnDelay ?? DEFAULT_RETURN_DELAY;
@@ -87,15 +78,12 @@ function ElevatorMoverView({ properties, children }: { properties: ElevatorMover
         if (sensorNodeId && payload.sourceNodeId !== sensorNodeId) {
             return;
         }
-        if (triggerEntityId && payload.targetNodeId !== triggerEntityId) {
-            return;
-        }
 
         if (phaseRef.current === "idle" || phaseRef.current === "descending") {
             phaseRef.current = "ascending";
             waitTimerRef.current = 0;
         }
-    }, [editMode, sensorNodeId, triggerEntityId]);
+    }, [editMode, sensorNodeId]);
 
     useFrame((_, delta) => {
         if (editMode || phaseRef.current === "idle") {
@@ -164,7 +152,6 @@ const ElevatorMover: Component = {
     defaultProperties: {
         platformNodeId: "",
         sensorNodeId: "",
-        triggerEntityId: DEFAULT_TRIGGER_ENTITY_ID,
         travelDistance: DEFAULT_TRAVEL_DISTANCE,
         moveSpeed: DEFAULT_MOVE_SPEED,
         returnDelay: DEFAULT_RETURN_DELAY,
