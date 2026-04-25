@@ -201,27 +201,19 @@ export const Joystick: React.FC<JoystickProps> = ({
 export const Button = ({
     button,
 }: {
-    button: 'jump' | 'sprint' | 'action' | 'altAction' | 'aim' | 'fire';
+    button: 'jump' | 'sprint' | 'use' | 'altUse' | 'aim' | 'fire';
 }) => {
     const setButton = useInputStore(state => state.setButton);
     const pressing = useRef(false);
     const [isPressed, setIsPressed] = useState(false);
 
-    type PublicButton = 'jump' | 'sprint' | 'action' | 'altAction' | 'aim' | 'fire';
-    type StoreButton = 'jump' | 'sprint' | 'use' | 'altUse' | 'aim' | 'fire';
-
-    const mapToStoreButton = (b: PublicButton): StoreButton => {
-        // Map public "action" to the store's "use" button
-        if (b === 'action') return 'use';
-        if (b === 'altAction') return 'altUse';
-        return b;
-    };
+    type PublicButton = 'jump' | 'sprint' | 'use' | 'altUse' | 'aim' | 'fire';
 
     const buttonLabels: Record<PublicButton, string> = {
         jump: 'Jump',
         sprint: 'Sprint',
-        action: 'Use',
-        altAction: 'Alt',
+        use: 'Use',
+        altUse: 'Alt',
         aim: 'Aim',
         fire: 'Fire',
     };
@@ -249,7 +241,7 @@ export const Button = ({
                 e.preventDefault();
                 pressing.current = true;
                 setIsPressed(true);
-                setButton(mapToStoreButton(button), true);
+                setButton(button, true);
                 // Resume AudioContext on user interaction (required for iOS/iPad)
                 sound.resume();
             }}
@@ -257,20 +249,20 @@ export const Button = ({
                 e.preventDefault();
                 pressing.current = false;
                 setIsPressed(false);
-                setButton(mapToStoreButton(button), false);
+                setButton(button, false);
             }}
             onMouseDown={e => {
                 e.preventDefault();
                 pressing.current = true;
                 setIsPressed(true);
-                setButton(mapToStoreButton(button), true);
+                setButton(button, true);
                 // Resume AudioContext on user interaction (required for iOS/iPad)
                 sound.resume();
                 const upListener = () => {
                     if (pressing.current) {
                         pressing.current = false;
                         setIsPressed(false);
-                        setButton(mapToStoreButton(button), false);
+                        setButton(button, false);
                     }
                     document.removeEventListener('mouseup', upListener);
                 };

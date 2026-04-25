@@ -82,8 +82,8 @@ function Controls({ children }: { children: React.ReactNode }) {
                         <div className='absolute bottom-10 right-10 z-50 grid grid-cols-2 gap-4 text-white select-none'>
                             {/* twin stick */}
                             {/* <Joystick horizontalAxis='lookHorizontal' verticalAxis='lookVertical' /> */}
-                            <Button button="action" />
-                            <Button button="altAction" />
+                            <Button button="use" />
+                            <Button button="altUse" />
                             <Button button="aim" />
                             <Button button="fire" />
                             <Button button="jump" />
