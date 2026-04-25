@@ -38,6 +38,9 @@ const scratchVertex = new Vector3();
 const scratchScale = new Vector3();
 const scratchBoundsSize = new Vector3();
 
+const SLEEP_TIME_BEFORE_REST = 0.2;
+const SLEEP_POINT_VELOCITY_THRESHOLD = 0.06;
+
 let didRegisterCrashcat = false;
 
 function ensureCrashcatRegistered() {
@@ -394,6 +397,8 @@ export const CrashcatRuntime = forwardRef<CrashcatRuntimeRef, {
 
         const settings = createWorldSettings();
         settings.narrowphase.collideWithBackfaces = true;
+        settings.sleeping.timeBeforeSleep = SLEEP_TIME_BEFORE_REST;
+        settings.sleeping.pointVelocitySleepThreshold = SLEEP_POINT_VELOCITY_THRESHOLD;
 
         const movingBroadphaseLayer = addBroadphaseLayer(settings);
         const staticBroadphaseLayer = addBroadphaseLayer(settings);
