@@ -143,7 +143,7 @@ export default function Rain({
 
                     ripplePosition.xz.assign(position.xz);
                     // Convert world Y to local space relative to rain group position
-                    ripplePosition.y.assign(floorPosition.sub(tslFloat(position[1])));
+                    ripplePosition.y.assign(floorPosition.sub(position.y));
 
                     rippleTime.x.assign(tslFloat(1));
 

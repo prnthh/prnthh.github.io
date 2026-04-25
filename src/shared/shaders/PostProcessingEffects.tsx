@@ -22,6 +22,8 @@ type RenderPipelineProps = {
     aoPower?: number;
 };
 
+type Vec4NodeLike = ReturnType<typeof vec4>;
+
 const MyRenderPipeline = ({
     aoResolutionScale = 1,
     aoRadius = 0.18,
@@ -61,18 +63,23 @@ const MyRenderPipeline = ({
         ambientOcclusion.distanceFallOff.value = aoDistanceFallOff;
         ambientOcclusion.samples.value = aoSamples;
 
-        const ambientOcclusionNode = denoiseEnabled
-            ? denoise(ambientOcclusion.getTextureNode(), sceneDepth, sceneNormal, camera)
-            : ambientOcclusion.getTextureNode();
+        let aoFactor;
 
-        if (denoiseEnabled && "radius" in ambientOcclusionNode) {
-            ambientOcclusionNode.radius.value = denoiseRadius;
-            ambientOcclusionNode.lumaPhi.value = denoiseLumaPhi;
-            ambientOcclusionNode.depthPhi.value = denoiseDepthPhi;
-            ambientOcclusionNode.normalPhi.value = denoiseNormalPhi;
+        if (denoiseEnabled) {
+            const denoiseNode = denoise(ambientOcclusion.getTextureNode(), sceneDepth, sceneNormal, camera);
+
+            denoiseNode.radius.value = denoiseRadius;
+            denoiseNode.lumaPhi.value = denoiseLumaPhi;
+            denoiseNode.depthPhi.value = denoiseDepthPhi;
+            denoiseNode.normalPhi.value = denoiseNormalPhi;
+
+            const denoisedOutput = denoiseNode as unknown as Vec4NodeLike;
+            aoFactor = denoisedOutput.r.pow(aoPower);
+        } else {
+            const aoTextureNode = ambientOcclusion.getTextureNode();
+            aoFactor = aoTextureNode.r.pow(aoPower);
         }
 
-        const aoFactor = ambientOcclusionNode.r.pow(aoPower);
         pipeline.outputNode = vec4(sceneColor.rgb.mul(aoFactor), sceneColor.a);
 
         return pipeline;

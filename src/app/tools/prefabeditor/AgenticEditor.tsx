@@ -127,11 +127,13 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
     }
 
     async function runTool(name: string, rawArguments: string): Promise<ToolResult> {
-        const scene = editorRef.current?.scene;
+        const editor = editorRef.current;
 
-        if (!scene) {
+        if (!editor) {
             return { ok: false, message: "Prefab editor scene is not ready." };
         }
+
+        const rootId = prefabRef.current?.root?.id ?? "root";
 
         let args: Record<string, unknown>;
 
@@ -234,8 +236,8 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                scene.add(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : scene.rootId,
+                editor.addNode(nextNode, {
+                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
                     select: true,
                 });
 
@@ -283,8 +285,8 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                scene.add(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : scene.rootId,
+                editor.addNode(nextNode, {
+                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
                     select: true,
                 });
 
@@ -325,8 +327,8 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                scene.add(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : scene.rootId,
+                editor.addNode(nextNode, {
+                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
                     select: true,
                 });
 
@@ -342,38 +344,32 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
 
             if (name === "set_node_transform") {
                 const nodeId = typeof args.nodeId === "string" ? args.nodeId : null;
-                const entity = nodeId ? scene.find(nodeId) : null;
+                const node = nodeId ? editor.getNode(nodeId) : null;
 
-                if (!entity) {
+                if (!nodeId || !node) {
                     return { ok: false, message: `Node ${String(args.nodeId)} was not found.` };
                 }
 
-                let transform = entity.getComponent("Transform");
+                editor.updateNode(nodeId, currentNode => {
+                    const transform = currentNode.components?.transform;
+                    const existingProperties = transform?.type === "Transform" && transform.properties && typeof transform.properties === "object"
+                        ? transform.properties as Record<string, unknown>
+                        : {};
 
-                if (!transform) {
-                    transform = entity.addComponent("Transform", {
-                        position: [0, 0, 0],
-                        rotation: [0, 0, 0],
-                        scale: [1, 1, 1],
-                    });
-                }
-
-                if (!transform) {
-                    return { ok: false, message: "Unable to create or resolve Transform component." };
-                }
-
-                scene.batch(() => {
-                    if (Array.isArray(args.position)) {
-                        transform?.set("position", args.position);
-                    }
-
-                    if (Array.isArray(args.rotation)) {
-                        transform?.set("rotation", args.rotation);
-                    }
-
-                    if (Array.isArray(args.scale)) {
-                        transform?.set("scale", args.scale);
-                    }
+                    return {
+                        ...currentNode,
+                        components: {
+                            ...currentNode.components,
+                            transform: {
+                                type: "Transform",
+                                properties: {
+                                    position: Array.isArray(args.position) ? args.position : existingProperties.position ?? [0, 0, 0],
+                                    rotation: Array.isArray(args.rotation) ? args.rotation : existingProperties.rotation ?? [0, 0, 0],
+                                    scale: Array.isArray(args.scale) ? args.scale : existingProperties.scale ?? [1, 1, 1],
+                                },
+                            },
+                        },
+                    };
                 });
 
                 return { ok: true, message: `Updated transform on ${nodeId}.` };
@@ -384,25 +380,31 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                 const componentName = typeof args.componentName === "string" ? args.componentName : null;
                 const nextProperties = args.properties && typeof args.properties === "object" ? args.properties as Record<string, unknown> : null;
                 const replace = args.replace === true;
-                const entity = nodeId ? scene.find(nodeId) : null;
+                const node = nodeId ? editor.getNode(nodeId) : null;
 
-                if (!entity || !componentName || !nextProperties) {
+                if (!nodeId || !node || !componentName || !nextProperties) {
                     return { ok: false, message: "nodeId, componentName, and properties are required." };
                 }
 
-                let component = entity.getComponent(componentName);
+                editor.updateNode(nodeId, currentNode => {
+                    const componentKey = Object.entries(currentNode.components ?? {}).find(([, component]) => component?.type === componentName)?.[0]
+                        ?? componentName.toLowerCase();
+                    const existingComponent = currentNode.components?.[componentKey];
+                    const existingProperties = existingComponent?.properties && typeof existingComponent.properties === "object"
+                        ? existingComponent.properties as Record<string, unknown>
+                        : {};
 
-                if (!component) {
-                    component = entity.addComponent(componentName, nextProperties);
-                } else {
-                    component.update((properties: Record<string, unknown>) => {
-                        return replace ? { ...nextProperties } : { ...properties, ...nextProperties };
-                    });
-                }
-
-                if (!component) {
-                    return { ok: false, message: `Unable to add or update ${componentName} on ${nodeId}.` };
-                }
+                    return {
+                        ...currentNode,
+                        components: {
+                            ...currentNode.components,
+                            [componentKey]: {
+                                type: existingComponent?.type ?? componentName,
+                                properties: replace ? { ...nextProperties } : { ...existingProperties, ...nextProperties },
+                            },
+                        },
+                    };
+                });
 
                 return { ok: true, message: `Updated ${componentName} on ${nodeId}.` };
             }
@@ -410,20 +412,24 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
             if (name === "add_component") {
                 const nodeId = typeof args.nodeId === "string" ? args.nodeId : null;
                 const componentName = typeof args.componentName === "string" ? args.componentName : null;
-                const entity = nodeId ? scene.find(nodeId) : null;
+                const node = nodeId ? editor.getNode(nodeId) : null;
 
-                if (!entity || !componentName) {
+                if (!nodeId || !node || !componentName) {
                     return { ok: false, message: "nodeId and componentName are required." };
                 }
 
-                const component = entity.addComponent(
-                    componentName,
-                    args.properties && typeof args.properties === "object" ? args.properties as Record<string, unknown> : undefined,
-                );
-
-                if (!component) {
-                    return { ok: false, message: `Unable to add ${componentName} to ${nodeId}.` };
-                }
+                editor.updateNode(nodeId, currentNode => ({
+                    ...currentNode,
+                    components: {
+                        ...currentNode.components,
+                        [componentName.toLowerCase()]: {
+                            type: componentName,
+                            properties: args.properties && typeof args.properties === "object"
+                                ? args.properties as Record<string, unknown>
+                                : {},
+                        },
+                    },
+                }));
 
                 return { ok: true, message: `Added ${componentName} to ${nodeId}.` };
             }
@@ -431,13 +437,23 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
             if (name === "remove_component") {
                 const nodeId = typeof args.nodeId === "string" ? args.nodeId : null;
                 const componentName = typeof args.componentName === "string" ? args.componentName : null;
-                const entity = nodeId ? scene.find(nodeId) : null;
+                const node = nodeId ? editor.getNode(nodeId) : null;
 
-                if (!entity || !componentName) {
+                if (!nodeId || !node || !componentName) {
                     return { ok: false, message: "nodeId and componentName are required." };
                 }
 
-                entity.removeComponent(componentName);
+                editor.updateNode(nodeId, currentNode => {
+                    const nextComponents = { ...(currentNode.components ?? {}) };
+                    const componentKey = Object.entries(nextComponents).find(([, component]) => component?.type === componentName)?.[0]
+                        ?? componentName.toLowerCase();
+                    delete nextComponents[componentKey];
+
+                    return {
+                        ...currentNode,
+                        components: nextComponents,
+                    };
+                });
 
                 return { ok: true, message: `Removed ${componentName} from ${nodeId}.` };
             }
@@ -470,8 +486,8 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                scene.add(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : scene.rootId,
+                editor.addNode(nextNode, {
+                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
                     select: true,
                 });
 
@@ -486,7 +502,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     return { ok: false, message: "nodeId and name are required." };
                 }
 
-                scene.update(nodeId, node => ({ ...node, name: nameArg }));
+                editor.updateNode(nodeId, node => ({ ...node, name: nameArg }));
 
                 return { ok: true, message: `Renamed ${nodeId} to ${nameArg}.` };
             }
@@ -498,7 +514,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     return { ok: false, message: "nodeId is required." };
                 }
 
-                scene.remove(nodeId);
+                editor.deleteNode(nodeId);
 
                 return { ok: true, message: `Deleted ${nodeId}.` };
             }

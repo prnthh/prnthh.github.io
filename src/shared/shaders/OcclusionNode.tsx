@@ -23,7 +23,7 @@ class OcclusionNode extends Node {
 
     }
 
-    async update(frame: NodeFrame) {
+    update(frame: NodeFrame) {
 
         const isOccluded = frame.renderer?.isOccluded
             ? frame.renderer.isOccluded(this.testObject)
@@ -31,6 +31,7 @@ class OcclusionNode extends Node {
 
         this.uniformNode.value.copy(isOccluded ? this.occludedColor : this.normalColor);
 
+        return true;
     }
 
     setup( /* builder */) {

@@ -4,7 +4,8 @@ import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three/webgpu";
 import {
-    attribute,
+    bufferAttribute,
+    clamp,
     positionLocal,
     sin,
     uniform,
@@ -17,6 +18,8 @@ type GrassProps = {
     fieldSize?: number;
     segments?: number;
 };
+
+type Vec3NodeLike = ReturnType<typeof vec3>;
 
 export function Grass({
     bladeCount = 250_000,
@@ -41,7 +44,6 @@ export function Grass({
     const geometry = useMemo(() => {
         const positions: number[] = [];
         const centers: number[] = [];
-        const uvs: number[] = [];
         const indices: number[] = [];
 
         let v = 0;
@@ -61,12 +63,10 @@ export function Grass({
                 // left
                 positions.push(-w, y, 0);
                 centers.push(cx, 0, cz);
-                uvs.push(0, t);
 
                 // right
                 positions.push(w, y, 0);
                 centers.push(cx, 0, cz);
-                uvs.push(1, t);
             }
 
             for (let s = 0; s < segments; s++) {
@@ -89,7 +89,6 @@ export function Grass({
             "bladeCenter",
             new THREE.Float32BufferAttribute(centers, 3)
         );
-        g.setAttribute("bladeUV", new THREE.Float32BufferAttribute(uvs, 2));
 
         g.computeBoundingSphere();
         return g;
@@ -105,42 +104,39 @@ export function Grass({
             side: THREE.DoubleSide,
         });
 
+        const bladeCenterAttribute = geometry.getAttribute("bladeCenter") as THREE.BufferAttribute | undefined;
+
+        if (!bladeCenterAttribute) {
+            return mat;
+        }
+
         mat.positionNode = (() => {
             const local = positionLocal;
-            const center = attribute("bladeCenter", "vec3");
-            const uv = attribute("bladeUV", "vec2");
-
+            const center = bufferAttribute(bladeCenterAttribute, "vec3") as unknown as Vec3NodeLike;
+            const centerXZ = vec2(center.x, center.z);
             const half = uFieldSize.mul(0.5);
-
-            // camera-relative infinite wrap
-            const wrappedXZ = center.xz
+            const wrappedXZ = centerXZ
                 .add(uCameraXZ)
                 .add(half)
                 .mod(uFieldSize)
                 .sub(half);
+            const bend = clamp(local.y.mul(4), 0, 1);
+            const wind = sin(
+                wrappedXZ.x.mul(0.15)
+                    .add(wrappedXZ.y.mul(0.12))
+                    .add(uTime.mul(1.5))
+            ).mul(0.15).mul(bend);
 
-            // wind
-            const wind =
-                sin(
-                    wrappedXZ.x.mul(0.15)
-                        .add(wrappedXZ.y.mul(0.12))
-                        .add(uTime.mul(1.5))
-                ).mul(0.15);
-
-            const sway = vec3(
-                wind.mul(uv.y),
-                0,
-                wind.mul(uv.y)
+            return vec3(
+                wrappedXZ.x.add(local.x).add(wind),
+                local.y,
+                wrappedXZ.y.add(local.z).add(wind)
             );
-            const x = wrappedXZ.x.add(local.x).add(sway.x);
-            const z = wrappedXZ.y.add(local.z).add(sway.z);
-
-            return vec3(x, local.y, z);
 
         })();
 
         return mat;
-    }, [uCameraXZ, uFieldSize, uTime]);
+    }, [geometry, uCameraXZ, uFieldSize, uTime]);
 
     /* ---------------------------------- */
     /* per-frame updates */
