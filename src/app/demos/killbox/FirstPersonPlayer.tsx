@@ -1,28 +1,16 @@
 "use client";
 
 import { PerspectiveCamera, useGLTF } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { capsule, filter, kcc, rigidBody, MotionType, type Filter, type RigidBody } from "crashcat";
+import { useFrame, useThree } from "@react-three/fiber";
+import { capsule, filter, kcc, rigidBody, MotionType, type Filter, type RigidBody, type World } from "crashcat";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, type RefObject } from "react";
 import { gameEvents, PrefabEditorMode, useEditorContext } from "react-three-game";
 import type { CrashcatRuntimeRef } from "@/app/components/CrashcatRuntime";
 import { useControls } from "@/app/react-three-controller/controls/ControlsProvider";
 import useInputStore from "@/app/react-three-controller/controls/InputStore";
-import { Group, MathUtils, Quaternion, Raycaster, Vector2, Vector3, type Object3D } from "three";
+import { Group, MathUtils, Quaternion, Raycaster, Vector2, Vector3, type Camera, type Object3D } from "three";
 
-const DEFAULT_MAX_SPEED = 7;
-const DEFAULT_GROUND_ACCEL = 18;
-const DEFAULT_AIR_ACCEL = 6;
-const DEFAULT_FRICTION = 10;
-const DEFAULT_JUMP_SPEED = 6.5;
-const DEFAULT_FOOTSTEP_EVENT = "player:footstep";
-const DEFAULT_FOOTSTEP_MIN_INTERVAL = 0.28;
-const DEFAULT_FOOTSTEP_MAX_INTERVAL = 0.48;
-const DEFAULT_FOOTSTEP_MIN_SPEED = 1.5;
 const FOOTSTEP_CLIPS = ["/sound/hit.mp3", "/sound/hit2.mp3"] as const;
-const DEFAULT_RADIUS = 0.35;
-const DEFAULT_HALF_HEIGHT = 0.45;
-const DEFAULT_CAMERA_HEIGHT = 0.54;
 const DEFAULT_GRAB_DISTANCE = 2.75;
 const DEFAULT_GRAB_RANGE = 8;
 const DEFAULT_GRAB_STRENGTH = 18;
@@ -63,8 +51,8 @@ export type FirstPersonPlayerProps = {
     friction?: number;
     jumpSpeed?: number;
     footstepEventName?: string;
-    footstepMinInterval?: number;
-    footstepMaxInterval?: number;
+    footstepInterval?: number;
+    footstepRandomDelay?: number;
     footstepMinSpeed?: number;
     cameraHeight?: number;
     spawnPosition?: [number, number, number];
@@ -110,21 +98,22 @@ function HandViewModel() {
 
 const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProps>(function FirstPersonPlayer({
     runtimeRef,
-    radius = DEFAULT_RADIUS,
-    halfHeightOfCylinder = DEFAULT_HALF_HEIGHT,
-    maxSpeed = DEFAULT_MAX_SPEED,
-    groundAccel = DEFAULT_GROUND_ACCEL,
-    airAccel = DEFAULT_AIR_ACCEL,
-    friction = DEFAULT_FRICTION,
-    jumpSpeed = DEFAULT_JUMP_SPEED,
-    footstepEventName = DEFAULT_FOOTSTEP_EVENT,
-    footstepMinInterval = DEFAULT_FOOTSTEP_MIN_INTERVAL,
-    footstepMaxInterval = DEFAULT_FOOTSTEP_MAX_INTERVAL,
-    footstepMinSpeed = DEFAULT_FOOTSTEP_MIN_SPEED,
-    cameraHeight = DEFAULT_CAMERA_HEIGHT,
+    radius = 0.35,
+    halfHeightOfCylinder = 0.45,
+    maxSpeed = 7,
+    groundAccel = 18,
+    airAccel = 6,
+    friction = 10,
+    jumpSpeed = 6.5,
+    footstepEventName = "player:footstep",
+    footstepInterval = 0.3,
+    footstepRandomDelay = 0.15,
+    footstepMinSpeed = 1.5,
+    cameraHeight = 0.54,
     spawnPosition = [0, 1.3, 6],
 }, ref) {
     const { mode } = useEditorContext();
+    const scene = useThree((state) => state.scene);
     const { setLookHandler } = useControls();
     const horizontalInput = useInputStore((state) => state.horizontal);
     const verticalInput = useInputStore((state) => state.vertical);
@@ -151,6 +140,53 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
     const lastAimPressedRef = useRef(false);
     const firePressed = useInputStore((state) => state.fire);
     const aimPressed = useInputStore((state) => state.aim);
+
+    const releaseGrabbed = useCallback((world: World, camera: Camera, launch = false) => {
+        const grabbedNodeId = grabbedNodeIdRef.current;
+        if (!grabbedNodeId) {
+            return;
+        }
+
+        const body = runtimeRef.current?.getBody(grabbedNodeId) ?? null;
+        if (body && launch) {
+            camera.getWorldDirection(forwardVector);
+            forwardVector.normalize();
+            grabVelocity.copy(forwardVector).multiplyScalar(DEFAULT_LAUNCH_SPEED);
+            grabVelocity.add(planarVelocityVector);
+            rigidBody.setAngularVelocity(world, body, [0, 0, 0]);
+            rigidBody.setLinearVelocity(world, body, [grabVelocity.x, grabVelocity.y, grabVelocity.z]);
+        }
+
+        grabbedNodeIdRef.current = null;
+    }, []);
+
+    const tryGrabTarget = useCallback((world: World, camera: Camera) => {
+        raycaster.setFromCamera(centerScreen, camera);
+
+        const intersections = raycaster.intersectObjects(scene.children, true);
+        for (const intersection of intersections) {
+            const nodeId = getPrefabNodeId(intersection.object);
+            if (!nodeId) {
+                continue;
+            }
+
+            const body = runtimeRef.current?.getBody(nodeId) ?? null;
+            if (!body || body.motionType !== MotionType.DYNAMIC || nodeId === PLAYER_ID) {
+                continue;
+            }
+
+            if (intersection.distance > DEFAULT_GRAB_RANGE) {
+                return;
+            }
+
+            grabbedNodeIdRef.current = nodeId;
+            grabQuaternion.set(body.quaternion[0], body.quaternion[1], body.quaternion[2], body.quaternion[3]);
+            camera.getWorldQuaternion(cameraWorldQuaternion);
+            grabbedRotationOffsetRef.current.copy(cameraWorldQuaternion).invert().multiply(grabQuaternion);
+            rigidBody.setAngularVelocity(world, body, [0, 0, 0]);
+            return;
+        }
+    }, [scene]);
 
     useImperativeHandle(ref, () => ({
         getBody: () => playerBodyRef.current,
@@ -228,7 +264,7 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
 
         const source = clips[Math.floor(Math.random() * clips.length)];
         const audio = source.cloneNode() as HTMLAudioElement;
-        audio.volume = 0.2 + Math.random() * 0.12;
+        audio.volume = 0.1 + Math.random() * 0.05;
         audio.playbackRate = 0.9 + Math.random() * 0.14;
         void audio.play().catch(() => { });
     };
@@ -309,66 +345,19 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
             return;
         }
 
-        const tryGrabTarget = () => {
-            raycaster.setFromCamera(centerScreen, state.camera);
-
-            const intersections = raycaster.intersectObjects(state.scene.children, true);
-            for (const intersection of intersections) {
-                const nodeId = getPrefabNodeId(intersection.object);
-                if (!nodeId) {
-                    continue;
-                }
-
-                const body = runtime?.getBody(nodeId);
-                if (!body || body.motionType !== MotionType.DYNAMIC || nodeId === PLAYER_ID) {
-                    continue;
-                }
-
-                if (intersection.distance > DEFAULT_GRAB_RANGE) {
-                    return;
-                }
-
-                grabbedNodeIdRef.current = nodeId;
-                grabQuaternion.set(body.quaternion[0], body.quaternion[1], body.quaternion[2], body.quaternion[3]);
-                state.camera.getWorldQuaternion(cameraWorldQuaternion);
-                grabbedRotationOffsetRef.current.copy(cameraWorldQuaternion).invert().multiply(grabQuaternion);
-                rigidBody.setAngularVelocity(world, body, [0, 0, 0]);
-                return;
-            }
-        };
-
-        const releaseGrabbed = (launch = false) => {
-            const grabbedNodeId = grabbedNodeIdRef.current;
-            if (!grabbedNodeId) {
-                return;
-            }
-
-            const body = runtime?.getBody(grabbedNodeId);
-            if (body && launch) {
-                state.camera.getWorldDirection(forwardVector);
-                forwardVector.normalize();
-                grabVelocity.copy(forwardVector).multiplyScalar(DEFAULT_LAUNCH_SPEED);
-                grabVelocity.add(planarVelocityVector);
-                rigidBody.setAngularVelocity(world, body, [0, 0, 0]);
-                rigidBody.setLinearVelocity(world, body, [grabVelocity.x, grabVelocity.y, grabVelocity.z]);
-            }
-
-            grabbedNodeIdRef.current = null;
-        };
-
         const aimPressedThisFrame = aimPressed && !lastAimPressedRef.current;
         const firePressedThisFrame = firePressed && !lastFirePressedRef.current;
 
         if (aimPressedThisFrame) {
             if (grabbedNodeIdRef.current) {
-                releaseGrabbed(false);
+                releaseGrabbed(world, state.camera, false);
             } else {
-                tryGrabTarget();
+                tryGrabTarget(world, state.camera);
             }
         }
 
         if (firePressedThisFrame && grabbedNodeIdRef.current) {
-            releaseGrabbed(true);
+            releaseGrabbed(world, state.camera, true);
         }
 
         lastAimPressedRef.current = aimPressed;
@@ -458,7 +447,9 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
         const moving = grounded && desiredPlanarSpeed.lengthSq() > 0 && speed > footstepMinSpeed;
 
         if (!moving) {
-            footstepTimerRef.current = 0;
+            if (footstepTimerRef.current !== 0) {
+                footstepTimerRef.current = 0;
+            }
         } else {
             footstepTimerRef.current -= delta;
 
@@ -470,8 +461,7 @@ const FirstPersonPlayer = forwardRef<FirstPersonPlayerRef, FirstPersonPlayerProp
                 });
                 playFootstepSound();
 
-                const speedAlpha = Math.min(speed / maxSpeed, 1);
-                footstepTimerRef.current = footstepMaxInterval - (footstepMaxInterval - footstepMinInterval) * speedAlpha;
+                footstepTimerRef.current = footstepInterval + Math.random() * footstepRandomDelay;
             }
         }
 
