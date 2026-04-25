@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useLocalEntity } from "./core/GameStateStore"
+// import { useLocalEntity } from "./core/GameStateStore"
 import { GameRoom, BaseAction } from "./multiplayer/GameRoom"
 import { ChatAction, MatchmakingAction } from "./multiplayer/LobbyRoom"
 
@@ -15,7 +15,7 @@ type Props = {
 }
 
 const ChatUI = ({ room, label, onJoinGame }: Props) => {
-    const localEntity = useLocalEntity()
+    // const localEntity = useLocalEntity()
     const [mounted, setMounted] = useState(false)
     const [chatInput, setChatInput] = useState('')
 
@@ -72,13 +72,13 @@ const ChatUI = ({ room, label, onJoinGame }: Props) => {
     const sendChatMessage = () => {
         if (!chatInput.trim()) return
         const timestamp = new Date().toLocaleTimeString()
-        const senderName = (localEntity as any)?.name || 'Me'
+        const senderName = 'Me'
         // Add to local logs
         setLogs(prev => [...prev.slice(-19), { text: `[${timestamp}] ${senderName}: ${chatInput.trim()}` }])
         // Broadcast to peers
         room.broadcastAction({
             type: 'chat',
-            payload: { message: chatInput.trim(), senderName: (localEntity as any)?.name || 'Anonymous' }
+            payload: { message: chatInput.trim(), senderName: 'Anonymous' }
         })
         setChatInput('')
     }

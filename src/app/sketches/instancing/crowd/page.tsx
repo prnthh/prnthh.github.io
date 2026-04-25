@@ -9,7 +9,7 @@ import {
     range,
     time
 } from "three/tsl";
-import { AnimationMixer, Clock, Group, InstancedBufferAttribute, Mesh, MeshStandardNodeMaterial, Object3D, PostProcessing } from "three/webgpu";
+import { AnimationMixer, Clock, Color, Group, InstancedBufferAttribute, Mesh, MeshStandardNodeMaterial, Object3D, PostProcessing } from "three/webgpu";
 import { useThree, useFrame, useLoader } from "@react-three/fiber";
 import { FBXLoader } from "three/examples/jsm/Addons.js";
 import { Stats } from '@react-three/drei'
@@ -125,7 +125,7 @@ const applyTexture = (child: Object3D) => {
         child.receiveShadow = true;
 
         const oscNode = oscSine(time.mul(.1));
-        const randomColors = range(color(0x000000), color(0xFFFFFF));
+        const randomColors = range(new Color(0x000000), new Color(0xFFFFFF));
         const randomMetalness = range(0, 1);
         child.material = new MeshStandardNodeMaterial();
         child.material.roughness = .1;

@@ -129,7 +129,7 @@ const applyTexture = (child: THREE.Object3D) => {
         child.receiveShadow = true;
 
         const oscNode = oscSine(time.mul(.1));
-        const randomColors = range(color(0x000000), color(0xFFFFFF));
+        const randomColors = range(new THREE.Color(0x000000), new THREE.Color(0xFFFFFF));
         const randomMetalness = range(0, 1);
         child.material = new MeshStandardNodeMaterial();
         child.material.roughness = .1;

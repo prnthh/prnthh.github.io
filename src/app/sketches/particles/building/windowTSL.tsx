@@ -19,7 +19,7 @@ const range = (start: number, end: number) =>
 
 // SDF for a square
 const sdfSquare = (uvNode: any, size: any, offset: any) => {
-    const d = abs(sub(uvNode, offset)).sub(size)
+    const d = vec2(abs(sub(uvNode, offset)).sub(size))
     const maxD = max(d.x, d.y)
     return add(
         length(max(d, vec2(0.0, 0.0))),
