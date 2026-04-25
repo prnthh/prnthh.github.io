@@ -72,7 +72,7 @@ function Controls({ children }: { children: React.ReactNode }) {
         <ControlsContext.Provider value={controlsContextValue}>
             <div className='contents' onClick={handleTap}>
                 <KeyboardInput />
-                {!isMobile && <PointerLockControls onLook={(dx, dy) => lookHandlerRef.current?.(dx, dy)} />}
+                <PointerLockControls onLook={(dx, dy) => lookHandlerRef.current?.(dx, dy)} />
                 {children}
                 {isMobile && (
                     <>
