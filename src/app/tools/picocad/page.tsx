@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Prefab, PrefabEditor, PrefabEditorRef, useEditorContext } from "react-three-game";
+import { createModelNode, Prefab, PrefabEditor, PrefabEditorRef, useEditorContext } from "react-three-game";
 import { LoadingManager, Material, Object3D, Texture } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import PixelationEffect from "./PixelationEffect";
@@ -346,11 +346,8 @@ export default function PicocadPage() {
             ...EMPTY_PREFAB,
             name: sceneName,
         }, { resetHistory: true });
-        const modelNode = editor.addModel(editorModelPath, loadedScene, {
-            name: sceneName,
-            parentId: "root",
-            select: true,
-        });
+        editor.addModel(editorModelPath, loadedScene);
+        const modelNode = editor.add(createModelNode(editorModelPath, sceneName), "root");
         setModelNodeId(modelNode.id);
         setUniformScale(1);
         injectedSceneRef.current = loadedScene;
@@ -473,7 +470,7 @@ export default function PicocadPage() {
             return;
         }
 
-        const node = editorRef.current.getNode(modelNodeId);
+        const node = editorRef.current.get(modelNodeId);
 
         if (!node) {
             return;
@@ -481,7 +478,7 @@ export default function PicocadPage() {
 
         const scale: Vec3 = [nextScale, nextScale, nextScale];
 
-        editorRef.current.updateNode(modelNodeId, currentNode => {
+        editorRef.current.update(modelNodeId, currentNode => {
             const transformComponent = currentNode.components?.transform;
 
             return {

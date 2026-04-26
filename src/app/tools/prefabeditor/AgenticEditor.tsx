@@ -236,10 +236,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                editor.addNode(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
-                    select: true,
-                });
+                editor.add(nextNode, typeof args.parentId === "string" ? args.parentId : rootId);
 
                 return { ok: true, message: `Created primitive ${nextNode.id}.`, nodeId: nextNode.id };
             }
@@ -285,10 +282,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                editor.addNode(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
-                    select: true,
-                });
+                editor.add(nextNode, typeof args.parentId === "string" ? args.parentId : rootId);
 
                 return { ok: true, message: `Created buffer mesh ${nextNode.id}.`, nodeId: nextNode.id };
             }
@@ -327,10 +321,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                editor.addNode(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
-                    select: true,
-                });
+                editor.add(nextNode, typeof args.parentId === "string" ? args.parentId : rootId);
 
                 return { ok: true, message: `Created model node ${nextNode.id}.`, nodeId: nextNode.id };
             }
@@ -344,13 +335,13 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
 
             if (name === "set_node_transform") {
                 const nodeId = typeof args.nodeId === "string" ? args.nodeId : null;
-                const node = nodeId ? editor.getNode(nodeId) : null;
+                const node = nodeId ? editor.get(nodeId) : null;
 
                 if (!nodeId || !node) {
                     return { ok: false, message: `Node ${String(args.nodeId)} was not found.` };
                 }
 
-                editor.updateNode(nodeId, currentNode => {
+                editor.update(nodeId, currentNode => {
                     const transform = currentNode.components?.transform;
                     const existingProperties = transform?.type === "Transform" && transform.properties && typeof transform.properties === "object"
                         ? transform.properties as Record<string, unknown>
@@ -380,13 +371,13 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                 const componentName = typeof args.componentName === "string" ? args.componentName : null;
                 const nextProperties = args.properties && typeof args.properties === "object" ? args.properties as Record<string, unknown> : null;
                 const replace = args.replace === true;
-                const node = nodeId ? editor.getNode(nodeId) : null;
+                const node = nodeId ? editor.get(nodeId) : null;
 
                 if (!nodeId || !node || !componentName || !nextProperties) {
                     return { ok: false, message: "nodeId, componentName, and properties are required." };
                 }
 
-                editor.updateNode(nodeId, currentNode => {
+                editor.update(nodeId, currentNode => {
                     const componentKey = Object.entries(currentNode.components ?? {}).find(([, component]) => component?.type === componentName)?.[0]
                         ?? componentName.toLowerCase();
                     const existingComponent = currentNode.components?.[componentKey];
@@ -412,13 +403,13 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
             if (name === "add_component") {
                 const nodeId = typeof args.nodeId === "string" ? args.nodeId : null;
                 const componentName = typeof args.componentName === "string" ? args.componentName : null;
-                const node = nodeId ? editor.getNode(nodeId) : null;
+                const node = nodeId ? editor.get(nodeId) : null;
 
                 if (!nodeId || !node || !componentName) {
                     return { ok: false, message: "nodeId and componentName are required." };
                 }
 
-                editor.updateNode(nodeId, currentNode => ({
+                editor.update(nodeId, currentNode => ({
                     ...currentNode,
                     components: {
                         ...currentNode.components,
@@ -437,13 +428,13 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
             if (name === "remove_component") {
                 const nodeId = typeof args.nodeId === "string" ? args.nodeId : null;
                 const componentName = typeof args.componentName === "string" ? args.componentName : null;
-                const node = nodeId ? editor.getNode(nodeId) : null;
+                const node = nodeId ? editor.get(nodeId) : null;
 
                 if (!nodeId || !node || !componentName) {
                     return { ok: false, message: "nodeId and componentName are required." };
                 }
 
-                editor.updateNode(nodeId, currentNode => {
+                editor.update(nodeId, currentNode => {
                     const nextComponents = { ...(currentNode.components ?? {}) };
                     const componentKey = Object.entries(nextComponents).find(([, component]) => component?.type === componentName)?.[0]
                         ?? componentName.toLowerCase();
@@ -486,10 +477,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     children: [],
                 };
 
-                editor.addNode(nextNode, {
-                    parentId: typeof args.parentId === "string" ? args.parentId : rootId,
-                    select: true,
-                });
+                editor.add(nextNode, typeof args.parentId === "string" ? args.parentId : rootId);
 
                 return { ok: true, message: `Created node ${nextNode.id}.`, nodeId: nextNode.id };
             }
@@ -502,7 +490,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     return { ok: false, message: "nodeId and name are required." };
                 }
 
-                editor.updateNode(nodeId, node => ({ ...node, name: nameArg }));
+                editor.update(nodeId, node => ({ ...node, name: nameArg }));
 
                 return { ok: true, message: `Renamed ${nodeId} to ${nameArg}.` };
             }
@@ -514,7 +502,7 @@ export default function AgenticEditor({ editorRef, prefab }: AgenticEditorProps)
                     return { ok: false, message: "nodeId is required." };
                 }
 
-                editor.deleteNode(nodeId);
+                editor.remove(nodeId);
 
                 return { ok: true, message: `Deleted ${nodeId}.` };
             }

@@ -1,5 +1,5 @@
-import { FieldRenderer, useAssetRuntime, useCurrentNode } from "react-three-game";
-import type { Component, FieldDefinition } from "react-three-game";
+import { FieldRenderer, useNode } from "react-three-game";
+import type { Component, ComponentViewProps, FieldDefinition } from "react-three-game";
 import { useFrame } from "@react-three/fiber";
 
 const rotatorFields: FieldDefinition[] = [
@@ -16,7 +16,17 @@ const rotatorFields: FieldDefinition[] = [
     },
 ];
 
-function RotatorComponentEditor({ component, onUpdate }: { component: any; onUpdate: (newComp: any) => void }) {
+type RotatorProperties = {
+    speed?: number;
+    axis?: 'x' | 'y' | 'z';
+};
+
+type RotatorComponentEditorProps = {
+    component: { properties: RotatorProperties };
+    onUpdate: (values: RotatorProperties) => void;
+};
+
+function RotatorComponentEditor({ component, onUpdate }: RotatorComponentEditorProps) {
     return (
         <FieldRenderer
             fields={rotatorFields}
@@ -26,18 +36,17 @@ function RotatorComponentEditor({ component, onUpdate }: { component: any; onUpd
     );
 }
 
-function RotatorView({ properties, children }: { properties: any; children?: React.ReactNode }) {
-    const { editMode, nodeId } = useCurrentNode();
-    const assetRuntime = useAssetRuntime();
+function RotatorView({ properties, children }: ComponentViewProps<RotatorProperties>) {
+    const { editMode, getObject } = useNode();
     const speed = properties.speed ?? 1.0;
     const axis = properties.axis ?? 'y';
 
     useFrame((_, delta) => {
         if (editMode) return;
-        const obj = assetRuntime.getNodeObject(nodeId);
+        const obj = getObject();
 
         if (obj) {
-            obj.rotation[axis as 'x' | 'y' | 'z'] += delta * speed;
+            obj.rotation[axis] += delta * speed;
             obj.updateMatrixWorld(true);
         }
     });
