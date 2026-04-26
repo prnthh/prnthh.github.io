@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 // import { useLocalEntity } from "./core/GameStateStore"
-import { GameRoom, BaseAction } from "./multiplayer/GameRoom"
-import { ChatAction, MatchmakingAction } from "./multiplayer/LobbyRoom"
+import { GameRoom, BaseAction } from "./GameRoom"
+import { ChatAction, MatchmakingAction } from "./LobbyRoom"
 
 type LogEntry = {
     text: string
