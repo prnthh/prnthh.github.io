@@ -43,7 +43,7 @@ export default function Home() {
             <Controls>
                 <PrefabEditor mode={PrefabEditorMode.Play} ref={editorRef} initialPrefab={initialWorld as Prefab}>
                     <ControlModeSync />
-                    <CrashcatRuntime debug>
+                    <CrashcatRuntime>
                         <FirstPersonPlayer ref={playerRef} />
                     </CrashcatRuntime>
                     <RenderPipeline />

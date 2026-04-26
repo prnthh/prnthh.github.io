@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
     BooleanField,
     FieldRenderer,
@@ -215,17 +215,64 @@ function CrashcatPhysicsView({ properties, children }: ComponentViewProps<Crashc
     const api: CrashcatApi | null = useCrashcat();
     const { getAssetRevision } = useAssetRuntime();
     const revision = getAssetRevision();
-
-    // Re-register when api, node, geometry-determining inputs, or asset revision change.
-    const propsKey = JSON.stringify(properties);
+    const {
+        angularVelocity,
+        capsuleHalfHeight,
+        capsuleRadius,
+        colliders,
+        collisionEnterEventName,
+        collisionExitEventName,
+        friction,
+        linearVelocity,
+        restitution,
+        sensor,
+        sensorEnterEventName,
+        sensorExitEventName,
+        type,
+    } = properties;
+    const physics = useMemo<CrashcatPhysicsProperties>(() => ({
+        angularVelocity,
+        capsuleHalfHeight,
+        capsuleRadius,
+        colliders,
+        collisionEnterEventName,
+        collisionExitEventName,
+        friction,
+        linearVelocity,
+        restitution,
+        sensor,
+        sensorEnterEventName,
+        sensorExitEventName,
+        type,
+    }), [
+        angularVelocity?.[0],
+        angularVelocity?.[1],
+        angularVelocity?.[2],
+        capsuleHalfHeight,
+        capsuleRadius,
+        colliders,
+        collisionEnterEventName,
+        collisionExitEventName,
+        friction,
+        linearVelocity?.[0],
+        linearVelocity?.[1],
+        linearVelocity?.[2],
+        restitution,
+        sensor,
+        sensorEnterEventName,
+        sensorExitEventName,
+        type,
+    ]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
+        // Rebuild mesh-derived colliders when referenced assets finish loading.
+        void revision;
         if (!api) return;
         const object = getObject();
         if (!object) return;
 
-        const shape = createShapeForObject(object, properties);
+        const shape = createShapeForObject(object, physics);
         if (!shape) return;
 
         object.updateWorldMatrix(true, true);
@@ -233,8 +280,8 @@ function CrashcatPhysicsView({ properties, children }: ComponentViewProps<Crashc
         const wq = new Quaternion();
         object.getWorldQuaternion(wq);
 
-        const motionType = toMotionType(properties);
-        const motionQuality = toMotionQuality(properties);
+        const motionType = toMotionType(physics);
+        const motionQuality = toMotionQuality(physics);
         const isKinematic = motionType === MotionType.KINEMATIC;
         const isStatic = motionType === MotionType.STATIC;
 
@@ -245,35 +292,41 @@ function CrashcatPhysicsView({ properties, children }: ComponentViewProps<Crashc
             objectLayer: isStatic ? api.staticObjectLayer : api.movingObjectLayer,
             position: [scratchPosition.x, scratchPosition.y, scratchPosition.z],
             quaternion: [wq.x, wq.y, wq.z, wq.w],
-            sensor: Boolean(properties.sensor),
+            sensor: Boolean(physics.sensor),
             collideKinematicVsNonDynamic: isKinematic,
-            friction: properties.friction,
-            restitution: properties.restitution,
+            friction: physics.friction,
+            restitution: physics.restitution,
             userData: { nodeId },
         });
 
-        if (properties.linearVelocity) {
-            rigidBody.setLinearVelocity(api.world, body, properties.linearVelocity);
+        if (physics.linearVelocity) {
+            rigidBody.setLinearVelocity(api.world, body, physics.linearVelocity);
         }
-        if (properties.angularVelocity) {
-            rigidBody.setAngularVelocity(api.world, body, properties.angularVelocity);
+        if (physics.angularVelocity) {
+            rigidBody.setAngularVelocity(api.world, body, physics.angularVelocity);
         }
 
-        api.register(nodeId, body, {
+        api.register(nodeId, body, object, {
             motionType,
-            sensor: Boolean(properties.sensor),
+            sensor: Boolean(physics.sensor),
             events: {
-                collisionEnter: properties.collisionEnterEventName,
-                collisionExit: properties.collisionExitEventName,
-                sensorEnter: properties.sensorEnterEventName,
-                sensorExit: properties.sensorExitEventName,
+                collisionEnter: physics.collisionEnterEventName,
+                collisionExit: physics.collisionExitEventName,
+                sensorEnter: physics.sensorEnterEventName,
+                sensorExit: physics.sensorExitEventName,
             },
         });
 
         return () => {
             api.unregister(nodeId);
         };
-    }, [api, nodeId, propsKey, revision]);
+    }, [
+        api,
+        getObject,
+        nodeId,
+        physics,
+        revision,
+    ]);
 
     return <>{children}</>;
 }
