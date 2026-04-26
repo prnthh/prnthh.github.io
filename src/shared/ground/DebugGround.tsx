@@ -1,7 +1,8 @@
-import { ThreeElements, ThreeEvent, useLoader } from "@react-three/fiber";
-import { CuboidCollider, RigidBody } from "@react-three/rapier";
+import { useLoader } from "@react-three/fiber";
+import type { ThreeElements, ThreeEvent } from "@react-three/fiber";
 import { useRef, useEffect } from "react";
-import { LinearMipmapLinearFilter, NearestFilter, RepeatWrapping, SRGBColorSpace, Texture, TextureLoader } from "three";
+import { LinearMipmapLinearFilter, NearestFilter, RepeatWrapping, SRGBColorSpace, TextureLoader } from "three";
+import type { Texture } from "three";
 
 const DRAG_THRESHOLD = 5;
 const DEFAULT_TEXTURE_URL = "/textures/proto32/grey.png";
@@ -48,23 +49,20 @@ const DebugGround = ({
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < DRAG_THRESHOLD) {
-            onClick?.(e as any);
+            onClick?.(e as unknown as ThreeEvent<MouseEvent>);
         }
     };
 
     return (
         <>
             <group position={position} rotation={rotation}>
-                <RigidBody type="fixed" colliders={false}>
-                    <CuboidCollider args={[size / 2, 0.01, size / 2]} />
-                    <DebugGroundVisual
-                        size={size}
-                        textureUrl={textureUrl}
-                        receiveShadow
-                        onPointerDown={handlePointerDown}
-                        onPointerUp={handlePointerUp}
-                    />
-                </RigidBody>
+                <DebugGroundVisual
+                    size={size}
+                    textureUrl={textureUrl}
+                    receiveShadow
+                    onPointerDown={handlePointerDown}
+                    onPointerUp={handlePointerUp}
+                />
                 {debug && <gridHelper
                     args={[size, size]}
                     position={[0, 0.01, 0]}

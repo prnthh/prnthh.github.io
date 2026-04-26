@@ -5,11 +5,10 @@ import { MapEditorProvider, useMapEditor } from "./MapEditorProvider";
 import { MapTiles } from "../MapTile";
 import { Map2DCanvas } from "./Map2DCanvas";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { Physics } from "@react-three/rapier";
+import type { ThreeEvent } from "@react-three/fiber";
 import { useCallback, useRef, useState } from "react";
 import { DemoEnvironment } from "@/shared/debug/DemoWorld";
 import SynchronizedPointer from "./SynchronizedPointer";
-import { NeoController } from "@/app/react-three-controller";
 
 
 function PageContent({
@@ -32,7 +31,7 @@ function PageContent({
     const isBrushMode = editorMode === "edit" && brushMode === "brush";
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handlePointerMove = useCallback((e: any) => {
+    const handlePointerMove = useCallback((e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
 
         // Get the intersection object with local coordinates
@@ -62,7 +61,7 @@ function PageContent({
         }
     }, [config, paintAt, pointerRef, isDrawing, tileSize, tileSizePx]);
 
-    const handlePointerDown = useCallback((e: any) => {
+    const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
         if (e.button !== 0) return;
         e.stopPropagation();
         setIsDrawing(true);
@@ -86,7 +85,7 @@ function PageContent({
         }
     }, [setIsDrawing, config, paintAt, tileSize, tileSizePx]);
 
-    const handlePointerUp = useCallback((e: any) => {
+    const handlePointerUp = useCallback((e: ThreeEvent<PointerEvent>) => {
         e.stopPropagation();
         setIsDrawing(false);
     }, [setIsDrawing]);
@@ -107,51 +106,41 @@ function PageContent({
         <>
             <GameCanvas>
                 <color attach="background" args={["#87ceeb"]} />
-                <Physics>
-                    <ambientLight intensity={1.5} />
-                    <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
+                <ambientLight intensity={1.5} />
+                <directionalLight castShadow position={[10, 10, 5]} intensity={1} />
 
-                    <group position={[-tileSize / 2, 0, -tileSize / 2]}>
-                        <MapTiles
-                            startX={config.startX}
-                            startZ={config.startZ}
-                            endX={config.endX}
-                            endZ={config.endZ}
-                            physics={editorMode === "play"}
-                            tileSize={tileSize}
-                            viewRadius={2}
-                            paintMode={brush.mode}
-                            showWireframe={editorMode === "edit" && brush.mode === "height"}
-                            showTileBoundaries={editorMode === "edit"}
-                            previewHeightDataMap={editorMode === "edit" ? previewHeightDataMap : undefined}
-                            previewColorTextureMap={editorMode === "edit" ? previewColorTextureMap : undefined}
-                            onPointerMove={isBrushMode ? handlePointerMove : undefined}
-                            onPointerDown={isBrushMode ? handlePointerDown : undefined}
-                            onPointerUp={isBrushMode ? handlePointerUp : undefined}
-                            onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
-                        />
-                    </group>
+                <group position={[-tileSize / 2, 0, -tileSize / 2]}>
+                    <MapTiles
+                        startX={config.startX}
+                        startZ={config.startZ}
+                        endX={config.endX}
+                        endZ={config.endZ}
+                        tileSize={tileSize}
+                        paintMode={brush.mode}
+                        showWireframe={editorMode === "edit" && brush.mode === "height"}
+                        showTileBoundaries={editorMode === "edit"}
+                        previewHeightDataMap={editorMode === "edit" ? previewHeightDataMap : undefined}
+                        previewColorTextureMap={editorMode === "edit" ? previewColorTextureMap : undefined}
+                        onPointerMove={isBrushMode ? handlePointerMove : undefined}
+                        onPointerDown={isBrushMode ? handlePointerDown : undefined}
+                        onPointerUp={isBrushMode ? handlePointerUp : undefined}
+                        onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
+                    />
+                </group>
 
-                    {editorMode !== "play" ? (
-                        <>
-                            <PerspectiveCamera makeDefault position={[-100, 100, 0]}>
-                                <OrbitControls makeDefault target={[0, 0, 0]} enableRotate={brushMode === "move"} enabled={!isDrawing} />
-                            </PerspectiveCamera>
-                            {isBrushMode && <SynchronizedPointer />}
-                        </>
-                    ) : (
-                        <>
-                            <NeoController position={[0, 20, 0]} />
-                            <DemoEnvironment />
-                        </>
-                    )}
-                </Physics>
+                <PerspectiveCamera makeDefault position={editorMode === "play" ? [40, 28, 40] : [-100, 100, 0]}>
+                    <OrbitControls makeDefault target={[0, 0, 0]} enableRotate={editorMode === "play" || brushMode === "move"} enabled={editorMode === "play" || !isDrawing} />
+                </PerspectiveCamera>
+
+                {editorMode === "play" ? <DemoEnvironment /> : null}
+                {isBrushMode && <SynchronizedPointer />}
             </GameCanvas>
 
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
                 {(["play", "edit"] as const).map((m) => (
                     <button
                         key={m}
+                        type="button"
                         onClick={() => setEditorMode(m)}
                         className={`px-4 py-2 rounded border transition-colors ${editorMode === m
                             ? "bg-blue-500 text-white border-blue-600"
@@ -217,7 +206,7 @@ const MapConfigPanel = ({
     return (
         <div className="overflow-hidden rounded-[1.5rem] border border-white/15 bg-white/92 text-slate-900 shadow-2xl backdrop-blur-md dark:bg-black/92 dark:text-white">
             {!isOpen ? (
-                <button onClick={() => setIsOpen(true)} title="Open settings" className="flex w-full items-center justify-between px-4 py-3 text-left">
+                <button type="button" onClick={() => setIsOpen(true)} title="Open settings" className="flex w-full items-center justify-between px-4 py-3 text-left">
                     <div>
                         <div className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-white/45">Map Setup</div>
                         <div className="text-sm font-medium">Settings</div>
@@ -232,6 +221,7 @@ const MapConfigPanel = ({
                             <h2 className="text-sm font-semibold">Settings</h2>
                         </div>
                         <button
+                            type="button"
                             onClick={() => setIsOpen(false)}
                             className="rounded-full bg-slate-900/10 px-3 py-1 text-xs transition-colors hover:bg-slate-900/15 dark:bg-white/10 dark:hover:bg-white/15"
                             title="Close settings"
@@ -241,6 +231,7 @@ const MapConfigPanel = ({
                     </div>
 
                     <button
+                        type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="rounded-2xl bg-slate-900 px-3 py-3 text-white dark:bg-white dark:text-slate-900"
                     >
@@ -258,7 +249,7 @@ const MapConfigPanel = ({
                         <h3 className="text-sm font-s mb-2">Grid Configuration</h3>
 
                         <div className="flex items-center gap-2">
-                            <label className="w-20">Grid Size:</label>
+                            <div className="w-20">Grid Size:</div>
                             <input
                                 type="number"
                                 value={gridSize}
@@ -274,7 +265,7 @@ const MapConfigPanel = ({
                         </div>
 
                         <div className="flex items-center gap-2 mt-2">
-                            <label className=" w-20">Grid Start:</label>
+                            <div className=" w-20">Grid Start:</div>
                             <input
                                 type="number"
                                 value={gridStart}
@@ -291,7 +282,7 @@ const MapConfigPanel = ({
                         <h3 className="text-sm font-semibold mb-2">Tile Configuration</h3>
 
                         <div className="flex items-center gap-2">
-                            <label className="text-sm w-20">Tile Size:</label>
+                            <div className="text-sm w-20">Tile Size:</div>
                             <input
                                 type="number"
                                 value={tileSize}
@@ -304,7 +295,7 @@ const MapConfigPanel = ({
                         </div>
 
                         <div className="flex items-center gap-2 mt-2">
-                            <label className="text-sm w-20">Texture Res:</label>
+                            <div className="text-sm w-20">Texture Res:</div>
                             <input
                                 type="number"
                                 value={tileSizePx}

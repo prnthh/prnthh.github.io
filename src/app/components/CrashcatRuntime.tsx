@@ -53,6 +53,14 @@ export type BodyMeta = {
     events?: CrashcatEventConfig;
 };
 
+type BodyEntry = {
+    body: RigidBody;
+    object: Object3D;
+    meta: BodyMeta;
+    lastPosition?: [number, number, number];
+    lastQuaternion?: [number, number, number, number];
+};
+
 export interface CrashcatApi {
     world: World;
     queryFilter: Filter;
@@ -117,18 +125,25 @@ function setObjectWorldTransform(object: Object3D, position: [number, number, nu
     object.updateMatrixWorld(true);
 }
 
+function syncBodyToObject(world: World, entry: BodyEntry, delta?: number) {
+    const { body, object } = entry;
+    object.getWorldPosition(scratchPosition);
+    object.getWorldQuaternion(worldQuaternion);
+    const position: [number, number, number] = [scratchPosition.x, scratchPosition.y, scratchPosition.z];
+    const quaternion: [number, number, number, number] = [worldQuaternion.x, worldQuaternion.y, worldQuaternion.z, worldQuaternion.w];
+    if (delta === undefined) {
+        rigidBody.setPosition(world, body, position, false);
+        rigidBody.setQuaternion(world, body, quaternion, false);
+        return;
+    }
+    rigidBody.moveKinematic(body, position, quaternion, delta);
+}
+
 export function CrashcatRuntime({ debug = false, children }: { debug?: boolean; children?: React.ReactNode }) {
-    const scene = useScene();
-    const mode = scene.mode;
-    const bodiesRef = useRef(new Map<string, {
-        body: RigidBody;
-        object: Object3D;
-        meta: BodyMeta;
-        lastPosition?: [number, number, number];
-        lastQuaternion?: [number, number, number, number];
-    }>());
+    const { mode } = useScene();
+    const bodiesRef = useRef(new Map<string, BodyEntry>());
     const bodyByIdRef = useRef(new Map<number, BodyMeta>());
-    const api = useSyncExternalStore(subscribeCrashcat, getCrashcatSnapshot, getCrashcatSnapshot);
+    const api = useCrashcat();
     const debugStateRef = useRef<ReturnType<typeof debugRenderer.init> | null>(null);
 
     if (debug && !debugStateRef.current) {
@@ -217,24 +232,12 @@ export function CrashcatRuntime({ debug = false, children }: { debug?: boolean; 
 
         if (mode === PrefabEditorMode.Edit) {
             for (const entry of bodiesRef.current.values()) {
-                const object = entry.object;
-                object.getWorldPosition(scratchPosition);
-                object.getWorldQuaternion(worldQuaternion);
-                rigidBody.setPosition(world, entry.body, [scratchPosition.x, scratchPosition.y, scratchPosition.z], false);
-                rigidBody.setQuaternion(world, entry.body, [worldQuaternion.x, worldQuaternion.y, worldQuaternion.z, worldQuaternion.w], false);
+                syncBodyToObject(world, entry);
             }
         } else {
             for (const entry of bodiesRef.current.values()) {
                 if (entry.meta.motionType !== MotionType.KINEMATIC) continue;
-                const object = entry.object;
-                object.getWorldPosition(scratchPosition);
-                object.getWorldQuaternion(worldQuaternion);
-                rigidBody.moveKinematic(
-                    entry.body,
-                    [scratchPosition.x, scratchPosition.y, scratchPosition.z],
-                    [worldQuaternion.x, worldQuaternion.y, worldQuaternion.z, worldQuaternion.w],
-                    stepDelta,
-                );
+                syncBodyToObject(world, entry, stepDelta);
             }
             updateWorld(world, listener, stepDelta);
 

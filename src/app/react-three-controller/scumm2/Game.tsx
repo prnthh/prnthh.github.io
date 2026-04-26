@@ -5,8 +5,8 @@ import { ThreeEvent } from "@react-three/fiber";
 import { GameCanvas, PrefabRoot } from "react-three-game";
 import scummworld from "@public/samples/scummworld.json";
 
-import NavigableWorld from "@/app/react-three-controller/navmesh/NavigableContext";
-import NavigableAgent, { type NavigableCharacterDefinition } from "@/app/react-three-controller/navmesh/NavigableAgent";
+import NavigableWorld from "../navmesh/NavigableContext";
+import NavigableAgent, { type NavigableCharacterDefinition } from "../navmesh/NavigableAgent";
 import { ShadowLight } from "@/shared/lighting/ShadowLight";
 
 const SCUMM_NAV_MESH_CONFIG = {

@@ -62,35 +62,6 @@
               ]
             }
           },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "colliders": "trimesh",
-              "capsuleRadius": 0.35,
-              "capsuleHalfHeight": 0.45,
-              "linearVelocity": [
-                0,
-                0,
-                0
-              ],
-              "angularVelocity": [
-                0,
-                0,
-                0
-              ],
-              "enabledTranslations": [
-                true,
-                true,
-                true
-              ],
-              "enabledRotations": [
-                true,
-                true,
-                true
-              ]
-            }
-          },
           "material": {
             "type": "Material",
             "properties": {

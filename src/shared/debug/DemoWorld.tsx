@@ -1,14 +1,16 @@
-import { RigidBody } from "@react-three/rapier"
-import { ThreeElements, ThreeEvent } from "@react-three/fiber"
+import type { ThreeElements } from "@react-three/fiber"
 import { Environment } from "@react-three/drei"
-import DebugGround from "@/shared/ground/DebugGround"
 import { BackSide } from "three"
 import { Csm } from "../Csm"
 
-const DemoWorld = ({ onClick, ...props }: ThreeElements['group']) => {
+const DemoWorld = (props: ThreeElements['group']) => {
     return <>
         <group {...props}>
-            <DebugGround onClick={onClick as any} />
+            <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+                <planeGeometry args={[100, 100]} />
+                <meshStandardMaterial color="#7a7a7a" />
+            </mesh>
+            <gridHelper args={[100, 100]} position={[0, 0.01, 0]} />
         </group >
         <DemoEnvironment />
 

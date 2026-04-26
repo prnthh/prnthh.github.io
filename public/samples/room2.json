@@ -70,13 +70,6 @@
                 50
               ]
             }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "cuboid"
-            }
           }
         },
         "children": [
@@ -173,13 +166,6 @@
                 4
               ]
             }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
-            }
           }
         },
         "children": []
@@ -223,13 +209,6 @@
                 8,
                 4
               ]
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
             }
           }
         },
@@ -280,13 +259,6 @@
               "magFilter": "LinearFilter",
               "generateMipmaps": true
             }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
-            }
           }
         },
         "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy",
@@ -335,13 +307,6 @@
               "minFilter": "NearestFilter",
               "magFilter": "LinearFilter",
               "generateMipmaps": true
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
             }
           }
         },

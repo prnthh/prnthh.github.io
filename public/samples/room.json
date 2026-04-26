@@ -74,13 +74,6 @@
               "magFilter": "NearestFilter",
               "minFilter": "NearestFilter"
             }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "cuboid"
-            }
           }
         },
         "children": []
@@ -124,13 +117,6 @@
                 8,
                 7
               ]
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
             }
           }
         },
@@ -176,13 +162,6 @@
                 4
               ]
             }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
-            }
           }
         },
         "children": []
@@ -226,13 +205,6 @@
                 8,
                 4
               ]
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
             }
           }
         },
@@ -278,13 +250,6 @@
                 4
               ],
               "roughness": 1
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
             }
           }
         },
@@ -335,13 +300,6 @@
                 4
               ],
               "roughness": 1
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
             }
           }
         },
@@ -394,13 +352,6 @@
               ],
               "roughness": 1
             }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
-            }
           }
         },
         "name": "92f0f143-6cd2-4f2f-bd03-4012a24c932b Copy Copy",
@@ -451,13 +402,6 @@
                 4
               ],
               "roughness": 1
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "hull"
             }
           }
         },
@@ -534,13 +478,6 @@
               "filename": "models/environment/Stool.glb",
               "instanced": false
             }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "cuboid"
-            }
           }
         },
         "children": []
@@ -574,13 +511,6 @@
             "properties": {
               "filename": "models/environment/Coat Rack Standing.glb",
               "instanced": false
-            }
-          },
-          "physics": {
-            "type": "Physics",
-            "properties": {
-              "type": "fixed",
-              "collider": "cuboid"
             }
           }
         },
@@ -640,14 +570,6 @@
                 "properties": {
                   "filename": "models/environment/Executive Desk.glb",
                   "instanced": false
-                }
-              },
-              "physics": {
-                "type": "Physics",
-                "properties": {
-                  "type": "fixed",
-                  "collider": "cuboid",
-                  "colliders": "cuboid"
                 }
               }
             },

@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import { Group, Mesh, Object3D, } from "three";
+import { Group } from "three";
+import type { Mesh, Object3D } from "three";
 import { SkeletonUtils } from "three-stdlib";
 import { useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -7,7 +8,7 @@ import { LAYER_DEFAULT, LAYER_SHADOW_ONLY } from "@/shared/util/layers";
 
 import useAnimationState from "./useAnimationStateBasic";
 import useLookAtTarget from "./useLookAtTarget";
-import { AnimatedModelProps, AnimatedModelRef } from "./types";
+import type { AnimatedModelProps, AnimatedModelRef } from "./types";
 // import { MeshToonNodeMaterial } from "three/webgpu";
 
 // steps to go from AI generated model to animated model:
@@ -29,6 +30,10 @@ function resolveAssetPath(path: string | undefined, basePath = DEFAULT_HUMANOID_
     return `${normalizedBasePath}${value.replace(/^\/+/, "")}`;
 }
 
+function getResolvedModelPath(model: string | undefined, basePath: string) {
+    return resolveAssetPath(model ?? "rigged.glb", basePath) ?? `${basePath.replace(/\/?$/, "/")}rigged.glb`;
+}
+
 function resolveAnimationOverrides(animationOverrides: AnimatedModelProps["animationOverrides"], basePath: string) {
     if (!animationOverrides) {
         return undefined;
@@ -44,11 +49,11 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
         basePath = DEFAULT_HUMANOID_BASE_PATH,
         height = 1, animationOverrides, position = [0, 0, 0], scale = 1, rotation = [0, 0, 0],
         modelOffset = [0, 0, 0],
-        debug = false, lookTarget, retargetOptions, onActions, attachments, enableBoneCollider = true, shadowOnly = false, children, ...props
+        debug = false, lookTarget, retargetOptions, onActions, attachments, shadowOnly = false, children, ...props
     }, ref) => {
-        const modelRef = useRef<Object3D | undefined>(undefined);
-        const groupRef = useRef<Group>(null!);
-        const resolvedModelPath = useMemo(() => resolveAssetPath(model ?? "rigged.glb", basePath)!, [basePath, model]);
+        const modelRef = useRef<Object3D | null>(null);
+        const groupRef = useRef<Group | null>(null);
+        const resolvedModelPath = useMemo(() => getResolvedModelPath(model, basePath), [basePath, model]);
         const resolvedAnimationOverrides = useMemo(() => resolveAnimationOverrides(animationOverrides, basePath), [animationOverrides, basePath]);
         const { scene, animations } = useGLTF(resolvedModelPath);
         const [clonedScene, setClonedScene] = useState<Object3D | undefined>(undefined);
@@ -120,7 +125,7 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
         useLookAtTarget(clonedScene, lookTarget, 'mixamorigNeck')
 
 
-        const { mixer, setThisAnimation, actions } = useAnimationState(clonedScene, resolvedAnimationOverrides, onActions, animations);
+        const { mixer, setThisAnimation } = useAnimationState(clonedScene, resolvedAnimationOverrides, onActions, animations);
 
         useEffect(() => {
             if (animation && mixer) {
@@ -129,12 +134,12 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
         }, [animation, mixer, setThisAnimation]);
 
         // // Update the mixer on each frame
-        useFrame((state, delta) => {
+        useFrame((_, delta) => {
             if (mixer) mixer.update(delta);
         });
 
         useImperativeHandle(ref, () => {
-            const group = groupRef.current;
+            const group = groupRef.current ?? new Group();
             return Object.assign(group, {
                 setAnimation: setThisAnimation,
                 groupRef,
@@ -151,9 +156,9 @@ const AnimatedModel = forwardRef<AnimatedModelRef, AnimatedModelProps>(
                 {clonedScene && <primitive position={modelOffset} name={name} scale={scale} rotation={rotation} object={clonedScene} ref={modelRef} />}
 
                 {/* raycast mesh instead of skinned mesh for better interaction */}
-                <mesh position={[0, height / 2, 0]} onClick={(e) => {
+                <mesh position={[0, height / 2, 0]} onPointerDown={(e) => {
                     e.stopPropagation();
-                    onClick?.(e);
+                    onClick?.(e as unknown as import("@react-three/fiber").ThreeEvent<MouseEvent>);
                 }}>
                     <capsuleGeometry args={[0.2, height]} />
                     <meshBasicMaterial visible={false} />

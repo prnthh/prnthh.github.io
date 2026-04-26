@@ -1,253 +1,347 @@
 {
-    "id": "prefab-1",
-    "name": "Test Prefab",
-    "root": {
-        "id": "root",
+  "id": "prefab-1",
+  "name": "Test Prefab",
+  "root": {
+    "id": "root",
+    "components": {
+      "transform": {
+        "type": "Transform",
+        "properties": {
+          "position": [
+            0,
+            -1,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    "children": [
+      {
+        "id": "ground",
         "components": {
-            "transform": {
-                "type": "Transform",
-                "properties": {
-                    "position": [0, -1, 0],
-                    "rotation": [0, 0, 0],
-                    "scale": [1, 1, 1]
-                }
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                -1.57,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
             }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "plane",
+              "args": [
+                50,
+                50
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "white",
+              "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
+              "repeat": true,
+              "repeatCount": [
+                25,
+                25
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": "child-1",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                2,
+                0,
+                1
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                0.8,
+                0.8,
+                0.8
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "sphere",
+              "args": [
+                0.5,
+                32,
+                32
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "green",
+              "wireframe": true
+            }
+          }
         },
         "children": [
-            {
-                "id": "ground",
-                "components": {
-                    "transform": {
-                        "type": "Transform",
-                        "properties": {
-                            "position": [0, 0, 0],
-                            "rotation": [-1.57, 0, 0],
-                            "scale": [1, 1, 1]
-                        }
-                    },
-                    "geometry": {
-                        "type": "Geometry",
-                        "properties": {
-                            "geometryType": "plane",
-                            "args": [50, 50]
-                        }
-                    },
-                    "material": {
-                        "type": "Material",
-                        "properties": {
-                            "color": "white",
-                            "texture": "/textures/GreyboxTextures/greybox_light_grid.png",
-                            "repeat": true,
-                            "repeatCount": [25, 25]
-                        }
-                    },
-                    "physics": {
-                        "type": "Physics",
-                        "properties": {
-                            "type": "fixed"
-                        }
-                    }
+          {
+            "id": "grandchild-1",
+            "components": {
+              "transform": {
+                "type": "Transform",
+                "properties": {
+                  "position": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "rotation": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "scale": [
+                    0.5,
+                    0.5,
+                    0.5
+                  ]
                 }
-            },
-            {
-                "id": "child-1", 
-                "components": {
-                    "transform": {
-                        "type": "Transform",
-                        "properties": {
-                            "position": [2, 0, 1],
-                            "rotation": [0, 0, 0],
-                            "scale": [0.8, 0.8, 0.8]
-                        }
-                    },
-                    "geometry": {
-                        "type": "Geometry",
-                        "properties": {
-                            "geometryType": "sphere",
-                            "args": [0.5, 32, 32]
-                        }
-                    },
-                    "material": {
-                        "type": "Material",
-                        "properties": {
-                            "color": "green",
-                            "wireframe": true
-                        }
-                    },
-                    "physics": {
-                        "type": "Physics",
-                        "properties": {
-                            "type": "dynamic"
-                        }
-                    }
-                },
-                "children": [
-                    {
-                        "id": "grandchild-1", 
-                        "components": {
-                            "transform": {
-                                "type": "Transform",
-                                "properties": {
-                                    "position": [0, 1, 0],
-                                    "rotation": [0, 0, 0],
-                                    "scale": [0.5, 0.5, 0.5]
-                                }
-                            },
-                            "geometry": {
-                                "type": "Geometry",
-                                "properties": {
-                                    "geometryType": "box",
-                                    "args": [1, 1, 1]
-                                }
-                            },
-                            "material": {
-                                "type": "Material",
-                                "properties": {
-                                    "color": "yellow",
-                                    "wireframe": true
-                                }
-                            }
-                        }
-                    }
-                ]
-            },
-            {
-                "id": "child-2", 
-                "components": {
-                    "transform": {
-                        "type": "Transform",
-                        "properties": {
-                            "position": [-2, 0, 1],
-                            "rotation": [0, 0, 0],
-                            "scale": [1, 1, 1]
-                        }
-                    },
-                    "geometry": {
-                        "type": "Geometry",
-                        "properties": {
-                            "geometryType": "sphere",
-                            "args": [0.5, 16, 16]
-                        }
-                    },
-                    "material": {
-                        "type": "Material",
-                        "properties": {
-                            "color": "blue",
-                            "wireframe": false
-                        }
-                    },
-                    "physics": {
-                        "type": "Physics",
-                        "properties": {
-                            "type": "dynamic"
-                        }
-                    }
+              },
+              "geometry": {
+                "type": "Geometry",
+                "properties": {
+                  "geometryType": "box",
+                  "args": [
+                    1,
+                    1,
+                    1
+                  ]
                 }
-            },
-            {
-                "id": "model-node",
-                "components": {
-                    "transform": {
-                        "type": "Transform",
-                        "properties": {
-                            "position": [0, 0, 2],
-                            "rotation": [0, 0, 0],
-                            "scale": [1, 1, 1]
-                        }
-                    },
-                    "model": {
-                        "type": "Model",
-                        "properties": {
-                            "filename": "models/environment/tree.glb",
-                            "instanced": true
-                        }
-                    },
-                    "physics": {
-                        "type": "Physics",
-                        "properties": {
-                            "type": "dynamic"
-                        }
-                    }
+              },
+              "material": {
+                "type": "Material",
+                "properties": {
+                  "color": "yellow",
+                  "wireframe": true
                 }
-            },
-            {
-                "id": "model-node2", 
-                "components": {
-                    "transform": {
-                        "type": "Transform",
-                        "properties": {
-                            "position": [-2, 0, 2],
-                            "rotation": [0, 0, 0],
-                            "scale": [1, 1, 1]
-                        }
-                    },
-                    "model": {
-                        "type": "Model",
-                        "properties": {
-                            "filename": "models/environment/servers.glb",
-                            "instanced": true
-                        }
-                    },
-                    "physics": {
-                        "type": "Physics",
-                        "properties": {
-                            "type": "dynamic"
-                        }
-                    }
-                }
-            },
-            {
-                "id": "model-node3", 
-                "components": {
-                    "transform": {
-                        "type": "Transform",
-                        "properties": {
-                            "position": [-4, 0, 2],
-                            "rotation": [0, 0, 0],
-                            "scale": [1, 1, 1]
-                        }
-                    },
-                    "model": {
-                        "type": "Model",
-                        "properties": {
-                            "filename": "models/environment/tree.glb"
-                        }
-                    },
-                    "physics": {
-                        "type": "Physics",
-                        "properties": {
-                            "type": "dynamic"
-                        }
-                    }
-                }
-            },
-            {
-                "id": "textured-node", 
-                "components": {
-                    "transform": {
-                        "type": "Transform",
-                        "properties": {
-                            "position": [2, 0, 2],
-                            "rotation": [0, 0, 0],
-                            "scale": [1, 1, 1]
-                        }
-                    },
-                    "geometry": {
-                        "type": "Geometry",
-                        "properties": {
-                            "geometryType": "box",
-                            "args": [1, 1, 1]
-                        }
-                    },
-                    "material": {
-                        "type": "Material",
-                        "properties": {
-                            "color": "red",
-                            "wireframe": true
-                        }
-                    }
-                }
+              }
             }
+          }
         ]
-    }
+      },
+      {
+        "id": "child-2",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -2,
+                0,
+                1
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "sphere",
+              "args": [
+                0.5,
+                16,
+                16
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "blue",
+              "wireframe": false
+            }
+          }
+        }
+      },
+      {
+        "id": "model-node",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                0,
+                0,
+                2
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/tree.glb",
+              "instanced": true
+            }
+          }
+        }
+      },
+      {
+        "id": "model-node2",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -2,
+                0,
+                2
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/servers.glb",
+              "instanced": true
+            }
+          }
+        }
+      },
+      {
+        "id": "model-node3",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                -4,
+                0,
+                2
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "model": {
+            "type": "Model",
+            "properties": {
+              "filename": "models/environment/tree.glb"
+            }
+          }
+        }
+      },
+      {
+        "id": "textured-node",
+        "components": {
+          "transform": {
+            "type": "Transform",
+            "properties": {
+              "position": [
+                2,
+                0,
+                2
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ],
+              "scale": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "geometry": {
+            "type": "Geometry",
+            "properties": {
+              "geometryType": "box",
+              "args": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "material": {
+            "type": "Material",
+            "properties": {
+              "color": "red",
+              "wireframe": true
+            }
+          }
+        }
+      }
+    ]
+  }
 }

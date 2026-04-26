@@ -1,18 +1,22 @@
 "use client";
 
 import { GameCanvas } from "react-three-game";
+import { useFrame, useThree } from "@react-three/fiber";
 import { Environment, OrbitControls } from "@react-three/drei";
-import { useEffect, useState } from "react";
-import { Physics } from "@react-three/rapier";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import Mouth from "./Mouth";
 import AnimatedModel from "@/app/react-three-character/HumanoidModel";
-import RigidHumanoidModel from "@/app/react-three-controller/ped/physics/RigidHumanoidModel";
-import { AnimationClip, Object3D, Vector3 } from "three";
+import type { AnimationClip, Object3D } from "three";
+import { DoubleSide, Plane, Vector3 } from "three";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { DebugGroundVisual } from "@/shared/ground/DebugGround";
 import { SkeletonUtils } from "three-stdlib";
+import BoneAttachment from "../BoneAttachment";
+import SimpleModel from "@/shared/SimpleModel";
+import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
 const animationList = ["idle", "walk"] as const;
 
@@ -20,6 +24,22 @@ const animationOverrides = {
     idle: "/models/human/anim/idle.fbx",
     walk: "/models/human/anim/walk.fbx",
 };
+
+const ALL_MODELS = [
+    "/models/human/onimilio/rigged.glb",
+    "/models/human/oni2/character.glb",
+    "/models/human/rigga/rigga.glb",
+    "/models/human/rigga/rigga2.glb",
+    "/models/human/rigga/rigga3.glb",
+    "/models/human/rigga/rigga4.glb",
+    "/models/human/rigga/rigga5.glb",
+    "/models/human/rigga/rigga6.glb",
+    "/models/human/milady.glb",
+    // "/models/human/barney_hd.glb",
+    "/models/human/Soldier.glb",
+    "/models/human/xbot.glb",
+    "/models/human/ybot.glb",
+];
 
 type LoadedAnimationItem = {
     name: string;
@@ -115,24 +135,113 @@ type AnimationRequest = {
     targetModelIndex: number;
 };
 
+const CHARACTERS_PER_RING = 6;
+const CHARACTER_RING_RADIUS = 4.5;
+const CHARACTER_RING_HEIGHT = 3;
+const FLOOR_DISC_RADIUS = CHARACTER_RING_RADIUS + 1.8;
+const FLOOR_DISC_INNER_RADIUS = CHARACTER_RING_RADIUS - 1.1;
+const FLOOR_DISC_THICKNESS = 0.3;
+const ENABLE_MOUSE_LOOK = true;
+
+function CharacterTowerBackdrop({ floorCount }: { floorCount: number }) {
+    const wallHeight = Math.max(CHARACTER_RING_HEIGHT * floorCount + 2, 6);
+
+    return (
+        <group>
+            <mesh position={[0, wallHeight / 2 - 1, 0]} receiveShadow castShadow>
+                <cylinderGeometry args={[FLOOR_DISC_RADIUS, FLOOR_DISC_RADIUS, wallHeight, 48, 1, true]} />
+                <meshStandardMaterial color="#8f8578" roughness={0.95} metalness={0.05} side={DoubleSide} />
+            </mesh>
+
+            {Array.from({ length: floorCount }, (_, floorIndex) => {
+                const floorY = floorIndex * CHARACTER_RING_HEIGHT - FLOOR_DISC_THICKNESS;
+
+                return (
+                    <mesh key={`floor-${floorY}`} position={[0, floorY, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
+                        <ringGeometry args={[FLOOR_DISC_INNER_RADIUS, FLOOR_DISC_RADIUS, 48, 1]} />
+                        <meshStandardMaterial color="#a2998c" roughness={0.97} metalness={0.03} side={DoubleSide} />
+                    </mesh>
+                );
+            })}
+        </group>
+    );
+}
+
+function getCharacterPosition(index: number): [number, number, number] {
+    const ringIndex = Math.floor(index / CHARACTERS_PER_RING);
+    const slotIndex = index % CHARACTERS_PER_RING;
+    const angle = (slotIndex / CHARACTERS_PER_RING) * Math.PI * 2;
+
+    return [
+        Math.sin(angle) * CHARACTER_RING_RADIUS,
+        ringIndex * CHARACTER_RING_HEIGHT,
+        Math.cos(angle) * CHARACTER_RING_RADIUS,
+    ];
+}
+
+function getCharacterRotation(position: [number, number, number]): [number, number, number] {
+    const [x, , z] = position;
+    return [0, Math.atan2(-x, -z), 0];
+}
+
+
+function MouseLookTarget({
+    targetRef,
+    focusPoint,
+}: {
+    targetRef: RefObject<Object3D | null>;
+    focusPoint: [number, number, number];
+}) {
+    const lookPlane = useMemo(() => new Plane(), []);
+    const planeNormal = useMemo(() => new Vector3(), []);
+    const planePoint = useMemo(() => new Vector3(), []);
+    const focusPointVector = useMemo(() => new Vector3(), []);
+    const intersection = useMemo(() => new Vector3(), []);
+
+    useFrame(({ camera, pointer, raycaster }) => {
+        const target = targetRef.current;
+        if (!target) {
+            return;
+        }
+
+        camera.getWorldDirection(planeNormal);
+        focusPointVector.set(...focusPoint);
+        planePoint.lerpVectors(focusPointVector, camera.position, 0.35);
+        lookPlane.setFromNormalAndCoplanarPoint(planeNormal, planePoint);
+
+        raycaster.setFromCamera(pointer, camera);
+        if (raycaster.ray.intersectPlane(lookPlane, intersection)) {
+            target.position.copy(intersection);
+        }
+    });
+
+    return <group ref={(value) => {
+        targetRef.current = value;
+    }} visible={false} />;
+}
+
 function ControlledAnimatedModel({
     modelIndex,
     model,
     position,
+    rotation,
     modelOffset,
     animationRequest,
     height,
     scale,
-    showCollider,
+    lookTarget,
+    isFocused,
 }: {
     modelIndex: number;
     model: string;
     position: [number, number, number];
+    rotation: [number, number, number];
     modelOffset: [number, number, number];
     animationRequest: AnimationRequest;
     height: number;
     scale: number;
-    showCollider: boolean;
+    lookTarget?: RefObject<Object3D | null>;
+    isFocused: boolean;
 }) {
     const [animationIndex, setAnimationIndex] = useState(0);
 
@@ -144,24 +253,8 @@ function ControlledAnimatedModel({
 
     const animation = animationList[animationIndex];
 
-    if (showCollider) {
-        return (
-            <RigidHumanoidModel
-                position={position}
-                modelOffset={modelOffset}
-                model={model}
-                animation={animation}
-                animationOverrides={animationOverrides}
-                height={height}
-                scale={scale}
-            >
-                <Mouth />
-            </RigidHumanoidModel>
-        );
-    }
-
     return (
-        <group position={position} rotation={[0, 0, 0]}>
+        <group position={position} rotation={rotation}>
             <AnimatedModel
                 model={model}
                 modelOffset={modelOffset}
@@ -169,40 +262,51 @@ function ControlledAnimatedModel({
                 animationOverrides={animationOverrides}
                 height={height}
                 scale={scale}
+                lookTarget={ENABLE_MOUSE_LOOK && isFocused ? lookTarget : undefined}
             >
                 <Mouth />
+                <BoneAttachment
+                    attachpoint="mixamorigRightHand"
+                    position={[2, 0, 0]}
+                    scale={[100, 100, 100]}
+                    rotation={[0.7, 0, -1]}
+                >
+                    <SimpleModel modelUrl="/models/environment/Katana.glb" />
+                </BoneAttachment>
             </AnimatedModel>
         </group>
     );
 }
 
 export default function CharacterPage() {
+    const mouseLookTargetRef = useRef<Object3D | null>(null);
     const [focusedModelIndex, setFocusedModelIndex] = useState(0);
     const [animationRequest, setAnimationRequest] = useState<AnimationRequest>({ id: 0, targetModelIndex: 0 });
     const [focusedHeight, setFocusedHeight] = useState(1);
     const [focusedScale, setFocusedScale] = useState(1);
     const [focusedYOffset, setFocusedYOffset] = useState(0);
-    const [showCollider, setShowCollider] = useState(true);
     const [focusedModelAsset, setFocusedModelAsset] = useState<FocusedModelAsset | null>(null);
     const [isLoadingAnimations, setIsLoadingAnimations] = useState(false);
     const [animationLoadError, setAnimationLoadError] = useState<string | null>(null);
     const [isExportingGlb, setIsExportingGlb] = useState(false);
-    const allModels = [
-        "/models/human/onimilio/rigged.glb",
-        "/models/human/oni2/character.glb",
-        "/models/human/rigga/rigga.glb",
-        "/models/human/rigga/rigga2.glb",
-        "/models/human/rigga/rigga3.glb",
-        "/models/human/rigga/rigga4.glb",
-        "/models/human/rigga/rigga5.glb",
-        "/models/human/rigga/rigga6.glb",
-        "/models/human/milady.glb",
-        // "/models/human/barney_hd.glb",
-        "/models/human/Soldier.glb",
-        "/models/human/xbot.glb",
-        "/models/human/ybot.glb",
+    const floorCount = Math.ceil(ALL_MODELS.length / CHARACTERS_PER_RING);
+    const focusedModelUrl = ALL_MODELS[focusedModelIndex];
+    const characterLayouts = useMemo(() => ALL_MODELS.map((modelUrl, index) => {
+        const position = getCharacterPosition(index);
+
+        return {
+            modelUrl,
+            index,
+            position,
+            rotation: getCharacterRotation(position),
+        };
+    }), []);
+    const focusedPosition = characterLayouts[focusedModelIndex]?.position ?? [0, 0, 0];
+    const mouseLookFocusPoint: [number, number, number] = [
+        focusedPosition[0],
+        focusedPosition[1] + focusedYOffset + focusedHeight * 0.8,
+        focusedPosition[2],
     ];
-    const focusedModelUrl = allModels[focusedModelIndex];
 
     useEffect(() => {
         let disposed = false;
@@ -303,30 +407,33 @@ export default function CharacterPage() {
     }
 
     return <div className="w-screen h-screen">
-        <GameCanvas camera={{ position: [0, 1.5, 3], }}>
-            <Physics debug={showCollider} gravity={[0, 0, 0]}>
-                {allModels.map((modelUrl, index) => {
-                    const isFocused = index === focusedModelIndex;
+        <GameCanvas>
+            {ENABLE_MOUSE_LOOK && <MouseLookTarget targetRef={mouseLookTargetRef} focusPoint={mouseLookFocusPoint} />}
+            <CharacterTowerBackdrop floorCount={floorCount} />
+            {characterLayouts.map(({ modelUrl, index, position, rotation }) => {
+                const isFocused = index === focusedModelIndex;
 
-                    return (
-                        <ControlledAnimatedModel
-                            key={modelUrl}
-                            modelIndex={index}
-                            model={modelUrl}
-                            position={[index * 2 - focusedModelIndex * 2, 0, 0]}
-                            modelOffset={[0, isFocused ? focusedYOffset : 0, 0]}
-                            animationRequest={animationRequest}
-                            height={isFocused ? focusedHeight : 1}
-                            scale={isFocused ? focusedScale : 1}
-                            showCollider={isFocused && showCollider}
-                        />
-                    );
-                })}
-            </Physics>
+                return (
+                    <ControlledAnimatedModel
+                        key={modelUrl}
+                        modelIndex={index}
+                        model={modelUrl}
+                        position={position}
+                        rotation={rotation}
+                        modelOffset={[0, isFocused ? focusedYOffset : 0, 0]}
+                        animationRequest={animationRequest}
+                        height={isFocused ? focusedHeight : 1}
+                        scale={isFocused ? focusedScale : 1}
+                        lookTarget={mouseLookTargetRef}
+                        isFocused={isFocused}
+                    />
+                );
+            })}
 
             <ambientLight intensity={2} />
-            <DebugGroundVisual />
-            <OrbitControls target={new Vector3(0, 0.5, 0)} makeDefault enablePan={false} />
+            <DebugGroundVisual position={[0, -2, 0]} />
+
+            <CameraRig focusedCharacterIndex={focusedModelIndex} />
 
             <Environment background frames={1}>
                 <mesh>
@@ -343,10 +450,10 @@ export default function CharacterPage() {
         <div className="absolute top-8 right-8 flex w-64 flex-col gap-3 rounded bg-black/50 p-4 text-white">
 
             <div className="flex justify-between">
-                <button onClick={() => setFocusedModelIndex((prev) => (prev - 1 + allModels.length) % allModels.length)}>&lt;--</button>
-                <button onClick={() => setFocusedModelIndex((prev) => (prev + 1) % allModels.length)}>--&gt;</button>
+                <button type="button" onClick={() => setFocusedModelIndex((prev) => (prev - 1 + ALL_MODELS.length) % ALL_MODELS.length)}>&lt;--</button>
+                <button type="button" onClick={() => setFocusedModelIndex((prev) => (prev + 1) % ALL_MODELS.length)}>--&gt;</button>
             </div>
-            {allModels[focusedModelIndex]}
+            {ALL_MODELS[focusedModelIndex]}
 
             <label className="flex flex-col gap-1 text-sm">
                 <span>Focused Height: {focusedHeight.toFixed(2)}</span>
@@ -381,22 +488,15 @@ export default function CharacterPage() {
                     onChange={(event) => setFocusedYOffset(Number(event.target.value))}
                 />
             </label>
-            <label className="flex items-center gap-2 text-sm">
-                <input
-                    type="checkbox"
-                    checked={showCollider}
-                    onChange={(event) => setShowCollider(event.target.checked)}
-                />
-                <span>Show Focused Collider</span>
-            </label>
-            <button>add instance</button>
-            <button onClick={() => setAnimationRequest((prev) => ({
+            <button type="button">add instance</button>
+            <button type="button" onClick={() => setAnimationRequest((prev) => ({
                 id: prev.id + 1,
                 targetModelIndex: focusedModelIndex,
             }))}>
                 next animation
             </button>
             <button
+                type="button"
                 onClick={() => void downloadPackedGlb()}
                 disabled={!focusedModelAsset || isLoadingAnimations || isExportingGlb}
                 className="disabled:cursor-not-allowed disabled:opacity-50"
@@ -419,4 +519,21 @@ export default function CharacterPage() {
 
         </div>
     </div>
+}
+
+const CameraRig = ({ focusedCharacterIndex }: { focusedCharacterIndex: number }) => {
+    const orbitControlsRef = useRef<OrbitControlsImpl>(null);
+    const { camera } = useThree();
+
+
+    useEffect(() => {
+        const position = getCharacterPosition(focusedCharacterIndex);
+        camera.position.set(0, position[1] + 2, 0);
+        orbitControlsRef.current?.target.set(...position);
+        orbitControlsRef.current?.update();
+    }, [focusedCharacterIndex, camera]);
+
+    return <>
+        <OrbitControls ref={orbitControlsRef} makeDefault enablePan={false} enableDamping />
+    </>
 }

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useMemo, memo } from "react";
+import { memo, useMemo } from "react";
 import * as THREE from "three";
-import { RigidBody, HeightfieldCollider } from "@react-three/rapier";
-import { ThreeEvent } from "@react-three/fiber";
+import type { ThreeEvent } from "@react-three/fiber";
 import { useMap, TILE_RESOLUTION, HEIGHT_SCALE } from "./MapProvider";
 import { MapSplatMaterial } from "./MapSplatMaterial";
 
@@ -81,7 +80,6 @@ interface TileProps {
     tileX: number;
     tileZ: number;
     tileSize: number;
-    physics?: boolean;
     heightData?: Float32Array | null;
     colorTexture?: THREE.Texture | null;
     showWireframe?: boolean;
@@ -93,7 +91,6 @@ interface TileProps {
         bottom?: Float32Array | null;
     };
     paintMode?: "height" | "color";
-    onClick?: (e: ThreeEvent<MouseEvent>) => void;
     onPointerMove?: (e: ThreeEvent<PointerEvent>) => void;
     onPointerDown?: (e: ThreeEvent<PointerEvent>) => void;
     onPointerUp?: (e: ThreeEvent<PointerEvent>) => void;
@@ -105,14 +102,12 @@ const Tile = memo(function Tile({
     tileX,
     tileZ,
     tileSize,
-    physics,
     heightData: externalHeightData,
     colorTexture: externalColorTexture,
     showWireframe,
     showTileBoundaries,
     neighborHeightData,
     paintMode,
-    onClick,
     onPointerMove,
     onPointerDown,
     onPointerUp,
@@ -137,7 +132,7 @@ const Tile = memo(function Tile({
         };
     }, [getTile, tileX, tileZ, heightField, neighborHeightData]);
 
-    // Create stitched heightfield for both rendering and physics
+    // Create stitched heightfield for rendering.
     const stitchedHeightField = useMemo(() => {
         if (!heightField) return null;
         const gridSize = resolution + 1;
@@ -187,11 +182,6 @@ const Tile = memo(function Tile({
         [worldX, worldZ, tileSize]
     );
 
-    const rapierHeightField = useMemo(() => {
-        const res = resolution || 32;
-        return stitchedHeightField ? buildRapierHeightfield(stitchedHeightField, res) : buildFlatHeightfield(res);
-    }, [stitchedHeightField, resolution]);
-
     // Create heightmap texture for visualization
     const heightTexture = useMemo(() => {
         if (!stitchedHeightField) return null;
@@ -204,7 +194,6 @@ const Tile = memo(function Tile({
                 geometry={geometry}
                 position={position}
                 receiveShadow
-                onClick={onClick}
                 onPointerMove={onPointerMove}
                 onPointerDown={onPointerDown}
                 onPointerUp={onPointerUp}
@@ -238,42 +227,22 @@ const Tile = memo(function Tile({
         </group>
     );
 
-    if (!physics) {
-        return meshElement;
-    }
-
-    return (
-        <RigidBody type="fixed" colliders={false}>
-            {meshElement}
-            <HeightfieldCollider
-                args={[
-                    resolution || 32,
-                    resolution || 32,
-                    rapierHeightField as unknown as number[],
-                    { x: tileSize, y: 1, z: tileSize },
-                ]}
-                position={position}
-            />
-        </RigidBody>
-    );
+    return meshElement;
 
 });
 
 /* Tile grid renderer */
 interface MapTilesProps {
     tileSize?: number;
-    viewRadius?: number;
     startX?: number;
     startZ?: number;
     endX?: number;
     endZ?: number;
-    physics?: boolean;
     paintMode?: "height" | "color";
     showWireframe?: boolean;
     showTileBoundaries?: boolean;
     previewHeightDataMap?: Map<string, Float32Array | null>;
     previewColorTextureMap?: Map<string, THREE.Texture | null>;
-    onClick?: (e: ThreeEvent<MouseEvent>) => void;
     onPointerMove?: (e: ThreeEvent<PointerEvent>) => void;
     onPointerDown?: (e: ThreeEvent<PointerEvent>) => void;
     onPointerUp?: (e: ThreeEvent<PointerEvent>) => void;
@@ -283,18 +252,15 @@ interface MapTilesProps {
 
 export function MapTiles({
     tileSize = 100,
-    viewRadius = 2,
     startX = 0,
     startZ = 0,
     endX = 0,
     endZ = 0,
-    physics,
     paintMode,
     showWireframe,
     showTileBoundaries,
     previewHeightDataMap,
     previewColorTextureMap,
-    onClick,
     onPointerMove,
     onPointerDown,
     onPointerUp,
@@ -317,7 +283,6 @@ export function MapTiles({
                     tileX={x}
                     tileZ={z}
                     tileSize={tileSize}
-                    physics={physics}
                     heightData={previewHeightDataMap?.get(tileKey)}
                     showTileBoundaries={showTileBoundaries}
                     neighborHeightData={previewHeightDataMap ? {
@@ -329,7 +294,6 @@ export function MapTiles({
                     colorTexture={previewColorTextureMap?.get(tileKey)}
                     showWireframe={showWireframe}
                     paintMode={paintMode}
-                    onClick={onClick}
                     onPointerMove={onPointerMove}
                     onPointerDown={onPointerDown}
                     onPointerUp={onPointerUp}
@@ -341,20 +305,4 @@ export function MapTiles({
     }
 
     return <group>{tiles}</group>;
-}
-
-function buildRapierHeightfield(src: Float32Array, res: number): Float32Array {
-    const size = res + 1;
-    const out = new Float32Array(size * size);
-    for (let z = 0; z < size; z++) {
-        for (let x = 0; x < size; x++) {
-            out[x * size + z] = src[z * size + x]; // Transpose X/Z
-        }
-    }
-    return out;
-}
-
-function buildFlatHeightfield(res: number): Float32Array {
-    const size = res + 1;
-    return new Float32Array(size * size); // all zeros
 }

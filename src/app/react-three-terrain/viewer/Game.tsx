@@ -1,71 +1,59 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-import { Environment, Helper, Plane, useTexture } from "@react-three/drei";
-import { Physics } from "@react-three/rapier";
-import { BackSide, DirectionalLightHelper, Object3D } from "three";
+import { Environment, Helper, OrbitControls, useTexture } from "@react-three/drei";
+import { BackSide, DirectionalLightHelper, NearestFilter } from "three";
 import { GameCanvas } from "react-three-game";
 import { useCanvasReady } from "@/app/sketches/loading/GameWithLoader";
 
-import Controls from "@/app/react-three-controller/controls/ControlsProvider";
-import Ped from "@/app/react-three-controller/ped/ped";
-import ModelAttachment from "@/app/react-three-character/ModelAttachment";
-import DialogCollider from "@/shared/physics/DialogCollider";
 import { MapProvider } from "@/app/react-three-terrain/MapProvider";
 import { MapTiles } from "@/app/react-three-terrain/MapTile";
-import { ShinyFloor } from "@/shared/shaders/floor/ShinyFloorMaterial";
 import Ocean from "@/shared/shaders/Water";
-import { NeoController } from "@/app/react-three-controller";
 
 
 
 export default function Game() {
-    return <Controls>
-        <GameCanvas>
-            <Physics>
-                <Lighting />
-                <FogEnvironment />
-                <InnerGame />
-                <MapProvider
-                    startX={-1}
-                    endX={1}
-                    startZ={-1}
-                    endZ={1}
-                    tileSizePx={256}
-                >
-                    <MapTiles
-                        startX={-1}
-                        startZ={-1}
-                        endX={1}
-                        endZ={1}
-                        physics
-                        tileSize={100}
-                        viewRadius={2}
-                    //  onPointerMove={isBrushMode ? handlePointerMove : undefined}
-                    // onPointerDown={isBrushMode ? handlePointerDown : undefined}
-                    // onPointerUp={isBrushMode ? handlePointerUp : undefined}
-                    // onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
-                    />
-                </MapProvider>
+    return <GameCanvas camera={{ position: [0, 5, -12] }}>
+        <Lighting />
+        <SkyEnvironment />
+        <InnerGame />
+        <MapProvider
+            startX={-1}
+            endX={1}
+            startZ={-1}
+            endZ={1}
+            tileSizePx={256}
+        >
+            <MapTiles
+                startX={-1}
+                startZ={-1}
+                endX={1}
+                endZ={1}
+                tileSize={100}
+            //  onPointerMove={isBrushMode ? handlePointerMove : undefined}
+            // onPointerDown={isBrushMode ? handlePointerDown : undefined}
+            // onPointerUp={isBrushMode ? handlePointerUp : undefined}
+            // onPointerLeave={isBrushMode ? handlePointerLeave : undefined}
+            />
+        </MapProvider>
 
-                <group position={[0, 0.2, 0]}>
-                    <Ocean size={20} distortionScale={1} alpha={0.5} />
+        <group position={[0, 0.2, 0]}>
+            <Ocean size={20} distortionScale={1} alpha={0.5} />
+        </group>
+        <ambientLight intensity={1} />
 
-                </group>
-            </Physics>
-            <ambientLight intensity={1} />
-
-        </GameCanvas>
-    </Controls >
+    </GameCanvas>
 
 }
 
 
-const FogEnvironment = () => {
+const SkyEnvironment = ({ pixelated = false }) => {
     const texture = useTexture('/textures/skybox/skybox1.jpg');
-    // texture.minFilter = NearestFilter;
-    // texture.magFilter = NearestFilter;
+
+    if (pixelated) {
+        texture.minFilter = NearestFilter;
+        texture.magFilter = NearestFilter;
+    }
+
     return <>
         {/* <fog attach="fog" args={['#87ceeb', 10, 50]} /> */}
         <color attach={"background"} args={['#87ceeb']} />
@@ -98,48 +86,11 @@ const Lighting = ({ debug }: { debug?: boolean }) => {
 }
 
 const InnerGame = () => {
-    const ballRef = useRef<Object3D | null>(null);
-
     useCanvasReady();
 
-
-
     return <>
-        <NeoController position={[0, 5, 0]} lookTarget={ballRef} >
-            <ModelAttachment
-                model="/models/environment/Katana.glb"
-                attachpoint="mixamorigRightHand"
-                offset={[0, 0, 0]}
-                scale={[100, 100, 100]}
-                rotation={[0, 0.8, -1.2]}
-            />
-        </NeoController>
-
-
-        <GoalFollowingPed ballRef={ballRef} />
+        <OrbitControls />
     </>
 }
 
-
-
-
-const GoalFollowingPed = ({ ballRef }: { ballRef: React.RefObject<Object3D | null> }) => {
-    const [ballPosition, setBallPosition] = useState<[number, number, number]>([0, 2, 10]);
-    const [dialogVisible, setDialogVisible] = useState(false);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (ballRef.current) {
-                const pos = new Object3D();
-                ballRef.current.getWorldPosition(pos.position);
-                setBallPosition([pos.position.x, pos.position.y, pos.position.z]);
-            }
-        }, 2000);
-        return () => clearInterval(interval);
-    }, [ballRef]);
-
-    return <Ped model="/models/human/rigga/rigga2.glb" position={ballPosition} modelOffset={[0, -0.5, 0]} lookTarget={ballRef}>
-        <DialogCollider>Ole!</DialogCollider>
-    </Ped>
-}
 
