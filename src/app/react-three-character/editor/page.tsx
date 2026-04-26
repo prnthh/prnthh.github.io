@@ -2,8 +2,8 @@
 
 import { GameCanvas } from "react-three-game";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls } from "@react-three/drei";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Box, Environment, OrbitControls } from "@react-three/drei";
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import Mouth from "./Mouth";
 import AnimatedModel from "@/app/react-three-character/HumanoidModel";
@@ -18,14 +18,16 @@ import BoneAttachment from "../BoneAttachment";
 import SimpleModel from "@/shared/SimpleModel";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
-const animationList = ["idle", "walk"] as const;
-
 const animationOverrides = {
     idle: "/models/human/anim/idle.fbx",
     walk: "/models/human/anim/walk.fbx",
+    walkLeft: "/models/human/anim/walkLeft.fbx",
+    run: "/models/human/anim/run.fbx",
 };
 
-const ALL_MODELS = [
+const animationList = Object.keys(animationOverrides);
+
+const INITIAL_MODELS = [
     "/models/human/onimilio/rigged.glb",
     "/models/human/oni2/character.glb",
     "/models/human/rigga/rigga.glb",
@@ -41,21 +43,66 @@ const ALL_MODELS = [
     "/models/human/ybot.glb",
 ];
 
+type ModelListItem = {
+    url: string;
+    label: string;
+};
+
+type ModelListState = {
+    models: ModelListItem[];
+    focusedModelIndex: number;
+};
+
 type LoadedAnimationItem = {
     name: string;
     source: "model" | "override";
     path?: string;
+    clip: AnimationClip;
 };
 
 type FocusedModelAsset = {
     modelUrl: string;
     scene: Object3D;
-    exportClips: AnimationClip[];
-    loadedAnimations: LoadedAnimationItem[];
+    animations: LoadedAnimationItem[];
 };
+
+type ModelRenderBoundaryProps = {
+    modelUrl: string;
+    onError: (modelUrl: string, error: Error) => void;
+    children: React.ReactNode;
+};
+
+class ModelRenderBoundary extends Component<ModelRenderBoundaryProps, { didFail: boolean }> {
+    state = { didFail: false };
+
+    static getDerivedStateFromError() {
+        return { didFail: true };
+    }
+
+    componentDidCatch(error: Error) {
+        this.props.onError(this.props.modelUrl, error);
+    }
+
+    componentDidUpdate(prevProps: ModelRenderBoundaryProps) {
+        if (prevProps.modelUrl !== this.props.modelUrl && this.state.didFail) {
+            this.setState({ didFail: false });
+        }
+    }
+
+    render() {
+        return this.state.didFail ? null : this.props.children;
+    }
+}
 
 const gltfAssetCache = new Map<string, Promise<{ scene: Object3D; animations: AnimationClip[] }>>();
 const fbxClipCache = new Map<string, Promise<AnimationClip | null>>();
+
+function getInitialModelList(): ModelListItem[] {
+    return INITIAL_MODELS.map((url) => ({
+        url,
+        label: url,
+    }));
+}
 
 function stripNeckTracks(clip: AnimationClip) {
     const filteredClip = clip.clone();
@@ -130,20 +177,23 @@ async function exportPackedGlb(scene: Object3D, animations: AnimationClip[]) {
     });
 }
 
-type AnimationRequest = {
-    id: number;
-    targetModelIndex: number;
-};
-
 const CHARACTERS_PER_RING = 6;
 const CHARACTER_RING_RADIUS = 4.5;
 const CHARACTER_RING_HEIGHT = 3;
 const FLOOR_DISC_RADIUS = CHARACTER_RING_RADIUS + 1.8;
 const FLOOR_DISC_INNER_RADIUS = CHARACTER_RING_RADIUS - 1.1;
-const FLOOR_DISC_THICKNESS = 0.3;
 const ENABLE_MOUSE_LOOK = true;
+const CHARACTER_PODIUM_HEIGHT = 0.12;
+const CHARACTER_PODIUM_RADIUS = 0.54;
+const FLOOR_Y_OFFSET = 0.12;
 
-function CharacterTowerBackdrop({ floorCount }: { floorCount: number }) {
+function CharacterTowerBackdrop({
+    floorCount,
+    characterLayouts,
+}: {
+    floorCount: number;
+    characterLayouts: Array<{ modelUrl: string; index: number; position: [number, number, number] }>;
+}) {
     const wallHeight = Math.max(CHARACTER_RING_HEIGHT * floorCount + 2, 6);
 
     return (
@@ -154,13 +204,29 @@ function CharacterTowerBackdrop({ floorCount }: { floorCount: number }) {
             </mesh>
 
             {Array.from({ length: floorCount }, (_, floorIndex) => {
-                const floorY = floorIndex * CHARACTER_RING_HEIGHT - FLOOR_DISC_THICKNESS;
+                const floorLevelY = floorIndex * CHARACTER_RING_HEIGHT;
+                const floorY = floorLevelY - FLOOR_Y_OFFSET;
+                const floorCharacters = characterLayouts.filter(({ index }) => Math.floor(index / CHARACTERS_PER_RING) === floorIndex);
 
                 return (
-                    <mesh key={`floor-${floorY}`} position={[0, floorY, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
-                        <ringGeometry args={[FLOOR_DISC_INNER_RADIUS, FLOOR_DISC_RADIUS, 48, 1]} />
-                        <meshStandardMaterial color="#a2998c" roughness={0.97} metalness={0.03} side={DoubleSide} />
-                    </mesh>
+                    <group key={`floor-${floorY}`}>
+                        <mesh position={[0, floorY, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow castShadow>
+                            <ringGeometry args={[FLOOR_DISC_INNER_RADIUS, FLOOR_DISC_RADIUS, 48, 1]} />
+                            <meshStandardMaterial color="#a2998c" roughness={0.97} metalness={0.03} side={DoubleSide} />
+                        </mesh>
+
+                        {floorCharacters.map(({ modelUrl, position }) => (
+                            <mesh
+                                key={`base-${modelUrl}`}
+                                position={[position[0], floorY + CHARACTER_PODIUM_HEIGHT / 2, position[2]]}
+                                receiveShadow
+                                castShadow
+                            >
+                                <cylinderGeometry args={[CHARACTER_PODIUM_RADIUS * 1.05, CHARACTER_PODIUM_RADIUS, CHARACTER_PODIUM_HEIGHT, 32]} />
+                                <meshStandardMaterial color="#d4c27a" roughness={0.96} metalness={0.03} />
+                            </mesh>
+                        ))}
+                    </group>
                 );
             })}
         </group>
@@ -221,40 +287,31 @@ function MouseLookTarget({
 }
 
 function ControlledAnimatedModel({
-    modelIndex,
     model,
     position,
     rotation,
     modelOffset,
-    animationRequest,
+    animation,
     height,
     scale,
     lookTarget,
     isFocused,
 }: {
-    modelIndex: number;
     model: string;
     position: [number, number, number];
     rotation: [number, number, number];
     modelOffset: [number, number, number];
-    animationRequest: AnimationRequest;
+    animation: string;
     height: number;
     scale: number;
     lookTarget?: RefObject<Object3D | null>;
     isFocused: boolean;
 }) {
-    const [animationIndex, setAnimationIndex] = useState(0);
-
-    useEffect(() => {
-        if (animationRequest.id === 0 || animationRequest.targetModelIndex !== modelIndex) return;
-
-        setAnimationIndex((prev) => (prev + 1) % animationList.length);
-    }, [animationRequest, modelIndex]);
-
-    const animation = animationList[animationIndex];
-
     return (
         <group position={position} rotation={rotation}>
+            <Box args={[0.5, 0.001, 0.5]}>
+                <meshStandardMaterial color="white" wireframe />
+            </Box>
             <AnimatedModel
                 model={model}
                 modelOffset={modelOffset}
@@ -279,9 +336,14 @@ function ControlledAnimatedModel({
 }
 
 export default function CharacterPage() {
+    const pageRef = useRef<HTMLDivElement | null>(null);
     const mouseLookTargetRef = useRef<Object3D | null>(null);
-    const [focusedModelIndex, setFocusedModelIndex] = useState(0);
-    const [animationRequest, setAnimationRequest] = useState<AnimationRequest>({ id: 0, targetModelIndex: 0 });
+    const uploadedModelUrlsRef = useRef<string[]>([]);
+    const [{ models, focusedModelIndex }, setModelListState] = useState<ModelListState>(() => ({
+        models: getInitialModelList(),
+        focusedModelIndex: 0,
+    }));
+    const [currentAnimation, setCurrentAnimation] = useState(animationList[0] ?? "idle");
     const [focusedHeight, setFocusedHeight] = useState(1);
     const [focusedScale, setFocusedScale] = useState(1);
     const [focusedYOffset, setFocusedYOffset] = useState(0);
@@ -289,9 +351,11 @@ export default function CharacterPage() {
     const [isLoadingAnimations, setIsLoadingAnimations] = useState(false);
     const [animationLoadError, setAnimationLoadError] = useState<string | null>(null);
     const [isExportingGlb, setIsExportingGlb] = useState(false);
-    const floorCount = Math.ceil(ALL_MODELS.length / CHARACTERS_PER_RING);
-    const focusedModelUrl = ALL_MODELS[focusedModelIndex];
-    const characterLayouts = useMemo(() => ALL_MODELS.map((modelUrl, index) => {
+    const [isDragOver, setIsDragOver] = useState(false);
+    const floorCount = Math.ceil(models.length / CHARACTERS_PER_RING);
+    const focusedModel = models[focusedModelIndex] ?? models[0];
+    const focusedModelUrl = focusedModel?.url;
+    const characterLayouts = useMemo(() => models.map(({ url: modelUrl }, index) => {
         const position = getCharacterPosition(index);
 
         return {
@@ -300,7 +364,7 @@ export default function CharacterPage() {
             position,
             rotation: getCharacterRotation(position),
         };
-    }), []);
+    }), [models]);
     const focusedPosition = characterLayouts[focusedModelIndex]?.position ?? [0, 0, 0];
     const mouseLookFocusPoint: [number, number, number] = [
         focusedPosition[0],
@@ -309,10 +373,26 @@ export default function CharacterPage() {
     ];
 
     useEffect(() => {
+        return () => {
+            uploadedModelUrlsRef.current.forEach((url) => {
+                URL.revokeObjectURL(url);
+            });
+            uploadedModelUrlsRef.current = [];
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!focusedModelUrl) {
+            setFocusedModelAsset(null);
+            setIsLoadingAnimations(false);
+            return;
+        }
+
         let disposed = false;
 
         setIsLoadingAnimations(true);
         setAnimationLoadError(null);
+        setFocusedModelAsset(null);
 
         void (async () => {
             try {
@@ -330,8 +410,7 @@ export default function CharacterPage() {
                 }
 
                 const seenNames = new Set<string>();
-                const loadedAnimations: LoadedAnimationItem[] = [];
-                const exportClips: AnimationClip[] = [];
+                const animations: LoadedAnimationItem[] = [];
 
                 for (const clip of modelAsset.animations) {
                     const clipName = clip.name.trim();
@@ -340,9 +419,9 @@ export default function CharacterPage() {
                         continue;
                     }
 
+                    const exportClip = stripNeckTracks(clip);
                     seenNames.add(normalizedName);
-                    loadedAnimations.push({ name: clipName, source: "model" });
-                    exportClips.push(stripNeckTracks(clip));
+                    animations.push({ name: clipName, source: "model", clip: exportClip });
                 }
 
                 for (const entry of overrideEntries) {
@@ -353,15 +432,13 @@ export default function CharacterPage() {
                     const clip = entry.clip.clone();
                     clip.name = entry.name;
                     seenNames.add(entry.name.toLowerCase());
-                    loadedAnimations.push({ name: entry.name, source: "override", path: entry.path });
-                    exportClips.push(clip);
+                    animations.push({ name: entry.name, source: "override", path: entry.path, clip });
                 }
 
                 setFocusedModelAsset({
                     modelUrl: focusedModelUrl,
                     scene: modelAsset.scene,
-                    exportClips,
-                    loadedAnimations,
+                    animations,
                 });
             } catch (error) {
                 if (disposed) {
@@ -382,6 +459,113 @@ export default function CharacterPage() {
         };
     }, [focusedModelUrl]);
 
+    const reportModelRenderError = useCallback((modelUrl: string, error: Error) => {
+        const model = models.find((item) => item.url === modelUrl);
+        setAnimationLoadError(`${model?.label ?? modelUrl}: ${error.message}`);
+    }, [models]);
+
+    const addDroppedModel = useCallback((file: File) => {
+        if (!file.name.toLowerCase().endsWith(".glb")) {
+            setAnimationLoadError("Only .glb files can be added to the model list.");
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+
+        setAnimationLoadError(null);
+
+        void loadModelAsset(objectUrl)
+            .then(() => {
+                uploadedModelUrlsRef.current.push(objectUrl);
+                setModelListState((prev) => ({
+                    models: [...prev.models, { url: objectUrl, label: file.name }],
+                    focusedModelIndex: prev.models.length,
+                }));
+            })
+            .catch((error) => {
+                URL.revokeObjectURL(objectUrl);
+                gltfAssetCache.delete(objectUrl);
+                setAnimationLoadError(error instanceof Error ? error.message : "Failed to load dropped GLB.");
+            })
+    }, []);
+
+    useEffect(() => {
+        const pageElement = pageRef.current;
+        if (!pageElement) {
+            return;
+        }
+
+        const dropSurface = pageElement;
+
+        function handleDragOver(event: globalThis.DragEvent) {
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = "copy";
+            }
+            setIsDragOver(true);
+        }
+
+        function handleDragLeave(event: globalThis.DragEvent) {
+            const nextTarget = event.relatedTarget;
+            if (nextTarget instanceof Node && dropSurface.contains(nextTarget)) {
+                return;
+            }
+
+            setIsDragOver(false);
+        }
+
+        function handleDrop(event: globalThis.DragEvent) {
+            event.preventDefault();
+            setIsDragOver(false);
+
+            const droppedFile = Array.from(event.dataTransfer?.files ?? []).find((file) => file.name.toLowerCase().endsWith(".glb"));
+            if (!droppedFile) {
+                setAnimationLoadError("Drop a .glb file to add it to the model list.");
+                return;
+            }
+
+            addDroppedModel(droppedFile);
+        }
+
+        dropSurface.addEventListener("dragover", handleDragOver);
+        dropSurface.addEventListener("dragleave", handleDragLeave);
+        dropSurface.addEventListener("drop", handleDrop);
+
+        return () => {
+            dropSurface.removeEventListener("dragover", handleDragOver);
+            dropSurface.removeEventListener("dragleave", handleDragLeave);
+            dropSurface.removeEventListener("drop", handleDrop);
+        };
+    }, [addDroppedModel]);
+
+    useEffect(() => {
+        if (!focusedModelAsset) {
+            return;
+        }
+
+        const hasCurrentAnimation = focusedModelAsset.animations.some((clip) => clip.name === currentAnimation);
+        if (hasCurrentAnimation) {
+            return;
+        }
+
+        setCurrentAnimation(focusedModelAsset.animations[0]?.name ?? (animationList[0] ?? "idle"));
+    }, [currentAnimation, focusedModelAsset]);
+
+    function removeAnimation(animationName: string) {
+        setFocusedModelAsset((prev) => {
+            if (!prev) {
+                return prev;
+            }
+
+            const normalizedName = animationName.toLowerCase();
+
+            return {
+                ...prev,
+                animations: prev.animations.filter((clip) => clip.name.toLowerCase() !== normalizedName),
+            };
+        });
+    }
+
     async function downloadPackedGlb() {
         if (!focusedModelAsset) {
             return;
@@ -391,7 +575,7 @@ export default function CharacterPage() {
         setAnimationLoadError(null);
 
         try {
-            const glbData = await exportPackedGlb(focusedModelAsset.scene, focusedModelAsset.exportClips);
+            const glbData = await exportPackedGlb(focusedModelAsset.scene, focusedModelAsset.animations.map((animation) => animation.clip));
             const blob = new Blob([glbData], { type: "model/gltf-binary" });
             const blobUrl = URL.createObjectURL(blob);
             const anchor = document.createElement("a");
@@ -406,27 +590,27 @@ export default function CharacterPage() {
         }
     }
 
-    return <div className="w-screen h-screen">
+    return <div ref={pageRef} className={`relative w-screen h-screen ${isDragOver ? "bg-white/5" : ""}`}>
         <GameCanvas>
             {ENABLE_MOUSE_LOOK && <MouseLookTarget targetRef={mouseLookTargetRef} focusPoint={mouseLookFocusPoint} />}
-            <CharacterTowerBackdrop floorCount={floorCount} />
+            <CharacterTowerBackdrop floorCount={floorCount} characterLayouts={characterLayouts} />
             {characterLayouts.map(({ modelUrl, index, position, rotation }) => {
                 const isFocused = index === focusedModelIndex;
 
                 return (
-                    <ControlledAnimatedModel
-                        key={modelUrl}
-                        modelIndex={index}
-                        model={modelUrl}
-                        position={position}
-                        rotation={rotation}
-                        modelOffset={[0, isFocused ? focusedYOffset : 0, 0]}
-                        animationRequest={animationRequest}
-                        height={isFocused ? focusedHeight : 1}
-                        scale={isFocused ? focusedScale : 1}
-                        lookTarget={mouseLookTargetRef}
-                        isFocused={isFocused}
-                    />
+                    <ModelRenderBoundary key={modelUrl} modelUrl={modelUrl} onError={reportModelRenderError}>
+                        <ControlledAnimatedModel
+                            model={modelUrl}
+                            position={position}
+                            rotation={rotation}
+                            modelOffset={[0, isFocused ? focusedYOffset : 0, 0]}
+                            animation={isFocused ? currentAnimation : animationList[0] ?? "idle"}
+                            height={isFocused ? focusedHeight : 1}
+                            scale={isFocused ? focusedScale : 1}
+                            lookTarget={mouseLookTargetRef}
+                            isFocused={isFocused}
+                        />
+                    </ModelRenderBoundary>
                 );
             })}
 
@@ -447,13 +631,35 @@ export default function CharacterPage() {
                 </mesh>
             </Environment>
         </GameCanvas>
+        {isDragOver && (
+            <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/35 text-sm uppercase tracking-[0.3em] text-white/90">
+                drop glb to add model
+            </div>
+        )}
         <div className="absolute top-8 right-8 flex w-64 flex-col gap-3 rounded bg-black/50 p-4 text-white">
 
             <div className="flex justify-between">
-                <button type="button" onClick={() => setFocusedModelIndex((prev) => (prev - 1 + ALL_MODELS.length) % ALL_MODELS.length)}>&lt;--</button>
-                <button type="button" onClick={() => setFocusedModelIndex((prev) => (prev + 1) % ALL_MODELS.length)}>--&gt;</button>
+                <button
+                    type="button"
+                    onClick={() => setModelListState((prev) => ({
+                        ...prev,
+                        focusedModelIndex: (prev.focusedModelIndex - 1 + prev.models.length) % prev.models.length,
+                    }))}
+                >
+                    &lt;--
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setModelListState((prev) => ({
+                        ...prev,
+                        focusedModelIndex: (prev.focusedModelIndex + 1) % prev.models.length,
+                    }))}
+                >
+                    --&gt;
+                </button>
             </div>
-            {ALL_MODELS[focusedModelIndex]}
+            <div className="break-all text-sm">{focusedModel?.label ?? "No model selected"}</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-white/50">drag and drop a .glb anywhere on the page to add it</div>
 
             <label className="flex flex-col gap-1 text-sm">
                 <span>Focused Height: {focusedHeight.toFixed(2)}</span>
@@ -488,13 +694,44 @@ export default function CharacterPage() {
                     onChange={(event) => setFocusedYOffset(Number(event.target.value))}
                 />
             </label>
-            <button type="button">add instance</button>
-            <button type="button" onClick={() => setAnimationRequest((prev) => ({
-                id: prev.id + 1,
-                targetModelIndex: focusedModelIndex,
-            }))}>
-                next animation
-            </button>
+            <div className="flex flex-col gap-2 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="font-medium">Loaded animations</div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-white/60">current: {currentAnimation}</div>
+                </div>
+                {isLoadingAnimations && <div className="text-white/70">loading...</div>}
+                {!isLoadingAnimations && animationLoadError && <div className="text-red-300">{animationLoadError}</div>}
+                {!isLoadingAnimations && !animationLoadError && focusedModelAsset?.animations.length === 0 && (
+                    <div className="text-white/70">No animations found.</div>
+                )}
+                {!isLoadingAnimations && !animationLoadError && focusedModelAsset?.animations.map((clip) => (
+                    <div key={`${clip.source}-${clip.name}`} className="flex items-center justify-between gap-3 rounded border border-white/10 bg-white/5 px-2 py-1.5 text-white/90">
+                        <div className="min-w-0 break-all">
+                            <span className={clip.name === currentAnimation ? "text-white" : undefined}>{clip.name}</span>{" "}
+                            <span className="text-white/50">({clip.source})</span>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setCurrentAnimation(clip.name)}
+                                disabled={clip.name === currentAnimation}
+                                aria-label={`Play ${clip.name}`}
+                                className="rounded border border-white/15 px-2 py-0.5 text-xs text-white/90 transition hover:bg-white/10 disabled:cursor-default disabled:opacity-50"
+                            >
+                                ▶
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => removeAnimation(clip.name)}
+                                aria-label={`Remove ${clip.name}`}
+                                className="rounded border border-red-300/20 px-2 py-0.5 text-xs text-red-200 transition hover:bg-red-300/10"
+                            >
+                                x
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
             <button
                 type="button"
                 onClick={() => void downloadPackedGlb()}
@@ -503,19 +740,6 @@ export default function CharacterPage() {
             >
                 {isExportingGlb ? "packing glb..." : "download glb with animations"}
             </button>
-            <div className="flex flex-col gap-2 text-sm">
-                <div className="font-medium">Loaded animations</div>
-                {isLoadingAnimations && <div className="text-white/70">loading...</div>}
-                {!isLoadingAnimations && animationLoadError && <div className="text-red-300">{animationLoadError}</div>}
-                {!isLoadingAnimations && !animationLoadError && focusedModelAsset?.loadedAnimations.length === 0 && (
-                    <div className="text-white/70">No animations found.</div>
-                )}
-                {!isLoadingAnimations && !animationLoadError && focusedModelAsset?.loadedAnimations.map((clip) => (
-                    <div key={`${clip.source}-${clip.name}`} className="break-all text-white/90">
-                        {clip.name} <span className="text-white/50">({clip.source})</span>
-                    </div>
-                ))}
-            </div>
 
         </div>
     </div>
@@ -533,7 +757,5 @@ const CameraRig = ({ focusedCharacterIndex }: { focusedCharacterIndex: number })
         orbitControlsRef.current?.update();
     }, [focusedCharacterIndex, camera]);
 
-    return <>
-        <OrbitControls ref={orbitControlsRef} makeDefault enablePan={false} enableDamping />
-    </>
+    return <OrbitControls ref={orbitControlsRef} makeDefault enablePan={false} enableDamping />
 }

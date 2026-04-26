@@ -24,7 +24,7 @@ const DEFAULT_HUMANOID_BASE_PATH = "/models/human/onimilio/";
 function resolveAssetPath(path: string | undefined, basePath = DEFAULT_HUMANOID_BASE_PATH) {
     const value = path?.trim();
     if (!value) return undefined;
-    if (value.startsWith("/") || value.startsWith("data:") || /^[a-z]+:\/\//i.test(value)) return value;
+    if (value.startsWith("/") || value.startsWith("data:") || value.startsWith("blob:") || /^[a-z]+:\/\//i.test(value)) return value;
 
     const normalizedBasePath = basePath.trim().replace(/\/?$/, "/");
     return `${normalizedBasePath}${value.replace(/^\/+/, "")}`;

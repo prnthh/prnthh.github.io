@@ -1,5 +1,5 @@
-import { createPortal, useFrame } from "@react-three/fiber";
-import { useState } from "react";
+import { createPortal } from "@react-three/fiber";
+import { useEffect, useState } from "react";
 import type { Group, Object3D } from "three";
 
 function findObjectByName(object: Object3D, names: string[]): Object3D | null {
@@ -35,11 +35,11 @@ export default function BoneAttachment({
         </group>
     );
 
-    useFrame(() => {
+    useEffect(() => {
         const parent = anchor?.parent;
         const nextBone = parent ? findObjectByName(parent, attachpoints) : null;
         setBone((currentBone) => currentBone === nextBone ? currentBone : nextBone);
-    });
+    }, [anchor, attachpoints]);
 
     return (
         <>

@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { type AnimationAction, AnimationClip, AnimationMixer, LoopRepeat, type Object3D, Object3DEventMap } from 'three'
+import { type AnimationAction, type AnimationClip, AnimationMixer, LoopRepeat, type Object3D, type Object3DEventMap } from 'three'
 import { useLoader } from '@react-three/fiber'
 import { FBXLoader } from 'three/examples/jsm/Addons.js'
 
+
+// when these animation keys are used, we implicitly play the corresponding animation in reverse
 const REVERSE_ANIMATION_MAP: Record<string, string> = {
     walkRight: 'walkLeft',
     walkBack: 'walk',
@@ -15,6 +17,21 @@ const filterNeckAnimations = (animation: AnimationClip): AnimationClip => {
     return filteredAnimation
 }
 
+const getTrackNodeName = (trackName: string) => trackName.split('.')[0]
+
+const filterClipForObject = (clip: AnimationClip, object?: Object3D<Object3DEventMap>) => {
+    if (!object) return clip
+
+    const nodeNames = new Set<string>()
+    object.traverse((node) => {
+        if (node.name) nodeNames.add(node.name)
+    })
+
+    const filteredClip = clip.clone()
+    filteredClip.tracks = clip.tracks.filter((track) => nodeNames.has(getTrackNodeName(track.name)))
+    return filteredClip
+}
+
 export default function useAnimationState(
     clone?: Object3D<Object3DEventMap>,
     animationOverrides?: { [key: string]: string },
@@ -22,9 +39,10 @@ export default function useAnimationState(
     modelAnimations?: AnimationClip[]
 ) {
     const [thisAnimation, setThisAnimation] = useState<string | string[] | undefined>('idle')
-    const [mixer, setMixer] = useState<AnimationMixer | null>(null)
     const prevActionRef = useRef<AnimationAction | null>(null)
     const lastKeyRef = useRef<string | undefined>(undefined)
+
+    const mixer = useMemo(() => clone ? new AnimationMixer(clone) : null, [clone])
 
     const ANIMATIONS = useMemo(() => ({
         idle: '/models/human/anim/idle.fbx',
@@ -33,19 +51,29 @@ export default function useAnimationState(
 
     const animationPaths = useMemo(() => Object.values(ANIMATIONS), [ANIMATIONS])
 
-    const _loaded = animationPaths.length ? useLoader(FBXLoader, animationPaths) : []
+    const _loaded = useLoader(FBXLoader, animationPaths)
     const fbxAnimations = useMemo(() =>
         _loaded.map((f) => filterNeckAnimations(f.animations[0])),
         [_loaded]
     )
 
+    const compatibleFbxAnimations = useMemo(() =>
+        fbxAnimations.map((clip) => {
+            const filteredClip = filterClipForObject(clip, clone)
+            return filteredClip.tracks.length > 0 ? filteredClip : null
+        }),
+        [clone, fbxAnimations]
+    )
+
     const modelAnimationMap = useMemo(() => {
         const map: { [key: string]: AnimationClip } = {}
         modelAnimations?.forEach((clip) => {
-            if (clip.name) map[clip.name.toLowerCase()] = filterNeckAnimations(clip)
+            if (!clip.name) return
+            const filteredClip = filterClipForObject(filterNeckAnimations(clip), clone)
+            if (filteredClip.tracks.length > 0) map[clip.name.toLowerCase()] = filteredClip
         })
         return map
-    }, [modelAnimations])
+    }, [clone, modelAnimations])
 
     const actions = useMemo(() => {
         if (!mixer) return {} as { [key: string]: AnimationAction }
@@ -58,7 +86,7 @@ export default function useAnimationState(
 
         // FBX animations as fallback
         Object.keys(ANIMATIONS).forEach((key, i) => {
-            const clip = fbxAnimations[i]
+            const clip = compatibleFbxAnimations[i]
             if (clip && !map[key]) map[key] = mixer.clipAction(clip, clone)
         })
 
@@ -73,30 +101,23 @@ export default function useAnimationState(
         })
 
         return map
-    }, [mixer, clone, fbxAnimations, ANIMATIONS, modelAnimationMap])
+    }, [mixer, clone, compatibleFbxAnimations, ANIMATIONS, modelAnimationMap])
 
     useEffect(() => {
         if (onActions && actions) onActions(actions)
     }, [actions, onActions])
 
     useEffect(() => {
-        if (!clone) return
-        const newMixer = new AnimationMixer(clone)
-        setMixer(newMixer)
+        if (!mixer) return
         return () => {
             try {
-                newMixer.stopAllAction()
-                newMixer.uncacheRoot(newMixer.getRoot())
-                if (newMixer.uncacheClip) {
-                    ;[...fbxAnimations, ...(modelAnimations || [])].forEach((clip) => {
-                        try { newMixer.uncacheClip(clip) } catch { }
-                    })
-                }
+                mixer.stopAllAction()
+                mixer.uncacheRoot(mixer.getRoot())
             } catch { }
             prevActionRef.current = null
             lastKeyRef.current = undefined
         }
-    }, [clone])
+    }, [mixer])
 
     useEffect(() => {
         if (!thisAnimation || !mixer) return
@@ -130,7 +151,6 @@ export default function useAnimationState(
         thisAnimation,
         setThisAnimation,
         mixer,
-        setMixer,
         actions,
     }), [thisAnimation, mixer, actions])
 }
