@@ -31,7 +31,7 @@
 		"recast-navigation": "^0.43.0",
 		"three": "^0.184.0",
 		"three-text": "^0.4.4",
-		"trystero": "^0.22.0",
+		"trystero": "^0.25.2",
 		"tunnel-rat": "^0.1.2",
 		"wiggle": "^0.0.17",
 		"xml2js": "^0.6.2"
